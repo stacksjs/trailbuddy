@@ -1,0 +1,121 @@
+<script server>
+const environments = [
+  { name: 'production', url: 'https://stacks.dev', status: 'healthy', lastDeploy: '2d ago', version: '1.2.3' },
+  { name: 'staging', url: 'https://staging.stacks.dev', status: 'healthy', lastDeploy: '1h ago', version: '1.2.4-beta' },
+  { name: 'development', url: 'http://localhost:3000', status: 'running', lastDeploy: 'Local', version: '1.2.4-dev' },
+]
+
+const variables = [
+  { key: 'APP_NAME', value: 'Stacks', environments: ['production', 'staging', 'development'] },
+  { key: 'APP_URL', value: 'https://stacks.dev', environments: ['production'] },
+  { key: 'DATABASE_URL', value: '••••••••', environments: ['production', 'staging'], sensitive: true },
+  { key: 'REDIS_URL', value: '••••••••', environments: ['production', 'staging'], sensitive: true },
+  { key: 'DEBUG', value: 'false', environments: ['production'] },
+  { key: 'DEBUG', value: 'true', environments: ['staging', 'development'] },
+]
+
+const stats = [
+  { label: 'Environments', value: '3' },
+  { label: 'Variables', value: '24' },
+  { label: 'Secrets', value: '8' },
+  { label: 'Last Sync', value: '5m ago' },
+]
+</script>
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div class="flex items-start justify-between mb-8">
+      <div class="">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Environment</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-1">Environment configuration and variables</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Sync</button>
+        <button class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Add Variable</button>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        @foreach (stats as stat)
+          <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+            <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stat.value }}</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ stat.label }}</div>
+          </div>
+        @endforeach
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @foreach (environments as env)
+          <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-lg transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+              <span class="font-semibold text-gray-900 dark:text-white capitalize">{{ env.name }}</span>
+              <span class="px-2.5 py-1 text-xs font-semibold rounded-full {{ env.status === 'healthy' ? 'success' : 'info'  === 'success' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : env.status === 'healthy' ? 'success' : 'info'  === 'warning' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' : env.status === 'healthy' ? 'success' : 'info'  === 'error' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300' }}">{{ env.status }}</span>
+            </div>
+            <div class="mt-4">
+              <div class="flex justify-between mb-2">
+                <span class="text-gray-500 dark:text-gray-400">URL</span>
+                <a href="{{ env.url }}" class="text-primary text-sm">{{ env.url }}</a>
+              </div>
+              <div class="flex justify-between mb-2">
+                <span class="text-gray-500 dark:text-gray-400">Version</span>
+                <code class="code-inline text-sm">{{ env.version }}</code>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500 dark:text-gray-400">Last Deploy</span>
+                <span>{{ env.lastDeploy }}</span>
+              </div>
+            </div>
+            <div class="mt-4 pt-4 border-t">
+              <button class="w-full px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Configure</button>
+            </div>
+          </div>
+        @endforeach
+      </div>
+
+      <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-lg transition-shadow">
+        <div class="flex items-center justify-between mb-4">
+          <span class="font-semibold text-gray-900 dark:text-white">Environment Variables</span>
+          <input type="text" class="input w-64" placeholder="Search variables..." />
+        </div>
+        <div class="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-xl">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 dark:bg-gray-700/50">
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Key</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Value</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Environments</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @foreach (variables as variable)
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                  <td class="px-4 py-3 text-gray-900 dark:text-white border-t border-gray-100 dark:border-gray-700"><code class="code-inline">{{ variable.key }}</code></td>
+                  <td class="px-4 py-3 text-gray-900 dark:text-white border-t border-gray-100 dark:border-gray-700">
+                    @if (variable.sensitive)
+                      <span class="text-gray-500 dark:text-gray-400">••••••••</span>
+                      <button class="ml-2 px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Reveal</button>
+                    @else
+                      <code class="code-inline">{{ variable.value }}</code>
+                    @endif
+                  </td>
+                  <td class="px-4 py-3 text-gray-900 dark:text-white border-t border-gray-100 dark:border-gray-700">
+                    <div class="flex gap-1">
+                      @foreach (variable.environments as env)
+                        <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{{ env }}</span>
+                      @endforeach
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-gray-900 dark:text-white border-t border-gray-100 dark:border-gray-700">
+                    <div class="flex gap-2">
+                      <button class="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Edit</button>
+                      <button class="px-3 py-1.5 text-xs font-medium text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              @endforeach
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>

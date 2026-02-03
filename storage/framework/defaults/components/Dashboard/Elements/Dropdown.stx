@@ -1,0 +1,51 @@
+<script server>
+  const label = props.label || ''
+  const open = props.open || false
+  const elements = props.elements || [] // Array of { to, label }
+  const id = props.id || 'dropdown-nav-' + Math.random().toString(36).slice(2, 11)
+</script>
+<div class="flex flex-col gap-y-2 overflow-hidden" data-dropdown-nav="{{ id }}">
+  <a class="flex items-center justify-between gap-x-2 cursor-pointer" data-toggle>
+    <span class="text-sm text-dark font-medium">
+      {{ label }}
+    </span>
+
+    <span class="i-hugeicons-chevron-down" data-icon-closed></span>
+    <span class="i-hugeicons-minus hidden" data-icon-open></span>
+  </a>
+
+  <ul data-list class="{{ open ? '' : 'hidden' }}">
+    @foreach(elements as element)
+      <li>
+        <a href="{{ element.to }}" class="block">
+          {{ element.label }}
+        </a>
+      </li>
+    @endforeach
+  </ul>
+</div>
+<script client>
+(function() {
+  const nav = document.querySelector('[data-dropdown-nav="{{ id }}"]')
+  if (!nav) return
+
+  const toggle = nav.querySelector('[data-toggle]')
+  const list = nav.querySelector('[data-list]')
+  const iconClosed = nav.querySelector('[data-icon-closed]')
+  const iconOpen = nav.querySelector('[data-icon-open]')
+  let isOpen = {{ open ? 'true' : 'false' }}
+
+  function updateState() {
+    list.classList.toggle('hidden', !isOpen)
+    iconClosed.classList.toggle('hidden', isOpen)
+    iconOpen.classList.toggle('hidden', !isOpen)
+  }
+
+  toggle?.addEventListener('click', function() {
+    isOpen = !isOpen
+    updateState()
+  }
+
+  updateState()
+})()
+</script>

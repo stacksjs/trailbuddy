@@ -1,0 +1,124 @@
+<script server>
+/**
+ * Dashboard Layout Component
+ * A unified layout wrapper that combines the modern sidebar and navbar
+ * for consistent dashboard page structure.
+ *
+ * When running inside Craft with --native-sidebar, the native macOS
+ * sidebar is rendered by Craft - we skip the web sidebar in that case.
+ */
+
+// Helper function to get prop values with defaults
+function getProp(name, defaultValue) {
+  return props[name] !== undefined ? props[name] : defaultValue
+}
+
+// Detect if Craft is rendering a native sidebar
+// When Craft uses --native-sidebar, it sets this flag
+const hasNativeSidebar = typeof window !== 'undefined' && (
+  window.__craftNativeSidebar === true ||
+  window.craft?.hasNativeSidebar?.() ||
+  // Also check if we're in a Craft webview (sidebar is handled natively)
+  (window.webkit?.messageHandlers?.craft && document.body?.dataset?.nativeSidebar === 'true')
+)
+
+// Sidebar width calculation (matches Sidebar width)
+function getSidebarWidth() {
+  if (hasNativeSidebar || getProp('isMobile', false)) return 0
+  return getProp('isSidebarCollapsed', false) ? 64 : 240
+}
+
+function getMainContentStyle() {
+  // No padding needed when native sidebar handles layout
+  if (hasNativeSidebar) return ''
+  if (!getProp('showSidebar', true) || getProp('isMobile', false)) return ''
+  return `padding-left: ${getSidebarWidth()}px`
+}
+
+// Determine if we should show the web sidebar
+function shouldShowWebSidebar() {
+  return getProp('showSidebar', true) && !hasNativeSidebar
+}
+</script>
+<!-- macOS-inspired layout with subtle background -->
+<div class="min-h-screen bg-white dark:bg-neutral-950">
+  <!-- Mobile sidebar overlay -->
+  @if(props.isMobileMenuOpen && props.isMobile)
+    <div
+      class="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden transition-opacity duration-300"
+      data-action="close-mobile-menu"
+    ></div>
+  @endif
+
+  <!-- Mobile sidebar (web-based, only when no native sidebar) -->
+  @if(props.isMobileMenuOpen && props.isMobile && shouldShowWebSidebar())
+    <div class="fixed inset-y-0 left-0 z-50 w-64 lg:hidden transition-transform duration-300">
+      <Sidebar />
+    </div>
+  @endif
+
+  <!-- Desktop sidebar (web-based, only when no native sidebar) -->
+  @if(shouldShowWebSidebar() && !props.isMobile)
+    <Sidebar />
+  @endif
+
+  <!-- Main content area -->
+  <div
+    class="flex flex-col min-h-screen transition-all duration-300"
+    style="{{ getMainContentStyle() }}"
+  >
+    <!-- Navbar -->
+    @if(getProp('showNavbar', true))
+      <NavbarModern
+        showWindowControls="{{ getProp('showWindowControls', false) }}"
+        currentPath="{{ props.currentPath || '/' }}"
+        isDark="{{ props.isDark || false }}"
+      />
+    @endif
+
+    <!-- Page header slot -->
+    @if($slots.header)
+      <div class="border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+        <div class="px-4 lg:px-6 py-4 {{ props.fullWidth ? '' : 'max-w-7xl mx-auto' }}">
+          <slot name="header">
+            <!-- Default page header -->
+            @if(props.pageTitle)
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <h1 class="text-2xl font-semibold text-neutral-900 dark:text-white">
+                    {{ props.pageTitle }}
+                  </h1>
+                  @if(props.pageDescription)
+                    <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                      {{ props.pageDescription }}
+                    </p>
+                  @endif
+                </div>
+                <slot name="header-actions" />
+              </div>
+            @endif
+          </slot>
+        </div>
+      </div>
+    @endif
+
+    <!-- Main content -->
+    <main class="{{ props.noPadding ? '' : 'px-4 lg:px-6 py-6' }} flex-1">
+      <div class="{{ props.fullWidth ? '' : 'max-w-7xl mx-auto' }}">
+        <slot />
+      </div>
+    </main>
+
+    <!-- Footer slot -->
+    @if($slots.footer)
+      <footer class="border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
+        <div class="px-4 lg:px-6 py-4 {{ props.fullWidth ? '' : 'max-w-7xl mx-auto' }}">
+          <slot name="footer" />
+        </div>
+      </footer>
+    @endif
+  </div>
+
+  <!-- Global overlays/modals slot -->
+  <slot name="overlays" />
+</div>

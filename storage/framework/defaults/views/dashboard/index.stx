@@ -1,0 +1,292 @@
+<script server>
+definePageMeta({
+  middleware: ['auth'],
+  layout: 'default'
+})
+
+import { useDashboard } from '../../functions/dashboard'
+
+// Dashboard data from composable
+const {
+  stats,
+  recentActivity,
+  systemHealth,
+  isLoading,
+  fetchAll,
+  fetchDashboardStats,
+} = useDashboard()
+
+// Time range filter
+const timeRange = '7d'
+const timeRangeOptions = [
+  { value: 'today', label: 'Today' },
+  { value: '7d', label: 'Last 7 days' },
+  { value: '30d', label: 'Last 30 days' },
+  { value: '90d', label: 'Last 90 days' },
+  { value: '1y', label: 'Last year' },
+  { value: 'all', label: 'All time' },
+]
+
+// Quick links (static navigation)
+const quickLinks = [
+  { name: 'Blog', description: 'Manage your blog posts and categories', icon: 'i-hugeicons-document-validation', href: '/content/dashboard', color: 'bg-blue-500' },
+  { name: 'Commerce', description: 'View orders and manage products', icon: 'i-hugeicons-shopping-cart-02', href: '/commerce/dashboard', color: 'bg-green-500' },
+  { name: 'Cloud', description: 'Monitor cloud performance and status', icon: 'i-hugeicons-cloud', href: '/cloud', color: 'bg-purple-500' },
+  { name: 'Settings', description: 'Configure your application settings', icon: 'i-hugeicons-settings-01', href: '/settings', color: 'bg-neutral-500' },
+]
+
+// Get icon based on activity type
+function getActivityIcon(type) {
+  const icons = {
+    deployment: 'i-hugeicons-rocket-02',
+    blog: 'i-hugeicons-document-validation',
+    cloud: 'i-hugeicons-cloud',
+    error: 'i-hugeicons-alert-02',
+    commerce: 'i-hugeicons-shopping-cart-02',
+    server: 'i-hugeicons-server-01',
+  }
+  return icons[type] || 'i-hugeicons-information-circle'
+}
+
+// Get color based on activity status
+function getActivityStyles(status) {
+  const styles = {
+    success: 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30',
+    error: 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30',
+    warning: 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30',
+  }
+  return styles[status] || 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30'
+}
+
+// Get status badge variant
+function getStatusVariant(status) {
+  const variants = {
+    healthy: 'success',
+    degraded: 'warning',
+    critical: 'danger',
+  }
+  return variants[status] || 'default'
+}
+
+function getStatusDotClass(status) {
+  if (status === 'healthy') return 'bg-green-500'
+  if (status === 'degraded') return 'bg-amber-500'
+  if (status === 'critical') return 'bg-red-500'
+  return 'bg-gray-500'
+}
+</script>
+<DashboardLayout>
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-semibold text-neutral-900 dark:text-white">Dashboard</h1>
+      <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+        Welcome back! Here's an overview of your system.
+      </p>
+    </div>
+    <div class="w-44">
+      <Select
+        value="{{ timeRange }}"
+        data-model="timeRange"
+      >
+        @foreach(timeRangeOptions as option)
+          <option value="{{ option }}">{{ option.label }}</option>
+        @endforeach
+      </Select>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+    @foreach(stats as stat)
+      <StatsCard
+        title="{{ stat.title }}"
+        value="{{ stat }}"
+        trend="{{ stat.trend }}"
+        trendLabel="{{ stat.trendLabel }}"
+        icon="{{ stat.icon }}"
+        iconBg="{{ stat.iconBg }}"
+      />
+    @endforeach
+  </div>
+
+  <!-- Quick Links -->
+  <div class="mb-8">
+    <h2 class="text-base font-semibold text-neutral-900 dark:text-white mb-4">Quick Links</h2>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      @foreach(quickLinks as link)
+        <a href="{{ link.href }}">
+          <Card hoverable class="h-full">
+            <div class="flex items-center gap-4">
+              <div class="{{ link.color }} flex-shrink-0 rounded-xl p-3">
+                <div class="{{ link.icon }} h-6 w-6 text-white"></div>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ link.name }}</p>
+                <p class="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400 truncate">
+                  {{ link.description }}
+                </p>
+              </div>
+              <div class="i-hugeicons-arrow-right-01 h-5 w-5 text-neutral-400 flex-shrink-0"></div>
+            </div>
+          </Card>
+        </a>
+      @endforeach
+    </div>
+  </div>
+
+  <!-- System Health and Recent Activity -->
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <!-- System Health -->
+    <Card>
+      <div slot="header" class="flex items-center justify-between">
+        <h3 class="text-base font-semibold text-neutral-900 dark:text-white">System Health</h3>
+        <a href="/health">
+          <Button variant="ghost" size="sm">
+            View all
+            <div class="i-hugeicons-arrow-right-01 w-4 h-4 ml-1"></div>
+          </Button>
+        </a>
+      </div>
+
+      <div class="divide-y divide-neutral-200 dark:divide-neutral-700 -mx-6 -mb-6">
+        @foreach(systemHealth as service)
+          <div class="flex items-center justify-between px-6 py-3.5">
+            <div class="flex items-center gap-3">
+              <span class="h-2.5 w-2.5 rounded-full {{ getStatusDotClass(service.status) }}"></span>
+              <span class="text-sm font-medium text-neutral-700 dark:text-neutral-200">
+                {{ service.name }}
+              </span>
+            </div>
+            <div class="flex items-center gap-4">
+              <span class="text-sm text-neutral-500 dark:text-neutral-400">
+                {{ service.latency }}
+              </span>
+              <span class="text-sm text-neutral-500 dark:text-neutral-400 hidden sm:block">
+                {{ service.uptime }}
+              </span>
+              <Badge variant="{{ getStatusVariant(service.status) }}" size="sm">
+                {{ service.status }}
+              </Badge>
+            </div>
+          </div>
+        @endforeach
+      </div>
+    </Card>
+
+    <!-- Recent Activity -->
+    <Card>
+      <div slot="header" class="flex items-center justify-between">
+        <h3 class="text-base font-semibold text-neutral-900 dark:text-white">Recent Activity</h3>
+        <a href="/data/activity">
+          <Button variant="ghost" size="sm">
+            View all
+            <div class="i-hugeicons-arrow-right-01 w-4 h-4 ml-1"></div>
+          </Button>
+        </a>
+      </div>
+
+      <div class="divide-y divide-neutral-200 dark:divide-neutral-700 -mx-6 -mb-6">
+        @foreach(recentActivity as activity)
+          <div class="flex items-center gap-4 px-6 py-3.5">
+            <div class="{{ getActivityStyles(activity.status) }} flex-shrink-0 rounded-lg p-2">
+              <div class="{{ getActivityIcon(activity.type) }} h-5 w-5"></div>
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium text-neutral-900 dark:text-white truncate">
+                {{ activity.title }}
+              </p>
+              <p class="text-sm text-neutral-500 dark:text-neutral-400">
+                {{ activity.time }}
+              </p>
+            </div>
+          </div>
+        @endforeach
+      </div>
+    </Card>
+  </div>
+
+  <!-- Resources and Documentation -->
+  <div class="mt-8">
+    <Card>
+      <div slot="header">
+        <h3 class="text-base font-semibold text-neutral-900 dark:text-white">Resources & Documentation</h3>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="rounded-xl bg-blue-50 dark:bg-blue-900/20 p-5">
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg">
+              <div class="i-hugeicons-book-open-02 h-5 w-5 text-blue-600 dark:text-blue-400"></div>
+            </div>
+            <div>
+              <h4 class="text-sm font-semibold text-blue-900 dark:text-blue-200">Documentation</h4>
+              <p class="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                Comprehensive guides and API references for developers.
+              </p>
+              <a
+                href="https://docs.stacksjs.org"
+                target="_blank"
+                class="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+              >
+                View documentation
+                <div class="i-hugeicons-arrow-right-01 w-4 h-4"></div>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-xl bg-green-50 dark:bg-green-900/20 p-5">
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 p-2 bg-green-100 dark:bg-green-900/40 rounded-lg">
+              <div class="i-hugeicons-video-01 h-5 w-5 text-green-600 dark:text-green-400"></div>
+            </div>
+            <div>
+              <h4 class="text-sm font-semibold text-green-900 dark:text-green-200">Video Tutorials</h4>
+              <p class="mt-1 text-sm text-green-700 dark:text-green-300">
+                Step-by-step video guides for common tasks and features.
+              </p>
+              <a
+                href="#"
+                class="mt-3 inline-flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-500 dark:text-green-400"
+              >
+                Watch tutorials
+                <div class="i-hugeicons-arrow-right-01 w-4 h-4"></div>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-xl bg-purple-50 dark:bg-purple-900/20 p-5">
+          <div class="flex gap-4">
+            <div class="flex-shrink-0 p-2 bg-purple-100 dark:bg-purple-900/40 rounded-lg">
+              <div class="i-hugeicons-user-group h-5 w-5 text-purple-600 dark:text-purple-400"></div>
+            </div>
+            <div>
+              <h4 class="text-sm font-semibold text-purple-900 dark:text-purple-200">Community</h4>
+              <p class="mt-1 text-sm text-purple-700 dark:text-purple-300">
+                Join our community forums for support and discussions.
+              </p>
+              <a
+                href="https://discord.gg/stacksjs"
+                target="_blank"
+                class="mt-3 inline-flex items-center gap-1 text-sm font-medium text-purple-600 hover:text-purple-500 dark:text-purple-400"
+              >
+                Join community
+                <div class="i-hugeicons-arrow-right-01 w-4 h-4"></div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Card>
+  </div>
+</DashboardLayout>
+<script client>
+import { onMount } from 'stx'
+
+onMount(async () => {
+  fetchAll(timeRange)
+})
+</script>
+

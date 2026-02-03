@@ -1,0 +1,22 @@
+{
+  "name": "stacks-web",
+  "type": "module",
+  "version": "0.70.23",
+  "private": true,
+  "scripts": {
+    "build": "bun --bun vite-ssg build -c ../../core/vite-config/src/views.ts",
+    "dev": "bun --bun vite serve -c ../../core/vite-config/src/views.ts",
+    "preview": "bun --bun vite preview",
+    "typecheck": "bun --bun vue-tsc --noEmit",
+    "up": "bun --bun taze major -I",
+    "sizecheck": "bun --bun vite-bundle-visualizer"
+  },
+  "dependencies": {
+    "@stacksjs/alias": "workspace:*",
+    "@stacksjs/config": "workspace:*",
+    "@stacksjs/server": "workspace:*",
+    "@vueuse/core": "^13.9.0",
+    "@vueuse/head": "^2.0.0"
+  },
+  "devDependencies": {}
+}

@@ -1,0 +1,64 @@
+{
+  "name": "@stacksjs/storage",
+  "type": "module",
+  "version": "0.70.23",
+  "description": "The Stacks file system.",
+  "author": "Chris Breuer",
+  "contributors": [
+    "Chris Breuer <chris@stacksjs.com>"
+  ],
+  "license": "MIT",
+  "funding": "https://github.com/sponsors/chrisbbreuer",
+  "homepage": "https://github.com/stacksjs/stacks/tree/main/storage/framework/core/storage#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stacksjs/stacks.git",
+    "directory": "./storage/framework/core/storage"
+  },
+  "bugs": {
+    "url": "https://github.com/stacksjs/stacks/issues"
+  },
+  "keywords": [
+    "storage",
+    "fs",
+    "file system",
+    "glob",
+    "api",
+    "collections",
+    "utilities",
+    "functions",
+    "bun",
+    "stacks"
+  ],
+  ".": {
+    "import": "./dist/index.js"
+  },
+  "./*": {
+    "import": "./dist/*"
+  },
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "README.md",
+    "dist"
+  ],
+  "scripts": {
+    "build": "bun build.ts",
+    "typecheck": "bun tsc --noEmit",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.876.0",
+    "@aws-sdk/s3-request-presigner": "^3.876.0"
+  },
+  "devDependencies": {
+    "@stacksjs/arrays": "workspace:*",
+    "better-dx": "^0.2.5",
+    "@stacksjs/error-handling": "workspace:*",
+    "@stacksjs/path": "workspace:*",
+    "@stacksjs/strings": "workspace:*",
+    "@stacksjs/types": "workspace:*",
+    "@types/archiver": "^6.0.3",
+    "archiver": "^7.0.1"
+  }
+}
