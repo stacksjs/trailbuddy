@@ -1,0 +1,26 @@
+<script server>
+import { defineProps } from 'stx'
+
+type Difficulty = 'easy' | 'moderate' | 'hard'
+
+interface DifficultyBadgeProps {
+  difficulty: Difficulty
+}
+
+const { difficulty } = defineProps<DifficultyBadgeProps>()
+
+function getDifficultyClass(diff: Difficulty): string {
+  const classes: Record<Difficulty, string> = {
+    easy: 'difficulty-easy',
+    moderate: 'difficulty-moderate',
+    hard: 'difficulty-hard'
+  }
+  return classes[diff] || 'difficulty-moderate'
+}
+</script>
+
+<template>
+  <span class="px-3 py-1 {{ getDifficultyClass(difficulty) }} rounded-full text-xs font-semibold capitalize">
+    {{ difficulty }}
+  </span>
+</template>
