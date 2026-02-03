@@ -1,0 +1,61 @@
+<script server>
+import { defineProps } from 'stx'
+
+interface UserStats {
+  totalDistance: number
+  totalTime: string
+  totalElevation: number
+  trailsCompleted: number
+  currentStreak: number
+  longestStreak: number
+}
+
+interface UserStatsCardProps {
+  stats: UserStats
+}
+
+const { stats } = defineProps<UserStatsCardProps>()
+
+function formatNumber(num: number): string {
+  return num.toLocaleString()
+}
+</script>
+
+<template>
+    <h3 class="font-bold text-lg text-gray-900 mb-4 flex items-center">
+      <svg class="w-5 h-5 mr-2 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+      Your Stats
+    </h3>
+    <div class="space-y-4">
+      <div class="flex items-center justify-between p-3 bg-emerald-50 rounded-xl">
+        <div>
+          <p class="text-2xl font-bold text-emerald-700">{{ stats.totalDistance }}</p>
+          <p class="text-sm text-emerald-600">Total Miles</p>
+        </div>
+        <svg class="w-8 h-8 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="p-3 bg-gray-50 rounded-xl">
+          <p class="text-lg font-bold text-gray-900">{{ stats.totalTime }}</p>
+          <p class="text-xs text-gray-500">Time Active</p>
+        </div>
+        <div class="p-3 bg-gray-50 rounded-xl">
+          <p class="text-lg font-bold text-gray-900">{{ formatNumber(stats.totalElevation) }}</p>
+          <p class="text-xs text-gray-500">Elevation (ft)</p>
+        </div>
+        <div class="p-3 bg-gray-50 rounded-xl">
+          <p class="text-lg font-bold text-gray-900">{{ stats.trailsCompleted }}</p>
+          <p class="text-xs text-gray-500">Trails Done</p>
+        </div>
+        <div class="p-3 bg-orange-50 rounded-xl">
+          <p class="text-lg font-bold text-orange-600">{{ stats.currentStreak }}</p>
+          <p class="text-xs text-orange-500">Day Streak</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

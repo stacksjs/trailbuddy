@@ -1,0 +1,93 @@
+<script server>
+import { defineProps, withDefaults } from 'stx'
+
+interface HeroProps {
+  activeUsers?: string
+  trailsMapped?: string
+  milesTracked?: string
+}
+
+const { activeUsers, trailsMapped, milesTracked } = withDefaults(defineProps<HeroProps>(), {
+  activeUsers: '2.5M+',
+  trailsMapped: '150K+',
+  milesTracked: '89M+'
+})
+</script>
+
+<template>
+  <section class="relative min-h-screen flex items-center hero-gradient overflow-hidden">
+    <!-- Background pattern -->
+    <div class="absolute inset-0 opacity-10">
+      <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <defs>
+          <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)" />
+      </svg>
+    </div>
+
+    <!-- Decorative mountains -->
+    <div class="absolute bottom-0 left-0 right-0">
+      <svg viewBox="0 0 1440 320" class="w-full" preserveAspectRatio="none">
+        <path fill="rgba(255,255,255,0.1)" d="M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,138.7C672,128,768,160,864,181.3C960,203,1056,213,1152,197.3C1248,181,1344,139,1392,117.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+      </svg>
+    </div>
+
+    <div class="relative z-10 px-4 mx-auto max-w-7xl sm:px-6 lg:px-8 pt-24 pb-32">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <!-- Left content -->
+        <div class="text-center lg:text-left">
+          <div class="inline-flex items-center px-4 py-2 bg-white/20 rounded-full text-white text-sm font-medium mb-6 backdrop-blur-sm">
+            <span class="w-2 h-2 bg-green-400 rounded-full mr-2 activity-live"></span>
+            12,847 runners active now
+          </div>
+          <h1 class="font-display text-5xl md:text-6xl lg:text-7xl font-black text-white mb-6 leading-tight">
+            Every Trail<br/>
+            <span class="text-emerald-200">Tells a Story</span>
+          </h1>
+          <p class="text-xl text-white/80 mb-8 max-w-lg mx-auto lg:mx-0">
+            Discover breathtaking trails, track your adventures, and connect with a community of outdoor enthusiasts.
+          </p>
+          <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+            <a href="#explore" class="w-full sm:w-auto px-8 py-4 text-lg font-semibold text-emerald-700 bg-white rounded-full hover:bg-gray-100 transition shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5">
+              Explore Trails
+            </a>
+            <a href="#" class="w-full sm:w-auto px-8 py-4 text-lg font-semibold text-white bg-white/20 rounded-full hover:bg-white/30 transition backdrop-blur-sm border border-white/30">
+              Download App
+            </a>
+          </div>
+
+          <!-- Quick stats -->
+          <div class="mt-12 grid grid-cols-3 gap-6">
+            <div class="text-center lg:text-left">
+              <p class="text-3xl font-bold text-white stat-value">{{ activeUsers }}</p>
+              <p class="text-white/60 text-sm">Active Users</p>
+            </div>
+            <div class="text-center lg:text-left">
+              <p class="text-3xl font-bold text-white stat-value">{{ trailsMapped }}</p>
+              <p class="text-white/60 text-sm">Trails Mapped</p>
+            </div>
+            <div class="text-center lg:text-left">
+              <p class="text-3xl font-bold text-white stat-value">{{ milesTracked }}</p>
+              <p class="text-white/60 text-sm">Miles Tracked</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right content - Featured trail card -->
+        <div class="hidden lg:block">
+          <slot name="featured-card" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Scroll indicator -->
+    <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+      <svg class="w-6 h-6 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+      </svg>
+    </div>
+  </section>
+</template>
