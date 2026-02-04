@@ -374,6 +374,20 @@ route.group({ prefix: '/shipping' }, () => {
   route.delete('/license-keys/{id}', 'Actions/Commerce/Shipping/LicenseKeyDestroyAction')
 })
 
+// Territory Game routes - claim land by running loops, conquer others' territory
+route.group({ prefix: '/territories' }, () => {
+  // Claim a new territory from an activity with a closed loop GPS track
+  route.post('/claim', 'Actions/Territory/ClaimTerritoryAction')
+  // Process activity to check for territory conquests
+  route.post('/process-conquest', 'Actions/Territory/ProcessActivityConquestAction')
+  // Get territories within a bounding box for map display
+  route.get('/map', 'Actions/Territory/GetTerritoriesForMapAction')
+  // Get territory leaderboard (by area, count, or conquests)
+  route.get('/leaderboard', 'Actions/Territory/TerritoryLeaderboardAction')
+  // Get all territories owned by a user
+  route.get('/user/{userId}', 'Actions/Territory/UserTerritoriesAction')
+})
+
 // Authenticated user routes
 route.group({ middleware: 'auth' }, () => {
   route.get('/me', 'Actions/Auth/AuthUserAction')
