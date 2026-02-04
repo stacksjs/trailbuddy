@@ -1,9 +1,6 @@
-import { Action } from '@stacksjs/actions'
-import { response } from '@stacksjs/router'
+// No imports needed - everything is auto-imported!
 
-// Minimum territory size in square meters (1,000 sq m = ~0.25 acres)
 const MIN_TERRITORY_SIZE = 1000
-// Maximum territory size in square meters (5,000,000 sq m = ~1,235 acres)
 const MAX_TERRITORY_SIZE = 5000000
 
 export default new Action({
@@ -24,23 +21,19 @@ export default new Action({
     }
 
     try {
-      // Fetch the activity - Activity is auto-imported
       const activity = await Activity.find(activityId)
       if (!activity) {
         return response.json({ success: false, error: 'Activity not found' }, 404)
       }
 
-      // Verify activity belongs to user
       if (activity.userId !== userId) {
         return response.json({ success: false, error: 'Activity does not belong to user' }, 403)
       }
 
-      // Check for GPS data
       if (!activity.gpxData) {
         return response.json({ success: false, error: 'Activity has no GPS data' }, 400)
       }
 
-      // Validate GPS data - validateGpsDataForClaim is auto-imported
       const validation = validateGpsDataForClaim(activity.gpxData)
       if (!validation.valid) {
         return response.json({ success: false, error: validation.error }, 400)
@@ -48,7 +41,6 @@ export default new Action({
 
       const coordinates = validation.coordinates!
 
-      // Verify it's a closed loop - isClosedLoop is auto-imported
       if (!isClosedLoop(coordinates)) {
         return response.json({
           success: false,
@@ -56,10 +48,7 @@ export default new Action({
         }, 400)
       }
 
-      // Simplify the track to reduce polygon complexity - simplifyTrack is auto-imported
       const simplified = simplifyTrack(coordinates)
-
-      // Calculate area - calculatePolygonArea is auto-imported
       const area = calculatePolygonArea(simplified)
 
       if (area < MIN_TERRITORY_SIZE) {
@@ -76,13 +65,11 @@ export default new Action({
         }, 400)
       }
 
-      // Calculate other properties - all geo functions are auto-imported
       const perimeter = calculatePerimeter(simplified)
       const centroid = getCentroid(simplified)
       const boundingBox = getBoundingBox(simplified)
       const polygonData = coordinatesToGeoJson(simplified)
 
-      // Create the territory - Territory model is auto-imported
       const territory = await Territory.create({
         userId,
         activityId,
@@ -98,7 +85,6 @@ export default new Action({
         claimedAt: new Date().toISOString(),
       })
 
-      // Create history record - TerritoryHistory model is auto-imported
       await TerritoryHistory.create({
         territoryId: territory.id,
         userId,
@@ -108,7 +94,6 @@ export default new Action({
         notes: 'Initial claim',
       })
 
-      // Update or create user's territory stats - TerritoryStats model is auto-imported
       let stats = await TerritoryStats.where('userId', '=', userId).first()
       if (stats) {
         await stats.update({

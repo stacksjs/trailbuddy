@@ -1,6 +1,4 @@
-import { Action } from '@stacksjs/actions'
-import { response } from '@stacksjs/router'
-// Models (Territory, User) and geo functions are auto-imported
+// No imports needed - everything is auto-imported!
 
 export default new Action({
   name: 'Get Territories For Map',
@@ -16,34 +14,23 @@ export default new Action({
     const limit = request.get<number>('limit') || 100
 
     try {
-
-      // Build query for active territories
       let query = Territory.where('status', '=', 'active')
-
-      // Get territories (will filter by bounding box in memory for SQLite)
       const territories = await query.limit(limit).get()
 
-      // Filter by bounding box if provided
       let filteredTerritories = territories
       if (minLat !== undefined && minLng !== undefined && maxLat !== undefined && maxLng !== undefined) {
         filteredTerritories = territories.filter((t: any) => {
-          if (!t.boundingBox)
-            return false
-
+          if (!t.boundingBox) return false
           const bbox = parseBoundingBox(t.boundingBox)
-
-          // Check if territory bounding box overlaps with requested area
           return !(bbox.maxLat < minLat || bbox.minLat > maxLat ||
                    bbox.maxLng < minLng || bbox.minLng > maxLng)
         })
       }
 
-      // Get user info for owners
       const userIds = [...new Set(filteredTerritories.map((t: any) => t.userId))]
       const users = await User.whereIn('id', userIds).get()
       const userMap = new Map(users.map((u: any) => [u.id, u]))
 
-      // Build GeoJSON FeatureCollection
       const features = filteredTerritories.map((t: any) => {
         const owner = userMap.get(t.userId)
         const isOwned = currentUserId ? t.userId === currentUserId : false

@@ -1,5 +1,4 @@
-import { Action } from '@stacksjs/actions'
-import { response } from '@stacksjs/router'
+// No imports needed - everything is auto-imported!
 
 export default new Action({
   name: 'Territory Leaderboard',
@@ -7,11 +6,10 @@ export default new Action({
   method: 'GET',
 
   async handle(request) {
-    const type = request.get('type') || 'area' // area, count, conquests
+    const type = request.get('type') || 'area'
     const limit = request.get<number>('limit') || 50
 
     try {
-      // Determine sort field based on type
       let sortField: string
       switch (type) {
         case 'count':
@@ -25,15 +23,11 @@ export default new Action({
           sortField = 'totalAreaOwned'
       }
 
-      // Get territory stats sorted by the specified field - TerritoryStats is auto-imported
       const stats = await TerritoryStats.orderBy(sortField, 'desc').limit(limit).get()
-
-      // Get user info - User is auto-imported
       const userIds = stats.map((s: any) => s.userId)
       const users = await User.whereIn('id', userIds).get()
       const userMap = new Map(users.map((u: any) => [u.id, u]))
 
-      // Build leaderboard
       const leaderboard = stats.map((s: any, index: number) => {
         const user = userMap.get(s.userId)
         return {

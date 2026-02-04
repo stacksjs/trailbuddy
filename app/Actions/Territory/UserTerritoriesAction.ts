@@ -1,6 +1,4 @@
-import { Action } from '@stacksjs/actions'
-import { response } from '@stacksjs/router'
-// Models (Territory, TerritoryStats, User) are auto-imported
+// No imports needed - everything is auto-imported!
 
 export default new Action({
   name: 'User Territories',
@@ -15,24 +13,19 @@ export default new Action({
     }
 
     try {
-
-      // Get user info
       const user = await User.find(userId)
       if (!user) {
         return response.json({ success: false, error: 'User not found' }, 404)
       }
 
-      // Get all active territories owned by the user
       const territories = await Territory
         .where('userId', '=', userId)
         .where('status', '=', 'active')
         .orderBy('areaSize', 'desc')
         .get()
 
-      // Get user's territory stats
       const stats = await TerritoryStats.where('userId', '=', userId).first()
 
-      // Format territories
       const formattedTerritories = territories.map((t: any) => ({
         id: t.id,
         name: t.name,

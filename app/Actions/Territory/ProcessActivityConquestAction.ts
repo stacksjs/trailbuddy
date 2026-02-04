@@ -1,7 +1,5 @@
-import { Action } from '@stacksjs/actions'
-import { response } from '@stacksjs/router'
+// No imports needed - everything is auto-imported!
 
-// Minimum territory size in square meters
 const MIN_TERRITORY_SIZE = 1000
 
 export default new Action({
@@ -22,27 +20,21 @@ export default new Action({
     }
 
     try {
-      // Fetch the activity - Activity is auto-imported
       const activity = await Activity.find(activityId)
       if (!activity) {
         return response.json({ success: false, error: 'Activity not found' }, 404)
       }
 
-      // Check for GPS data
       if (!activity.gpxData) {
         return response.json({ success: false, error: 'Activity has no GPS data' }, 400)
       }
 
-      // Parse GPS data - parseGpsData is auto-imported
       const routeCoordinates = parseGpsData(activity.gpxData)
       if (routeCoordinates.length < 2) {
         return response.json({ success: false, error: 'Insufficient GPS data' }, 400)
       }
 
-      // Get bounding box of the route for initial filtering - getBoundingBox is auto-imported
       const routeBbox = getBoundingBox(routeCoordinates)
-
-      // Find all active territories (excluding user's own) - Territory is auto-imported
       const allTerritories = await Territory.where('status', '=', 'active').get()
 
       const conqueredTerritories: Array<{
@@ -54,43 +46,27 @@ export default new Action({
       }> = []
 
       for (const territory of allTerritories) {
-        // Skip own territories
-        if (territory.userId === userId)
-          continue
+        if (territory.userId === userId) continue
+        if (!territory.boundingBox || !boundingBoxesOverlap(routeBbox, territory.boundingBox)) continue
 
-        // Quick bounding box check - boundingBoxesOverlap is auto-imported
-        if (!territory.boundingBox || !boundingBoxesOverlap(routeBbox, territory.boundingBox))
-          continue
-
-        // Parse territory polygon - geoJsonToCoordinates is auto-imported
         const territoryPolygon = geoJsonToCoordinates(territory.polygonData)
+        if (!routeIntersectsPolygon(routeCoordinates, territoryPolygon)) continue
 
-        // Check if route intersects this territory - routeIntersectsPolygon is auto-imported
-        if (!routeIntersectsPolygon(routeCoordinates, territoryPolygon))
-          continue
-
-        // Route passes through this territory - process partial conquest
-        // splitPolygonByRoute is auto-imported
         const splitPolygons = splitPolygonByRoute(territoryPolygon, routeCoordinates)
 
         if (splitPolygons.length <= 1) {
-          // Split failed or territory is too small to split - conquer entire territory
           const previousOwner = territory.userId
           const previousClaimedAt = territory.claimedAt
-
-          // Calculate ownership duration
           const ownershipDuration = previousClaimedAt
             ? Math.floor((Date.now() - new Date(previousClaimedAt).getTime()) / 1000)
             : 0
 
-          // Transfer ownership
           await territory.update({
             userId,
             conquestCount: (territory.conquestCount || 0) + 1,
             claimedAt: new Date().toISOString(),
           })
 
-          // Create history record - TerritoryHistory is auto-imported
           await TerritoryHistory.create({
             territoryId: territory.id,
             userId,
@@ -109,34 +85,24 @@ export default new Action({
             remainingArea: 0,
           })
 
-          // Update stats for both users
           await updateConquestStats(userId, previousOwner, territory.areaSize, 0)
         }
         else {
-          // Partial conquest - split the territory
           const previousOwner = territory.userId
           const previousClaimedAt = territory.claimedAt
           const ownershipDuration = previousClaimedAt
             ? Math.floor((Date.now() - new Date(previousClaimedAt).getTime()) / 1000)
             : 0
 
-          // Find the largest polygon (keep for original owner) and the conquered portion
-          // calculatePolygonArea is auto-imported
           const polygonAreas = splitPolygons.map(p => ({
             polygon: p,
             area: calculatePolygonArea(p),
           }))
 
-          // Sort by area descending
           polygonAreas.sort((a, b) => b.area - a.area)
-
-          // Largest goes to original owner (or conquered if their piece is smaller)
           const [keepPolygon, conqueredPolygon] = polygonAreas
 
-          // Check minimum size
           if (conqueredPolygon && conqueredPolygon.area >= MIN_TERRITORY_SIZE) {
-            // Update original territory with remaining polygon
-            // getCentroid, coordinatesToGeoJson, getBoundingBox, calculatePerimeter are auto-imported
             const keepCentroid = getCentroid(keepPolygon.polygon)
             await territory.update({
               polygonData: coordinatesToGeoJson(keepPolygon.polygon),
@@ -147,7 +113,6 @@ export default new Action({
               perimeter: calculatePerimeter(keepPolygon.polygon),
             })
 
-            // Create new territory for conquered portion
             const conqueredCentroid = getCentroid(conqueredPolygon.polygon)
             const newTerritory = await Territory.create({
               userId,
@@ -165,7 +130,6 @@ export default new Action({
               claimedAt: new Date().toISOString(),
             })
 
-            // Create history records
             await TerritoryHistory.create({
               territoryId: territory.id,
               userId: previousOwner,
@@ -197,7 +161,6 @@ export default new Action({
               newTerritoryId: newTerritory.id,
             })
 
-            // Update stats
             await updateConquestStats(userId, previousOwner, conqueredPolygon.area, keepPolygon.area)
           }
         }
@@ -219,16 +182,12 @@ export default new Action({
   },
 })
 
-/**
- * Helper function to update territory stats for both users involved in a conquest
- */
 async function updateConquestStats(
   conquerorId: number,
   previousOwnerId: number,
   conqueredArea: number,
   remainingArea: number,
 ) {
-  // Update conqueror's stats - TerritoryStats is auto-imported
   let conquerorStats = await TerritoryStats.where('userId', '=', conquerorId).first()
   if (conquerorStats) {
     await conquerorStats.update({
@@ -254,10 +213,9 @@ async function updateConquestStats(
     })
   }
 
-  // Update previous owner's stats
   let previousOwnerStats = await TerritoryStats.where('userId', '=', previousOwnerId).first()
   if (previousOwnerStats) {
-    const lostTerritory = remainingArea === 0 ? 1 : 0 // Only count as lost if fully conquered
+    const lostTerritory = remainingArea === 0 ? 1 : 0
     const newTotalOwned = remainingArea === 0
       ? Math.max(0, (previousOwnerStats.totalTerritoriesOwned || 0) - 1)
       : previousOwnerStats.totalTerritoriesOwned || 0
