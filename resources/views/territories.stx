@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Territory Game - TrailBuddy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    .font-display {
+      font-family: 'Outfit', sans-serif;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+    /* Navbar states */
+    #navbar { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    #navbar.scrolled { background: rgba(255, 255, 255, 0.95); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    #navbar.scrolled .nav-link { color: #374151 !important; }
+    #navbar.scrolled .nav-link:hover { color: #059669 !important; }
+    #navbar.scrolled .nav-logo { color: #059669 !important; }
+
+    /* Territory card hover */
+    .territory-card { transition: all 0.3s ease; }
+    .territory-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
+
+    /* Pulse animation for live indicator */
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .pulse { animation: pulse 2s infinite; }
+  </style>
+</head>
+
+<script server>
+import { defineProps, withDefaults } from 'stx'
+
+interface Territory {
+  id: number
+  name: string
+  ownerName: string
+  ownerAvatar: string
+  areaSize: number
+  conquestCount: number
+  claimedAt: string
+  isOwned: boolean
+}
+
+interface LeaderboardEntry {
+  rank: number
+  userId: number
+  userName: string
+  userAvatar: string
+  totalAreaOwned: number
+  totalTerritoriesOwned: number
+  territoriesConquered: number
+}
+
+interface UserTerritoryStats {
+  totalTerritoriesOwned: number
+  totalAreaOwned: number
+  territoriesClaimed: number
+  territoriesConquered: number
+  territoriesLost: number
+  territoriesDefended: number
+  weeklyRank: number
+  allTimeRank: number
+}
+
+// Sample data - in production this would come from API
+const territories: Territory[] = [
+  { id: 1, name: 'Downtown Loop', ownerName: 'Sarah M.', ownerAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop', areaSize: 45000, conquestCount: 2, claimedAt: '3 days ago', isOwned: false },
+  { id: 2, name: 'Park District', ownerName: 'You', ownerAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop', areaSize: 32500, conquestCount: 0, claimedAt: '1 week ago', isOwned: true },
+  { id: 3, name: 'Riverfront Trail', ownerName: 'Mike R.', ownerAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop', areaSize: 78000, conquestCount: 5, claimedAt: '2 weeks ago', isOwned: false },
+  { id: 4, name: 'University Loop', ownerName: 'Emma L.', ownerAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop', areaSize: 21000, conquestCount: 1, claimedAt: 'Yesterday', isOwned: false },
+  { id: 5, name: 'Mountain View', ownerName: 'You', ownerAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop', areaSize: 125000, conquestCount: 3, claimedAt: '5 days ago', isOwned: true },
+  { id: 6, name: 'Beach Circuit', ownerName: 'Alex K.', ownerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop', areaSize: 56000, conquestCount: 0, claimedAt: '4 hours ago', isOwned: false },
+]
+
+const leaderboardEntries: LeaderboardEntry[] = [
+  { rank: 1, userId: 1, userName: 'Sarah M.', userAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop', totalAreaOwned: 450000, totalTerritoriesOwned: 12, territoriesConquered: 8 },
+  { rank: 2, userId: 2, userName: 'Mike R.', userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop', totalAreaOwned: 380000, totalTerritoriesOwned: 9, territoriesConquered: 15 },
+  { rank: 3, userId: 3, userName: 'Emma L.', userAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop', totalAreaOwned: 295000, totalTerritoriesOwned: 7, territoriesConquered: 4 },
+  { rank: 4, userId: 4, userName: 'You', userAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop', totalAreaOwned: 157500, totalTerritoriesOwned: 2, territoriesConquered: 1 },
+  { rank: 5, userId: 5, userName: 'Alex K.', userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop', totalAreaOwned: 120000, totalTerritoriesOwned: 4, territoriesConquered: 2 },
+]
+
+const userStats: UserTerritoryStats = {
+  totalTerritoriesOwned: 2,
+  totalAreaOwned: 157500,
+  territoriesClaimed: 5,
+  territoriesConquered: 1,
+  territoriesLost: 2,
+  territoriesDefended: 3,
+  weeklyRank: 4,
+  allTimeRank: 47
+}
+
+const currentUserId = 4
+</script>
+
+<body class="antialiased bg-gray-50">
+  <!-- Navigation -->
+  <Navbar />
+
+  <!-- Hero Section -->
+  <section class="relative bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 pt-24 pb-16 overflow-hidden">
+    <div class="absolute inset-0 overflow-hidden">
+      <div class="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+      <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-400/20 rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="relative px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+      <div class="text-center">
+        <h1 class="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+          Conquer Your Territory
+        </h1>
+        <p class="text-xl text-white/80 max-w-2xl mx-auto mb-8">
+          Run loops to claim land. Run through others' territories to conquer them. Build your empire one run at a time.
+        </p>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <button class="w-full sm:w-auto px-8 py-4 text-lg font-semibold text-emerald-700 bg-white rounded-full hover:bg-gray-100 transition shadow-xl flex items-center justify-center">
+            <svg class="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Start a Run
+          </button>
+          <a href="#how-it-works" class="w-full sm:w-auto px-8 py-4 text-lg font-semibold text-white border-2 border-white/30 rounded-full hover:bg-white/10 transition flex items-center justify-center">
+            How It Works
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Map Section -->
+  <section class="py-12 px-4 mx-auto max-w-7xl sm:px-6 lg:px-8 -mt-8">
+    <TerritoryMap :centerLat="37.7749" :centerLng="-122.4194" :zoom="13" :currentUserId="currentUserId" />
+  </section>
+
+  <!-- Stats & Territories Grid -->
+  <section class="py-12 px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-3 gap-8">
+      <!-- Main Content - Territories -->
+      <div class="lg:col-span-2">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="font-display text-2xl font-bold text-gray-900">Nearby Territories</h2>
+          <div class="flex items-center space-x-2">
+            <button class="px-4 py-2 text-sm font-medium text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition">All</button>
+            <button class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition">Mine</button>
+            <button class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition">Contested</button>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          @foreach(territories as territory)
+            <TerritoryCard
+              :id="territory.id"
+              :name="territory.name"
+              :ownerName="territory.ownerName"
+              :ownerAvatar="territory.ownerAvatar"
+              :areaSize="territory.areaSize"
+              :conquestCount="territory.conquestCount"
+              :claimedAt="territory.claimedAt"
+              :isOwned="territory.isOwned"
+            />
+          @endforeach
+        </div>
+
+        <div class="text-center mt-8">
+          <button class="px-6 py-3 bg-white text-gray-700 font-semibold rounded-full border-2 border-gray-200 hover:border-emerald-500 hover:text-emerald-600 transition">
+            Load More Territories
+          </button>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="space-y-6">
+        <TerritoryStatsCard
+          :totalTerritoriesOwned="userStats.totalTerritoriesOwned"
+          :totalAreaOwned="userStats.totalAreaOwned"
+          :territoriesClaimed="userStats.territoriesClaimed"
+          :territoriesConquered="userStats.territoriesConquered"
+          :territoriesLost="userStats.territoriesLost"
+          :territoriesDefended="userStats.territoriesDefended"
+          :weeklyRank="userStats.weeklyRank"
+          :allTimeRank="userStats.allTimeRank"
+        />
+
+        <TerritoryLeaderboard
+          type="area"
+          :entries="leaderboardEntries"
+          :currentUserId="currentUserId"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works Section -->
+  <section id="how-it-works" class="py-20 bg-white">
+    <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+      <div class="text-center mb-16">
+        <h2 class="font-display text-3xl md:text-4xl font-bold text-gray-900 mb-4">How Territory Game Works</h2>
+        <p class="text-gray-500 max-w-2xl mx-auto">Claim, defend, and conquer territories through your runs and adventures.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        <!-- Claim -->
+        <div class="text-center">
+          <div class="w-20 h-20 mx-auto mb-6 bg-emerald-100 rounded-2xl flex items-center justify-center">
+            <svg class="w-10 h-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900 mb-3">Claim Territory</h3>
+          <p class="text-gray-500">Run a closed loop (start and end within 50m) to claim the enclosed area as your territory. Minimum size: 1,000m².</p>
+        </div>
+
+        <!-- Conquer -->
+        <div class="text-center">
+          <div class="w-20 h-20 mx-auto mb-6 bg-orange-100 rounded-2xl flex items-center justify-center">
+            <svg class="w-10 h-10 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900 mb-3">Conquer Territory</h3>
+          <p class="text-gray-500">Run through someone else's territory to split and conquer it. The portion your route carves through becomes yours.</p>
+        </div>
+
+        <!-- Defend -->
+        <div class="text-center">
+          <div class="w-20 h-20 mx-auto mb-6 bg-blue-100 rounded-2xl flex items-center justify-center">
+            <svg class="w-10 h-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900 mb-3">Defend & Grow</h3>
+          <p class="text-gray-500">Territories persist forever until conquered. Expand your empire by claiming adjacent areas and defending your land.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <Footer />
+
+  <script>
+    // Navbar scroll behavior
+    window.addEventListener('scroll', function() {
+      const navbar = document.getElementById('navbar');
+      if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+      } else {
+        navbar.classList.remove('scrolled');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<script server>
+import { defineProps, withDefaults } from 'stx'
+
+interface TerritoryCardProps {
+  id?: number
+  name?: string
+  ownerName?: string
+  ownerAvatar?: string
+  areaSize?: number
+  conquestCount?: number
+  claimedAt?: string
+  isOwned?: boolean
+}
+
+const props = withDefaults(defineProps<TerritoryCardProps>(), {
+  id: 1,
+  name: 'Downtown Territory',
+  ownerName: 'Unknown',
+  ownerAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
+  areaSize: 25000,
+  conquestCount: 3,
+  claimedAt: '2 days ago',
+  isOwned: false
+})
+
+// Format area size for display
+function formatArea(sqMeters: number): string {
+  if (sqMeters >= 1000000) {
+    return `${(sqMeters / 1000000).toFixed(2)} km²`
+  } else if (sqMeters >= 10000) {
+    return `${(sqMeters / 10000).toFixed(2)} ha`
+  }
+  return `${sqMeters.toLocaleString()} m²`
+}
+
+const formattedArea = formatArea(props.areaSize)
+</script>
+
+<template>
+  <div class="territory-card bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300" :class="{ 'ring-2 ring-emerald-500': props.isOwned }">
+    <!-- Territory Preview Map -->
+    <div class="h-32 bg-gradient-to-br from-emerald-100 to-teal-100 relative">
+      <div class="absolute inset-0 flex items-center justify-center">
+        <svg class="w-16 h-16 text-emerald-300" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+        </svg>
+      </div>
+      @if(props.isOwned)
+        <div class="absolute top-2 right-2 bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+          YOUR TERRITORY
+        </div>
+      @endif
+      @if(props.conquestCount > 0)
+        <div class="absolute top-2 left-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center">
+          <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"/>
+          </svg>
+          {{ props.conquestCount }}x Conquered
+        </div>
+      @endif
+    </div>
+
+    <!-- Territory Info -->
+    <div class="p-4">
+      <h3 class="font-bold text-gray-900 text-lg mb-2">{{ props.name }}</h3>
+
+      <div class="flex items-center space-x-2 mb-3">
+        <img :src="props.ownerAvatar" :alt="props.ownerName" class="w-6 h-6 rounded-full object-cover" />
+        <span class="text-sm text-gray-600">Owned by <span class="font-medium">{{ props.ownerName }}</span></span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 text-sm">
+        <div class="bg-gray-50 rounded-lg p-2">
+          <p class="text-gray-500 text-xs">Area Size</p>
+          <p class="font-semibold text-gray-900">{{ formattedArea }}</p>
+        </div>
+        <div class="bg-gray-50 rounded-lg p-2">
+          <p class="text-gray-500 text-xs">Claimed</p>
+          <p class="font-semibold text-gray-900">{{ props.claimedAt }}</p>
+        </div>
+      </div>
+
+      <button class="mt-4 w-full py-2.5 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition flex items-center justify-center">
+        <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+        </svg>
+        View on Map
+      </button>
+    </div>
+  </div>
+</template>

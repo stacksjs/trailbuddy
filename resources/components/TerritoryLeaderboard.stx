@@ -1,0 +1,133 @@
+<script server>
+import { defineProps, withDefaults } from 'stx'
+
+interface LeaderboardEntry {
+  rank: number
+  userId: number
+  userName: string
+  userAvatar: string
+  totalAreaOwned: number
+  totalTerritoriesOwned: number
+  territoriesConquered: number
+}
+
+interface TerritoryLeaderboardProps {
+  type?: 'area' | 'count' | 'conquests'
+  entries?: LeaderboardEntry[]
+  currentUserId?: number
+}
+
+const props = withDefaults(defineProps<TerritoryLeaderboardProps>(), {
+  type: 'area',
+  entries: [],
+  currentUserId: 0
+})
+
+function formatArea(sqMeters: number): string {
+  if (sqMeters >= 1000000) {
+    return `${(sqMeters / 1000000).toFixed(1)} km²`
+  } else if (sqMeters >= 10000) {
+    return `${(sqMeters / 10000).toFixed(1)} ha`
+  }
+  return `${Math.round(sqMeters).toLocaleString()} m²`
+}
+
+function getRankBadge(rank: number): string {
+  if (rank === 1) return 'bg-yellow-400'
+  if (rank === 2) return 'bg-gray-300'
+  if (rank === 3) return 'bg-orange-400'
+  return 'bg-gray-100'
+}
+
+function getRankIcon(rank: number): string {
+  if (rank === 1) return '🥇'
+  if (rank === 2) return '🥈'
+  if (rank === 3) return '🥉'
+  return String(rank)
+}
+
+const typeLabels = {
+  area: 'Total Area',
+  count: 'Territories',
+  conquests: 'Conquests'
+}
+</script>
+
+<template>
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4">
+      <h3 class="font-bold text-lg text-white flex items-center">
+        <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+        </svg>
+        Territory Leaderboard
+      </h3>
+      <p class="text-emerald-100 text-sm mt-1">Ranked by {{ typeLabels[props.type] }}</p>
+    </div>
+
+    <!-- Type Tabs -->
+    <div class="flex border-b border-gray-100">
+      <button class="flex-1 py-3 text-sm font-medium transition" :class="props.type === 'area' ? 'text-emerald-600 border-b-2 border-emerald-600' : 'text-gray-500 hover:text-gray-700'">
+        By Area
+      </button>
+      <button class="flex-1 py-3 text-sm font-medium transition" :class="props.type === 'count' ? 'text-emerald-600 border-b-2 border-emerald-600' : 'text-gray-500 hover:text-gray-700'">
+        By Count
+      </button>
+      <button class="flex-1 py-3 text-sm font-medium transition" :class="props.type === 'conquests' ? 'text-emerald-600 border-b-2 border-emerald-600' : 'text-gray-500 hover:text-gray-700'">
+        Conquests
+      </button>
+    </div>
+
+    <!-- Leaderboard Entries -->
+    <div class="divide-y divide-gray-50">
+      @foreach(props.entries as entry)
+        <div class="px-4 py-3 flex items-center hover:bg-gray-50 transition" :class="{ 'bg-emerald-50': entry.userId === props.currentUserId }">
+          <!-- Rank -->
+          <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm" :class="getRankBadge(entry.rank)">
+            {{ getRankIcon(entry.rank) }}
+          </div>
+
+          <!-- User Info -->
+          <div class="flex items-center flex-1 ml-3">
+            <img :src="entry.userAvatar" :alt="entry.userName" class="w-8 h-8 rounded-full object-cover" />
+            <div class="ml-3">
+              <p class="font-medium text-gray-900 text-sm">{{ entry.userName }}</p>
+              <p class="text-xs text-gray-500">{{ entry.totalTerritoriesOwned }} territories</p>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="text-right">
+            @if(props.type === 'area')
+              <p class="font-bold text-gray-900">{{ formatArea(entry.totalAreaOwned) }}</p>
+            @elseif(props.type === 'count')
+              <p class="font-bold text-gray-900">{{ entry.totalTerritoriesOwned }}</p>
+            @else
+              <p class="font-bold text-gray-900">{{ entry.territoriesConquered }}</p>
+            @endif
+          </div>
+        </div>
+      @endforeach
+
+      @if(props.entries.length === 0)
+        <div class="px-4 py-8 text-center text-gray-500">
+          <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+          </svg>
+          <p>No entries yet. Start claiming territories!</p>
+        </div>
+      @endif
+    </div>
+
+    <!-- View All Link -->
+    <div class="px-4 py-3 bg-gray-50 border-t border-gray-100">
+      <a href="/territories/leaderboard" class="text-emerald-600 font-medium text-sm hover:text-emerald-700 transition flex items-center justify-center">
+        View Full Leaderboard
+        <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </a>
+    </div>
+  </div>
+</template>

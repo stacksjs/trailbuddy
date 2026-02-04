@@ -1,6 +1,5 @@
 import { Action } from '@stacksjs/actions'
 import { response } from '@stacksjs/router'
-// Models and geo functions are auto-imported
 
 // Minimum territory size in square meters
 const MIN_TERRITORY_SIZE = 1000
@@ -23,8 +22,7 @@ export default new Action({
     }
 
     try {
-
-      // Fetch the activity
+      // Fetch the activity - Activity is auto-imported
       const activity = await Activity.find(activityId)
       if (!activity) {
         return response.json({ success: false, error: 'Activity not found' }, 404)
@@ -35,16 +33,16 @@ export default new Action({
         return response.json({ success: false, error: 'Activity has no GPS data' }, 400)
       }
 
-      // Parse GPS data
+      // Parse GPS data - parseGpsData is auto-imported
       const routeCoordinates = parseGpsData(activity.gpxData)
       if (routeCoordinates.length < 2) {
         return response.json({ success: false, error: 'Insufficient GPS data' }, 400)
       }
 
-      // Get bounding box of the route for initial filtering
+      // Get bounding box of the route for initial filtering - getBoundingBox is auto-imported
       const routeBbox = getBoundingBox(routeCoordinates)
 
-      // Find all active territories (excluding user's own)
+      // Find all active territories (excluding user's own) - Territory is auto-imported
       const allTerritories = await Territory.where('status', '=', 'active').get()
 
       const conqueredTerritories: Array<{
@@ -60,18 +58,19 @@ export default new Action({
         if (territory.userId === userId)
           continue
 
-        // Quick bounding box check
+        // Quick bounding box check - boundingBoxesOverlap is auto-imported
         if (!territory.boundingBox || !boundingBoxesOverlap(routeBbox, territory.boundingBox))
           continue
 
-        // Parse territory polygon
+        // Parse territory polygon - geoJsonToCoordinates is auto-imported
         const territoryPolygon = geoJsonToCoordinates(territory.polygonData)
 
-        // Check if route intersects this territory
+        // Check if route intersects this territory - routeIntersectsPolygon is auto-imported
         if (!routeIntersectsPolygon(routeCoordinates, territoryPolygon))
           continue
 
         // Route passes through this territory - process partial conquest
+        // splitPolygonByRoute is auto-imported
         const splitPolygons = splitPolygonByRoute(territoryPolygon, routeCoordinates)
 
         if (splitPolygons.length <= 1) {
@@ -91,7 +90,7 @@ export default new Action({
             claimedAt: new Date().toISOString(),
           })
 
-          // Create history record
+          // Create history record - TerritoryHistory is auto-imported
           await TerritoryHistory.create({
             territoryId: territory.id,
             userId,
@@ -122,6 +121,7 @@ export default new Action({
             : 0
 
           // Find the largest polygon (keep for original owner) and the conquered portion
+          // calculatePolygonArea is auto-imported
           const polygonAreas = splitPolygons.map(p => ({
             polygon: p,
             area: calculatePolygonArea(p),
@@ -136,6 +136,7 @@ export default new Action({
           // Check minimum size
           if (conqueredPolygon && conqueredPolygon.area >= MIN_TERRITORY_SIZE) {
             // Update original territory with remaining polygon
+            // getCentroid, coordinatesToGeoJson, getBoundingBox, calculatePerimeter are auto-imported
             const keepCentroid = getCentroid(keepPolygon.polygon)
             await territory.update({
               polygonData: coordinatesToGeoJson(keepPolygon.polygon),
@@ -227,7 +228,7 @@ async function updateConquestStats(
   conqueredArea: number,
   remainingArea: number,
 ) {
-  // Update conqueror's stats
+  // Update conqueror's stats - TerritoryStats is auto-imported
   let conquerorStats = await TerritoryStats.where('userId', '=', conquerorId).first()
   if (conquerorStats) {
     await conquerorStats.update({

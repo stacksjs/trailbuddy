@@ -1,6 +1,5 @@
 import { Action } from '@stacksjs/actions'
 import { response } from '@stacksjs/router'
-// Models (TerritoryStats, User) are auto-imported
 
 export default new Action({
   name: 'Territory Leaderboard',
@@ -12,7 +11,6 @@ export default new Action({
     const limit = request.get<number>('limit') || 50
 
     try {
-
       // Determine sort field based on type
       let sortField: string
       switch (type) {
@@ -27,10 +25,10 @@ export default new Action({
           sortField = 'totalAreaOwned'
       }
 
-      // Get territory stats sorted by the specified field
+      // Get territory stats sorted by the specified field - TerritoryStats is auto-imported
       const stats = await TerritoryStats.orderBy(sortField, 'desc').limit(limit).get()
 
-      // Get user info
+      // Get user info - User is auto-imported
       const userIds = stats.map((s: any) => s.userId)
       const users = await User.whereIn('id', userIds).get()
       const userMap = new Map(users.map((u: any) => [u.id, u]))
