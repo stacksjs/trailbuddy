@@ -2,7 +2,7 @@
  * GPX file parsing utilities for extracting GPS coordinates from activities
  */
 
-import type { Coordinate } from './geoUtils'
+import type { Coordinate } from './geo'
 
 /**
  * Parse a GPX XML string and extract track coordinates

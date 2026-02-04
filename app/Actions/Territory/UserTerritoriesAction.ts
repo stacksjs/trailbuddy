@@ -1,5 +1,6 @@
 import { Action } from '@stacksjs/actions'
 import { response } from '@stacksjs/router'
+// Models (Territory, TerritoryStats, User) are auto-imported
 
 export default new Action({
   name: 'User Territories',
@@ -14,10 +15,6 @@ export default new Action({
     }
 
     try {
-      // Import models
-      const { Territory } = await import('@stacksjs/orm')
-      const { TerritoryStats } = await import('@stacksjs/orm')
-      const { User } = await import('@stacksjs/orm')
 
       // Get user info
       const user = await User.find(userId)

@@ -1,6 +1,6 @@
 import { Action } from '@stacksjs/actions'
 import { response } from '@stacksjs/router'
-import { parseBoundingBox } from './geoUtils'
+// Models (Territory, User) and geo functions are auto-imported
 
 export default new Action({
   name: 'Get Territories For Map',
@@ -16,9 +16,6 @@ export default new Action({
     const limit = request.get<number>('limit') || 100
 
     try {
-      // Import Territory model
-      const { Territory } = await import('@stacksjs/orm')
-      const { User } = await import('@stacksjs/orm')
 
       // Build query for active territories
       let query = Territory.where('status', '=', 'active')

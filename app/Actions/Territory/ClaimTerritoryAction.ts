@@ -1,15 +1,6 @@
 import { Action } from '@stacksjs/actions'
 import { response } from '@stacksjs/router'
-import {
-  calculatePerimeter,
-  calculatePolygonArea,
-  coordinatesToGeoJson,
-  getBoundingBox,
-  getCentroid,
-  isClosedLoop,
-  simplifyTrack,
-} from './geoUtils'
-import { parseGpsData, validateGpsDataForClaim } from './gpxParser'
+// Models (Activity, Territory, TerritoryHistory, TerritoryStats) and geo functions are auto-imported
 
 // Minimum territory size in square meters (1,000 sq m = ~0.25 acres)
 const MIN_TERRITORY_SIZE = 1000
@@ -34,11 +25,6 @@ export default new Action({
     }
 
     try {
-      // Import models dynamically to avoid circular dependencies
-      const { Activity } = await import('@stacksjs/orm')
-      const { Territory } = await import('@stacksjs/orm')
-      const { TerritoryHistory } = await import('@stacksjs/orm')
-      const { TerritoryStats } = await import('@stacksjs/orm')
 
       // Fetch the activity
       const activity = await Activity.find(activityId)

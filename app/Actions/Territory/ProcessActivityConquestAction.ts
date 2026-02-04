@@ -1,17 +1,6 @@
 import { Action } from '@stacksjs/actions'
 import { response } from '@stacksjs/router'
-import {
-  boundingBoxesOverlap,
-  calculatePerimeter,
-  calculatePolygonArea,
-  coordinatesToGeoJson,
-  geoJsonToCoordinates,
-  getBoundingBox,
-  getCentroid,
-  routeIntersectsPolygon,
-  splitPolygonByRoute,
-} from './geoUtils'
-import { parseGpsData } from './gpxParser'
+// Models and geo functions are auto-imported
 
 // Minimum territory size in square meters
 const MIN_TERRITORY_SIZE = 1000
@@ -34,11 +23,6 @@ export default new Action({
     }
 
     try {
-      // Import models dynamically
-      const { Activity } = await import('@stacksjs/orm')
-      const { Territory } = await import('@stacksjs/orm')
-      const { TerritoryHistory } = await import('@stacksjs/orm')
-      const { TerritoryStats } = await import('@stacksjs/orm')
 
       // Fetch the activity
       const activity = await Activity.find(activityId)
@@ -127,7 +111,7 @@ export default new Action({
           })
 
           // Update stats for both users
-          await updateConquestStats(TerritoryStats, userId, previousOwner, territory.areaSize, 0)
+          await updateConquestStats(userId, previousOwner, territory.areaSize, 0)
         }
         else {
           // Partial conquest - split the territory
@@ -213,7 +197,7 @@ export default new Action({
             })
 
             // Update stats
-            await updateConquestStats(TerritoryStats, userId, previousOwner, conqueredPolygon.area, keepPolygon.area)
+            await updateConquestStats(userId, previousOwner, conqueredPolygon.area, keepPolygon.area)
           }
         }
       }
@@ -238,7 +222,6 @@ export default new Action({
  * Helper function to update territory stats for both users involved in a conquest
  */
 async function updateConquestStats(
-  TerritoryStats: any,
   conquerorId: number,
   previousOwnerId: number,
   conqueredArea: number,

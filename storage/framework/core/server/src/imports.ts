@@ -24,10 +24,12 @@ function scanExports(dir: string): string[] {
 export function initiateImports(): void {
   const modelsPath = path.storagePath('framework/orm/src/models')
   const requestsPath = path.storagePath('framework/requests')
+  const functionsPath = path.resourcesPath('functions')
 
   // Build explicit imports with absolute paths to avoid relative path resolution issues
   const modelExports = scanExports(modelsPath)
   const requestExports = scanExports(requestsPath)
+  const functionExports = scanExports(functionsPath)
 
   const modelImports = modelExports.map(name => ({
     from: modelsPath,
@@ -41,9 +43,16 @@ export function initiateImports(): void {
     as: name,
   }))
 
+  const functionImports = functionExports.map(name => ({
+    from: functionsPath,
+    name,
+    as: name,
+  }))
+
   const options: AutoImportsOptions = {
     dts: path.storagePath('framework/types/server-auto-imports.d.ts'),
-    imports: [...modelImports, ...requestImports],
+    imports: [...modelImports, ...requestImports, ...functionImports],
+    dirs: [functionsPath],
     eslint: {
       enabled: true, // TODO: not needed in production envs
       filepath: path.storagePath('framework/server-auto-imports.json'),

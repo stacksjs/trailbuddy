@@ -1,5 +1,6 @@
 import { Action } from '@stacksjs/actions'
 import { response } from '@stacksjs/router'
+// Models (TerritoryStats, User) are auto-imported
 
 export default new Action({
   name: 'Territory Leaderboard',
@@ -11,9 +12,6 @@ export default new Action({
     const limit = request.get<number>('limit') || 50
 
     try {
-      // Import models
-      const { TerritoryStats } = await import('@stacksjs/orm')
-      const { User } = await import('@stacksjs/orm')
 
       // Determine sort field based on type
       let sortField: string
