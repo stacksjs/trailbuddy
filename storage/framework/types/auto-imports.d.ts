@@ -17,6 +17,7 @@ import type * as Path from '@stacksjs/path'
 import type * as Storage from '@stacksjs/storage'
 import type * as Logging from '@stacksjs/logging'
 import type * as ErrorHandling from '@stacksjs/error-handling'
+import type * as AuthModule from '@stacksjs/auth'
 
 // ===========================================
 // User Functions
@@ -72,6 +73,12 @@ declare global {
   // @stacksjs/error-handling
   // ===========================================
   const handleError: typeof ErrorHandling.handleError
+
+  // ===========================================
+  // @stacksjs/auth
+  // ===========================================
+  const Auth: typeof AuthModule.Auth
+  const register: typeof AuthModule.register
 
   // ===========================================
   // @stacksjs/orm - Models

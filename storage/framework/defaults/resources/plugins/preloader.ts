@@ -52,6 +52,22 @@ async function loadAutoImports() {
   const { Glob } = await import('bun')
   const { path } = await import('@stacksjs/path')
 
+  // CRITICAL: Never overwrite these built-in globals
+  const protectedGlobals = new Set([
+    'process', 'globalThis', 'global', 'window', 'self',
+    'console', 'require', 'module', 'exports', '__dirname', '__filename',
+    'Buffer', 'setTimeout', 'setInterval', 'clearTimeout', 'clearInterval',
+    'setImmediate', 'clearImmediate', 'queueMicrotask',
+    'fetch', 'Request', 'Response', 'Headers', 'URL', 'URLSearchParams',
+    'TextEncoder', 'TextDecoder', 'Blob', 'File', 'FormData',
+    'crypto', 'performance', 'navigator', 'location',
+    'Promise', 'Symbol', 'Proxy', 'Reflect', 'WeakMap', 'WeakSet', 'Map', 'Set',
+    'Array', 'Object', 'String', 'Number', 'Boolean', 'Date', 'RegExp', 'Error',
+    'JSON', 'Math', 'Intl', 'eval', 'isNaN', 'isFinite', 'parseInt', 'parseFloat',
+    'encodeURI', 'encodeURIComponent', 'decodeURI', 'decodeURIComponent',
+    'Bun', 'Deno', 'Node',
+  ])
+
   // 1. Load Stacks framework packages into globalThis
   const stacksPackages = [
     '@stacksjs/actions',
@@ -82,7 +98,9 @@ async function loadAutoImports() {
     try {
       const module = await import(pkg)
       for (const [name, value] of Object.entries(module)) {
-        if (name !== 'default' && typeof value !== 'undefined') {
+        // Skip default exports and protected globals
+        if (name === 'default' || protectedGlobals.has(name)) continue
+        if (typeof value !== 'undefined') {
           (globalThis as any)[name] = value
         }
       }
@@ -105,7 +123,9 @@ async function loadAutoImports() {
     try {
       const module = await import(file)
       for (const [name, value] of Object.entries(module)) {
-        if (name !== 'default' && typeof value !== 'undefined') {
+        // Skip default exports and protected globals
+        if (name === 'default' || protectedGlobals.has(name)) continue
+        if (typeof value !== 'undefined') {
           (globalThis as any)[name] = value
         }
       }
