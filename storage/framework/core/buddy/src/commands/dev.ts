@@ -338,6 +338,9 @@ async function startReverseProxy(options: DevOptions): Promise<void> {
         domain,
         hostCertCN: domain,
         basePath: sslBasePath,
+        caCertPath: path.join(sslBasePath, `${domain}.ca.crt`),
+        certPath: path.join(sslBasePath, `${domain}.crt`),
+        keyPath: path.join(sslBasePath, `${domain}.key`),
         altNameIPs: ['127.0.0.1', '::1'],
         altNameURIs: ['localhost', domain],
         organizationName: 'Stacks Development',
@@ -347,6 +350,9 @@ async function startReverseProxy(options: DevOptions): Promise<void> {
         commonName: domain,
         validityDays: 365,
       },
+      // Skip certificate regeneration/trust since setupSSL() already handles it
+      // This prevents multiple sudo prompts
+      regenerateUntrustedCerts: false,
       cleanup: {
         hosts: false, // Don't cleanup hosts on exit - managed by setup:ssl
         certs: false,

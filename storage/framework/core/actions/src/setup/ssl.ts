@@ -184,6 +184,13 @@ export async function trustCertificate(domain: string, verbose?: boolean): Promi
     return false
   }
 
+  // First check if already trusted to avoid unnecessary sudo prompts
+  if (isCertificateTrusted(domain)) {
+    if (verbose)
+      log.info('Certificate is already trusted, skipping trust step')
+    return true
+  }
+
   // Check if we can run sudo (either interactive or have password)
   if (!canRunSudo()) {
     log.warn('Cannot trust certificate (non-interactive mode and no SUDO_PASSWORD set)')
@@ -198,32 +205,26 @@ export async function trustCertificate(domain: string, verbose?: boolean): Promi
     return new Promise((resolve) => {
       log.info('Trusting SSL certificate (requires sudo)...')
 
+      // Combine both CA and host cert trust into a single sudo command to minimize password prompts
+      const combinedCommand = `security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain '${caCertPath}' && security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain '${certPath}'`
+
       let child
       if (sudoPassword) {
         // Use sudo -S to read password from stdin
-        child = spawn('sh', ['-c', `echo '${sudoPassword}' | sudo -S security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain '${caCertPath}'`], {
+        child = spawn('sh', ['-c', `echo '${sudoPassword}' | sudo -S sh -c "${combinedCommand}"`], {
           stdio: ['pipe', 'inherit', 'inherit'],
         })
       }
       else {
-        // Interactive mode - let user enter password
-        child = spawn('sudo', [
-          'security',
-          'add-trusted-cert',
-          '-d',
-          '-r',
-          'trustRoot',
-          '-k',
-          '/Library/Keychains/System.keychain',
-          caCertPath,
-        ], {
+        // Interactive mode - combine both operations into a single sudo call
+        child = spawn('sudo', ['sh', '-c', combinedCommand], {
           stdio: 'inherit',
         })
       }
 
       child.on('close', (code) => {
         if (code === 0) {
-          log.success('CA certificate trusted in system keychain')
+          log.success('CA and host certificates trusted in system keychain')
 
           // Also add host cert to login keychain (no sudo needed)
           try {
