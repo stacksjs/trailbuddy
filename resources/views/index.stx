@@ -207,7 +207,7 @@ const featuredTrail = trails[5] // Dipsea Trail
     <!-- Trail Grid -->
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
       @foreach(trails as trail)
-        <TrailCard :trail="trail" />
+        <TrailCard :trail />
       @endforeach
     </div>
 

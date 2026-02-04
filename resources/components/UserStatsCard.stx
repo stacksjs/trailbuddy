@@ -1,5 +1,5 @@
 <script server>
-import { defineProps } from 'stx'
+import { defineProps, withDefaults } from 'stx'
 
 interface UserStats {
   totalDistance: number
@@ -11,10 +11,21 @@ interface UserStats {
 }
 
 interface UserStatsCardProps {
-  stats: UserStats
+  stats?: UserStats
 }
 
-const { stats } = defineProps<UserStatsCardProps>()
+const defaultStats: UserStats = {
+  totalDistance: 0,
+  totalTime: '0h 0m',
+  totalElevation: 0,
+  trailsCompleted: 0,
+  currentStreak: 0,
+  longestStreak: 0
+}
+
+const { stats } = withDefaults(defineProps<UserStatsCardProps>(), {
+  stats: defaultStats
+})
 
 function formatNumber(num: number): string {
   return num.toLocaleString()

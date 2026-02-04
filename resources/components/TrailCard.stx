@@ -1,5 +1,5 @@
 <script server>
-import { defineProps } from 'stx'
+import { defineProps, withDefaults } from 'stx'
 
 type Difficulty = 'easy' | 'moderate' | 'hard'
 
@@ -18,10 +18,26 @@ interface Trail {
 }
 
 interface TrailCardProps {
-  trail: Trail
+  trail?: Trail
 }
 
-const { trail } = defineProps<TrailCardProps>()
+const defaultTrail: Trail = {
+  id: 0,
+  name: 'Unknown Trail',
+  location: 'Unknown Location',
+  distance: 0,
+  elevation: 0,
+  difficulty: 'moderate',
+  rating: 0,
+  reviews: 0,
+  time: '0m',
+  image: '',
+  tags: []
+}
+
+const { trail } = withDefaults(defineProps<TrailCardProps>(), {
+  trail: defaultTrail
+})
 
 function getDifficultyClass(difficulty: Difficulty): string {
   const classes: Record<Difficulty, string> = {

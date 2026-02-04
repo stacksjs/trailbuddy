@@ -1,5 +1,5 @@
 <script server>
-import { defineProps } from 'stx'
+import { defineProps, withDefaults } from 'stx'
 
 type ActivityType = 'Trail Run' | 'Hike' | 'Walk' | 'Bike'
 
@@ -18,10 +18,26 @@ interface Activity {
 }
 
 interface ActivityCardProps {
-  activity: Activity
+  activity?: Activity
 }
 
-const { activity } = defineProps<ActivityCardProps>()
+const defaultActivity: Activity = {
+  id: 0,
+  user: 'Anonymous',
+  avatar: '',
+  trail: 'Unknown Trail',
+  type: 'Hike',
+  distance: 0,
+  time: '0:00',
+  pace: '0:00',
+  elevation: 0,
+  date: 'Unknown',
+  kudos: 0
+}
+
+const { activity } = withDefaults(defineProps<ActivityCardProps>(), {
+  activity: defaultActivity
+})
 
 function formatNumber(num: number): string {
   return num.toLocaleString()

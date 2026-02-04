@@ -1,17 +1,25 @@
 <script server>
-import { defineProps } from 'stx'
+import { defineProps, withDefaults } from 'stx'
 
 interface FeaturedTrailCardProps {
-  name: string
-  location: string
-  distance: number
-  elevation: number
-  difficulty: string
-  rating: number
-  image: string
+  name?: string
+  location?: string
+  distance?: number
+  elevation?: number
+  difficulty?: string
+  rating?: number
+  image?: string
 }
 
-const { name, location, distance, elevation, difficulty, rating, image } = defineProps<FeaturedTrailCardProps>()
+const { name, location, distance, elevation, difficulty, rating, image } = withDefaults(defineProps<FeaturedTrailCardProps>(), {
+  name: 'Featured Trail',
+  location: 'Unknown Location',
+  distance: 0,
+  elevation: 0,
+  difficulty: 'moderate',
+  rating: 0,
+  image: ''
+})
 </script>
 
 <template>

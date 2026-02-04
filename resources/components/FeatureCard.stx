@@ -1,14 +1,17 @@
 <script server>
-import { defineProps } from 'stx'
+import { defineProps, withDefaults } from 'stx'
 
 interface FeatureCardProps {
-  title: string
-  description: string
-  iconColor: string
-  bgColor: string
+  title?: string
+  description?: string
+  bgColor?: string
 }
 
-const { title, description, iconColor, bgColor } = defineProps<FeatureCardProps>()
+const { title, description, bgColor } = withDefaults(defineProps<FeatureCardProps>(), {
+  title: 'Feature',
+  description: 'Description',
+  bgColor: 'bg-emerald-500/20'
+})
 </script>
 
 <template>

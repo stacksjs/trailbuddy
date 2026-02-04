@@ -1,5 +1,5 @@
 <script server>
-import { defineProps } from 'stx'
+import { defineProps, withDefaults } from 'stx'
 
 interface Achievement {
   name: string
@@ -10,10 +10,20 @@ interface Achievement {
 }
 
 interface AchievementProgressProps {
-  achievement: Achievement
+  achievement?: Achievement
 }
 
-const { achievement } = defineProps<AchievementProgressProps>()
+const defaultAchievement: Achievement = {
+  name: 'Achievement',
+  icon: '🏆',
+  description: 'Complete this achievement',
+  progress: 0,
+  total: 100
+}
+
+const { achievement } = withDefaults(defineProps<AchievementProgressProps>(), {
+  achievement: defaultAchievement
+})
 </script>
 
 <template>
