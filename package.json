@@ -60,6 +60,7 @@
   "dependencies": {
     "@cwcss/crosswind": "link:@cwcss/crosswind",
     "@stacksjs/clarity": "^0.3.24",
+    "@stacksjs/rpx": "link:@stacksjs/rpx",
     "@stacksjs/stx": "link:@stacksjs/stx",
     "bun-plugin-stx": "link:bun-plugin-stx",
     "stacks": "workspace:*"
