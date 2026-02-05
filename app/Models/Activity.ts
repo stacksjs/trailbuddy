@@ -1,6 +1,8 @@
 import type { Model } from '@stacksjs/types'
 import { schema } from '@stacksjs/validation'
 
+const activityTypes = ['Trail Run', 'Hike', 'Walk', 'Bike'] as const
+
 export default {
   name: 'Activity',
   table: 'activities',
@@ -32,12 +34,12 @@ export default {
       order: 1,
       fillable: true,
       validation: {
-        rule: schema.string().required(),
+        rule: schema.enum(activityTypes).required(),
         message: {
           required: 'Activity type is required',
         },
       },
-      factory: (faker) => faker.helpers.arrayElement(['Trail Run', 'Hike', 'Walk', 'Bike']),
+      factory: (faker): typeof activityTypes[number] => faker.helpers.arrayElement([...activityTypes]),
     },
 
     distance: {

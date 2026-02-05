@@ -22,6 +22,7 @@ export default {
     notes: {
       order: 1,
       fillable: true,
+      nullable: true,
       validation: {
         rule: schema.string().max(500),
       },

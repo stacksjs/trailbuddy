@@ -1,6 +1,10 @@
 import type { Model } from '@stacksjs/types'
 import { schema } from '@stacksjs/validation'
 
+const categories = ['distance', 'elevation', 'streak', 'social', 'exploration', 'speed'] as const
+const targetUnits = ['trails', 'miles', 'feet', 'days', 'kudos', 'hours'] as const
+const badgeColors = ['gold', 'silver', 'bronze', 'emerald', 'ruby'] as const
+
 export default {
   name: 'Achievement',
   table: 'achievements',
@@ -79,12 +83,12 @@ export default {
       order: 4,
       fillable: true,
       validation: {
-        rule: schema.string().required(),
+        rule: schema.enum(categories).required(),
         message: {
           required: 'Category is required',
         },
       },
-      factory: (faker) => faker.helpers.arrayElement(['distance', 'elevation', 'streak', 'social', 'exploration', 'speed']),
+      factory: (faker): typeof categories[number] => faker.helpers.arrayElement([...categories]),
     },
 
     targetValue: {
@@ -103,9 +107,9 @@ export default {
       order: 6,
       fillable: true,
       validation: {
-        rule: schema.string().required(),
+        rule: schema.enum(targetUnits).required(),
       },
-      factory: (faker) => faker.helpers.arrayElement(['trails', 'miles', 'feet', 'days', 'kudos', 'hours']),
+      factory: (faker): typeof targetUnits[number] => faker.helpers.arrayElement([...targetUnits]),
     },
 
     points: {
@@ -121,9 +125,9 @@ export default {
       order: 8,
       fillable: true,
       validation: {
-        rule: schema.string(),
+        rule: schema.enum(badgeColors),
       },
-      factory: (faker) => faker.helpers.arrayElement(['gold', 'silver', 'bronze', 'emerald', 'ruby']),
+      factory: (faker): typeof badgeColors[number] => faker.helpers.arrayElement([...badgeColors]),
     },
   },
 

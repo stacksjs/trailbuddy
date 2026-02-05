@@ -1,6 +1,8 @@
 import type { Model } from '@stacksjs/types'
 import { schema } from '@stacksjs/validation'
 
+const statuses = ['active', 'contested'] as const
+
 export default {
   name: 'Territory',
   table: 'territories',
@@ -29,10 +31,10 @@ export default {
   hasMany: ['TerritoryHistory'],
 
   attributes: {
-    // For split territories - references the original territory this was split from
     parentTerritoryId: {
       order: 1,
       fillable: true,
+      nullable: true,
       validation: {
         rule: schema.number(),
       },
@@ -42,13 +44,13 @@ export default {
     name: {
       order: 2,
       fillable: true,
+      nullable: true,
       validation: {
         rule: schema.string().max(200),
       },
       factory: (faker) => `${faker.location.street()} Territory`,
     },
 
-    // GeoJSON polygon stored as JSON string
     polygonData: {
       order: 3,
       fillable: true,
@@ -59,16 +61,15 @@ export default {
         },
       },
       factory: (faker) => {
-        // Generate a simple square polygon around a random point
         const centerLat = faker.location.latitude()
         const centerLng = faker.location.longitude()
-        const offset = 0.005 // ~500m
+        const offset = 0.005
         const coords = [
           [centerLng - offset, centerLat - offset],
           [centerLng + offset, centerLat - offset],
           [centerLng + offset, centerLat + offset],
           [centerLng - offset, centerLat + offset],
-          [centerLng - offset, centerLat - offset], // Close the loop
+          [centerLng - offset, centerLat - offset],
         ]
         return JSON.stringify({
           type: 'Polygon',
@@ -77,10 +78,10 @@ export default {
       },
     },
 
-    // Bounding box for quick spatial queries (minLat,minLng,maxLat,maxLng)
     boundingBox: {
       order: 4,
       fillable: true,
+      nullable: true,
       validation: {
         rule: schema.string(),
       },
@@ -92,7 +93,6 @@ export default {
       },
     },
 
-    // Center point for map display
     centerLat: {
       order: 5,
       fillable: true,
@@ -117,7 +117,6 @@ export default {
       factory: (faker) => faker.location.longitude(),
     },
 
-    // Area in square meters
     areaSize: {
       order: 7,
       fillable: true,
@@ -130,30 +129,28 @@ export default {
       factory: (faker) => faker.number.float({ min: 1000, max: 500000, fractionDigits: 2 }),
     },
 
-    // Perimeter in meters
     perimeter: {
       order: 8,
       fillable: true,
+      nullable: true,
       validation: {
         rule: schema.number().min(0),
       },
       factory: (faker) => faker.number.float({ min: 100, max: 5000, fractionDigits: 2 }),
     },
 
-    // Territory status
     status: {
       order: 9,
       fillable: true,
       validation: {
-        rule: schema.string().required(),
+        rule: schema.enum(statuses).required(),
         message: {
           required: 'Status is required',
         },
       },
-      factory: (faker) => faker.helpers.arrayElement(['active', 'contested']),
+      factory: (faker): typeof statuses[number] => faker.helpers.arrayElement([...statuses]),
     },
 
-    // How many times this territory has been conquered
     conquestCount: {
       order: 10,
       fillable: true,
@@ -163,7 +160,6 @@ export default {
       factory: (faker) => faker.number.int({ min: 0, max: 50 }),
     },
 
-    // Timestamp when ownership was last claimed
     claimedAt: {
       order: 11,
       fillable: true,

@@ -1,6 +1,8 @@
 import type { Model } from '@stacksjs/types'
 import { schema } from '@stacksjs/validation'
 
+const eventTypes = ['claimed', 'conquered', 'split', 'defended'] as const
+
 export default {
   name: 'TerritoryHistory',
   table: 'territory_histories',
@@ -22,63 +24,62 @@ export default {
   belongsTo: ['Territory', 'User', 'Activity'],
 
   attributes: {
-    // Previous owner ID (null for first claim)
     previousOwnerId: {
       order: 1,
       fillable: true,
+      nullable: true,
       validation: {
         rule: schema.number(),
       },
       factory: (faker) => faker.datatype.boolean() ? faker.number.int({ min: 1, max: 100 }) : null,
     },
 
-    // Type of event: 'claimed', 'conquered', 'split', 'defended'
     eventType: {
       order: 2,
       fillable: true,
       validation: {
-        rule: schema.string().required(),
+        rule: schema.enum(eventTypes).required(),
         message: {
           required: 'Event type is required',
         },
       },
-      factory: (faker) => faker.helpers.arrayElement(['claimed', 'conquered', 'split', 'defended']),
+      factory: (faker): typeof eventTypes[number] => faker.helpers.arrayElement([...eventTypes]),
     },
 
-    // Area at time of event (territories can be split)
     areaAtEvent: {
       order: 3,
       fillable: true,
+      nullable: true,
       validation: {
         rule: schema.number().min(0),
       },
       factory: (faker) => faker.number.float({ min: 1000, max: 500000, fractionDigits: 2 }),
     },
 
-    // Duration of previous ownership in seconds
     previousOwnershipDuration: {
       order: 4,
       fillable: true,
+      nullable: true,
       validation: {
         rule: schema.number().min(0),
       },
-      factory: (faker) => faker.number.int({ min: 3600, max: 2592000 }), // 1 hour to 30 days in seconds
+      factory: (faker) => faker.number.int({ min: 3600, max: 2592000 }),
     },
 
-    // Optional notes about the event
     notes: {
       order: 5,
       fillable: true,
+      nullable: true,
       validation: {
         rule: schema.string().max(500),
       },
       factory: (faker) => faker.lorem.sentence(),
     },
 
-    // For split events, reference to the new territory created from the split
     newTerritoryId: {
       order: 6,
       fillable: true,
+      nullable: true,
       validation: {
         rule: schema.number(),
       },

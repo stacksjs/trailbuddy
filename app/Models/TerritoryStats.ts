@@ -72,7 +72,7 @@ export default {
       factory: (faker) => faker.number.int({ min: 0, max: 20 }),
     },
 
-    // Times user successfully defended (ran through own territory while someone else tried to conquer)
+    // Times user successfully defended
     territoriesDefended: {
       order: 6,
       fillable: true,
@@ -106,6 +106,7 @@ export default {
     weeklyRank: {
       order: 9,
       fillable: true,
+      nullable: true,
       validation: {
         rule: schema.number().min(1),
       },
@@ -116,6 +117,7 @@ export default {
     allTimeRank: {
       order: 10,
       fillable: true,
+      nullable: true,
       validation: {
         rule: schema.number().min(1),
       },

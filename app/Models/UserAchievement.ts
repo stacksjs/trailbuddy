@@ -34,6 +34,7 @@ export default {
     completedAt: {
       order: 2,
       fillable: true,
+      nullable: true,
       validation: {
         rule: schema.string(),
       },

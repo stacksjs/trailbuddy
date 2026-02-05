@@ -1,6 +1,8 @@
 import type { Model } from '@stacksjs/types'
 import { schema } from '@stacksjs/validation'
 
+const difficulties = ['easy', 'moderate', 'hard'] as const
+
 export default {
   name: 'Trail',
   table: 'trails',
@@ -83,12 +85,12 @@ export default {
       order: 5,
       fillable: true,
       validation: {
-        rule: schema.string().required(),
+        rule: schema.enum(difficulties).required(),
         message: {
           required: 'Difficulty is required',
         },
       },
-      factory: (faker) => faker.helpers.arrayElement(['easy', 'moderate', 'hard']),
+      factory: (faker): typeof difficulties[number] => faker.helpers.arrayElement([...difficulties]),
     },
 
     rating: {

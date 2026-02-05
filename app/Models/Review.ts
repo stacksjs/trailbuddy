@@ -1,6 +1,8 @@
 import type { Model } from '@stacksjs/types'
 import { schema } from '@stacksjs/validation'
 
+const conditions = ['excellent', 'good', 'fair', 'poor', 'muddy', 'icy'] as const
+
 export default {
   name: 'Review',
   table: 'trail_reviews',
@@ -45,6 +47,7 @@ export default {
     title: {
       order: 2,
       fillable: true,
+      nullable: true,
       validation: {
         rule: schema.string().max(200),
       },
@@ -76,6 +79,7 @@ export default {
     visitDate: {
       order: 4,
       fillable: true,
+      nullable: true,
       validation: {
         rule: schema.string(),
       },
@@ -85,10 +89,11 @@ export default {
     conditions: {
       order: 5,
       fillable: true,
+      nullable: true,
       validation: {
-        rule: schema.string(),
+        rule: schema.enum(conditions),
       },
-      factory: (faker) => faker.helpers.arrayElement(['excellent', 'good', 'fair', 'poor', 'muddy', 'icy']),
+      factory: (faker): typeof conditions[number] => faker.helpers.arrayElement([...conditions]),
     },
 
     helpfulCount: {
@@ -103,6 +108,7 @@ export default {
     photos: {
       order: 7,
       fillable: true,
+      nullable: true,
       validation: {
         rule: schema.string(),
       },
