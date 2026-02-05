@@ -3,41 +3,25 @@ import { defineProps, withDefaults } from 'stx'
 
 type Difficulty = 'easy' | 'moderate' | 'hard'
 
-interface Trail {
-  id: number
-  name: string
-  location: string
-  distance: number
-  elevation: number
-  difficulty: Difficulty
-  rating: number
-  reviews: number
-  time: string
-  image: string
-  tags: string[]
-}
-
+// Can accept either a plain object or a browser model instance
 interface TrailCardProps {
-  trail?: Trail
-}
-
-const defaultTrail: Trail = {
-  id: 0,
-  name: 'Unknown Trail',
-  location: 'Unknown Location',
-  distance: 0,
-  elevation: 0,
-  difficulty: 'moderate',
-  rating: 0,
-  reviews: 0,
-  time: '0m',
-  image: '',
-  tags: []
+  trail?: any
 }
 
 const { trail } = withDefaults(defineProps<TrailCardProps>(), {
-  trail: defaultTrail
+  trail: null
 })
+
+// Helper to get value from either plain object or model instance
+function getValue(obj: any, key: string, defaultValue: any = ''): any {
+  if (!obj) return defaultValue
+  // Check if it's a model instance with get() method
+  if (typeof obj.get === 'function') {
+    return obj.get(key) ?? defaultValue
+  }
+  // Plain object
+  return obj[key] ?? defaultValue
+}
 
 function getDifficultyClass(difficulty: Difficulty): string {
   const classes: Record<Difficulty, string> = {
@@ -49,18 +33,31 @@ function getDifficultyClass(difficulty: Difficulty): string {
 }
 
 function formatNumber(num: number): string {
-  return num.toLocaleString()
+  return (num || 0).toLocaleString()
 }
+
+// Extract values with fallbacks
+const name = getValue(trail, 'name', 'Unknown Trail')
+const location = getValue(trail, 'location', 'Unknown Location')
+const distance = getValue(trail, 'distance', 0)
+const elevation = getValue(trail, 'elevation', 0)
+const difficulty = getValue(trail, 'difficulty', 'moderate') as Difficulty
+const rating = getValue(trail, 'rating', 0)
+const reviews = getValue(trail, 'reviewCount', getValue(trail, 'reviews', 0))
+const time = getValue(trail, 'estimatedTime', getValue(trail, 'time', '0m'))
+const image = getValue(trail, 'image', 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&h=600&fit=crop')
+const tagsRaw = getValue(trail, 'tags', '')
+const tags = typeof tagsRaw === 'string' ? (tagsRaw ? tagsRaw.split(',') : []) : (tagsRaw || [])
 </script>
 
 <template>
   <article class="trail-card bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100">
     <!-- Image -->
     <div class="relative h-48 overflow-hidden">
-      <img src="{{ trail.image }}" alt="{{ trail.name }}" class="trail-image w-full h-full object-cover" />
+      <img :src="image" :alt="name" class="trail-image w-full h-full object-cover" />
       <div class="absolute top-4 left-4">
-        <span class="px-3 py-1 {{ getDifficultyClass(trail.difficulty) }} rounded-full text-xs font-semibold capitalize">
-          {{ trail.difficulty }}
+        <span class="px-3 py-1 {{ getDifficultyClass(difficulty) }} rounded-full text-xs font-semibold capitalize">
+          {{ difficulty }}
         </span>
       </div>
       <button class="absolute top-4 right-4 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition shadow-md">
@@ -73,13 +70,13 @@ function formatNumber(num: number): string {
     <!-- Content -->
     <div class="p-5">
       <div class="flex items-start justify-between mb-2">
-        <h3 class="font-bold text-lg text-gray-900 hover:text-emerald-600 transition cursor-pointer">{{ trail.name }}</h3>
+        <h3 class="font-bold text-lg text-gray-900 hover:text-emerald-600 transition cursor-pointer">{{ name }}</h3>
         <div class="flex items-center space-x-1 text-sm">
           <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
           </svg>
-          <span class="font-semibold text-gray-900">{{ trail.rating }}</span>
-          <span class="text-gray-400">({{ formatNumber(trail.reviews) }})</span>
+          <span class="font-semibold text-gray-900">{{ rating }}</span>
+          <span class="text-gray-400">({{ formatNumber(reviews) }})</span>
         </div>
       </div>
 
@@ -87,7 +84,7 @@ function formatNumber(num: number): string {
         <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
         </svg>
-        {{ trail.location }}
+        {{ location }}
       </p>
 
       <!-- Stats -->
@@ -97,24 +94,26 @@ function formatNumber(num: number): string {
             <svg class="w-4 h-4 mr-1 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
-            {{ trail.distance }} mi
+            {{ distance }} mi
           </span>
           <span class="flex items-center">
             <svg class="w-4 h-4 mr-1 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
             </svg>
-            {{ formatNumber(trail.elevation) }} ft
+            {{ formatNumber(elevation) }} ft
           </span>
         </div>
-        <span class="text-gray-400">~{{ trail.time }}</span>
+        <span class="text-gray-400">~{{ time }}</span>
       </div>
 
       <!-- Tags -->
-      <div class="flex flex-wrap gap-2 mt-4">
-        @foreach(trail.tags as tag)
-          <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-xs capitalize">{{ tag }}</span>
-        @endforeach
-      </div>
+      @if="tags.length > 0"
+        <div class="flex flex-wrap gap-2 mt-4">
+          @for="tag in tags"
+            <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-xs capitalize">{{ tag }}</span>
+          @endfor
+        </div>
+      @endif
     </div>
   </article>
 </template>

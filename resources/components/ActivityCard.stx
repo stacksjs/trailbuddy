@@ -3,45 +3,68 @@ import { defineProps, withDefaults } from 'stx'
 
 type ActivityType = 'Trail Run' | 'Hike' | 'Walk' | 'Bike'
 
-interface Activity {
-  id: number
-  user: string
-  avatar: string
-  trail: string
-  type: ActivityType
-  distance: number
-  time: string
-  pace: string
-  elevation: number
-  date: string
-  kudos: number
-}
-
+// Can accept either a plain object or a browser model instance
 interface ActivityCardProps {
-  activity?: Activity
-}
-
-const defaultActivity: Activity = {
-  id: 0,
-  user: 'Anonymous',
-  avatar: '',
-  trail: 'Unknown Trail',
-  type: 'Hike',
-  distance: 0,
-  time: '0:00',
-  pace: '0:00',
-  elevation: 0,
-  date: 'Unknown',
-  kudos: 0
+  activity?: any
 }
 
 const { activity } = withDefaults(defineProps<ActivityCardProps>(), {
-  activity: defaultActivity
+  activity: null
 })
 
-function formatNumber(num: number): string {
-  return num.toLocaleString()
+// Helper to get value from either plain object or model instance
+function getValue(obj: any, key: string, defaultValue: any = ''): any {
+  if (!obj) return defaultValue
+  // Check if it's a model instance with get() method
+  if (typeof obj.get === 'function') {
+    return obj.get(key) ?? defaultValue
+  }
+  // Plain object
+  return obj[key] ?? defaultValue
 }
+
+function formatNumber(num: number): string {
+  return (num || 0).toLocaleString()
+}
+
+function formatDuration(seconds: number): string {
+  if (!seconds || typeof seconds !== 'number') return '0:00'
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const secs = seconds % 60
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  }
+  return `${minutes}:${secs.toString().padStart(2, '0')}`
+}
+
+function getRelativeTime(dateString: string): string {
+  if (!dateString) return 'Unknown'
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffHours / 24)
+
+  if (diffHours < 1) return 'Just now'
+  if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`
+  if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`
+  return date.toLocaleDateString()
+}
+
+// Extract values with fallbacks
+const user = getValue(activity, 'user', 'Anonymous')
+const avatar = getValue(activity, 'avatar', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop')
+const trail = getValue(activity, 'trail', 'Unknown Trail')
+const activityType = getValue(activity, 'activityType', getValue(activity, 'type', 'Hike')) as ActivityType
+const distance = getValue(activity, 'distance', 0)
+const duration = getValue(activity, 'duration', 0)
+const time = typeof duration === 'number' ? formatDuration(duration) : getValue(activity, 'time', '0:00')
+const pace = getValue(activity, 'pace', '0:00')
+const elevation = getValue(activity, 'elevation', 0)
+const completedAt = getValue(activity, 'completedAt', '')
+const date = completedAt ? getRelativeTime(completedAt) : getValue(activity, 'date', 'Unknown')
+const kudos = getValue(activity, 'kudosCount', getValue(activity, 'kudos', 0))
 </script>
 
 <template>
@@ -49,10 +72,10 @@ function formatNumber(num: number): string {
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center space-x-3">
-        <img src="{{ activity.avatar }}" alt="{{ activity.user }}" class="w-12 h-12 rounded-full object-cover border-2 border-emerald-100" />
+        <img :src="avatar" :alt="user" class="w-12 h-12 rounded-full object-cover border-2 border-emerald-100" />
         <div>
-          <p class="font-semibold text-gray-900">{{ activity.user }}</p>
-          <p class="text-sm text-gray-500">{{ activity.date }} · {{ activity.type }}</p>
+          <p class="font-semibold text-gray-900">{{ user }}</p>
+          <p class="text-sm text-gray-500">{{ date }} · {{ activityType }}</p>
         </div>
       </div>
       <button class="text-gray-400 hover:text-gray-600">
@@ -64,25 +87,25 @@ function formatNumber(num: number): string {
 
     <!-- Trail name -->
     <h3 class="font-bold text-lg text-gray-900 mb-3 hover:text-emerald-600 cursor-pointer transition">
-      {{ activity.trail }}
+      {{ trail }}
     </h3>
 
     <!-- Stats grid -->
     <div class="grid grid-cols-4 gap-4 mb-4">
       <div class="text-center p-3 bg-gray-50 rounded-xl">
-        <p class="text-2xl font-bold text-gray-900">{{ activity.distance }}</p>
+        <p class="text-2xl font-bold text-gray-900">{{ distance }}</p>
         <p class="text-xs text-gray-500">Miles</p>
       </div>
       <div class="text-center p-3 bg-gray-50 rounded-xl">
-        <p class="text-2xl font-bold text-gray-900">{{ activity.time }}</p>
+        <p class="text-2xl font-bold text-gray-900">{{ time }}</p>
         <p class="text-xs text-gray-500">Time</p>
       </div>
       <div class="text-center p-3 bg-gray-50 rounded-xl">
-        <p class="text-2xl font-bold text-gray-900">{{ activity.pace }}</p>
+        <p class="text-2xl font-bold text-gray-900">{{ pace }}</p>
         <p class="text-xs text-gray-500">Pace</p>
       </div>
       <div class="text-center p-3 bg-gray-50 rounded-xl">
-        <p class="text-2xl font-bold text-gray-900">{{ formatNumber(activity.elevation) }}</p>
+        <p class="text-2xl font-bold text-gray-900">{{ formatNumber(elevation) }}</p>
         <p class="text-xs text-gray-500">Elev (ft)</p>
       </div>
     </div>
@@ -104,7 +127,7 @@ function formatNumber(num: number): string {
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
-          <span class="text-sm font-medium">{{ activity.kudos }} Kudos</span>
+          <span class="text-sm font-medium">{{ kudos }} Kudos</span>
         </button>
         <button class="flex items-center space-x-2 text-gray-500 hover:text-emerald-500 transition">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

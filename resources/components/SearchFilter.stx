@@ -3,20 +3,38 @@ import { defineProps, withDefaults } from 'stx'
 
 interface SearchFilterProps {
   activeFilter?: string
+  onFilterChange?: (filter: string) => void
 }
 
-const { activeFilter } = withDefaults(defineProps<SearchFilterProps>(), {
+const { activeFilter, onFilterChange } = withDefaults(defineProps<SearchFilterProps>(), {
   activeFilter: 'all'
 })
 
 const filters = [
   { id: 'all', label: 'All Trails' },
-  { id: 'running', label: 'Trail Running' },
-  { id: 'hiking', label: 'Hiking' },
-  { id: 'walking', label: 'Walking' },
-  { id: 'dog-friendly', label: 'Dog Friendly' },
-  { id: 'waterfall', label: 'Waterfall' }
+  { id: 'easy', label: 'Easy' },
+  { id: 'moderate', label: 'Moderate' },
+  { id: 'hard', label: 'Hard' },
+  { id: 'dog-friendly', label: 'Dog Friendly' }
 ]
+</script>
+
+<script>
+import { state } from 'stx'
+
+// Local state for current filter
+const currentFilter = state(activeFilter || 'all')
+
+// Handle filter change
+function selectFilter(filterId: string) {
+  currentFilter.set(filterId)
+  // Emit event for parent to handle
+  if (typeof onFilterChange === 'function') {
+    onFilterChange(filterId)
+  }
+  // Also dispatch custom event
+  window.dispatchEvent(new CustomEvent('filter-change', { detail: { filter: filterId } }))
+}
 </script>
 
 <template>
@@ -44,13 +62,17 @@ const filters = [
         </button>
       </div>
 
-      <!-- Quick filters -->
+      <!-- Quick filters - reactive -->
       <div class="mt-4 flex flex-wrap gap-2">
-        @foreach(filters as filter)
-          <button class="filter-btn {{ filter.id === activeFilter ? 'active' : '' }} px-4 py-2 text-sm font-medium {{ filter.id === activeFilter ? '' : 'text-gray-600' }} rounded-full border border-gray-200 {{ filter.id !== activeFilter ? 'hover:border-emerald-500 hover:text-emerald-600' : '' }} transition" data-filter="{{ filter.id }}">
+        @for="filter in filters"
+          <button
+            @click="selectFilter(filter.id)"
+            :class="currentFilter() === filter.id ? 'bg-emerald-600 text-white border-emerald-600' : 'text-gray-600 border-gray-200 hover:border-emerald-500 hover:text-emerald-600'"
+            class="px-4 py-2 text-sm font-medium rounded-full border transition"
+          >
             {{ filter.label }}
           </button>
-        @endforeach
+        @endfor
       </div>
     </div>
   </section>

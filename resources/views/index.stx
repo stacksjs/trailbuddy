@@ -63,6 +63,7 @@
 <script server>
 import { defineProps, withDefaults } from 'stx'
 
+// Type definitions for props
 type Difficulty = 'easy' | 'moderate' | 'hard'
 type ActivityType = 'Trail Run' | 'Hike' | 'Walk' | 'Bike'
 
@@ -111,39 +112,19 @@ interface Achievement {
   total: number
 }
 
-// Sample data - in production this would come from API
-const trails: Trail[] = [
-  { id: 1, name: 'Redwood Canyon Loop', location: 'Big Basin State Park, CA', distance: 8.4, elevation: 1250, difficulty: 'moderate', rating: 4.8, reviews: 2341, time: '3h 15m', image: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&h=600&fit=crop', tags: ['forest', 'waterfall', 'wildlife'] },
-  { id: 2, name: 'Ocean Bluff Trail', location: 'Point Reyes, CA', distance: 5.2, elevation: 420, difficulty: 'easy', rating: 4.9, reviews: 1876, time: '1h 45m', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop', tags: ['coastal', 'views', 'dog-friendly'] },
-  { id: 3, name: 'Mission Peak Summit', location: 'Fremont, CA', distance: 6.8, elevation: 2100, difficulty: 'hard', rating: 4.6, reviews: 4521, time: '3h 30m', image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&h=600&fit=crop', tags: ['summit', 'views', 'challenging'] },
-  { id: 4, name: 'Muir Woods Cathedral Grove', location: 'Mill Valley, CA', distance: 2.1, elevation: 180, difficulty: 'easy', rating: 4.7, reviews: 5234, time: '45m', image: 'https://images.unsplash.com/photo-1476231682828-37e571bc172f?w=800&h=600&fit=crop', tags: ['redwoods', 'family', 'accessible'] },
-  { id: 5, name: 'Skyline Ridge Loop', location: 'Los Altos Hills, CA', distance: 11.3, elevation: 1850, difficulty: 'moderate', rating: 4.5, reviews: 892, time: '4h 20m', image: 'https://images.unsplash.com/photo-1501555088652-021faa106b9b?w=800&h=600&fit=crop', tags: ['running', 'meadow', 'sunrise'] },
-  { id: 6, name: 'Dipsea Trail', location: 'Mill Valley to Stinson Beach, CA', distance: 7.4, elevation: 2200, difficulty: 'hard', rating: 4.9, reviews: 3102, time: '3h 45m', image: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&h=600&fit=crop', tags: ['historic', 'stairs', 'beach'] }
-]
-
-const recentActivities: Activity[] = [
-  { id: 1, user: 'Sarah M.', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop', trail: 'Redwood Canyon Loop', type: 'Trail Run', distance: 8.4, time: '58:23', pace: '6:57', elevation: 1250, date: '2 hours ago', kudos: 24 },
-  { id: 2, user: 'Mike R.', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop', trail: 'Mission Peak Summit', type: 'Hike', distance: 6.8, time: '2:45:00', pace: '24:15', elevation: 2100, date: '5 hours ago', kudos: 18 },
-  { id: 3, user: 'Emma L.', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop', trail: 'Ocean Bluff Trail', type: 'Walk', distance: 5.2, time: '1:15:00', pace: '14:25', elevation: 420, date: 'Yesterday', kudos: 31 }
-]
-
+// Initial empty arrays - populated by client-side API
+const trails: Trail[] = []
+const recentActivities: Activity[] = []
 const userStats: UserStatsData = {
-  totalDistance: 847.3,
-  totalTime: '142h 35m',
-  totalElevation: 98450,
-  trailsCompleted: 156,
-  currentStreak: 12,
-  longestStreak: 28
+  totalDistance: 0,
+  totalTime: '0h 0m',
+  totalElevation: 0,
+  trailsCompleted: 0,
+  currentStreak: 0,
+  longestStreak: 0
 }
-
-const achievements: Achievement[] = [
-  { name: 'Early Bird', icon: '🌅', description: 'Complete 10 sunrise trails', progress: 8, total: 10 },
-  { name: 'Summit Seeker', icon: '🏔️', description: 'Reach 50 summits', progress: 34, total: 50 },
-  { name: 'Century Club', icon: '💯', description: 'Run 100 miles in a month', progress: 76, total: 100 },
-  { name: 'Trail Blazer', icon: '🔥', description: '30-day activity streak', progress: 12, total: 30 }
-]
-
-const featuredTrail = trails[5] // Dipsea Trail
+const achievements: Achievement[] = []
+const featuredTrail: Trail | null = null
 </script>
 
 <body class="antialiased bg-gray-50">
@@ -204,11 +185,24 @@ const featuredTrail = trails[5] // Dipsea Trail
       </a>
     </div>
 
-    <!-- Trail Grid -->
+    <!-- Trail Grid - reactive -->
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-      @foreach(trails as trail)
-        <TrailCard :trail />
-      @endforeach
+      <!-- Loading state -->
+      <div @show="loading()" class="col-span-3 text-center py-12">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent"></div>
+        <p class="mt-4 text-gray-500">Loading trails...</p>
+      </div>
+
+      <!-- Trail cards -->
+      @for="trail in filteredTrails()"
+        <TrailCard :trail="trail" />
+      @endfor
+
+      <!-- Empty state -->
+      <div @show="!loading() && filteredTrails().length === 0" class="col-span-3 text-center py-12 text-gray-500">
+        <p class="text-lg font-medium">No trails found</p>
+        <p class="mt-1">Try adjusting your filters</p>
+      </div>
     </div>
 
     <!-- Load more -->
@@ -228,11 +222,22 @@ const featuredTrail = trails[5] // Dipsea Trail
       </div>
 
       <div class="grid lg:grid-cols-3 gap-8">
-        <!-- Activity Feed -->
+        <!-- Activity Feed - reactive -->
         <div class="lg:col-span-2 space-y-6">
-          @foreach(recentActivities as activity)
+          <!-- Loading state -->
+          <div @show="loading()" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent"></div>
+          </div>
+
+          <!-- Activity cards -->
+          @for="activity in activities()"
             <ActivityCard :activity="activity" />
-          @endforeach
+          @endfor
+
+          <!-- Empty state -->
+          <div @show="!loading() && activities().length === 0" class="text-center py-12 text-gray-500">
+            <p>No recent activities</p>
+          </div>
         </div>
 
         <!-- Sidebar - Your Stats & Achievements -->
@@ -248,9 +253,15 @@ const featuredTrail = trails[5] // Dipsea Trail
               Achievements
             </h3>
             <div class="space-y-4">
-              @foreach(achievements as achievement)
+              <!-- Loading state -->
+              <div @show="loading()" class="text-center py-4">
+                <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-yellow-500 border-t-transparent"></div>
+              </div>
+
+              <!-- Achievements -->
+              @for="achievement in achievements()"
                 <AchievementProgress :achievement="achievement" />
-              @endforeach
+              @endfor
             </div>
           </div>
 
@@ -347,23 +358,83 @@ const featuredTrail = trails[5] // Dipsea Trail
   <Footer />
 
   <script>
-    // Navbar scroll behavior
-    window.addEventListener('scroll', function() {
-      const navbar = document.getElementById('navbar');
-      if (window.scrollY > 50) {
-        navbar.classList.add('scrolled');
-      } else {
-        navbar.classList.remove('scrolled');
-      }
-    });
+    import { state, onMount } from 'stx'
+    import {
+      Trail,
+      Activity,
+      UserStats,
+      Achievement,
+      UserAchievement,
+      auth,
+      formatDistance,
+      formatElevation,
+      formatDuration,
+      getRelativeTime,
+    } from '@stacksjs/browser'
 
-    // Filter button click handler
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-      });
-    });
+    // API is auto-initialized when @stacksjs/browser is imported
+
+    // Reactive state
+    const loading = state(true)
+    const currentUser = state<any>(null)
+    const trails = state<any[]>([])
+    const activities = state<any[]>([])
+    const userStats = state<any>(null)
+    const achievements = state<any[]>([])
+    const featuredTrail = state<any>(null)
+    const activeFilter = state<'all' | 'easy' | 'moderate' | 'hard'>('all')
+
+    // Filtered trails
+    const filteredTrails = () => {
+      const all = trails()
+      const f = activeFilter()
+      if (f === 'all') return all
+      return all.filter(t => t.get('difficulty') === f)
+    }
+
+    // Load data on mount
+    onMount(async () => {
+      try {
+        const user = await auth.user()
+        currentUser.set(user)
+
+        // Load data in parallel
+        const [trailsData, activitiesData, statsData, achievementsData] = await Promise.all([
+          Trail.orderByDesc('rating').limit(6).get(),
+          Activity.orderByDesc('created_at').limit(3).get(),
+          user ? UserStats.where('user_id', user.id).first() : null,
+          Achievement.all(),
+        ])
+
+        trails.set(trailsData)
+        activities.set(activitiesData)
+        userStats.set(statsData)
+        achievements.set(achievementsData)
+
+        // Set featured trail (highest rated hard trail)
+        const featured = trailsData.find(t => t.get('difficulty') === 'hard') || trailsData[0]
+        featuredTrail.set(featured)
+      } catch (error) {
+        console.error('Failed to load data:', error)
+      } finally {
+        loading.set(false)
+      }
+    })
+
+    // Filter handler
+    function setFilter(f: 'all' | 'easy' | 'moderate' | 'hard') {
+      activeFilter.set(f)
+    }
+
+    // Navbar scroll behavior
+    window.addEventListener('scroll', () => {
+      const navbar = document.getElementById('navbar')
+      if (window.scrollY > 50) {
+        navbar?.classList.add('scrolled')
+      } else {
+        navbar?.classList.remove('scrolled')
+      }
+    })
   </script>
 </body>
 </html>

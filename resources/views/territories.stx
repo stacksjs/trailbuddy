@@ -41,6 +41,7 @@
 <script server>
 import { defineProps, withDefaults } from 'stx'
 
+// TypeScript interfaces for type safety (matching browser models)
 interface Territory {
   id: number
   name: string
@@ -73,36 +74,21 @@ interface UserTerritoryStats {
   allTimeRank: number
 }
 
-// Sample data - in production this would come from API
-const territories: Territory[] = [
-  { id: 1, name: 'Downtown Loop', ownerName: 'Sarah M.', ownerAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop', areaSize: 45000, conquestCount: 2, claimedAt: '3 days ago', isOwned: false },
-  { id: 2, name: 'Park District', ownerName: 'You', ownerAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop', areaSize: 32500, conquestCount: 0, claimedAt: '1 week ago', isOwned: true },
-  { id: 3, name: 'Riverfront Trail', ownerName: 'Mike R.', ownerAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop', areaSize: 78000, conquestCount: 5, claimedAt: '2 weeks ago', isOwned: false },
-  { id: 4, name: 'University Loop', ownerName: 'Emma L.', ownerAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop', areaSize: 21000, conquestCount: 1, claimedAt: 'Yesterday', isOwned: false },
-  { id: 5, name: 'Mountain View', ownerName: 'You', ownerAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop', areaSize: 125000, conquestCount: 3, claimedAt: '5 days ago', isOwned: true },
-  { id: 6, name: 'Beach Circuit', ownerName: 'Alex K.', ownerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop', areaSize: 56000, conquestCount: 0, claimedAt: '4 hours ago', isOwned: false },
-]
-
-const leaderboardEntries: LeaderboardEntry[] = [
-  { rank: 1, userId: 1, userName: 'Sarah M.', userAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop', totalAreaOwned: 450000, totalTerritoriesOwned: 12, territoriesConquered: 8 },
-  { rank: 2, userId: 2, userName: 'Mike R.', userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop', totalAreaOwned: 380000, totalTerritoriesOwned: 9, territoriesConquered: 15 },
-  { rank: 3, userId: 3, userName: 'Emma L.', userAvatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop', totalAreaOwned: 295000, totalTerritoriesOwned: 7, territoriesConquered: 4 },
-  { rank: 4, userId: 4, userName: 'You', userAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop', totalAreaOwned: 157500, totalTerritoriesOwned: 2, territoriesConquered: 1 },
-  { rank: 5, userId: 5, userName: 'Alex K.', userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop', totalAreaOwned: 120000, totalTerritoriesOwned: 4, territoriesConquered: 2 },
-]
-
+// Initial empty state - will be populated by client-side API calls
+const territories: Territory[] = []
+const leaderboardEntries: LeaderboardEntry[] = []
 const userStats: UserTerritoryStats = {
-  totalTerritoriesOwned: 2,
-  totalAreaOwned: 157500,
-  territoriesClaimed: 5,
-  territoriesConquered: 1,
-  territoriesLost: 2,
-  territoriesDefended: 3,
-  weeklyRank: 4,
-  allTimeRank: 47
+  totalTerritoriesOwned: 0,
+  totalAreaOwned: 0,
+  territoriesClaimed: 0,
+  territoriesConquered: 0,
+  territoriesLost: 0,
+  territoriesDefended: 0,
+  weeklyRank: 0,
+  allTimeRank: 0
 }
 
-const currentUserId = 4
+const currentUserId = 0 // Will be set from auth
 </script>
 
 <body class="antialiased bg-gray-50">
@@ -153,25 +139,54 @@ const currentUserId = 4
         <div class="flex items-center justify-between mb-6">
           <h2 class="font-display text-2xl font-bold text-gray-900">Nearby Territories</h2>
           <div class="flex items-center space-x-2">
-            <button class="px-4 py-2 text-sm font-medium text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition">All</button>
-            <button class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition">Mine</button>
-            <button class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition">Contested</button>
+            <button
+              @click="setFilter('all')"
+              :class="filter() === 'all' ? 'text-emerald-600 bg-emerald-50' : 'text-gray-600 hover:bg-gray-100'"
+              class="px-4 py-2 text-sm font-medium rounded-lg transition"
+            >All</button>
+            <button
+              @click="setFilter('mine')"
+              :class="filter() === 'mine' ? 'text-emerald-600 bg-emerald-50' : 'text-gray-600 hover:bg-gray-100'"
+              class="px-4 py-2 text-sm font-medium rounded-lg transition"
+            >Mine</button>
+            <button
+              @click="setFilter('contested')"
+              :class="filter() === 'contested' ? 'text-emerald-600 bg-emerald-50' : 'text-gray-600 hover:bg-gray-100'"
+              class="px-4 py-2 text-sm font-medium rounded-lg transition"
+            >Contested</button>
           </div>
         </div>
 
+        <!-- Territory grid - reactive with STX -->
         <div class="grid md:grid-cols-2 gap-6">
-          @foreach(territories as territory)
+          <!-- Loading state -->
+          <div @show="loading()" class="col-span-2 text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent"></div>
+            <p class="mt-4 text-gray-500">Loading territories...</p>
+          </div>
+
+          <!-- Empty state -->
+          <div @show="!loading() && filteredTerritories().length === 0" class="col-span-2 text-center py-12 text-gray-500">
+            <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
+            <p class="text-lg font-medium">No territories found</p>
+            <p class="mt-1">Start a run to claim your first territory!</p>
+          </div>
+
+          <!-- Territory cards -->
+          @for="territory in filteredTerritories()"
             <TerritoryCard
-              :id="territory.id"
-              :name="territory.name"
-              :ownerName="territory.ownerName"
-              :ownerAvatar="territory.ownerAvatar"
-              :areaSize="territory.areaSize"
-              :conquestCount="territory.conquestCount"
-              :claimedAt="territory.claimedAt"
-              :isOwned="territory.isOwned"
+              :id="territory.get('id')"
+              :name="territory.get('name') || 'Unnamed Territory'"
+              :ownerName="territory.get('user_id') === currentUser()?.id ? 'You' : 'Other'"
+              :ownerAvatar="'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop'"
+              :areaSize="territory.get('areaSize')"
+              :conquestCount="territory.get('conquestCount')"
+              :claimedAt="getRelativeTime(territory.get('claimedAt'))"
+              :isOwned="territory.get('user_id') === currentUser()?.id"
             />
-          @endforeach
+          @endfor
         </div>
 
         <div class="text-center mt-8">
@@ -183,22 +198,83 @@ const currentUserId = 4
 
       <!-- Sidebar -->
       <div class="space-y-6">
-        <TerritoryStatsCard
-          :totalTerritoriesOwned="userStats.totalTerritoriesOwned"
-          :totalAreaOwned="userStats.totalAreaOwned"
-          :territoriesClaimed="userStats.territoriesClaimed"
-          :territoriesConquered="userStats.territoriesConquered"
-          :territoriesLost="userStats.territoriesLost"
-          :territoriesDefended="userStats.territoriesDefended"
-          :weeklyRank="userStats.weeklyRank"
-          :allTimeRank="userStats.allTimeRank"
-        />
+        <!-- Stats Card - reactive -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h3 class="font-bold text-lg text-gray-900 mb-4 flex items-center">
+            <svg class="w-5 h-5 mr-2 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            Your Territory Stats
+          </h3>
 
-        <TerritoryLeaderboard
-          type="area"
-          :entries="leaderboardEntries"
-          :currentUserId="currentUserId"
-        />
+          <!-- Loading state -->
+          <div @show="loading()" class="text-center py-8 text-gray-400">
+            <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-emerald-500 border-t-transparent"></div>
+          </div>
+
+          <!-- Stats grid -->
+          <div @show="!loading() && userStats()" class="grid grid-cols-2 gap-4">
+            <div class="text-center p-4 bg-emerald-50 rounded-xl">
+              <p class="text-2xl font-bold text-emerald-600" @text="userStats()?.get('totalTerritoriesOwned') ?? 0"></p>
+              <p class="text-sm text-gray-600">Territories</p>
+            </div>
+            <div class="text-center p-4 bg-blue-50 rounded-xl">
+              <p class="text-2xl font-bold text-blue-600" @text="formatAreaSize(userStats()?.get('totalAreaOwned') ?? 0)"></p>
+              <p class="text-sm text-gray-600">Total Area</p>
+            </div>
+            <div class="text-center p-4 bg-orange-50 rounded-xl">
+              <p class="text-2xl font-bold text-orange-600" @text="userStats()?.get('territoriesConquered') ?? 0"></p>
+              <p class="text-sm text-gray-600">Conquered</p>
+            </div>
+            <div class="text-center p-4 bg-purple-50 rounded-xl">
+              <p class="text-2xl font-bold text-purple-600">#<span @text="userStats()?.get('weeklyRank') ?? '-'"></span></p>
+              <p class="text-sm text-gray-600">Weekly Rank</p>
+            </div>
+          </div>
+
+          <!-- No stats state -->
+          <div @show="!loading() && !userStats()" class="text-center py-8 text-gray-500">
+            <p>No stats yet. Claim your first territory!</p>
+          </div>
+        </div>
+
+        <!-- Leaderboard - reactive -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h3 class="font-bold text-lg text-gray-900 mb-4 flex items-center">
+            <svg class="w-5 h-5 mr-2 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+            </svg>
+            Leaderboard
+          </h3>
+
+          <!-- Loading state -->
+          <div @show="loading()" class="text-center py-8 text-gray-400">
+            <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-yellow-500 border-t-transparent"></div>
+          </div>
+
+          <!-- Leaderboard entries -->
+          <div @show="!loading()" class="space-y-2">
+            @for="(entry, index) in leaderboard()"
+              <div
+                class="flex items-center space-x-3 p-3 rounded-lg transition"
+                :class="entry.get('user_id') === currentUser()?.id ? 'bg-emerald-50' : 'hover:bg-gray-50'"
+              >
+                <span
+                  class="w-6 text-center font-bold"
+                  :class="index < 3 ? 'text-yellow-500' : 'text-gray-400'"
+                  @text="index + 1"
+                ></span>
+                <div class="flex-1">
+                  <p class="font-medium text-gray-900" @text="entry.get('user_id') === currentUser()?.id ? 'You' : `User ${entry.get('user_id')}`"></p>
+                  <p class="text-xs text-gray-500" @text="formatAreaSize(entry.get('totalAreaOwned'))"></p>
+                </div>
+                <span class="text-sm font-medium text-gray-600">
+                  <span @text="entry.get('totalTerritoriesOwned')"></span> territories
+                </span>
+              </div>
+            @endfor
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -253,15 +329,73 @@ const currentUserId = 4
   <Footer />
 
   <script>
-    // Navbar scroll behavior
-    window.addEventListener('scroll', function() {
-      const navbar = document.getElementById('navbar');
-      if (window.scrollY > 50) {
-        navbar.classList.add('scrolled');
-      } else {
-        navbar.classList.remove('scrolled');
+    import { state, effect, onMount } from 'stx'
+    import {
+      Territory,
+      TerritoryStats,
+      auth,
+      formatAreaSize,
+      getRelativeTime,
+    } from '@stacksjs/browser'
+
+    // API is auto-initialized when @stacksjs/browser is imported
+
+    // Reactive state
+    const loading = state(true)
+    const currentUser = state<any>(null)
+    const territories = state<any[]>([])
+    const leaderboard = state<any[]>([])
+    const userStats = state<any>(null)
+    const filter = state<'all' | 'mine' | 'contested'>('all')
+
+    // Computed: filtered territories
+    const filteredTerritories = () => {
+      const all = territories()
+      const f = filter()
+      const user = currentUser()
+
+      if (f === 'all') return all
+      if (f === 'mine') return all.filter(t => t.get('user_id') === user?.id)
+      return all.filter(t => t.get('status') === 'contested')
+    }
+
+    // Load data on mount
+    onMount(async () => {
+      try {
+        const user = await auth.user()
+        currentUser.set(user)
+
+        // Load data in parallel
+        const [territoriesData, statsData, leaderboardData] = await Promise.all([
+          Territory.orderByDesc('created_at').limit(20).get(),
+          user ? TerritoryStats.where('user_id', user.id).first() : null,
+          TerritoryStats.orderByDesc('totalAreaOwned').limit(10).get(),
+        ])
+
+        territories.set(territoriesData)
+        userStats.set(statsData)
+        leaderboard.set(leaderboardData)
+      } catch (error) {
+        console.error('Failed to load territory data:', error)
+      } finally {
+        loading.set(false)
       }
-    });
+    })
+
+    // Filter change handler
+    function setFilter(f: 'all' | 'mine' | 'contested') {
+      filter.set(f)
+    }
+
+    // Navbar scroll behavior
+    window.addEventListener('scroll', () => {
+      const navbar = document.getElementById('navbar')
+      if (window.scrollY > 50) {
+        navbar?.classList.add('scrolled')
+      } else {
+        navbar?.classList.remove('scrolled')
+      }
+    })
   </script>
 </body>
 </html>

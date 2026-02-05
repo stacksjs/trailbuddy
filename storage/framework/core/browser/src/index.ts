@@ -1,5 +1,9 @@
+// Auto-initialize API on import (runs as side effect)
+import './auto-init'
+
 export * from './composables'
 export * from './utils'
+export * from './models'
 
 // Re-export browser query builder from bun-query-builder
 export {
@@ -10,6 +14,13 @@ export {
   configureBrowser,
   getBrowserConfig,
   createBrowserDb,
+  createBrowserModel,
   isBrowser,
 } from 'bun-query-builder'
-export type { BrowserConfig } from 'bun-query-builder'
+export type {
+  BrowserConfig,
+  BrowserModelDefinition,
+  BrowserTypedAttribute,
+  BrowserModelInstance,
+  BrowserModelQueryBuilder,
+} from 'bun-query-builder'
