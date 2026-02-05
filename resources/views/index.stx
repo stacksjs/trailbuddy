@@ -358,22 +358,6 @@ const featuredTrail: Trail | null = null
   <Footer />
 
   <script>
-    import { state, onMount } from 'stx'
-    import {
-      Trail,
-      Activity,
-      UserStats,
-      Achievement,
-      UserAchievement,
-      auth,
-      formatDistance,
-      formatElevation,
-      formatDuration,
-      getRelativeTime,
-    } from '@stacksjs/browser'
-
-    // API is auto-initialized when @stacksjs/browser is imported
-
     // Reactive state
     const loading = state(true)
     const currentUser = state<any>(null)

@@ -5,11 +5,27 @@
  * when imported. It runs as a side effect to eliminate the need for
  * manual `initApi()` calls in each component.
  *
- * The framework imports this module automatically when @stacksjs/browser
- * is used, so developers can use models directly without setup.
+ * It also exposes all browser exports on `window.StacksBrowser` for
+ * STX auto-import support (no explicit imports needed in STX files).
  */
 
-import { configureBrowser } from 'bun-query-builder'
+import {
+  browserQuery,
+  BrowserQueryBuilder,
+  BrowserQueryError,
+  browserAuth,
+  configureBrowser,
+  getBrowserConfig,
+  createBrowserDb,
+  createBrowserModel,
+  isBrowser,
+} from 'bun-query-builder'
+
+// Composables from core framework
+import * as Composables from './composables'
+
+// Model loader - dynamically imports all app models
+import { loadBrowserModels } from './model-loader'
 
 // Flag to prevent double initialization
 let isInitialized = false
@@ -62,6 +78,27 @@ function autoInit(): void {
       return data?.data ?? data
     },
   })
+
+  // Expose core browser exports on window.StacksBrowser for STX auto-imports
+  // App-specific models will self-register when loaded
+  ;(window as any).StacksBrowser = {
+    // Core browser query builder exports
+    browserQuery,
+    BrowserQueryBuilder,
+    BrowserQueryError,
+    browserAuth,
+    configureBrowser,
+    getBrowserConfig,
+    createBrowserDb,
+    createBrowserModel,
+    isBrowser,
+
+    // Spread all composables (auth, useAuth, initApi, formatters, etc.)
+    ...Composables,
+  }
+
+  // Load all app models and register on StacksBrowser
+  loadBrowserModels()
 
   // Dispatch event to notify that API is ready
   window.dispatchEvent(new CustomEvent('stacks:api-ready'))

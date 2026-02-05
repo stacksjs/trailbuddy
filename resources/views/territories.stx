@@ -329,17 +329,6 @@ const currentUserId = 0 // Will be set from auth
   <Footer />
 
   <script>
-    import { state, effect, onMount } from 'stx'
-    import {
-      Territory,
-      TerritoryStats,
-      auth,
-      formatAreaSize,
-      getRelativeTime,
-    } from '@stacksjs/browser'
-
-    // API is auto-initialized when @stacksjs/browser is imported
-
     // Reactive state
     const loading = state(true)
     const currentUser = state<any>(null)

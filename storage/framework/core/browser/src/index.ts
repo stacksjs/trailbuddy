@@ -3,7 +3,7 @@ import './auto-init'
 
 export * from './composables'
 export * from './utils'
-export * from './models'
+export * from './model-loader'
 
 // Re-export browser query builder from bun-query-builder
 export {
