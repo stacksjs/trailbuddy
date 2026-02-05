@@ -1,45 +1,15 @@
 /**
- * API Composable for TrailBuddy
+ * API Composable
  *
- * Provides initialized browser models and API utilities.
+ * Provides API utilities and configuration helpers.
  * The browser query builder is auto-configured via ../auto-init.ts
  * when @stacksjs/browser is imported, so manual initApi() is optional.
+ *
+ * Models are loaded dynamically via model-loader.ts - no hardcoded
+ * model imports needed here.
  */
 
 import { configureBrowser, browserAuth } from 'bun-query-builder'
-import {
-  Trail,
-  Activity,
-  Review,
-  Territory,
-  TerritoryHistory,
-  TerritoryStats,
-  UserStats,
-  Achievement,
-  UserAchievement,
-  Kudos,
-  SavedTrail,
-  User,
-} from '../models'
-
-// Re-export models for convenience
-export {
-  Trail,
-  Activity,
-  Review,
-  Territory,
-  TerritoryHistory,
-  TerritoryStats,
-  UserStats,
-  Achievement,
-  UserAchievement,
-  Kudos,
-  SavedTrail,
-  User,
-}
-
-// Re-export types
-export * from '../models'
 
 /**
  * Initialize the API client with custom configuration
