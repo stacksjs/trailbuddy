@@ -9,7 +9,7 @@ describe('getFileSize', () => {
 
   it('should return file size for existing file', async () => {
     // Test with package.json which should exist
-    const size = await getFileSize('/Users/chrisbreuer/Code/stacks/storage/framework/core/utils/package.json')
+    const size = await getFileSize(new URL('../package.json', import.meta.url).pathname)
     expect(size).toBeGreaterThan(0)
   })
 })

@@ -11,7 +11,10 @@ import { createBrowserModel } from 'bun-query-builder'
 
 // Use Vite's import.meta.glob to dynamically import all model files
 // This is processed at build time and creates a map of all model modules
-const modelModules = import.meta.glob<{ default: any }>('~/app/Models/*.ts', { eager: true })
+// Guard for non-Vite environments (e.g. Bun test runner, server-side)
+const modelModules: Record<string, { default: any }> = typeof import.meta.glob === 'function'
+  ? import.meta.glob<{ default: any }>('~/app/Models/*.ts', { eager: true })
+  : {}
 
 /**
  * Load all models and register them on window.StacksBrowser

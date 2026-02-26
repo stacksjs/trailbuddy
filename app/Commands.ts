@@ -28,11 +28,10 @@ export type CommandRegistry = Record<string, string | CommandConfig>
  */
 export default {
   'inspire': 'Inspire',
-  // Add more commands here
-  // 'my-command': 'MyCommand',
-  // 'send-emails': {
-  //   file: 'SendEmails',
-  //   enabled: true,
-  //   aliases: ['emails'],
-  // },
+
+  'scrape:trails': {
+    file: 'ScrapeTrails',
+    enabled: true,
+    aliases: ['trails:scrape'],
+  },
 } satisfies CommandRegistry

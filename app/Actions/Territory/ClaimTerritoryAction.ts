@@ -94,7 +94,7 @@ export default new Action({
         notes: 'Initial claim',
       })
 
-      let stats = await TerritoryStats.where('userId', '=', userId).first()
+      const stats = await TerritoryStats.where('userId', '=', userId).first()
       if (stats) {
         await stats.update({
           totalTerritoriesOwned: (stats.totalTerritoriesOwned || 0) + 1,

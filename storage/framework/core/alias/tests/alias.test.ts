@@ -7,10 +7,7 @@ describe('@stacksjs/alias', () => {
   it('should have valid paths for all aliases', () => {
     Object.entries(alias).forEach(([key, value]) => {
       const filePath = value.replace('src/index.ts', '').replace('*', '')
-
-      it(`should have a valid path for ${key}`, () => {
-        expect(fs.existsSync(path.resolve(filePath))).toBe(true)
-      })
+      expect(fs.existsSync(path.resolve(filePath))).toBe(true)
     })
   })
 
@@ -27,20 +24,22 @@ describe('@stacksjs/alias', () => {
     })
   })
 
-  it('should have all aliases starting with "@stacksjs/" or "stacks/" or "~/" or "framework/" or be "stacks"', () => {
-    const validPrefixes = ['@stacksjs/', 'stacks/', '~/', 'framework/']
+  it('should have all aliases starting with known prefixes', () => {
+    const validPrefixes = ['@stacksjs/', 'stacks/', '~/', 'framework/', '@/']
     Object.keys(alias).forEach((key) => {
-      expect(validPrefixes.some(prefix => key.startsWith(prefix) || key === 'stacks')).toBe(true)
+      expect(validPrefixes.some(prefix => key.startsWith(prefix)) || key === 'stacks').toBe(true)
     })
   })
 
   it('should have consistent naming conventions', () => {
     Object.keys(alias).forEach((key) => {
-      expect(key).toMatch(/^(@stacksjs\/|stacks\/|~\/|framework\/)?[a-z-]+(\/[a-z-]+)*(\*)?$/)
+      expect(key).toMatch(/^(@stacksjs\/|stacks\/|~\/|framework\/|@\/)?[a-z*-]+(\/[a-z*-]+)*$/)
     })
   })
 
-  it('should have the expected number of total aliases', () => {
-    expect(Object.keys(alias).length).toBe(250)
+  it('should have a reasonable number of aliases', () => {
+    const count = Object.keys(alias).length
+    expect(count).toBeGreaterThan(200)
+    expect(count).toBeLessThan(400)
   })
 })

@@ -84,7 +84,7 @@ export {
   // Failed job management
   FailedJobManager,
   type FailedJob,
-} from 'bun-queue'
+} from '@stacksjs/bun-queue'
 
 // =============================================================================
 // Stacks Job class for file-based jobs (app/Jobs/*.ts)

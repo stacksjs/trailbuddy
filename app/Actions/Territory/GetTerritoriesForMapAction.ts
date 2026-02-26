@@ -14,7 +14,7 @@ export default new Action({
     const limit = request.get<number>('limit') || 100
 
     try {
-      let query = Territory.where('status', '=', 'active')
+      const query = Territory.where('status', '=', 'active')
       const territories = await query.limit(limit).get()
 
       let filteredTerritories = territories
@@ -22,8 +22,8 @@ export default new Action({
         filteredTerritories = territories.filter((t: any) => {
           if (!t.boundingBox) return false
           const bbox = parseBoundingBox(t.boundingBox)
-          return !(bbox.maxLat < minLat || bbox.minLat > maxLat ||
-                   bbox.maxLng < minLng || bbox.minLng > maxLng)
+          return !(bbox.maxLat < minLat || bbox.minLat > maxLat
+            || bbox.maxLng < minLng || bbox.minLng > maxLng)
         })
       }
 

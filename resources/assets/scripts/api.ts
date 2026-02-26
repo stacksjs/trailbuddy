@@ -166,7 +166,7 @@ export async function giveKudos(activityId: number) {
 /**
  * Save a trail
  */
-export async function saveTrail(trailId: number, notes?: string) {
+export async function saveTrail(_trailId: number, notes?: string) {
   return SavedTrail.create({
     notes: notes || '',
     wantToVisit: true,

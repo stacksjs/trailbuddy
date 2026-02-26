@@ -57,13 +57,13 @@ function generateSelfHostedAnalyticsScript(): string {
 
   return `(function(){
 'use strict';
-var d=document,w=window,n=navigator,s=d.currentScript;
-var site=s.dataset.site,api=s.dataset.api;
+const d=document,w=window,n=navigator,s=d.currentScript;
+const site=s.dataset.site,api=s.dataset.api;
 ${honorDnt}
-var q=[],sid=Math.random().toString(36).slice(2);
+const q=[],sid=Math.random().toString(36).slice(2);
 function t(e,p){
-var x=new XMLHttpRequest();
-x.open('POST',api+'/collect',true);
+const x=new XMLHttpRequest();
+x.open('POST',\`\${api}/collect\`,true);
 x.setRequestHeader('Content-Type','application/json');
 x.send(JSON.stringify({s:site,sid:sid,e:e,p:p||{},u:location.href,r:d.referrer,t:d.title,sw:screen.width,sh:screen.height}));
 }

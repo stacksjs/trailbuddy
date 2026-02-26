@@ -188,7 +188,7 @@ async function updateConquestStats(
   conqueredArea: number,
   remainingArea: number,
 ) {
-  let conquerorStats = await TerritoryStats.where('userId', '=', conquerorId).first()
+  const conquerorStats = await TerritoryStats.where('userId', '=', conquerorId).first()
   if (conquerorStats) {
     await conquerorStats.update({
       totalTerritoriesOwned: (conquerorStats.totalTerritoriesOwned || 0) + 1,
@@ -213,7 +213,7 @@ async function updateConquestStats(
     })
   }
 
-  let previousOwnerStats = await TerritoryStats.where('userId', '=', previousOwnerId).first()
+  const previousOwnerStats = await TerritoryStats.where('userId', '=', previousOwnerId).first()
   if (previousOwnerStats) {
     const lostTerritory = remainingArea === 0 ? 1 : 0
     const newTotalOwned = remainingArea === 0

@@ -2,10 +2,10 @@
 import { log } from '@stacksjs/logging'
 import { ExitCode } from '@stacksjs/types'
 import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
-import { CAC } from 'cac'
 import {
   buddyOptions,
   cli,
+  CLI,
   exec,
   execSync,
   installPackage,
@@ -63,7 +63,7 @@ describe('@stacksjs/cli', () => {
   describe('cli', () => {
     it('creates a CAC instance', () => {
       const instance = cli()
-      expect(instance).toBeInstanceOf(CAC)
+      expect(instance).toBeInstanceOf(CLI)
     })
 
     it('creates a CAC instance with custom name', () => {
@@ -130,7 +130,7 @@ describe('@stacksjs/cli', () => {
   describe('runCommand', () => {
     it('runs a command', async () => {
       const result = await runCommand('echo test')
-      expect(result.isOk).toBe(true)
+      expect(result.isOk()).toBe(true)
       expect(mockExec).toHaveBeenCalledWith('echo test')
     })
   })

@@ -269,8 +269,8 @@ export function boundingBoxesOverlap(bbox1: string, bbox2: string): boolean {
   const b1 = parseBoundingBox(bbox1)
   const b2 = parseBoundingBox(bbox2)
 
-  return !(b1.maxLat < b2.minLat || b1.minLat > b2.maxLat ||
-           b1.maxLng < b2.minLng || b1.minLng > b2.maxLng)
+  return !(b1.maxLat < b2.minLat || b1.minLat > b2.maxLat
+    || b1.maxLng < b2.minLng || b1.minLng > b2.maxLng)
 }
 
 /**
