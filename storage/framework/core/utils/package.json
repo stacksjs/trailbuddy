@@ -59,7 +59,7 @@
     "@vueuse/core": "^13.8.0",
     "@vueuse/head": "^2.0.0",
     "@vueuse/math": "^13.8.0",
-    "@vueuse/shared": "^13.8.0",
+    "@vueuse/shared": "^14.2.1",
     "magic-regexp": "^0.10.0"
   }
 }
