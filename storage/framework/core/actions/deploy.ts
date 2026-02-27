@@ -774,7 +774,7 @@ echo "Setup complete!"
       'ca-central-1': 'ZQSVJUPU6J1EY',
     }
 
-    const albHostedZoneId = albHostedZoneIds[options.environment === 'production' ? 'us-east-1' : 'us-east-1'] || 'Z35SXDOTRQ7X7K'
+    const _albHostedZoneId = albHostedZoneIds[options.environment === 'production' ? 'us-east-1' : 'us-east-1'] || 'Z35SXDOTRQ7X7K'
 
     // Create DNS A record for each SSL domain
     sslDomains.forEach((domain: string, index: number) => {
@@ -2295,11 +2295,10 @@ export async function deployFrontend(options: DeployFrontendOptions): Promise<vo
 /**
  * Get deployment status and outputs
  */
-export async function getDeploymentStatus(options: { environment: string, region: string }): Promise<{
+export async function getDeploymentStatus({ environment, region }: { environment: string, region: string }): Promise<{
   status: string
   outputs: Record<string, string>
 }> {
-  const { environment, region } = options
   const stackName = `stacks-cloud-${environment}`
 
   const { CloudFormationClient } = await import('ts-cloud/aws')

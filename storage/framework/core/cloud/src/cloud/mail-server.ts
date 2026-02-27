@@ -413,8 +413,8 @@ async function main() {
 
   // Get passwords from environment or use defaults
   const users = ${JSON.stringify(Object.fromEntries(
-    Object.entries(users).map(([k, v]) => [k, { password: process.env[\`IMAP_PASSWORD_\${k.toUpperCase()}\`] || 'changeme', email: (v as any).email }])
-  ), null, 2).replace(/process\.env\[`IMAP_PASSWORD_([A-Z]+)`\]/g, "process.env.IMAP_PASSWORD_$1 || 'changeme'")}
+    Object.entries(users).map(([k, v]) => [k, { password: 'PLACEHOLDER_' + k.toUpperCase(), email: (v as any).email }])
+  ), null, 2).replace(/"PLACEHOLDER_([A-Z]+)"/g, "process.env.IMAP_PASSWORD_$1 || 'changeme'")}
 
   const tlsConfig = hasTlsCerts ? {
     key: '/etc/letsencrypt/live/mail.${domain}/privkey.pem',
@@ -523,7 +523,7 @@ main().catch(console.error)
       'Type=simple',
       'User=root',
       'WorkingDirectory=/opt/imap-server',
-      'Environment="AWS_REGION=${Stack.of({ node: { id: 'scope' } } as any).region || 'us-east-1'}"',
+      `Environment="AWS_REGION=${Stack.of({ node: { id: 'scope' } } as any).region || 'us-east-1'}"`,
       ...Object.keys(users).map(u => `Environment="IMAP_PASSWORD_${u.toUpperCase()}=changeme"`),
       'ExecStart=/root/.bun/bin/bun run /opt/imap-server/server.ts',
       'Restart=always',

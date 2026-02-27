@@ -274,7 +274,7 @@ export class ImapServer {
       return `${tag} BAD Invalid FETCH arguments\r\n`
     }
 
-    const [, seqSet, items] = seqMatch
+    const [, _seqSet, items] = seqMatch
     const fetchItems = items.toUpperCase()
 
     for (const msg of session.messages) {

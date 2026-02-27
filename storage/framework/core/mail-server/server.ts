@@ -299,9 +299,9 @@ function startSMTP587(){
             }else{s.write('504 Unrecognized auth type\r\n');}
             break;
           case'MAIL':if(!auth){s.write('530 5.7.0 Authentication required\r\n');break;}
-            const fm=args.match(/FROM:<([^>]+)>/i);if(fm){from=fm[1];s.write('250 OK\r\n');}else s.write('501\r\n');break;
+            {const fm=args.match(/FROM:<([^>]+)>/i);if(fm){from=fm[1];s.write('250 OK\r\n');}else s.write('501\r\n');break;}
           case'RCPT':if(!auth){s.write('530 5.7.0 Authentication required\r\n');break;}
-            const tm=args.match(/TO:<([^>]+)>/i);if(tm){to.push(tm[1]);s.write('250 OK\r\n');}else s.write('501\r\n');break;
+            {const tm=args.match(/TO:<([^>]+)>/i);if(tm){to.push(tm[1]);s.write('250 OK\r\n');}else s.write('501\r\n');break;}
           case'DATA':if(!auth||!from||!to.length){s.write('503\r\n');break;}inD=true;s.write('354 Start mail input\r\n');break;
           case'QUIT':s.write('221 Bye\r\n');s.end();break;
           case'NOOP':case'RSET':s.write('250 OK\r\n');if(cmd==='RSET'){from='';to=[];data='';}break;

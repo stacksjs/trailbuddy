@@ -115,7 +115,7 @@ export async function authenticate(email: string, password: string): Promise<boo
 /**
  * List mailboxes for a user
  */
-export async function listMailboxes(userEmail: string): Promise<MailboxInfo[]> {
+export async function listMailboxes(_userEmail: string): Promise<MailboxInfo[]> {
   // For now, we have a simple structure: INBOX, Sent, Drafts, Trash
   const mailboxes: MailboxInfo[] = [
     { name: 'INBOX', messages: 0, unseen: 0, uidNext: 1, uidValidity: 1 },

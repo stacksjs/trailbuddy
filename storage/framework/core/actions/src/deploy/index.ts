@@ -123,7 +123,7 @@ if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
 
 // Use ts-cloud deployment instead of CDK
 try {
-  const { deployStack, deployFrontend } = await import('../../deploy')
+  const { deployStack, deployFrontend: _deployFrontend } = await import('../../deploy')
 
   const environment = process.env.APP_ENV || process.env.NODE_ENV || 'production'
   const region = process.env.AWS_REGION || 'us-east-1'
@@ -340,7 +340,7 @@ try {
   try {
     const { S3Client, CloudFormationClient } = await import('ts-cloud/aws')
     const { existsSync, readdirSync, statSync, readFileSync, copyFileSync, mkdirSync, rmSync } = await import('node:fs')
-    const { join, extname, relative } = await import('node:path')
+    const { join, extname, relative: _relative } = await import('node:path')
 
     const s3 = new S3Client(region)
     const cf = new CloudFormationClient(region)

@@ -58,7 +58,7 @@ export function fetchTestSqliteFile(): string {
   return path.userDatabasePath('stacks_testing.sqlite')
 }
 
-export async function generateSqliteMigration(modelPath: string): Promise<void> {
+export async function generateSqliteMigration(_modelPath: string): Promise<void> {
   // check if any files are in the database folder
   // const files = await fs.readdir(path.userMigrationsPath())
 
@@ -120,7 +120,7 @@ export async function generateSqliteMigration(modelPath: string): Promise<void> 
   else await createTableMigration(modelPath)
 }
 
-export async function createSqliteForeignKeyMigrations(modelPath: string): Promise<void> {
+export async function createSqliteForeignKeyMigrations(_modelPath: string): Promise<void> {
   // SQLite doesn't support adding foreign key constraints via ALTER TABLE
   // Foreign keys are already added during table creation in createTableMigration()
   // So we skip creating separate foreign key migrations for SQLite

@@ -64,10 +64,10 @@ export function createClaudeLocalAgent(config: ClaudeAgentConfig = {}): AIDriver
     name: 'Claude CLI (Local)',
 
     async process(command: string, context: string, _history: AIMessage[]): Promise<string> {
-      const { $ } = await import('bun')
+      const bun = await import('bun')
 
       // Check if claude CLI is available
-      const whichResult = await $`which claude`.quiet().nothrow()
+      const whichResult = await bun.$`which claude`.quiet().nothrow()
       if (whichResult.exitCode !== 0) {
         throw new Error('Claude CLI not found. Install it with: npm install -g @anthropic-ai/claude-code')
       }
@@ -80,7 +80,7 @@ export function createClaudeLocalAgent(config: ClaudeAgentConfig = {}): AIDriver
       const cwd = config.cwd || process.cwd()
 
       try {
-        const result = await $`cd ${cwd} && claude --print --dangerously-skip-permissions ${fullPrompt}`.quiet()
+        const result = await bun.$`cd ${cwd} && claude --print --dangerously-skip-permissions ${fullPrompt}`.quiet()
         return result.text().trim()
       }
       catch {
@@ -111,7 +111,7 @@ export function createClaudeEC2Agent(config: ClaudeAgentConfig): AIDriver {
     name: 'Claude CLI (EC2)',
 
     async process(command: string, context: string, _history: AIMessage[]): Promise<string> {
-      const { $ } = await import('bun')
+      const bun = await import('bun')
 
       if (!ec2Host) {
         throw new Error('BUDDY_EC2_HOST environment variable not set. Set it to your EC2 instance IP/hostname.')
@@ -130,7 +130,7 @@ export function createClaudeEC2Agent(config: ClaudeAgentConfig): AIDriver {
       const sshTarget = `${ec2User}@${ec2Host}`
 
       try {
-        const result = await $`ssh ${sshArgs} ${sshTarget} "claude --print '${escapedPrompt}'"`.quiet()
+        const result = await bun.$`ssh ${sshArgs} ${sshTarget} "claude --print '${escapedPrompt}'"`.quiet()
         return result.text().trim()
       }
       catch (error) {

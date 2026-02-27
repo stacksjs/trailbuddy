@@ -7,7 +7,7 @@ import { createInterface } from 'node:readline'
 import type { Interface } from 'node:readline'
 
 // Protect stdin from being closed by readline
-const originalDestroy = process.stdin.destroy
+const _originalDestroy = process.stdin.destroy
 process.stdin.destroy = function(error?: Error) {
   // Don't actually destroy stdin - just emit 'close' if needed
   if (error) {

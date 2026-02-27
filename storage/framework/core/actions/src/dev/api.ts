@@ -3,7 +3,7 @@ import { config } from '@stacksjs/config'
 import { log } from '@stacksjs/logging'
 import { cors, route } from '@stacksjs/router'
 
-const options = parseOptions()
+const _options = parseOptions()
 const port = config.ports?.api || 3008
 
 log.info('[API] Starting development server...')

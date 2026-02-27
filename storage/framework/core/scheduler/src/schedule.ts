@@ -39,7 +39,7 @@ export class Schedule implements UntimedSchedule {
     timezone?: string
     catch?: CatchCallbackFn
     maxRuns?: number
-    protect?: boolean | ((job: Cron) => void)
+    protect?: boolean | ((_job: Cron) => void)
     name?: string
     context?: any
     interval?: number
