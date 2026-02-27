@@ -82,7 +82,7 @@
     "prepublishOnly": "bun run build && bun run compile:all && bun run zip:all"
   },
   "dependencies": {
-    "@aws-sdk/client-cloudfront": "^3.911.0",
+    "@aws-sdk/client-cloudfront": "^3.999.0",
     "@stacksjs/rpx": "^0.11.0",
     "@stacksjs/actions": "^0.70.23",
     "@stacksjs/ai": "^0.70.23",
