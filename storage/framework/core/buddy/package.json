@@ -83,7 +83,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-cloudfront": "^3.911.0",
-    "@stacksjs/rpx": "link:@stacksjs/rpx",
+    "@stacksjs/rpx": "^0.11.0",
     "@stacksjs/actions": "^0.70.23",
     "@stacksjs/ai": "^0.70.23",
     "@stacksjs/alias": "^0.70.23",

@@ -58,11 +58,11 @@
     "stx": "./buddy"
   },
   "dependencies": {
-    "@cwcss/crosswind": "link:@cwcss/crosswind",
+    "@cwcss/crosswind": "^0.1.6",
     "@stacksjs/clarity": "^0.3.24",
-    "@stacksjs/rpx": "link:@stacksjs/rpx",
-    "@stacksjs/stx": "link:@stacksjs/stx",
-    "bun-plugin-stx": "link:bun-plugin-stx",
+    "@stacksjs/rpx": "^0.11.0",
+    "@stacksjs/stx": "^0.2.5",
+    "bun-plugin-stx": "^0.2.5",
     "stacks": "workspace:*"
   },
   "workspaces": [
