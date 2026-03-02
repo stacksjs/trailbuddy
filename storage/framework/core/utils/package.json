@@ -50,16 +50,16 @@
     "@stacksjs/arrays": "workspace:*",
     "@stacksjs/cli": "workspace:*",
     "@stacksjs/config": "workspace:*",
-    "better-dx": "^0.2.5",
+    "better-dx": "^0.2.6",
     "@stacksjs/lint": "workspace:*",
     "@stacksjs/path": "workspace:*",
     "@stacksjs/storage": "workspace:*",
     "@stacksjs/strings": "workspace:*",
     "@stacksjs/types": "workspace:*",
-    "@vueuse/core": "^13.8.0",
+    "@vueuse/core": "^13.9.0",
     "@vueuse/head": "^2.0.0",
-    "@vueuse/math": "^13.8.0",
-    "@vueuse/shared": "^13.8.0",
+    "@vueuse/math": "^13.9.0",
+    "@vueuse/shared": "^13.9.0",
     "magic-regexp": "^0.10.0"
   }
 }
