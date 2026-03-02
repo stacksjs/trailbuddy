@@ -82,7 +82,7 @@
     "prepublishOnly": "bun run build && bun run compile:all && bun run zip:all"
   },
   "dependencies": {
-    "@aws-sdk/client-cloudfront": "^3.911.0",
+    "@aws-sdk/client-cloudfront": "^3.1000.0",
     "@stacksjs/rpx": "^0.11.0",
     "@stacksjs/actions": "^0.70.23",
     "@stacksjs/ai": "^0.70.23",
@@ -97,7 +97,7 @@
     "@stacksjs/config": "^0.70.23",
     "@stacksjs/database": "^0.70.23",
     "@stacksjs/desktop": "^0.70.23",
-    "better-dx": "^0.2.5",
+    "better-dx": "^0.2.6",
     "@stacksjs/dns": "^0.70.23",
     "@stacksjs/docs": "^0.70.23",
     "@stacksjs/email": "^0.70.23",
@@ -128,7 +128,7 @@
     "@stacksjs/validation": "^0.70.23"
   },
   "devDependencies": {
-    "better-dx": "^0.2.5"
+    "better-dx": "^0.2.6"
   },
   "web-types": "./web-types.json"
 }
