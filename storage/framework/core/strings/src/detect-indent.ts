@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 // thanks to https://github.com/sindresorhus/detect-indent for much of this!
 
 // Detect either spaces or tabs but not both to properly handle tabs for indentation and spaces for alignment

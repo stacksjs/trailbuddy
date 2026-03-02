@@ -1,3 +1,4 @@
+/* eslint-disable pickier/no-unused-vars */
 /**
  * WebAuthn Server Implementation
  * Native implementation to replace @simplewebauthn/server

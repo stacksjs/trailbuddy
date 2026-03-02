@@ -1,3 +1,4 @@
+/* eslint-disable pickier/no-unused-vars */
 /**
  * ts-cloud deployment functions
  * Creates real AWS infrastructure for Stacks deployments

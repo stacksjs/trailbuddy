@@ -1,3 +1,4 @@
+/* eslint-disable pickier/no-unused-vars */
 /**
  * Ollama API Driver
  *

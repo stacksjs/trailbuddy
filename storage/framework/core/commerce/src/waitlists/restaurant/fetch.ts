@@ -1,3 +1,4 @@
+/* eslint-disable pickier/no-unused-vars */
 import type { WaitlistRestaurantJsonResponse } from '@stacksjs/orm'
 import { db } from '@stacksjs/database'
 import { formatDate, toTimestamp } from '@stacksjs/orm'

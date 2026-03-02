@@ -1,3 +1,4 @@
+/* eslint-disable pickier/no-unused-vars */
 import type { CategoryJsonResponse } from '@stacksjs/orm'
 import type { CategoryStats } from '../../types'
 import { db } from '@stacksjs/database'

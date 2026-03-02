@@ -1,3 +1,4 @@
+/* eslint-disable pickier/no-unused-vars */
 import type { AuthComposable, AuthUser, ErrorResponse, LoginError, LoginResponse, MeResponse, RegisterError, RegisterResponse, UserData } from '../types/dashboard'
 import { useStorage } from '@vueuse/core'
 /// <reference lib="dom" />

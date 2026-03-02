@@ -27,11 +27,8 @@ export type CommandRegistry = Record<string, string | CommandConfig>
  * },
  */
 export default {
-  'inspire': 'Inspire',
-
   'scrape:trails': {
     file: 'ScrapeTrails',
     enabled: true,
-    aliases: ['trails:scrape'],
   },
 } satisfies CommandRegistry

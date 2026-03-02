@@ -23,3 +23,6 @@ export * from './utils'
 
 // Export User model from db package
 export { default as User } from '../../db/src/orm/Models/User'
+
+// Export Trail model from db package
+export { default as Trail } from '../../db/src/orm/Models/Trail'

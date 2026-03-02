@@ -1,3 +1,4 @@
+/* eslint-disable pickier/no-unused-vars */
 import type { ReceiptJsonResponse } from '@stacksjs/orm'
 import { db } from '@stacksjs/database'
 import { formatDate } from '@stacksjs/orm'

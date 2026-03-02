@@ -1,3 +1,4 @@
+/* eslint-disable pickier/no-unused-vars */
 import type { OrderJsonResponse } from '@stacksjs/orm'
 import type {
   OrderStats,

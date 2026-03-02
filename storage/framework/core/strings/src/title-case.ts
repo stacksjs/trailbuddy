@@ -1,3 +1,4 @@
+/* eslint-disable pickier/no-unused-vars */
 // thanks to https://github.com/blakeembrey/change-case/blob/main/packages/title-case
 // for much of this code
 

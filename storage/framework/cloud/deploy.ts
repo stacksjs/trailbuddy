@@ -1,3 +1,4 @@
+/* eslint-disable pickier/no-unused-vars */
 import type { CloudOptions } from '../core/cloud/src/types'
 import process from 'node:process'
 import { log } from '@stacksjs/cli'

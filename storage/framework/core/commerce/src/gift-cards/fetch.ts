@@ -1,3 +1,4 @@
+/* eslint-disable pickier/no-unused-vars */
 import type { GiftCardJsonResponse } from '@stacksjs/orm'
 import type { GiftCardStats } from '../types'
 import { db, sql } from '@stacksjs/database'

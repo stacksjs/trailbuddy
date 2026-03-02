@@ -1,3 +1,4 @@
+/* eslint-disable pickier/no-unused-vars */
 import type { PaymentJsonResponse } from '@stacksjs/orm'
 import { db, sql } from '@stacksjs/database'
 import { formatDate } from '@stacksjs/orm'
