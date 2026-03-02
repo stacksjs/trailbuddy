@@ -35,10 +35,10 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@stripe/stripe-js": "^8.1.0"
+    "@stripe/stripe-js": "^8.8.0"
   },
   "devDependencies": {
-    "better-dx": "^0.2.5",
+    "better-dx": "^0.2.6",
     "@stacksjs/utils": "workspace:*"
   }
 }
