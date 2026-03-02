@@ -48,17 +48,17 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.876.0",
-    "@aws-sdk/s3-request-presigner": "^3.876.0"
+    "@aws-sdk/client-s3": "^3.1000.0",
+    "@aws-sdk/s3-request-presigner": "^3.1000.0"
   },
   "devDependencies": {
     "@stacksjs/arrays": "workspace:*",
-    "better-dx": "^0.2.5",
+    "better-dx": "^0.2.6",
     "@stacksjs/error-handling": "workspace:*",
     "@stacksjs/path": "workspace:*",
     "@stacksjs/strings": "workspace:*",
     "@stacksjs/types": "workspace:*",
-    "@types/archiver": "^6.0.3",
+    "@types/archiver": "^6.0.4",
     "archiver": "^7.0.1"
   }
 }
