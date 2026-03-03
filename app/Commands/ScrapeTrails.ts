@@ -1,8 +1,11 @@
 import type { CLI } from '@stacksjs/types'
 import process from 'node:process'
 import { intro, log, outro } from '@stacksjs/cli'
-import { Trail } from '@stacksjs/orm'
+import { defineModel } from '@stacksjs/orm'
 import { ExitCode } from '@stacksjs/types'
+import TrailDefinition from '../Models/Trail'
+
+const Trail = defineModel(TrailDefinition as any)
 import { deduplicateTrails } from '../../resources/functions/scraper/deduplication'
 import { fetchTile } from '../../resources/functions/scraper/overpass-client'
 import { generateTiles, getRegion, regions } from '../../resources/functions/scraper/region-definitions'
