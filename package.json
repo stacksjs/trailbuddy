@@ -58,11 +58,6 @@
     "stx": "./buddy"
   },
   "dependencies": {
-    "@cwcss/crosswind": "^0.1.6",
-    "@stacksjs/clarity": "^0.3.24",
-    "@stacksjs/rpx": "^0.11.0",
-    "@stacksjs/stx": "^0.2.5",
-    "bun-plugin-stx": "^0.2.5",
     "stacks": "workspace:*"
   },
   "workspaces": [
@@ -76,7 +71,6 @@
     "!storage/framework/cache/**"
   ],
   "devDependencies": {
-    "better-dx": "0.2.5",
-    "happy-dom": "^20.7.0"
+    "better-dx": "0.2.5"
   }
 }
