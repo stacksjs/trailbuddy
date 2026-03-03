@@ -26,12 +26,24 @@ export async function runAction(action: Action, options?: ActionOptions): Promis
     try {
       const port = Number(process.env.PORT) || 3000
 
+      // Load project-level STX config for component/layout/partial paths
+      let stxConfig: Record<string, string> = {}
+      try {
+        const configModule = await import(`${process.cwd()}/config/stx.ts`)
+        stxConfig = configModule.default || {}
+      }
+      catch {
+        // No stx config found, use defaults
+      }
+
+      const componentsDir = stxConfig.componentsDir || 'resources/components'
+
       // Import and call serve function directly - no subprocess!
       const { serve } = await import('bun-plugin-stx/serve')
       await serve({
         patterns: ['resources/views', 'storage/framework/defaults/resources/views'],
         port,
-        componentsDir: 'storage/framework/defaults/components/Dashboard',
+        componentsDir,
         layoutsDir: 'resources/layouts',
         partialsDir: 'resources/views',
         quiet: true,
