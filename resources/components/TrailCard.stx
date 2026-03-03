@@ -54,7 +54,7 @@ const tags = typeof tagsRaw === 'string' ? (tagsRaw ? tagsRaw.split(',') : []) :
   <article class="trail-card bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100">
     <!-- Image -->
     <div class="relative h-48 overflow-hidden">
-      <img :src="image" :alt="name" class="trail-image w-full h-full object-cover" />
+      <img src="{{ image }}" alt="{{ name }}" class="trail-image w-full h-full object-cover" />
       <div class="absolute top-4 left-4">
         <span class="px-3 py-1 {{ getDifficultyClass(difficulty) }} rounded-full text-xs font-semibold capitalize">
           {{ difficulty }}
@@ -107,11 +107,11 @@ const tags = typeof tagsRaw === 'string' ? (tagsRaw ? tagsRaw.split(',') : []) :
       </div>
 
       <!-- Tags -->
-      @if="tags.length > 0"
+      @if(tags.length > 0)
         <div class="flex flex-wrap gap-2 mt-4">
-          @for="tag in tags"
+          @foreach(tags as tag)
             <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-xs capitalize">{{ tag }}</span>
-          @endfor
+          @endforeach
         </div>
       @endif
     </div>

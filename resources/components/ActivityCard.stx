@@ -72,7 +72,7 @@ const kudos = getValue(activity, 'kudosCount', getValue(activity, 'kudos', 0))
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center space-x-3">
-        <img :src="avatar" :alt="user" class="w-12 h-12 rounded-full object-cover border-2 border-emerald-100" />
+        <img src="{{ avatar }}" alt="{{ user }}" class="w-12 h-12 rounded-full object-cover border-2 border-emerald-100" />
         <div>
           <p class="font-semibold text-gray-900">{{ user }}</p>
           <p class="text-sm text-gray-500">{{ date }} · {{ activityType }}</p>

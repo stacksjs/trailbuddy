@@ -3,10 +3,9 @@ import { defineProps, withDefaults } from 'stx'
 
 interface SearchFilterProps {
   activeFilter?: string
-  onFilterChange?: (filter: string) => void
 }
 
-const { activeFilter, onFilterChange } = withDefaults(defineProps<SearchFilterProps>(), {
+const { activeFilter } = withDefaults(defineProps<SearchFilterProps>(), {
   activeFilter: 'all'
 })
 
@@ -23,16 +22,12 @@ const filters = [
 import { state } from 'stx'
 
 // Local state for current filter
-const currentFilter = state(activeFilter || 'all')
+const currentFilter = state('all')
 
 // Handle filter change
-function selectFilter(filterId: string) {
+function selectFilter(filterId) {
   currentFilter.set(filterId)
-  // Emit event for parent to handle
-  if (typeof onFilterChange === 'function') {
-    onFilterChange(filterId)
-  }
-  // Also dispatch custom event
+  // Dispatch custom event for parent to handle
   window.dispatchEvent(new CustomEvent('filter-change', { detail: { filter: filterId } }))
 }
 </script>
@@ -62,17 +57,17 @@ function selectFilter(filterId: string) {
         </button>
       </div>
 
-      <!-- Quick filters - reactive -->
+      <!-- Quick filters - SSR the buttons, client handles active state -->
       <div class="mt-4 flex flex-wrap gap-2">
-        @for="filter in filters"
+        @foreach(filters as filter)
           <button
-            @click="selectFilter(filter.id)"
-            :class="currentFilter() === filter.id ? 'bg-emerald-600 text-white border-emerald-600' : 'text-gray-600 border-gray-200 hover:border-emerald-500 hover:text-emerald-600'"
+            @click="selectFilter('{{ filter.id }}')"
+            :class="currentFilter() === '{{ filter.id }}' ? 'bg-emerald-600 text-white border-emerald-600' : 'text-gray-600 border-gray-200 hover:border-emerald-500 hover:text-emerald-600'"
             class="px-4 py-2 text-sm font-medium rounded-full border transition"
           >
             {{ filter.label }}
           </button>
-        @endfor
+        @endforeach
       </div>
     </div>
   </section>
