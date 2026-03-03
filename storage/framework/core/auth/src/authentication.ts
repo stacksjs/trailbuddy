@@ -1,4 +1,5 @@
-import type { UserModel } from '@stacksjs/orm'
+
+type UserModel = InstanceType<typeof User>
 import type {
   AuthCredentials,
   AuthToken,
@@ -6,16 +7,18 @@ import type {
   OAuthClientRow,
   PersonalAccessToken,
   TokenCreateOptions,
-  TokenScopes,
 } from '@stacksjs/types'
 import { config } from '@stacksjs/config'
 import { db } from '@stacksjs/database'
 import { HttpError } from '@stacksjs/error-handling'
 import { formatDate, User } from '@stacksjs/orm'
 import { request } from '@stacksjs/router'
+import { Buffer } from 'node:buffer'
+import { timingSafeEqual } from 'node:crypto'
 import { decrypt, encrypt, verifyHash } from '@stacksjs/security'
 import { RateLimiter } from './rate-limiter'
 import { TokenManager } from './token'
+import { parseScopes } from './tokens'
 
 export class Auth {
   private static authUser: UserModel | undefined = undefined
@@ -81,7 +84,7 @@ export class Auth {
       if (!client)
         throw new HttpError(500, 'No personal access client found. Please run `./buddy auth:setup` first.')
 
-      return client
+      return client as unknown as OAuthClientRow
     }
     catch (error) {
       // Check if the error is due to missing table
@@ -98,44 +101,37 @@ export class Auth {
       .selectAll()
       .executeTakeFirst()
 
-    if (!client)
+    if (!client?.secret)
       return false
 
-    return client.secret === clientSecret
-  }
-
-  private static parseScopes(scopes: string | string[] | null | undefined): TokenScopes {
-    if (!scopes)
-      return []
-    if (Array.isArray(scopes))
-      return scopes as TokenScopes
-    try {
-      const parsed = JSON.parse(scopes)
-      return Array.isArray(parsed) ? parsed as TokenScopes : []
-    }
-    catch {
-      return []
-    }
+    const a = Buffer.from(String(client.secret))
+    const b = Buffer.from(clientSecret)
+    if (a.length !== b.length)
+      return false
+    return timingSafeEqual(a, b)
   }
 
   private static async getTokenFromId(tokenId: number): Promise<PersonalAccessToken | null> {
-    const token = await db.selectFrom('oauth_access_tokens')
+    const result = await db.selectFrom('oauth_access_tokens')
       .where('id', '=', tokenId)
       .selectAll()
       .executeTakeFirst()
 
-    if (!token)
+    if (!result)
       return null
 
+    const token = result as Record<string, unknown>
+
     return {
-      id: token.id,
-      userId: token.user_id,
-      clientId: token.oauth_client_id,
-      name: token.name || 'auth-token',
-      abilities: this.parseScopes(token.scopes),
-      expiresAt: token.expires_at ? new Date(token.expires_at) : null,
-      createdAt: token.created_at ? new Date(token.created_at) : new Date(),
-      updatedAt: token.updated_at ? new Date(token.updated_at) : new Date(),
+      id: token.id as number,
+      userId: token.user_id as number,
+      clientId: token.oauth_client_id as number,
+      name: (token.name as string) || 'auth-token',
+      scopes: parseScopes(token.scopes as string),
+      abilities: parseScopes(token.scopes as string),
+      expiresAt: token.expires_at ? new Date(String(token.expires_at)) : null,
+      createdAt: token.created_at ? new Date(String(token.created_at)) : new Date(),
+      updatedAt: token.updated_at ? new Date(String(token.updated_at)) : new Date(),
       revoked: !!token.revoked,
     }
   }
@@ -193,7 +189,7 @@ export class Auth {
       return false
 
     const authPass = credentials[password] || ''
-    return verifyHash(authPass, user.password, 'bcrypt')
+    return verifyHash(authPass, user.password)
   }
 
   /**
@@ -353,6 +349,7 @@ export class Auth {
       userId: user.id,
       clientId: client.id,
       name,
+      scopes: abilities,
       abilities,
       expiresAt,
       createdAt: new Date(),
@@ -419,7 +416,7 @@ export class Auth {
       return false
 
     // Check if token is expired
-    if (accessToken.expires_at && new Date(accessToken.expires_at) < new Date()) {
+    if (accessToken.expires_at && new Date(String(accessToken.expires_at)) < new Date()) {
       await db.deleteFrom('oauth_access_tokens')
         .where('id', '=', accessToken.id)
         .execute()
@@ -432,7 +429,7 @@ export class Auth {
 
     // Rotate token if it's been used for more than configured hours
     const rotationHours = config.auth.tokenRotation ?? 24
-    const lastUsed = accessToken.updated_at ? new Date(accessToken.updated_at) : new Date()
+    const lastUsed = accessToken.updated_at ? new Date(String(accessToken.updated_at)) : new Date()
     const now = new Date()
     const hoursSinceLastUse = (now.getTime() - lastUsed.getTime()) / (1000 * 60 * 60)
 
@@ -471,7 +468,7 @@ export class Auth {
     if (!accessToken || accessToken.token !== plainToken)
       return undefined
 
-    if (accessToken.expires_at && new Date(accessToken.expires_at) < new Date()) {
+    if (accessToken.expires_at && new Date(String(accessToken.expires_at)) < new Date()) {
       await db.deleteFrom('oauth_access_tokens')
         .where('id', '=', accessToken.id)
         .execute()
@@ -482,7 +479,7 @@ export class Auth {
       return undefined
 
     // Cache the current token for ability checks
-    this.currentToken = await this.getTokenFromId(accessToken.id) ?? undefined
+    this.currentToken = await this.getTokenFromId(accessToken.id as number) ?? undefined
 
     await db.updateTable('oauth_access_tokens')
       .set({ updated_at: formatDate(new Date()) })
@@ -492,7 +489,7 @@ export class Auth {
     if (!accessToken?.user_id)
       return undefined
 
-    return await User.find(accessToken.user_id)
+    return await User.find(accessToken.user_id as number)
   }
 
   /**
@@ -600,15 +597,16 @@ export class Auth {
       .selectAll()
       .execute()
 
-    return tokens.map(token => ({
-      id: token.id,
-      userId: token.user_id,
-      clientId: token.oauth_client_id,
-      name: token.name || 'auth-token',
-      abilities: this.parseScopes(token.scopes),
-      expiresAt: token.expires_at ? new Date(token.expires_at) : null,
-      createdAt: token.created_at ? new Date(token.created_at) : new Date(),
-      updatedAt: token.updated_at ? new Date(token.updated_at) : new Date(),
+    return tokens.map((token: Record<string, unknown>) => ({
+      id: Number(token.id),
+      userId: Number(token.user_id),
+      clientId: Number(token.oauth_client_id),
+      name: String(token.name || 'auth-token'),
+      scopes: parseScopes(String(token.scopes ?? '')),
+      abilities: parseScopes(String(token.scopes ?? '')),
+      expiresAt: token.expires_at ? new Date(String(token.expires_at)) : null,
+      createdAt: token.created_at ? new Date(String(token.created_at)) : new Date(),
+      updatedAt: token.updated_at ? new Date(String(token.updated_at)) : new Date(),
       revoked: !!token.revoked,
     }))
   }
@@ -721,7 +719,7 @@ export class Auth {
       return null
 
     // Generate new JWT token
-    const newToken = TokenManager.generateJWT(accessToken.user_id)
+    const newToken = TokenManager.generateJWT(accessToken.user_id as number)
 
     // Update the token
     await db.updateTable('oauth_access_tokens')
@@ -765,7 +763,7 @@ export class Auth {
       return false
 
     const authPass = credentials[password] || ''
-    const hashCheck = await verifyHash(authPass, user.password, 'bcrypt')
+    const hashCheck = await verifyHash(authPass, user.password)
 
     if (hashCheck) {
       this.authUser = user

@@ -3,15 +3,21 @@ import { fs } from '@stacksjs/storage'
 import { resourcesPath } from '@stacksjs/path'
 import { join } from 'node:path'
 
-interface TemplateResult {
+export interface TemplateResult {
   html: string
   text: string
 }
 
-interface TemplateOptions {
+/** Allowed types for email template variable values */
+export type TemplateVariableValue = string | number | boolean | undefined | null
+
+/** Map of variable names to their values for template replacement */
+export type TemplateVariables = Record<string, TemplateVariableValue>
+
+export interface TemplateOptions {
   /** Template variables to replace */
-  variables?: Record<string, any>
-  /** Layout to wrap the template in (default: 'base') */
+  variables?: TemplateVariables
+  /** Layout to wrap the template in (default: 'base', ignored for .stx templates) */
   layout?: string | false
   /** Subject line for the email */
   subject?: string
@@ -20,7 +26,7 @@ interface TemplateOptions {
 /**
  * Get default template variables from config
  */
-function getDefaultVariables(): Record<string, any> {
+function getDefaultVariables(): TemplateVariables {
   const primaryColor = config.app.primaryColor || '#3b82f6'
 
   return {
@@ -47,7 +53,7 @@ function darkenColor(hex: string, percent: number): string {
 /**
  * Replace template variables in HTML
  */
-function replaceVariables(html: string, variables: Record<string, any>): string {
+function replaceVariables(html: string, variables: TemplateVariables): string {
   let result = html
 
   for (const [key, value] of Object.entries(variables)) {
@@ -60,9 +66,37 @@ function replaceVariables(html: string, variables: Record<string, any>): string 
 }
 
 /**
- * Load a template file
+ * Resolve a template file path, preferring .stx over .html
+ * Returns { path, type } where type is 'stx' or 'html'
  */
-function loadTemplate(templatePath: string): string | null {
+function resolveTemplatePath(templateName: string): { path: string, type: 'stx' | 'html' } | null {
+  // If already has extension, use as-is
+  if (templateName.endsWith('.stx')) {
+    const fullPath = resourcesPath(join('emails', templateName))
+    if (fs.existsSync(fullPath)) return { path: fullPath, type: 'stx' }
+    return null
+  }
+
+  if (templateName.endsWith('.html')) {
+    const fullPath = resourcesPath(join('emails', templateName))
+    if (fs.existsSync(fullPath)) return { path: fullPath, type: 'html' }
+    return null
+  }
+
+  // Try .stx first, then .html
+  const stxPath = resourcesPath(join('emails', `${templateName}.stx`))
+  if (fs.existsSync(stxPath)) return { path: stxPath, type: 'stx' }
+
+  const htmlPath = resourcesPath(join('emails', `${templateName}.html`))
+  if (fs.existsSync(htmlPath)) return { path: htmlPath, type: 'html' }
+
+  return null
+}
+
+/**
+ * Load an HTML template file content
+ */
+function loadHtmlTemplate(templatePath: string): string | null {
   const path = templatePath.endsWith('.html') ? templatePath : `${templatePath}.html`
   const fullPath = resourcesPath(join('emails', path))
 
@@ -77,7 +111,7 @@ function loadTemplate(templatePath: string): string | null {
  * Load a layout template
  */
 function loadLayout(layoutName: string): string | null {
-  return loadTemplate(`layouts/${layoutName}`)
+  return loadHtmlTemplate(`layouts/${layoutName}`)
 }
 
 /**
@@ -107,22 +141,29 @@ function htmlToText(html: string): string {
 /**
  * Render an email template with optional layout
  *
+ * Supports both .stx and .html templates. When a .stx template
+ * is found, it uses the STX engine for rendering (with directives,
+ * server scripts, etc.). When an .html template is found, it uses
+ * simple {{ variable }} replacement with layout wrapping.
+ *
+ * .stx templates are preferred over .html when both exist.
+ *
  * @example
  * ```typescript
- * // Simple template
+ * // STX template (resources/emails/welcome.stx)
  * const { html, text } = await template('welcome', {
  *   variables: { userName: 'John' }
  * })
  *
- * // Without layout
+ * // HTML template with layout
  * const { html, text } = await template('notification', {
- *   layout: false
+ *   layout: 'base',
+ *   variables: { message: 'Hello' }
  * })
  *
- * // Custom layout
- * const { html, text } = await template('invoice', {
- *   layout: 'minimal',
- *   variables: { invoiceId: '12345' }
+ * // Without layout (HTML templates only)
+ * const { html, text } = await template('simple', {
+ *   layout: false
  * })
  * ```
  */
@@ -137,19 +178,37 @@ export async function template(
   } = options
 
   // Merge default variables with provided ones
-  const allVariables: Record<string, any> = {
+  const allVariables: TemplateVariables = {
     ...getDefaultVariables(),
     subject,
     ...variables,
   }
 
-  // Load the content template
-  let content = loadTemplate(templateName)
+  // Resolve template path (prefers .stx over .html)
+  const resolved = resolveTemplatePath(templateName)
 
-  if (!content) {
+  if (!resolved) {
     console.warn(`[Email Template] Template "${templateName}" not found`)
-    content = ''
+    return { html: '', text: '' }
   }
+
+  // Use STX engine for .stx templates
+  if (resolved.type === 'stx') {
+    try {
+      // @ts-ignore - renderEmail may not be exported yet from stx
+      const { renderEmail } = await import('@stacksjs/stx')
+      const result = await renderEmail(resolved.path, allVariables)
+      return result
+    }
+    catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      console.error(`[Email Template] STX render error for "${templateName}":`, message)
+      return { html: '', text: '' }
+    }
+  }
+
+  // HTML template path - use simple variable replacement
+  let content = fs.readFileSync(resolved.path, 'utf-8')
 
   // Replace variables in content
   content = replaceVariables(content, allVariables)
@@ -185,7 +244,7 @@ export async function template(
  */
 export function renderHtml(
   htmlContent: string,
-  variables: Record<string, any> = {},
+  variables: TemplateVariables = {},
 ): TemplateResult {
   const allVariables = {
     ...getDefaultVariables(),
@@ -199,14 +258,14 @@ export function renderHtml(
 }
 
 /**
- * Check if a template exists
+ * Check if a template exists (.stx or .html)
  */
 export function templateExists(templateName: string): boolean {
-  return loadTemplate(templateName) !== null
+  return resolveTemplatePath(templateName) !== null
 }
 
 /**
- * List available templates
+ * List available templates (.stx and .html)
  */
 export function listTemplates(): string[] {
   const emailsPath = resourcesPath('emails')
@@ -224,8 +283,11 @@ export function listTemplates(): string[] {
       if (entry.isDirectory() && entry.name !== 'layouts') {
         scanDir(join(dir, entry.name), `${prefix}${entry.name}/`)
       }
-      else if (entry.isFile() && entry.name.endsWith('.html')) {
-        templates.push(`${prefix}${entry.name.replace('.html', '')}`)
+      else if (entry.isFile() && (entry.name.endsWith('.html') || entry.name.endsWith('.stx'))) {
+        const name = entry.name.replace(/\.(html|stx)$/, '')
+        if (!templates.includes(`${prefix}${name}`)) {
+          templates.push(`${prefix}${name}`)
+        }
       }
     }
   }

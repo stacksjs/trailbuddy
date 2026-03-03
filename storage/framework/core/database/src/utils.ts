@@ -5,12 +5,18 @@
  * configured using the stacks database config.
  */
 
+import type { DatabaseSchema } from 'bun-query-builder'
 import { createQueryBuilder, setConfig } from 'bun-query-builder'
+
+// Permissive schema type that accepts any table name with any columns
+// This allows the query builder to work before model types are generated
+type AnySchema = DatabaseSchema<any> & Record<string, { columns: Record<string, any>, primaryKey: string }>
 
 // Use default values to avoid circular dependencies initially
 // These can be overridden later once config is fully loaded
 // Read from environment variables first
-const envVars = typeof Bun !== 'undefined' ? Bun.env : process.env
+import { env as envVars } from '@stacksjs/env'
+import { getConnectionDefaults } from './defaults'
 
 interface DbConnectionConfig {
   database?: string
@@ -30,30 +36,17 @@ interface DbConfig {
   }
 }
 
+const sqliteDefaults = getConnectionDefaults('sqlite', envVars)
+const mysqlDefaults = getConnectionDefaults('mysql', envVars)
+const postgresDefaults = getConnectionDefaults('postgres', envVars)
+
 let appEnv: string = envVars.APP_ENV || 'local'
 let dbDriver: string = envVars.DB_CONNECTION || 'sqlite'
 let dbConfig: DbConfig = {
   connections: {
-    sqlite: {
-      database: 'database/stacks.sqlite', // SQLite uses file path, not env DB_DATABASE
-      prefix: '',
-    },
-    mysql: {
-      name: envVars.DB_DATABASE || 'stacks',
-      host: envVars.DB_HOST || '127.0.0.1',
-      username: envVars.DB_USERNAME || 'root',
-      password: envVars.DB_PASSWORD || '',
-      port: Number(envVars.DB_PORT) || 3306,
-      prefix: '',
-    },
-    postgres: {
-      name: envVars.DB_DATABASE || 'stacks',
-      host: envVars.DB_HOST || '127.0.0.1',
-      username: envVars.DB_USERNAME || '',
-      password: envVars.DB_PASSWORD || '',
-      port: Number(envVars.DB_PORT) || 5432,
-      prefix: '',
-    },
+    sqlite: { database: sqliteDefaults.database, prefix: '' },
+    mysql: { name: mysqlDefaults.database, host: mysqlDefaults.host, username: mysqlDefaults.username, password: mysqlDefaults.password, port: mysqlDefaults.port, prefix: '' },
+    postgres: { name: postgresDefaults.database, host: postgresDefaults.host, username: postgresDefaults.username, password: postgresDefaults.password, port: postgresDefaults.port, prefix: '' },
   },
 }
 
@@ -146,7 +139,7 @@ function updateQueryBuilderConfig(): void {
 
   setConfig({
     dialect,
-    database: dbConfigForQb,
+    database: dbConfigForQb as any,
     verbose: getEnv() !== 'production',
     timestamps: {
       createdAt: 'created_at',
@@ -203,9 +196,7 @@ function getDb(): ReturnType<typeof createQueryBuilder> {
     // Ensure query builder config is updated before creating instance
     updateQueryBuilderConfig()
 
-    console.log('[database] Creating query builder instance...')
     _dbInstance = createQueryBuilder()
-    console.log('[database] Query builder created:', typeof _dbInstance, Object.keys(_dbInstance || {}))
   }
   return _dbInstance
 }
@@ -213,11 +204,19 @@ function getDb(): ReturnType<typeof createQueryBuilder> {
 // Initialize config asynchronously in the background
 ensureConfigLoaded()
 
+// The bun-query-builder types `unsafe()` as returning `Promise<any>`, but at
+// runtime it returns a Bun SQL Statement that has `.execute()`. This interface
+// corrects the return type so callers can chain `.execute()` without type errors.
+type UnsafeReturn = Promise<any> & { execute: () => Promise<any> }
+interface Db extends Omit<ReturnType<typeof createQueryBuilder>, 'unsafe'> {
+  unsafe: (query: string, params?: any[]) => UnsafeReturn
+}
+
 /**
  * Lazy proxy for the query builder - connection is only made when first used.
  * This is the main entry point for database operations.
  */
-export const db: ReturnType<typeof createQueryBuilder> = new Proxy({} as ReturnType<typeof createQueryBuilder>, {
+export const db = new Proxy({} as Db, {
   get(_target, prop) {
     const instance = getDb()
     const value = (instance as any)[prop]

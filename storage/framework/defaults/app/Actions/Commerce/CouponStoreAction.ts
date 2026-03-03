@@ -1,4 +1,3 @@
-import type { CouponRequestType } from '@stacksjs/orm'
 import { Action } from '@stacksjs/actions'
 
 import { coupons } from '@stacksjs/commerce'
@@ -9,8 +8,8 @@ export default new Action({
   name: 'Coupon Store',
   description: 'Coupon Store ORM Action',
   method: 'POST',
-  model: 'Coupon',
-  async handle(request: CouponRequestType) {
+  model: Coupon,
+  async handle(request) {
     await request.validate()
 
     const data = request.all()

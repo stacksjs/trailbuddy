@@ -1,7 +1,5 @@
 import type { QueueOption } from '@stacksjs/types'
-import process from 'node:process'
 import { path } from '@stacksjs/path'
-import Job from '../../../orm/src/models/Job'
 
 export async function storeJob(name: string, options: QueueOption): Promise<void> {
   const importedJob = (await import(path.appPath(`Jobs/${name}.ts`))).default
@@ -15,14 +13,18 @@ export async function storeJob(name: string, options: QueueOption): Promise<void
     classPayload: JSON.stringify(importedJob),
   })
 
-  const job = {
-    queue: options.queue,
-    payload: payloadJson,
-    attempts: 0,
-    available_at: generateUnixTimestamp(options.delay || 0),
-  }
+  const { db } = await import('@stacksjs/database')
 
-  await Job.create(job)
+  await db
+    .insertInto('jobs')
+    .values({
+      queue: options.queue,
+      payload: payloadJson,
+      attempts: 0,
+      available_at: generateUnixTimestamp(options.delay || 0),
+      created_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
+    })
+    .execute()
 }
 
 function generateUnixTimestamp(secondsToAdd: number): number {

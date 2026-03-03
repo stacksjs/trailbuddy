@@ -4,9 +4,10 @@
  * Uses ts-auth for native WebAuthn implementation (no external dependencies)
  */
 
-import type { VerifiedRegistrationResponse } from 'ts-auth'
+import type { VerifiedRegistrationResponse } from '@stacksjs/ts-auth'
 import type { Insertable } from '@stacksjs/database'
-import type { UserModel } from '../../../orm/src/models/User'
+
+type UserModel = InstanceType<typeof User>
 import { db } from '@stacksjs/database'
 
 // Re-export WebAuthn functions from ts-auth
@@ -21,7 +22,7 @@ export {
   browserSupportsWebAuthn,
   browserSupportsWebAuthnAutofill,
   platformAuthenticatorIsAvailable,
-} from 'ts-auth'
+} from '@stacksjs/ts-auth'
 
 // Re-export WebAuthn types from ts-auth
 export type {
@@ -29,12 +30,11 @@ export type {
   VerifiedAuthenticationResponse,
   RegistrationCredential,
   AuthenticationCredential,
-  AuthenticationResponseJSON,
   PublicKeyCredentialCreationOptions,
   PublicKeyCredentialRequestOptions,
   RegistrationOptions,
   AuthenticationOptions,
-} from 'ts-auth'
+} from '@stacksjs/ts-auth'
 
 type PasskeyInsertable = Insertable<PasskeyAttribute>
 
@@ -54,16 +54,18 @@ export interface PasskeyAttribute {
 }
 
 export async function getUserPasskeys(userId: number): Promise<PasskeyAttribute[]> {
-  return await db.selectFrom('passkeys').selectAll().where('user_id', '=', userId).execute()
+  const rows = await db.selectFrom('passkeys').selectAll().where('user_id', '=', userId).execute()
+  return rows as unknown as PasskeyAttribute[]
 }
 
 export async function getUserPasskey(userId: number, passkeyId: string): Promise<PasskeyAttribute | undefined> {
-  return await db
+  const row = await db
     .selectFrom('passkeys')
     .selectAll()
     .where('id', '=', passkeyId)
     .where('user_id', '=', userId)
     .executeTakeFirst()
+  return row as unknown as PasskeyAttribute | undefined
 }
 
 export async function setCurrentRegistrationOptions(

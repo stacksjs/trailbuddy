@@ -1,38 +1,50 @@
-// soon, these will be auto-imported
-import type { Model } from '@stacksjs/types'
+import { defineModel } from '@stacksjs/orm'
 import { schema } from '@stacksjs/validation'
 
-export default {
-  name: 'SubscriberEmail', // defaults to the sanitized file name
-  table: 'subscriber_emails', // defaults to the lowercase, plural name of the model name (or the name of the model file)
-  primaryKey: 'id', // defaults to `id`
-  autoIncrement: true, // defaults to true
+export default defineModel({
+  name: 'SubscriberEmail',
+  table: 'subscriber_emails',
+  primaryKey: 'id',
+  autoIncrement: true,
+  belongsTo: ['Subscriber'],
 
   traits: {
-    useAuth: true, // defaults to false, `authenticatable` used as an alias
-    useTimestamps: true, // defaults to true, `timestampable` used as an alias
-    useSoftDeletes: true, // defaults to false, `softDeletable` used as an alias
-
-    useSeeder: {
-      // defaults to a count of 10, `seedable` used as an alias
-      count: 100,
+    useUuid: true,
+    useTimestamps: true,
+    useApi: {
+      uri: 'subscriber-emails',
+      routes: ['index', 'show'],
     },
-    // useUuid: true, // defaults to false
   },
 
   attributes: {
     email: {
-      unique: true,
+      required: true,
       fillable: true,
       validation: {
-        rule: schema.string().required().email(),
+        rule: schema.string().email().max(255),
         message: {
-          email: 'Email address must be of valid format',
-          required: 'Email is required',
+          string: 'email must be a string',
+          required: 'email is required',
+          email: 'email must be a valid email address',
+          max: 'email must have a maximum of 255 characters',
         },
       },
-
       factory: faker => faker.internet.email(),
     },
+
+    source: {
+      required: false,
+      fillable: true,
+      default: 'homepage',
+      validation: {
+        rule: schema.string().max(100),
+        message: {
+          string: 'source must be a string',
+          max: 'source must have a maximum of 100 characters',
+        },
+      },
+      factory: faker => faker.helpers.arrayElement(['homepage', 'blog', 'landing-page', 'api', 'import']),
+    },
   },
-} satisfies Model
+} as const)

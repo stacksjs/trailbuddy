@@ -212,17 +212,11 @@ export interface EmailServerConfig {
 
   /**
    * Server mode:
-   * - 'serverless': Lightweight TypeScript/Bun server (default, ~$3/month)
-   * - 'server': Full-featured Zig mail server with IMAP, POP3, CalDAV, etc.
-   * @default 'serverless'
+   * - 'server': Full-featured Zig mail server with IMAP, POP3, CalDAV, etc. (default)
+   * - 'serverless': Lightweight TypeScript/Bun server (~$3/month)
+   * @default 'server'
    */
   mode?: 'serverless' | 'server'
-
-  /**
-   * Path to the Zig mail server repository (only used when mode is 'server')
-   * @default process.env.MAIL_SERVER_PATH
-   */
-  serverPath?: string
 
   storage?: {
     bucket?: string
@@ -297,14 +291,24 @@ export interface EmailResult {
   success: boolean
   provider: string
   messageId?: string
-  [key: string]: any
+  /** Additional metadata from the email provider */
+  metadata?: Record<string, unknown>
 }
 
 // Base configuration interface
 export interface EmailDriverConfig {
   maxRetries?: number
   retryTimeout?: number
-  [key: string]: any
+}
+
+/** Options for email template rendering */
+export interface EmailTemplateOptions {
+  /** Template variables to replace */
+  variables?: Record<string, string | number | boolean | undefined | null>
+  /** Layout to wrap the template in */
+  layout?: string | false
+  /** Subject line for the email */
+  subject?: string
 }
 
 // Email driver interface
@@ -313,7 +317,7 @@ export interface EmailDriver {
   name: string
 
   /** Send an email */
-  send: (message: EmailMessage, options?: RenderOptions) => Promise<EmailResult>
+  send: (message: EmailMessage, options?: EmailTemplateOptions) => Promise<EmailResult>
 
   /** Configure the driver */
   configure: (config: EmailDriverConfig) => void

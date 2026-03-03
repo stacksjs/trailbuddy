@@ -21,18 +21,19 @@
   "keywords": [
     "linter",
     "formatter",
-    "eslint",
-    "antfu",
+    "pickier",
     "pre-configured",
     "zero-config",
     "stacks"
   ],
   "exports": {
     ".": {
+      "bun": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
     "./*": {
+      "bun": "./src/*",
       "import": "./dist/*"
     }
   },
@@ -51,7 +52,6 @@
   "devDependencies": {
     "better-dx": "^0.2.5",
     "@stacksjs/gitlint": "^0.1.5",
-    "bun-git-hooks": "^0.3.1",
-    "publint": "^0.3.12"
+    "bun-git-hooks": "^0.3.1"
   }
 }

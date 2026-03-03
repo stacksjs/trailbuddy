@@ -16,6 +16,27 @@ interface QueuePayload {
   classPayload: string
 }
 
+interface JobRecord {
+  id: number
+  queue: string
+  payload: string
+  attempts: number
+  available_at: number
+  reserved_at: number | null
+  created_at: string | null
+  [key: string]: unknown
+}
+
+interface FailedJobRecord {
+  id: number
+  queue: string
+  connection: string
+  payload: string
+  exception: string
+  failed_at: string
+  [key: string]: unknown
+}
+
 try {
   if (!jobId) {
     log.error('Please provide a job ID')
@@ -32,12 +53,14 @@ try {
 
   if (failedFlag) {
     // Inspect failed job
-    const job = await FailedJob.find(id)
+    const failedResult = await FailedJob.find(id)
 
-    if (!job) {
+    if (!failedResult) {
       log.error(`Failed job with ID ${id} not found`)
       process.exit(1)
     }
+
+    const job = failedResult as FailedJobRecord
 
     console.log('\n┌────────────────────────────────────────────────────────────────┐')
     console.log('│                    Failed Job Details                          │')
@@ -66,7 +89,7 @@ try {
 
     if (job.payload) {
       try {
-        const payload: QueuePayload = JSON.parse(job.payload)
+        const payload = JSON.parse(job.payload) as QueuePayload
         console.log(`│ Name:       ${payload.name.padEnd(52)} │`)
         console.log(`│ Path:       ${payload.path.padEnd(52)} │`)
         console.log(`│ Max Tries:  ${String(payload.maxTries).padEnd(52)} │`)
@@ -97,13 +120,15 @@ try {
   }
   else {
     // Inspect pending/processing job
-    const job = await Job.find(id)
+    const jobResult = await Job.find(id)
 
-    if (!job) {
+    if (!jobResult) {
       log.error(`Job with ID ${id} not found`)
       log.info('Tip: Use --failed flag to inspect failed jobs')
       process.exit(1)
     }
+
+    const job = jobResult as JobRecord
 
     const now = Math.floor(Date.now() / 1000)
     let status = 'Pending'
@@ -144,7 +169,7 @@ try {
 
     if (job.payload) {
       try {
-        const payload: QueuePayload = JSON.parse(job.payload)
+        const payload = JSON.parse(job.payload) as QueuePayload
         console.log(`│ Name:       ${payload.name.padEnd(52)} │`)
         console.log(`│ Path:       ${payload.path.padEnd(52)} │`)
         console.log(`│ Max Tries:  ${String(payload.maxTries).padEnd(52)} │`)
@@ -163,7 +188,7 @@ try {
         // Show job configuration if available
         if (payload.classPayload) {
           try {
-            const classConfig = JSON.parse(payload.classPayload)
+            const classConfig = JSON.parse(payload.classPayload) as Record<string, any>
             console.log('├────────────────────────────────────────────────────────────────┤')
             console.log('│ Job Configuration:                                             │')
             console.log('├────────────────────────────────────────────────────────────────┤')

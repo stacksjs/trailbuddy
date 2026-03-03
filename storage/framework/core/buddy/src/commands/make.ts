@@ -124,10 +124,10 @@ export function make(buddy: CLI): void {
             await createNotification(options)
             break
           case 'policy':
-            await makePolicy(options)
+            await makePolicy(options as any)
             break
           case 'resource':
-            await makeResource(options)
+            await makeResource(options as any)
             break
           case 'queue-table':
             await makeQueueTable()
@@ -206,7 +206,7 @@ export function make(buddy: CLI): void {
     .option('-n, --name [name]', descriptions.name, { default: false })
     .option('-s, --signature [signature]', 'The command signature (CLI name)', { default: false })
     .option('-d, --description [description]', 'The command description', { default: false })
-    .option('--no-register', 'Do not register in Commands.ts', { default: false })
+    .option('--no-register', 'Do not register in Commands.ts')
     .option('-p, --project [project]', descriptions.project, { default: false })
     .option('--verbose', descriptions.verbose, { default: false })
     .example('buddy make:command SendEmails')
@@ -422,8 +422,8 @@ export function make(buddy: CLI): void {
 
       const perf = await intro('buddy make:policy')
 
-      name = name ?? options.name
-      options.name = name
+      name = name ?? (options as any).name
+      ;(options as any).name = name
 
       if (!name) {
         log.error('You need to specify a policy name.')
@@ -431,7 +431,7 @@ export function make(buddy: CLI): void {
         process.exit()
       }
 
-      const result = await makePolicy(options)
+      const result = await makePolicy(options as any)
 
       if (!result) {
         await outro('While running the make:policy command, there was an issue', {
@@ -463,8 +463,8 @@ export function make(buddy: CLI): void {
 
       const perf = await intro('buddy make:resource')
 
-      name = name ?? options.name
-      options.name = name
+      name = name ?? (options as any).name
+      ;(options as any).name = name
 
       if (!name) {
         log.error('You need to specify a resource name.')
@@ -472,7 +472,7 @@ export function make(buddy: CLI): void {
         process.exit()
       }
 
-      const result = await makeResource(options)
+      const result = await makeResource(options as any)
 
       if (!result) {
         await outro('While running the make:resource command, there was an issue', {

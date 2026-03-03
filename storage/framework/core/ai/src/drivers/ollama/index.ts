@@ -1,4 +1,3 @@
-/* eslint-disable pickier/no-unused-vars */
 /**
  * Ollama API Driver
  *
@@ -416,7 +415,7 @@ export async function pullModel(
       if (!line.trim()) continue
 
       try {
-        const data = JSON.parse(line)
+        const data = JSON.parse(line) as { status?: string; completed?: number; total?: number }
         if (onProgress) {
           onProgress(data.status, data.completed, data.total)
         }
@@ -449,7 +448,7 @@ export async function deleteModel(name: string): Promise<void> {
 /**
  * Show model information
  */
-export async function showModel(name: string): Promise<{
+export async function showModel(_name: string): Promise<{
   modelfile: string
   parameters: string
   template: string
@@ -466,7 +465,7 @@ export async function showModel(name: string): Promise<{
   const response = await fetch(`${config.host}/api/show`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ name: _name }),
   })
 
   if (!response.ok) {
@@ -474,7 +473,7 @@ export async function showModel(name: string): Promise<{
     throw new Error(`Ollama API error: ${error}`)
   }
 
-  return response.json()
+  return response.json() as any
 }
 
 /**

@@ -9,7 +9,7 @@ import { Action } from '@stacksjs/enums'
 import { err, handleError, ok } from '@stacksjs/error-handling'
 import { frameworkPath, projectPath } from '@stacksjs/path'
 import { fs, readJsonFile, readPackageJson, readTextFile, writeTextFile } from '@stacksjs/storage'
-import { parse } from 'yaml'
+// Bun has native YAML support via Bun.YAML
 
 // import { semver } from './versions'
 
@@ -30,7 +30,7 @@ export async function initProject(): Promise<Result<Subprocess, Error>> {
 
   log.info('Application key generated.')
 
-  return ok(result.value)
+  return ok((result as any).value)
 }
 
 export async function ensureProjectIsInitialized(): Promise<boolean> {
@@ -138,7 +138,7 @@ export function hasScript(manifest: Manifest, script: NpmScript): boolean {
 }
 
 export function parseYaml(content: any): any {
-  return parse(content)
+  return Bun.YAML.parse(content)
 }
 
 /**
@@ -171,4 +171,11 @@ export function isIpv6(address: AddressInfo): boolean {
   )
 }
 
-export { dump as dumpYaml, load as loadYaml } from 'js-yaml'
+export function dumpYaml(_content: any): string {
+  // TODO: Bun.YAML.stringify when available
+  return JSON.stringify(_content, null, 2)
+}
+
+export function loadYaml(content: string): any {
+  return Bun.YAML.parse(content)
+}

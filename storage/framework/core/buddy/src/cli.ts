@@ -8,6 +8,7 @@ const args = process.argv.slice(2)
 const requestedCommand = args[0] || 'help'
 // Minimal commands that don't need full project setup
 const isMinimalCommand = ['--version', '-v', '--help', '-h', 'help', 'version'].includes(requestedCommand)
+const skipAppKeyCheck = ['build', 'lint', 'lint:fix', 'test', 'test:types', 'test:unit', 'test:feature', 'typecheck', 'types:fix', 'types:generate', 'clean', 'fresh', 'about', 'doctor'].some(cmd => requestedCommand.startsWith(cmd))
 const needsFullSetup = !isMinimalCommand
 
 // Setup global error handlers (skip for minimal commands for performance)
@@ -45,51 +46,51 @@ async function main() {
 
   // Skip expensive setup for commands that don't need it
   if (needsFullSetup) {
-    const { runAction } = await import('@stacksjs/actions')
-    const { Action } = await import('@stacksjs/enums')
-    const { ensureProjectIsInitialized } = await import('@stacksjs/utils')
-
-    // Load required commands for setup
+    // Load required commands for setup and key generation
     const { setup } = await import('./commands/setup.ts')
+    setup(buddy as any)
+
     const { key } = await import('./commands/key.ts')
+    key(buddy as any)
 
-    setup(buddy)
-    key(buddy)
+    // Before running any commands, ensure the project is already initialized
+    // Skip APP_KEY check for commands that don't need it (build, lint, test, etc.)
+    if (!skipAppKeyCheck) {
+      const { runAction } = await import('@stacksjs/actions')
+      const { Action } = await import('@stacksjs/enums')
+      const { ensureProjectIsInitialized } = await import('@stacksjs/utils')
 
-    // before running any commands, ensure the project is already initialized
-    const isAppKeySet = await ensureProjectIsInitialized()
-    if (!isAppKeySet) {
-      log.info('Your `APP_KEY` is not yet set')
-      log.info('Generating application key...')
-      const result = await runAction(Action.KeyGenerate)
+      const isAppKeySet = await ensureProjectIsInitialized()
+      if (!isAppKeySet) {
+        log.info('Your `APP_KEY` is not yet set')
+        log.info('Generating application key...')
+        const result = await runAction(Action.KeyGenerate)
 
-      if (result.isErr) {
-        log.error('Failed to set random application key.', result.error)
-        process.exit()
+        if (result.isErr) {
+          log.error('Failed to set random application key.', result.error)
+          process.exit()
+        }
       }
     }
 
     // Use lazy loading for better cold start performance
     const { loadCommands, getCommandsToLoad } = await import('./lazy-commands.ts')
     const commandsToLoad = getCommandsToLoad(args)
-    await loadCommands(commandsToLoad, buddy)
+    await loadCommands(commandsToLoad, buddy as any)
 
-    // dynamic imports - skip for list command since we already have all commands
-    const baseCommand = args[0]?.split(':')[0]
-    if (baseCommand !== 'list') {
-      await dynamicImports(buddy)
-    }
+    // Load user commands from app/Commands/
+    await dynamicImports(buddy)
   }
   else {
     // For minimal commands, only load what's needed for better cold start
     const { loadCommand } = await import('./lazy-commands.ts')
-    await loadCommand('version', buddy)
+    await loadCommand('version', buddy as any)
   }
 
   buddy.help()
 
   // Handle interactive mode when no command is specified
-  if (args.length === 0 && process.stdin.isTTY && !buddy.isNoInteraction) {
+  if (args.length === 0 && process.stdin.isTTY && !(buddy as any).isNoInteraction) {
     await showInteractiveMenu(buddy)
   }
   else {
@@ -178,7 +179,7 @@ async function dynamicImports(buddy: CLI) {
 
       // Check if file exists
       if (!fs.existsSync(commandPath)) {
-        log.warn(`Command file not found: ${commandPath} (registered as '${signature}')`)
+        log.debug(`Command file not found: ${commandPath} (registered as '${signature}')`)
         continue
       }
 
@@ -191,7 +192,7 @@ async function dynamicImports(buddy: CLI) {
           // Register aliases if specified
           if (commandConfig.aliases && Array.isArray(commandConfig.aliases)) {
             for (const alias of commandConfig.aliases) {
-              buddy.alias(signature, alias)
+              ;(buddy as any).alias(signature, alias)
             }
           }
         }
@@ -206,18 +207,29 @@ async function dynamicImports(buddy: CLI) {
   }
   catch {
     // If Commands.ts doesn't exist, fall back to auto-discovery
+    if (!fs.existsSync(commandsDir)) {
+      log.debug('app/Commands directory not found, skipping user commands')
+      return
+    }
+
     log.debug('Commands.ts not found, using auto-discovery')
 
     const commandFiles = fs.readdirSync(commandsDir).filter((file: string) => file.endsWith('.ts'))
 
     for (const file of commandFiles) {
       const commandPath = `${commandsDir}/${file}`
-      const dynamicImport = await import(commandPath)
 
-      if (typeof dynamicImport.default === 'function')
-        dynamicImport.default(buddy)
-      else
-        log.error(`Expected a default export function in ${file}, but got:`, dynamicImport.default)
+      try {
+        const dynamicImport = await import(commandPath)
+
+        if (typeof dynamicImport.default === 'function')
+          dynamicImport.default(buddy)
+        else
+          log.debug(`Skipping ${file} — no default export function`)
+      }
+      catch (error) {
+        log.error(`Failed to load command ${file}:`, error)
+      }
     }
   }
 

@@ -1,4 +1,3 @@
-import type { CustomerRequestType } from '@stacksjs/orm'
 import { randomUUIDv7 } from 'bun'
 
 import { Action } from '@stacksjs/actions'
@@ -10,8 +9,8 @@ export default new Action({
   name: 'Customer Store',
   description: 'Customer Store ORM Action',
   method: 'POST',
-  model: 'Customer',
-  async handle(request: CustomerRequestType) {
+  model: Customer,
+  async handle(request) {
     await request.validate()
 
     const data = {

@@ -1,8 +1,15 @@
 import type { AuthToken } from '@stacksjs/types'
+export type { AuthToken } from '@stacksjs/types'
 import { Buffer } from 'node:buffer'
-import { randomBytes } from 'node:crypto'
+import { createHmac, randomBytes } from 'node:crypto'
+import process from 'node:process'
 import { db, sql } from '@stacksjs/database'
 import { HttpError } from '@stacksjs/error-handling'
+
+/** Type-safe helper to brand a plain string as an AuthToken */
+function toAuthToken(value: string): AuthToken {
+  return value as AuthToken
+}
 
 export class TokenManager {
   static async createAccessToken(user: { id: number }): Promise<AuthToken> {
@@ -25,7 +32,7 @@ export class TokenManager {
     if (!result?.insertId)
       throw new HttpError(500, 'Failed to create access token')
 
-    return token
+    return toAuthToken(token)
   }
 
   static async validateToken(token: string): Promise<boolean> {
@@ -38,7 +45,7 @@ export class TokenManager {
       return false
 
     // Check if token is expired
-    if (accessToken.expires_at && new Date(accessToken.expires_at) < new Date()) {
+    if (accessToken.expires_at && new Date(String(accessToken.expires_at)) < new Date()) {
       // Automatically delete expired tokens
       await db.deleteFrom('oauth_access_tokens')
         .where('id', '=', accessToken.id)
@@ -51,7 +58,7 @@ export class TokenManager {
       return false
 
     // Rotate token if it's been used for more than 24 hours
-    const lastUsed = accessToken.updated_at ? new Date(accessToken.updated_at) : new Date()
+    const lastUsed = accessToken.updated_at ? new Date(String(accessToken.updated_at)) : new Date()
     const now = new Date()
     const hoursSinceLastUse = (now.getTime() - lastUsed.getTime()) / (1000 * 60 * 60)
 
@@ -92,7 +99,7 @@ export class TokenManager {
       .where('id', '=', accessToken.id)
       .execute()
 
-    return newToken
+    return toAuthToken(newToken)
   }
 
   static async revokeToken(token: string): Promise<void> {
@@ -110,6 +117,8 @@ export class TokenManager {
    * Contains user ID, timestamps, and random signature for security
    */
   static generateJWT(userId: number): string {
+    const appKey = process.env.APP_KEY || 'stacks-default-key'
+
     const header = {
       alg: 'HS256',
       typ: 'JWT',
@@ -124,7 +133,9 @@ export class TokenManager {
 
     const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url')
     const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url')
-    const signature = randomBytes(32).toString('base64url')
+    const signature = createHmac('sha256', appKey)
+      .update(`${encodedHeader}.${encodedPayload}`)
+      .digest('base64url')
 
     return `${encodedHeader}.${encodedPayload}.${signature}`
   }

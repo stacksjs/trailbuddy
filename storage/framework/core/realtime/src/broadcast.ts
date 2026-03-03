@@ -1,4 +1,5 @@
 import type { BroadcastEvent, ChannelType } from 'ts-broadcasting'
+import { log } from '@stacksjs/logging'
 import { getServer } from './server-instance'
 
 export interface BroadcastInstance {
@@ -36,7 +37,7 @@ export class Broadcast {
   subscribe(channel: string, callback: (data: any) => void): void {
     // Subscription is client-side, not server-side
     // This is handled by BroadcastClient
-    console.warn('Broadcast.subscribe() is a client-side operation. Use BroadcastClient instead.')
+    log.warn('Broadcast.subscribe() is a client-side operation. Use BroadcastClient instead.')
   }
 
   /**
@@ -44,7 +45,7 @@ export class Broadcast {
    */
   unsubscribe(channel: string): void {
     // Unsubscription is client-side, not server-side
-    console.warn('Broadcast.unsubscribe() is a client-side operation. Use BroadcastClient instead.')
+    log.warn('Broadcast.unsubscribe() is a client-side operation. Use BroadcastClient instead.')
   }
 
   /**
@@ -54,7 +55,7 @@ export class Broadcast {
     const server = getServer()
 
     if (!server) {
-      console.warn('Broadcast server not initialized')
+      log.warn('Broadcast server not initialized')
       return
     }
 
@@ -86,9 +87,9 @@ export class Broadcast {
 export async function runBroadcast(name: string, payload?: any): Promise<void> {
   // Dynamically import path utilities to avoid build-time issues
   const { appPath } = await import('@stacksjs/path')
-  const { globSync } = await import('bun')
+  const bun = await import('bun')
 
-  const broadcastFiles = globSync([appPath('Broadcasts/**/*.ts')], { absolute: true })
+  const broadcastFiles = (bun as any).globSync([appPath('Broadcasts/**/*.ts')], { absolute: true })
   const broadcastFile = broadcastFiles.find((file: string) => file.endsWith(`${name}.ts`))
 
   if (!broadcastFile)

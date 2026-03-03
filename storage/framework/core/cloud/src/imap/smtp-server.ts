@@ -175,7 +175,7 @@ export class SmtpServer {
    */
   private send(session: SmtpSession, message: string): void {
     if (!session.socket.destroyed) {
-      session.socket.write(message + '\r\n')
+      session.socket.write(`${message}\r\n`)
     }
   }
 
@@ -274,7 +274,7 @@ export class SmtpServer {
 
     this.send(session, '220 Ready to start TLS')
 
-    const tlsOptions: tls.TlsOptions = {
+    const tlsOptions = {
       key: fs.readFileSync(this.config.tls.key),
       cert: fs.readFileSync(this.config.tls.cert),
       isServer: true,
@@ -319,18 +319,27 @@ export class SmtpServer {
       let username = ''
 
       session.socket.on('data', async (data) => {
-        const line = data.toString().trim()
+        try {
+          const line = data.toString().trim()
 
-        if (step === 'username') {
-          username = Buffer.from(line, 'base64').toString('utf-8')
-          step = 'password'
-          this.send(session, '334 UGFzc3dvcmQ6') // "Password:" in base64
-        } else if (step === 'password') {
-          const password = Buffer.from(line, 'base64').toString('utf-8')
+          if (step === 'username') {
+            username = Buffer.from(line, 'base64').toString('utf-8')
+            step = 'password'
+            this.send(session, '334 UGFzc3dvcmQ6') // "Password:" in base64
+          } else if (step === 'password') {
+            const password = Buffer.from(line, 'base64').toString('utf-8')
+            session.socket.removeAllListeners('data')
+            session.socket.on('data', originalHandler)
+
+            await this.authenticateUser(session, username, password)
+          }
+        }
+        catch (err) {
+          // Always restore the original data handler on error
           session.socket.removeAllListeners('data')
           session.socket.on('data', originalHandler)
-
-          await this.authenticateUser(session, username, password)
+          this.send(session, '535 Authentication failed')
+          console.error(`SMTP AUTH LOGIN error: ${(err as Error).message}`)
         }
       })
     } else {
@@ -366,7 +375,28 @@ export class SmtpServer {
 
     const user = this.config.users[cleanUsername]
 
-    if (user && user.password === password) {
+    const passwordsMatch = user ? (() => {
+      try {
+        const expected = Buffer.from(user.password, 'utf-8')
+        const actual = Buffer.from(password, 'utf-8')
+        if (expected.length !== actual.length) {
+          // Pad to same length to avoid leaking length info, then compare
+          const maxLen = Math.max(expected.length, actual.length)
+          const a = Buffer.alloc(maxLen)
+          const b = Buffer.alloc(maxLen)
+          a.set(expected)
+          b.set(actual)
+          crypto.timingSafeEqual(a, b)
+          return false
+        }
+        return crypto.timingSafeEqual(expected, actual)
+      }
+      catch {
+        return false
+      }
+    })() : false
+
+    if (user && passwordsMatch) {
       session.authenticated = true
       session.username = cleanUsername
       session.email = user.email
@@ -462,7 +492,7 @@ export class SmtpServer {
     } else {
       // Handle dot-stuffing (lines starting with . have the dot removed)
       const actualLine = line.startsWith('.') ? line.slice(1) : line
-      session.dataBuffer += actualLine + '\r\n'
+      session.dataBuffer += `${actualLine}\r\n`
     }
   }
 

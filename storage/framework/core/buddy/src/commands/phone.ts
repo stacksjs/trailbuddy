@@ -56,7 +56,7 @@ export function phone(buddy: CLI): void {
       loadAwsCredentials()
 
       try {
-        const { ConnectClient } = await import('ts-cloud/aws')
+        const { ConnectClient } = await import('@stacksjs/ts-cloud')
         const connect = new ConnectClient(process.env.AWS_REGION || 'us-east-1')
 
         const appName = (process.env.APP_NAME || 'stacks').toLowerCase().replace(/[^a-z0-9-]/g, '-')
@@ -64,9 +64,9 @@ export function phone(buddy: CLI): void {
 
         console.log(`Looking for Connect instance: ${instanceAlias}`)
 
-        const instances = await withTimeout(connect.listInstances({ MaxResults: 100 }))
+        const instances = await withTimeout(connect.listInstances({ MaxResults: 100 })) as any
         const instance = instances.InstanceSummaryList?.find(
-          i => i.InstanceAlias === instanceAlias
+          (i: any) => i.InstanceAlias === instanceAlias
         )
 
         if (instance) {
@@ -80,7 +80,7 @@ export function phone(buddy: CLI): void {
           // List phone numbers
           if (instance.Id) {
             try {
-              const numbers = await withTimeout(connect.listPhoneNumbers({ InstanceId: instance.Id }))
+              const numbers = await withTimeout(connect.listPhoneNumbers({ InstanceId: instance.Id })) as any
               if (numbers.ListPhoneNumbersSummaryList && numbers.ListPhoneNumbersSummaryList.length > 0) {
                 console.log('\n  Phone Numbers:')
                 for (const num of numbers.ListPhoneNumbersSummaryList) {
@@ -116,15 +116,15 @@ export function phone(buddy: CLI): void {
       loadAwsCredentials()
 
       try {
-        const { ConnectClient } = await import('ts-cloud/aws')
+        const { ConnectClient } = await import('@stacksjs/ts-cloud')
         const connect = new ConnectClient(process.env.AWS_REGION || 'us-east-1')
 
         const appName = (process.env.APP_NAME || 'stacks').toLowerCase().replace(/[^a-z0-9-]/g, '-')
         const instanceAlias = `${appName}-phone`
 
-        const instances = await withTimeout(connect.listInstances({ MaxResults: 100 }))
+        const instances = await withTimeout(connect.listInstances({ MaxResults: 100 })) as any
         const instance = instances.InstanceSummaryList?.find(
-          i => i.InstanceAlias === instanceAlias
+          (i: any) => i.InstanceAlias === instanceAlias
         )
 
         if (!instance?.Id) {
@@ -133,7 +133,7 @@ export function phone(buddy: CLI): void {
           return
         }
 
-        const numbers = await withTimeout(connect.listPhoneNumbers({ InstanceId: instance.Id }))
+        const numbers = await withTimeout(connect.listPhoneNumbers({ InstanceId: instance.Id })) as any
 
         if (!numbers.ListPhoneNumbersSummaryList || numbers.ListPhoneNumbersSummaryList.length === 0) {
           console.log('No phone numbers claimed.')
@@ -170,15 +170,15 @@ export function phone(buddy: CLI): void {
       loadAwsCredentials()
 
       try {
-        const { ConnectClient } = await import('ts-cloud/aws')
+        const { ConnectClient } = await import('@stacksjs/ts-cloud')
         const connect = new ConnectClient(process.env.AWS_REGION || 'us-east-1')
 
         const appName = (process.env.APP_NAME || 'stacks').toLowerCase().replace(/[^a-z0-9-]/g, '-')
         const instanceAlias = `${appName}-phone`
 
-        const instances = await withTimeout(connect.listInstances({ MaxResults: 100 }))
+        const instances = await withTimeout(connect.listInstances({ MaxResults: 100 })) as any
         const instance = instances.InstanceSummaryList?.find(
-          i => i.InstanceAlias === instanceAlias
+          (i: any) => i.InstanceAlias === instanceAlias
         )
 
         if (!instance?.Arn) {
@@ -192,7 +192,7 @@ export function phone(buddy: CLI): void {
           PhoneNumberCountryCode: countryCode,
           PhoneNumberType: phoneType,
           MaxResults: 10,
-        }))
+        })) as any
 
         if (!available.AvailableNumbersList || available.AvailableNumbersList.length === 0) {
           console.log(`No ${phoneType} numbers available in ${countryCode}.`)

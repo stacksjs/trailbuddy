@@ -1,13 +1,14 @@
-import type { MakeOptions } from '@stacksjs/types'
 import { log } from '@stacksjs/logging'
 import * as p from '@stacksjs/path'
 import { doesExist, get, writeFile } from '@stacksjs/storage'
 
-export interface MakePolicyOptions extends MakeOptions {
+export interface MakePolicyOptions {
+  name?: string
   /** The model this policy is for */
   model?: string
   /** Whether to register the policy in Gates.ts */
   register?: boolean
+  [key: string]: any
 }
 
 /**
@@ -59,8 +60,10 @@ export async function makePolicy(options: MakePolicyOptions): Promise<boolean> {
  * Generate policy file content
  */
 function generatePolicyContent(policyName: string, modelName: string): string {
-  return `import type { UserModel } from '@stacksjs/orm'
+  return `import type _User from '../models/User'
 import { BasePolicy } from '@stacksjs/auth'
+
+type UserModel = _User
 
 /**
  * ${policyName}
@@ -173,7 +176,7 @@ async function registerPolicy(modelName: string, policyName: string): Promise<vo
 
       // Add the new policy
       const newPolicy = `  '${modelName}': '${policyName}',\n`
-      const updatedPolicies = existingPolicies.trimEnd() + '\n' + newPolicy
+      const updatedPolicies = `${existingPolicies.trimEnd()}\n${newPolicy}`
 
       content = content.replace(
         /export const policies[^{]*\{([^}]*)\}/,

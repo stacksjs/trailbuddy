@@ -4,20 +4,12 @@ import { db } from '@stacksjs/database'
 import { log } from '@stacksjs/logging'
 
 // Detect database driver from environment
-const envVars = typeof Bun !== 'undefined' ? Bun.env : process.env
-const dbDriver = envVars.DB_CONNECTION || 'sqlite'
-const isPostgres = dbDriver === 'postgres'
-const isMysql = dbDriver === 'mysql'
+import { env } from '@stacksjs/env'
+import { sqlHelpers } from '@stacksjs/database'
 
-// SQL syntax helpers for cross-database compatibility
-// - PostgreSQL: SERIAL PRIMARY KEY, NOW(), true/false
-// - MySQL: INTEGER AUTO_INCREMENT PRIMARY KEY, NOW(), 1/0
-// - SQLite: INTEGER PRIMARY KEY AUTOINCREMENT, datetime('now'), 1/0
-const _autoIncrement = isPostgres ? 'SERIAL' : 'INTEGER'
-const _primaryKey = isPostgres ? 'PRIMARY KEY' : (isMysql ? 'PRIMARY KEY AUTO_INCREMENT' : 'PRIMARY KEY AUTOINCREMENT')
-const now = isPostgres || isMysql ? 'NOW()' : `datetime('now')`
-const boolTrue = isPostgres ? 'true' : '1'
-const _boolFalse = isPostgres ? 'false' : '0'
+const dbDriver = env.DB_CONNECTION || 'sqlite'
+const sql = sqlHelpers(dbDriver)
+const { isPostgres, isMysql, now, boolTrue, boolFalse: _boolFalse } = sql
 
 log.info('Setting up authentication...')
 log.info(`Database driver: ${dbDriver}`)
@@ -41,7 +33,7 @@ try {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP
       )
-    `).execute()
+    `)
   } else if (isMysql) {
     await db.unsafe(`
       CREATE TABLE IF NOT EXISTS oauth_clients (
@@ -56,7 +48,7 @@ try {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP
       )
-    `).execute()
+    `)
   } else {
     await db.unsafe(`
       CREATE TABLE IF NOT EXISTS oauth_clients (
@@ -71,7 +63,7 @@ try {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP
       )
-    `).execute()
+    `)
   }
 
   // Create oauth_access_tokens table if it doesn't exist
@@ -91,7 +83,7 @@ try {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP
       )
-    `).execute()
+    `)
   } else if (isMysql) {
     await db.unsafe(`
       CREATE TABLE IF NOT EXISTS oauth_access_tokens (
@@ -106,7 +98,7 @@ try {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP NULL
       )
-    `).execute()
+    `)
   } else {
     await db.unsafe(`
       CREATE TABLE IF NOT EXISTS oauth_access_tokens (
@@ -121,13 +113,13 @@ try {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP
       )
-    `).execute()
+    `)
   }
 
   // Create index on token for fast lookups
   await db.unsafe(`
     CREATE INDEX IF NOT EXISTS idx_oauth_access_tokens_token ON oauth_access_tokens(token)
-  `).execute()
+  `)
 
   // Create oauth_refresh_tokens table if it doesn't exist
   // Note: tokens are JWT-like strings with embedded metadata (variable length)
@@ -142,7 +134,7 @@ try {
         expires_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `).execute()
+    `)
   } else if (isMysql) {
     await db.unsafe(`
       CREATE TABLE IF NOT EXISTS oauth_refresh_tokens (
@@ -153,7 +145,7 @@ try {
         expires_at TIMESTAMP NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `).execute()
+    `)
   } else {
     await db.unsafe(`
       CREATE TABLE IF NOT EXISTS oauth_refresh_tokens (
@@ -164,13 +156,13 @@ try {
         expires_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `).execute()
+    `)
   }
 
   // Create index on refresh token for fast lookups
   await db.unsafe(`
     CREATE INDEX IF NOT EXISTS idx_oauth_refresh_tokens_token ON oauth_refresh_tokens(token)
-  `).execute()
+  `)
 
   log.success('OAuth tables ready')
 }
@@ -191,7 +183,7 @@ try {
         token VARCHAR(255) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `).execute()
+    `)
   } else if (isMysql) {
     await db.unsafe(`
       CREATE TABLE IF NOT EXISTS password_resets (
@@ -200,7 +192,7 @@ try {
         token VARCHAR(255) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `).execute()
+    `)
   } else {
     await db.unsafe(`
       CREATE TABLE IF NOT EXISTS password_resets (
@@ -209,13 +201,13 @@ try {
         token VARCHAR(255) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
-    `).execute()
+    `)
   }
 
   // Create index on email for fast lookups
   await db.unsafe(`
     CREATE INDEX IF NOT EXISTS idx_password_resets_email ON password_resets(email)
-  `).execute()
+  `)
 
   log.success('Password resets table ready')
 }
@@ -231,7 +223,7 @@ try {
   // Check if personal access client already exists using raw SQL
   const existing = await db.unsafe(`
     SELECT id FROM oauth_clients WHERE personal_access_client = ${boolTrue} LIMIT 1
-  `).execute()
+  `)
 
   if ((existing as any[])?.length > 0) {
     console.log('\n✓ Personal access client already exists')
@@ -243,13 +235,13 @@ try {
       await db.unsafe(`
         INSERT INTO oauth_clients (name, secret, provider, redirect, personal_access_client, password_client, revoked, created_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
-      `, ['Personal Access Client', secret, 'local', 'http://localhost', true, false, false]).execute()
+      `, ['Personal Access Client', secret, 'local', 'http://localhost', true, false, false])
     } else {
       // MySQL and SQLite both use ? placeholders and numeric booleans
       await db.unsafe(`
         INSERT INTO oauth_clients (name, secret, provider, redirect, personal_access_client, password_client, revoked, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ${now})
-      `, ['Personal Access Client', secret, 'local', 'http://localhost', 1, 0, 0]).execute()
+      `, ['Personal Access Client', secret, 'local', 'http://localhost', 1, 0, 0])
     }
 
     console.log('\n✓ Personal access client created successfully')

@@ -1,15 +1,25 @@
 import type { JobOptions } from '@stacksjs/types'
-import type { schema } from '@stacksjs/validation'
 
 interface ActionValidations {
   [key: string]: {
-    rule: ReturnType<typeof schema.string>
+    rule: { validate: (value: unknown) => { valid: boolean, errors?: Array<{ message: string }> } }
     message?: string | Record<string, string>
   }
 }
 
-type Request = any
-interface ActionOptions {
+/**
+ * Infer the correct RequestInstance type from the model value.
+ *
+ * When `model: Post` (a defineModel() return), resolves to RequestInstance<typeof Post>
+ * with full field narrowing. When `model: 'Post'` (string) or omitted, falls back
+ * to bare RequestInstance.
+ */
+type InferRequest<TModel> =
+  TModel extends { _isStacksModel: true }
+    ? RequestInstance<TModel>
+    : RequestInstance
+
+interface ActionOptions<TModel = string> {
   name?: string
   description?: string
   apiResponse?: boolean
@@ -21,11 +31,11 @@ interface ActionOptions {
   enabled?: JobOptions['enabled']
   path?: string
   requestFile?: string
-  model?: string
-  handle: (options?: Request) => Promise<any> | string | number | boolean
+  model?: TModel
+  handle: (request: InferRequest<TModel>) => Promise<any> | any
 }
 
-export class Action {
+export class Action<TModel = string> {
   name?: string
   description?: string
   rate?: ActionOptions['rate']
@@ -36,8 +46,9 @@ export class Action {
   method?: ActionOptions['method']
   validations?: ActionOptions['validations']
   requestFile?: string
-  handle: ActionOptions['handle']
-  model?: ActionOptions['model']
+  handle: ActionOptions<TModel>['handle']
+  model?: string
+
   constructor({
     name,
     description,
@@ -51,9 +62,7 @@ export class Action {
     method,
     requestFile,
     model,
-  }: ActionOptions) {
-    // log.debug(`Action ${name} created`) // TODO: this does not yet work because the cloud does not yet have proper file system (efs) access
-
+  }: ActionOptions<TModel>) {
     this.name = name
     this.description = description
     this.validations = validations
@@ -65,6 +74,13 @@ export class Action {
     this.method = method
     this.handle = handle
     this.requestFile = requestFile
-    this.model = model
+
+    // Extract model name string for runtime (route generation, etc.)
+    if (model && typeof model === 'object' && 'name' in model) {
+      this.model = (model as { name: string }).name
+    }
+    else if (typeof model === 'string') {
+      this.model = model
+    }
   }
 }

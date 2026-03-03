@@ -99,9 +99,9 @@ When the user gives you a command:
 2. Identify the files that need to be modified
 3. Generate the exact code changes needed
 4. Respond with a structured format showing:
-   - Summary of changes
-   - Files to modify/create with full content
-   - Any additional notes
+  - Summary of changes
+  - Files to modify/create with full content
+  - Any additional notes
 
 Format file changes as:
 FILE: path/to/file.ts
@@ -250,8 +250,8 @@ export function getAvailableDrivers(): string[] {
  * Get repository structure for context
  */
 export async function getRepoContext(repoPath: string): Promise<string> {
-  const { $ } = await import('bun')
-  const treeResult = await $`cd ${repoPath} && find . -type f -not -path "*/node_modules/*" -not -path "*/.git/*" -not -name "*.lock" | head -50`.quiet()
+  const { $: _$ } = await import('bun')
+  const treeResult = await _$`cd ${repoPath} && find . -type f -not -path "*/node_modules/*" -not -path "*/.git/*" -not -name "*.lock" | head -50`.quiet()
   const files = treeResult.text().trim()
 
   let readme = ''
@@ -279,7 +279,7 @@ ${packageJson ? `package.json:\n${packageJson}\n` : ''}
  * Clone or open a repository
  */
 export async function openRepository(input: string): Promise<RepoState> {
-  const { $ } = await import('bun')
+  const { $: _$ } = await import('bun')
   let repoPath: string
   let repoName: string
 
@@ -289,11 +289,11 @@ export async function openRepository(input: string): Promise<RepoState> {
 
     if (existsSync(repoPath)) {
       console.log(`Repository already exists, pulling latest...`)
-      await $`cd ${repoPath} && git pull --rebase`.quiet()
+      await _$`cd ${repoPath} && git pull --rebase`.quiet()
     }
     else {
       console.log(`Cloning ${input}...`)
-      await $`git clone ${input} ${repoPath}`.quiet()
+      await _$`git clone ${input} ${repoPath}`.quiet()
     }
   }
   else {
@@ -310,13 +310,13 @@ export async function openRepository(input: string): Promise<RepoState> {
     repoName = repoPath.split('/').pop() || 'repo'
   }
 
-  const branchResult = await $`cd ${repoPath} && git branch --show-current`.quiet()
+  const branchResult = await _$`cd ${repoPath} && git branch --show-current`.quiet()
   const branch = branchResult.text().trim()
 
-  const statusResult = await $`cd ${repoPath} && git status --porcelain`.quiet()
+  const statusResult = await _$`cd ${repoPath} && git status --porcelain`.quiet()
   const hasChanges = statusResult.text().trim().length > 0
 
-  const lastCommitResult = await $`cd ${repoPath} && git log -1 --format="%h %s"`.quiet()
+  const lastCommitResult = await _$`cd ${repoPath} && git log -1 --format="%h %s"`.quiet()
   const lastCommit = lastCommitResult.text().trim()
 
   const repoState: RepoState = {
@@ -375,11 +375,11 @@ export async function configureGitUser(): Promise<void> {
   const currentState = buddyState.getState()
   if (!currentState.repo || !currentState.github) return
 
-  const { $ } = await import('bun')
+  const { $: _$ } = await import('bun')
   const { name, email } = currentState.github
 
-  await $`cd ${currentState.repo.path} && git config user.name ${name}`.quiet()
-  await $`cd ${currentState.repo.path} && git config user.email ${email}`.quiet()
+  await _$`cd ${currentState.repo.path} && git config user.name ${name}`.quiet()
+  await _$`cd ${currentState.repo.path} && git config user.email ${email}`.quiet()
 
   console.log(`Git configured for ${name} <${email}>`)
 }
@@ -394,16 +394,16 @@ export async function commitChanges(): Promise<string> {
     throw new Error('No repository opened')
   }
 
-  const { $ } = await import('bun')
+  const { $: _$ } = await import('bun')
 
   if (currentState.github) {
     await configureGitUser()
   }
 
-  await $`cd ${currentState.repo.path} && git add -A`.quiet()
-  await $`cd ${currentState.repo.path} && git commit -m ${CONFIG.commitMessage}`.quiet()
+  await _$`cd ${currentState.repo.path} && git add -A`.quiet()
+  await _$`cd ${currentState.repo.path} && git commit -m ${CONFIG.commitMessage}`.quiet()
 
-  const hashResult = await $`cd ${currentState.repo.path} && git rev-parse --short HEAD`.quiet()
+  const hashResult = await _$`cd ${currentState.repo.path} && git rev-parse --short HEAD`.quiet()
   const commitHash = hashResult.text().trim()
 
   currentState.repo.hasChanges = false
@@ -422,8 +422,8 @@ export async function pushChanges(): Promise<void> {
     throw new Error('No repository opened')
   }
 
-  const { $ } = await import('bun')
-  await $`cd ${currentState.repo.path} && git push`.quiet()
+  const { $: _$ } = await import('bun')
+  await _$`cd ${currentState.repo.path} && git push`.quiet()
 }
 
 // =============================================================================
@@ -588,7 +588,7 @@ Be concise but thorough. If the user asks about coding or their project specific
               if (data === '[DONE]') continue
 
               try {
-                const event = JSON.parse(data)
+                const event = JSON.parse(data) as { type?: string; delta?: { text?: string } }
                 if (event.type === 'content_block_delta' && event.delta?.text) {
                   const text = event.delta.text
                   fullResponse += text

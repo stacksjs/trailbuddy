@@ -1,3 +1,4 @@
+
 import type { UserModel } from '@stacksjs/orm'
 import type Stripe from 'stripe'
 import { stripe } from '..'
@@ -13,7 +14,7 @@ export const manageInvoice: ManageInvoice = (() => {
     }
 
     const invoices = await stripe.invoices.list({
-      customer: user?.stripeId(),
+      customer: user?.stripe_id || '',
       expand: ['data.payment_intent.payment_method'],
     })
 

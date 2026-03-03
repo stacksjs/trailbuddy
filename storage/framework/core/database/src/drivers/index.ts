@@ -1,6 +1,6 @@
 import type { DateValidatorType, EnumValidatorType, NumberValidatorType, StringValidatorType, ValidationType } from '@stacksjs/ts-validation'
 import type { Attribute, AttributesElements, Model } from '@stacksjs/types'
-import { log } from '@stacksjs/cli'
+import { log } from '@stacksjs/logging'
 import { getTableName } from '@stacksjs/orm'
 import { path } from '@stacksjs/path'
 import { fs, globSync } from '@stacksjs/storage'
@@ -20,7 +20,7 @@ interface Range {
 }
 
 export async function deleteMigrationFiles(): Promise<void> {
-  const files = await fs.readdir(path.userMigrationsPath())
+  const files = await fs.promises.readdir(path.userMigrationsPath())
 
   if (files.length) {
     for (const file of files) {
@@ -35,7 +35,7 @@ export async function deleteMigrationFiles(): Promise<void> {
 }
 
 export async function deleteFrameworkModels(): Promise<void> {
-  const modelFiles = await fs.readdir(path.frameworkPath('models'))
+  const modelFiles = await fs.promises.readdir(path.frameworkPath('models'))
 
   if (modelFiles.length) {
     for (const modelFile of modelFiles) {
@@ -87,7 +87,7 @@ export async function hasMigrationBeenCreated(tableName: string): Promise<boolea
 
 export async function getExecutedMigrations(): Promise<{ name: string }[]> {
   try {
-    return await db.selectFrom('migrations').select('name').execute()
+    return await (db as any).selectFrom('migrations').select('name').execute()
   }
 
   catch (error: any) {
@@ -143,9 +143,9 @@ export function compareRanges(range1: Range, range2: Range): boolean {
 }
 
 export async function checkPivotMigration(dynamicPart: string): Promise<boolean> {
-  const files = await fs.readdir(path.userMigrationsPath())
+  const files = await (fs.readdir as any)(path.userMigrationsPath())
 
-  return files.some((migrationFile: string) => {
+  return (files as any).some((migrationFile: string) => {
     // Escape special characters in the dynamic part to ensure it's treated as a literal string
     const escapedDynamicPart = dynamicPart.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 

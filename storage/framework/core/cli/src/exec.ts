@@ -91,11 +91,11 @@ export async function execSync(command: string | string[], options?: CliOptions)
 
   if (!cmd) {
     log.error(`Failed to parse command: ${cmd}`, options)
-    process.exit(ExitCode.FatalError)
+    throw new Error(`Failed to parse command: ${cmd}`)
   }
 
   const proc = Bun.spawnSync(cmd, {
-    ...options,
+    ...options as any,
     stdin: options?.stdin ?? 'inherit',
     stdout: options?.stdout ?? 'pipe',
     stderr: options?.stderr ?? 'inherit',
@@ -128,9 +128,9 @@ function exitHandler(
 
   if (error) {
     log.error(error)
-    process.exit(ExitCode.FatalError)
+    throw error
   }
 
   if (exitCode !== ExitCode.Success && exitCode)
-    process.exit(exitCode)
+    throw new Error(`Command exited with code ${exitCode}`)
 }

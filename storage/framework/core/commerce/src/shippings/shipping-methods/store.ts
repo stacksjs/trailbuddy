@@ -1,4 +1,5 @@
-import type { NewShippingMethod, ShippingMethodJsonResponse } from '@stacksjs/orm'
+type ShippingMethodJsonResponse = ModelRow<typeof ShippingMethod>
+type NewShippingMethod = NewModelData<typeof ShippingMethod>
 import { randomUUIDv7 } from 'bun'
 import { db } from '@stacksjs/database'
 import { fetchById } from './fetch'
@@ -11,8 +12,13 @@ import { fetchById } from './fetch'
  */
 export async function store(data: NewShippingMethod): Promise<ShippingMethodJsonResponse> {
   try {
+    const d = data as Record<string, unknown>
     const shippingData = {
-      ...data,
+      name: data.name,
+      description: data.description,
+      base_rate: d.base_rate,
+      free_shipping: d.free_shipping,
+      status: data.status,
       uuid: randomUUIDv7(),
     }
 
@@ -82,7 +88,7 @@ export function formatShippingOptions(): Promise<{ id: number, name: string, sta
       .selectFrom('shipping_methods')
       .select(['id', 'name', 'status', 'base_rate'])
       .orderBy('name')
-      .execute()
+      .execute() as any
   }
   catch (error) {
     if (error instanceof Error) {
@@ -105,7 +111,7 @@ export async function getActiveShippingMethods(): Promise<ShippingMethodJsonResp
       .selectAll()
       .where('status', '=', 'active')
       .orderBy('name')
-      .execute()
+      .execute() as ShippingMethodJsonResponse[]
   }
   catch (error) {
     if (error instanceof Error) {

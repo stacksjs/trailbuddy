@@ -1,4 +1,3 @@
-import type { RequestInstance } from '@stacksjs/types'
 import { Action } from '@stacksjs/actions'
 import { passwordResets, RateLimiter } from '@stacksjs/auth'
 import { response } from '@stacksjs/router'
@@ -7,8 +6,8 @@ export default new Action({
   name: 'PasswordResetAction',
   description: 'Password Reset',
   method: 'POST',
-  model: 'PasswordResets',
-  async handle(request: RequestInstance) {
+  model: PasswordResets,
+  async handle(request) {
     const token = request.get('token')
     const password = request.get('password')
     const passwordConfirmation = request.get('password_confirmation')

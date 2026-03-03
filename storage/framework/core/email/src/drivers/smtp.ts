@@ -1,10 +1,10 @@
 import type { EmailAddress, EmailMessage, EmailResult } from '@stacksjs/types'
-import type { RenderOptions } from '@vue-email/compiler'
 import { Buffer } from 'node:buffer'
 import * as tls from 'node:tls'
 import * as net from 'node:net'
 import { config } from '@stacksjs/config'
 import { log } from '@stacksjs/logging'
+import type { TemplateOptions } from '../template'
 import { template } from '../template'
 import { BaseEmailDriver } from './base'
 
@@ -14,6 +14,8 @@ import { BaseEmailDriver } from './base'
  * Supports STARTTLS (port 587) and direct TLS (port 465)
  */
 export class SMTPDriver extends BaseEmailDriver {
+  private static readonly SMTP_TIMEOUT = 30_000 // 30 seconds
+
   public name = 'smtp'
   private smtpConfig: {
     host: string
@@ -38,7 +40,7 @@ export class SMTPDriver extends BaseEmailDriver {
     return this.smtpConfig
   }
 
-  public async send(message: EmailMessage, options?: RenderOptions): Promise<EmailResult> {
+  public async send(message: EmailMessage, options?: TemplateOptions): Promise<EmailResult> {
     const smtpConfig = this.getConfig()
 
     // Validate SMTP config
@@ -160,6 +162,15 @@ export class SMTPDriver extends BaseEmailDriver {
     content: string,
   ): Promise<string> {
     return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error(`SMTP connection timed out after ${SMTPDriver.SMTP_TIMEOUT}ms`))
+      }, SMTPDriver.SMTP_TIMEOUT)
+
+      const originalResolve = resolve
+      const originalReject = reject
+      resolve = (value: string | PromiseLike<string>) => { clearTimeout(timeout); originalResolve(value) }
+      reject = (reason?: unknown) => { clearTimeout(timeout); originalReject(reason) }
+
       let socket: net.Socket | tls.TLSSocket
       let buffer = ''
       const _currentCommand = ''
@@ -190,7 +201,7 @@ export class SMTPDriver extends BaseEmailDriver {
         return new Promise((res, rej) => {
           commandQueue.push({ cmd, resolve: res, reject: rej })
           log.debug(`[SMTP] Client: ${cmd}`)
-          socket.write(cmd + '\r\n')
+          socket.write(`${cmd}\r\n`)
         })
       }
 
@@ -240,12 +251,12 @@ export class SMTPDriver extends BaseEmailDriver {
                 log.debug('[SMTP] TLS connection established')
                 res(tlsSocket)
               })
-              tlsSocket.on('error', (err) => {
+              tlsSocket.on('error', (err: any) => {
                 log.error('[SMTP] TLS socket error:', err)
                 rej(err)
               })
               tlsSocket.on('data', handleData)
-              tlsSocket.on('close', (hadError) => {
+              tlsSocket.on('close', (hadError: any) => {
                 log.debug(`[SMTP] TLS socket closed (hadError: ${hadError})`)
                 while (commandQueue.length > 0) {
                   const pending = commandQueue.shift()
@@ -275,7 +286,7 @@ export class SMTPDriver extends BaseEmailDriver {
           await sendCommand('DATA')
 
           // Send email content (no response expected until final .)
-          socket.write(content + '\r\n.\r\n')
+          socket.write(`${content}\r\n.\r\n`)
           await new Promise<string>((res, rej) => {
             commandQueue.push({ cmd: 'DATA_END', resolve: res, reject: rej })
           })
@@ -316,6 +327,10 @@ export class SMTPDriver extends BaseEmailDriver {
       }
 
       socket.on('data', handleData)
+      socket.setTimeout(SMTPDriver.SMTP_TIMEOUT)
+      socket.on('timeout', () => {
+        socket.destroy(new Error(`SMTP socket timed out after ${SMTPDriver.SMTP_TIMEOUT}ms`))
+      })
       socket.on('error', (error) => {
         log.error(`[SMTP] Connection error to ${smtpConfig.host}:${smtpConfig.port}:`, error)
         reject(error)

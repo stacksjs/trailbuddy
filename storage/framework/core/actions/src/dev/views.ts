@@ -8,9 +8,9 @@ const userViewsPath = 'resources/views'
 const defaultViewsPath = 'storage/framework/defaults/resources/views'
 const userLayoutsPath = 'resources/layouts'
 const defaultLayoutsPath = 'storage/framework/defaults/resources/layouts'
-const preferredPort = 3456
+const preferredPort = Number(process.env.PORT) || 3000
 
-log.success(`🚀 Starting STX development server on http://localhost:${preferredPort}\n`)
+// STX serve will log the server URL
 
 // Start the server directly - no subprocess overhead!
 // Patterns are checked in order: user views first, then defaults

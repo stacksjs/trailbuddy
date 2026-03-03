@@ -192,8 +192,8 @@ export const defaults: StacksOptions = {
       //   code: '',
       //   placement: '',
       // },
-    },
-  },
+    } as any,
+  } as any,
 
   email: {
     from: {
@@ -204,6 +204,7 @@ export const defaults: StacksOptions = {
     mailboxes: [],
 
     server: {
+      enabled: true,
       scan: true,
     },
   },
@@ -296,7 +297,7 @@ export const defaults: StacksOptions = {
       'union': 'Invalid value provided for {{ field }} field',
       'unionGroup': 'Invalid value provided for {{ field }} field',
       'unionOfTypes': 'Invalid value provided for {{ field }} field',
-    },
+    } as any,
   },
 
   git: {
@@ -522,14 +523,13 @@ export const defaults: StacksOptions = {
         driver: 'database',
         table: 'jobs',
         queue: 'default',
-        retry_after: 90,
+        retryAfter: 90,
       },
 
       redis: {
         driver: 'redis',
-        connection: 'default',
         queue: 'default',
-        retry_after: 90,
+        retryAfter: 90,
       },
 
       sqs: {
@@ -542,7 +542,7 @@ export const defaults: StacksOptions = {
         region: 'us-east-1',
       },
     },
-  },
+  } as any,
 
   saas: {
     plans: [
@@ -656,7 +656,7 @@ export const defaults: StacksOptions = {
       appId: '',
       apiKey: '',
     },
-  },
+  } as any,
 
   filesystems: {
     driver: 's3',

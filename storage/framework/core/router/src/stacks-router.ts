@@ -15,8 +15,10 @@ import { Router } from '@stacksjs/bun-router'
 import { runWithRequest } from './request-context'
 import { createErrorResponse, createMiddlewareErrorResponse } from './error-handler'
 
-type StringHandler = string
-type StacksHandler = ActionHandler | StringHandler
+import type { StacksActionPath } from './action-paths'
+
+type RouteHandlerFn = (_req: EnhancedRequest) => Response | Promise<Response>
+type StacksHandler = string | RouteHandlerFn
 
 interface StacksRouterConfig {
   verbose?: boolean
@@ -29,50 +31,159 @@ interface GroupOptions {
 }
 
 /**
- * Chainable route interface for middleware support
+ * Chainable route interface for middleware and naming support
  */
 interface ChainableRoute {
   middleware: (name: string) => ChainableRoute
+  name: (routeName: string) => ChainableRoute
+}
+
+/**
+ * Named route registry - maps route names to their paths
+ * e.g., 'email.unsubscribe' → '/api/email/unsubscribe'
+ */
+const namedRouteRegistry = new Map<string, string>()
+
+/**
+ * Generate a full URL for a named route, like Laravel's route() helper.
+ *
+ * @example
+ * ```typescript
+ * // Define a named route
+ * route.get('/api/email/unsubscribe', 'Actions/UnsubscribeAction').name('email.unsubscribe')
+ *
+ * // Generate URL
+ * url('email.unsubscribe', { token: 'abc-123' })
+ * // → https://stacksjs.com/api/email/unsubscribe?token=abc-123
+ *
+ * // With path parameters
+ * route.get('/users/{id}/posts/{postId}', handler).name('user.post')
+ * url('user.post', { id: 42, postId: 7 })
+ * // → https://stacksjs.com/users/42/posts/7
+ * ```
+ */
+export function url(routeName: string, params: Record<string, string | number> = {}): string {
+  const routePath = namedRouteRegistry.get(routeName)
+  if (!routePath) {
+    throw new Error(`Route '${routeName}' is not defined. Available routes: ${[...namedRouteRegistry.keys()].join(', ')}`)
+  }
+
+  let appUrl: string
+  try {
+    // Dynamically import config to get app URL
+    appUrl = process.env.APP_URL || 'https://localhost'
+  }
+  catch {
+    appUrl = 'https://localhost'
+  }
+
+  // Normalize the base URL
+  appUrl = appUrl.replace(/\/$/, '')
+  if (!appUrl.startsWith('http')) {
+    appUrl = `https://${appUrl}`
+  }
+
+  // Substitute path parameters like {id}, {postId}
+  let resolvedPath = routePath
+  const queryParams: Record<string, string> = {}
+
+  for (const [key, value] of Object.entries(params)) {
+    const placeholder = `{${key}}`
+    if (resolvedPath.includes(placeholder)) {
+      resolvedPath = resolvedPath.replace(placeholder, String(value))
+    }
+    else {
+      // Not a path param — add as query string
+      queryParams[key] = String(value)
+    }
+  }
+
+  const queryString = Object.keys(queryParams).length > 0
+    ? `?${new URLSearchParams(queryParams).toString()}`
+    : ''
+
+  return `${appUrl}${resolvedPath}${queryString}`
+}
+
+/** Represents a middleware module with a handle method */
+interface MiddlewareHandler {
+  handle: (req: EnhancedRequest) => Promise<void> | void
 }
 
 /**
  * Cache for loaded middleware handlers
  */
-const middlewareCache = new Map<string, any>()
+const middlewareCache = new Map<string, MiddlewareHandler | null>()
+
+/**
+ * Cache for the middleware alias map (loaded once from app/Middleware.ts)
+ */
+let middlewareAliases: Record<string, string> | null = null
+
+/**
+ * Load the middleware alias map from app/Middleware.ts
+ * Maps short names (e.g., 'auth') to class names (e.g., 'Auth')
+ */
+async function getMiddlewareAliases(): Promise<Record<string, string>> {
+  if (middlewareAliases) return middlewareAliases
+
+  try {
+    const aliasModule = await import(p.appPath('Middleware.ts'))
+    middlewareAliases = aliasModule.default || {}
+  }
+  catch {
+    // Fall back to defaults
+    try {
+      const defaultModule = await import(p.storagePath('framework/defaults/app/Middleware.ts'))
+      middlewareAliases = defaultModule.default || {}
+    }
+    catch {
+      middlewareAliases = {}
+    }
+  }
+
+  return middlewareAliases!
+}
+
+/**
+ * Resolve a middleware alias to its class name
+ * e.g., 'auth' → 'Auth', 'verified' → 'EnsureEmailIsVerified'
+ */
+async function resolveMiddlewareName(name: string): Promise<string> {
+  const aliases = await getMiddlewareAliases()
+  // If there's an alias mapping, use it; otherwise capitalize the first letter
+  return aliases[name] || (name.charAt(0).toUpperCase() + name.slice(1))
+}
 
 /**
  * Load a middleware by name
  */
-async function loadMiddleware(name: string): Promise<any> {
+async function loadMiddleware(name: string): Promise<MiddlewareHandler | null> {
   if (middlewareCache.has(name)) {
-    return middlewareCache.get(name)
+    return middlewareCache.get(name) ?? null
   }
 
-  // Built-in 'auth' middleware - directly uses @stacksjs/auth
-  if (name === 'auth') {
-    const { authMiddlewareHandler } = await import('@stacksjs/auth')
-    middlewareCache.set(name, authMiddlewareHandler)
-    return authMiddlewareHandler
-  }
+  const className = await resolveMiddlewareName(name)
 
-  // For other middleware, try loading from files
+  // Try loading from app/Middleware first (user overrides)
   try {
-    // Try loading from app/Middleware
-    const userPath = p.appPath(`Middleware/${name.charAt(0).toUpperCase() + name.slice(1)}.ts`)
+    const userPath = p.appPath(`Middleware/${className}.ts`)
     const middleware = await import(userPath)
-    middlewareCache.set(name, middleware.default)
-    return middleware.default
+    const handler = middleware.default as MiddlewareHandler | null
+    middlewareCache.set(name, handler)
+    return handler
   }
   catch {
+    // Fall back to framework defaults
     try {
-      // Fall back to defaults
-      const defaultPath = p.storagePath(`framework/defaults/middleware/${name.charAt(0).toUpperCase() + name.slice(1)}.ts`)
+      const defaultPath = p.storagePath(`framework/defaults/app/Middleware/${className}.ts`)
       const middleware = await import(defaultPath)
-      middlewareCache.set(name, middleware.default)
-      return middleware.default
+      const handler = middleware.default as MiddlewareHandler | null
+      middlewareCache.set(name, handler)
+      return handler
     }
-    catch (err) {
-      log.error(`[Router] Failed to load middleware '${name}':`, err)
+    catch (err: unknown) {
+      log.error(`[Router] Failed to load middleware '${name}' (resolved to '${className}'):`, err)
       return null
     }
   }
@@ -101,7 +212,7 @@ function parseMiddlewareName(middleware: string): { name: string, params?: strin
 /**
  * Create a wrapped handler with middleware support
  */
-function createMiddlewareHandler(routeKey: string, handler: StacksHandler): ActionHandler {
+function createMiddlewareHandler(routeKey: string, handler: StacksHandler): RouteHandlerFn {
   // Create the base handler with skipParsing=true since we'll do it ourselves
   const wrappedBase = wrapHandler(handler, true)
 
@@ -112,7 +223,7 @@ function createMiddlewareHandler(routeKey: string, handler: StacksHandler): Acti
 
     // Run the entire request handling within the request context
     // This allows Auth and other services to access the current request
-    return runWithRequest(enhancedReq as any, async () => {
+    return runWithRequest<Promise<Response>>(enhancedReq, async () => {
       const middlewareEntries = routeMiddlewareRegistry.get(routeKey) || []
 
       // Run middleware in order
@@ -131,14 +242,18 @@ function createMiddlewareHandler(routeKey: string, handler: StacksHandler): Acti
             await middleware.handle(enhancedReq)
           }
           catch (error) {
-            // Middleware threw an error (e.g., 401 Unauthorized)
-            if (error instanceof Error && 'statusCode' in error) {
+            // Middleware threw an error — always convert to a proper HTTP response
+            const err = error instanceof Error ? error : new Error(String(error))
+            if ('statusCode' in err) {
               return await createMiddlewareErrorResponse(
-                error as Error & { statusCode: number },
+                err as Error & { statusCode: number },
                 enhancedReq,
               )
             }
-            throw error
+            // No statusCode — treat as 500 and return an error response
+            // instead of re-throwing which would crash the handler
+            log.error(`[Router] Middleware '${middlewareName}' threw an unexpected error:`, err)
+            return await createErrorResponse(err, enhancedReq, { status: 500 })
           }
         }
       }
@@ -158,12 +273,20 @@ function createChainableRoute(routeKey: string): ChainableRoute {
     routeMiddlewareRegistry.set(routeKey, [])
   }
 
+  // Extract the path from routeKey (format: "METHOD:/path")
+  const routePath = routeKey.includes(':') ? routeKey.substring(routeKey.indexOf(':') + 1) : routeKey
+
   const chain: ChainableRoute = {
     middleware(name: string) {
       const middlewareList = routeMiddlewareRegistry.get(routeKey)
       if (middlewareList) {
         middlewareList.push(name)
       }
+      return chain
+    },
+
+    name(routeName: string) {
+      namedRouteRegistry.set(routeName, routePath)
       return chain
     },
   }
@@ -187,7 +310,7 @@ async function fileExists(path: string): Promise<boolean> {
  * Resolve a string handler to an actual handler function
  * Supports user overrides: checks user's app/ first, then falls back to defaults
  */
-async function resolveStringHandler(handlerPath: string): Promise<ActionHandler> {
+async function resolveStringHandler(handlerPath: string): Promise<RouteHandlerFn> {
   let modulePath = handlerPath
 
   // Remove trailing .ts if present
@@ -415,9 +538,13 @@ function enhanceWithLaravelMethods(req: EnhancedRequest): EnhancedRequest {
     ;(req as any).query = query
   }
 
-  // Helper to get all input data
-  const getAllInput = (): Record<string, any> => {
-    const input: Record<string, any> = {}
+  // Cached input data — computed once on first access
+  let cachedInput: Record<string, unknown> | null = null
+
+  const getAllInput = (): Record<string, unknown> => {
+    if (cachedInput) return cachedInput
+
+    const input: Record<string, unknown> = {}
 
     // Query parameters
     for (const [key, value] of Object.entries(query || {})) {
@@ -445,6 +572,7 @@ function enhanceWithLaravelMethods(req: EnhancedRequest): EnhancedRequest {
       }
     }
 
+    cachedInput = input
     return input
   }
 
@@ -461,7 +589,7 @@ function enhanceWithLaravelMethods(req: EnhancedRequest): EnhancedRequest {
     return (value !== undefined ? value : defaultValue) as T
   }
 
-  ;(req as any).all = (): Record<string, any> => getAllInput()
+  ;(req as any).all = (): Record<string, unknown> => getAllInput()
 
   ;(req as any).only = <T extends Record<string, unknown>>(keys: string[]): T => {
     const input = getAllInput()
@@ -617,7 +745,7 @@ function enhanceWithLaravelMethods(req: EnhancedRequest): EnhancedRequest {
   return req
 }
 
-function wrapHandler(handler: StacksHandler, skipParsing = false): ActionHandler {
+function wrapHandler(handler: StacksHandler, skipParsing = false): RouteHandlerFn {
   if (typeof handler === 'string') {
     const handlerPath = handler // capture for error messages
     return async (req: EnhancedRequest) => {
@@ -646,6 +774,7 @@ function wrapHandler(handler: StacksHandler, skipParsing = false): ActionHandler
       }
     }
   }
+  // handler is a callable function (RouteHandler or TypedRouteHandler)
   return handler
 }
 
@@ -653,9 +782,14 @@ function wrapHandler(handler: StacksHandler, skipParsing = false): ActionHandler
  * Parse request body and attach to request object
  */
 async function parseRequestBody(req: EnhancedRequest): Promise<void> {
+  // Skip if body was already parsed (avoid double-parsing)
+  if ((req as any)._bodyParsed) return
+  ;(req as any)._bodyParsed = true
+
   const contentType = req.headers.get('content-type') || ''
 
   try {
+    // Clone once up front — only the branch that matches content-type will use it
     if (contentType.includes('application/json')) {
       const body = await req.clone().json()
       ;(req as any).jsonBody = body
@@ -676,9 +810,7 @@ async function parseRequestBody(req: EnhancedRequest): Promise<void> {
 
       formData.forEach((value, key) => {
         if (value instanceof File) {
-          // Handle file uploads
           if (files[key]) {
-            // Multiple files with same key
             if (Array.isArray(files[key])) {
               (files[key] as File[]).push(value)
             }
@@ -691,7 +823,6 @@ async function parseRequestBody(req: EnhancedRequest): Promise<void> {
           }
         }
         else {
-          // Regular form field
           formBody[key] = value
         }
       })
@@ -701,8 +832,7 @@ async function parseRequestBody(req: EnhancedRequest): Promise<void> {
     }
   }
   catch (e) {
-    // Body parsing failed - log it for debugging
-    console.error('[stacks-router] Body parsing failed:', e)
+    log.debug('[stacks-router] Body parsing failed:', e)
   }
 }
 
@@ -711,7 +841,7 @@ async function parseRequestBody(req: EnhancedRequest): Promise<void> {
  */
 export function createStacksRouter(config: StacksRouterConfig = {}): StacksRouterInstance {
   const bunRouter = new Router({
-    verbose: config.verbose ?? process.env.APP_ENV !== 'production',
+    verbose: config.verbose ?? false,
   })
 
   let currentPrefix = ''
@@ -826,12 +956,12 @@ export function createStacksRouter(config: StacksRouterConfig = {}): StacksRoute
     use(middleware: ActionHandler) {
       // bunRouter.use() is async, so we need to call it properly
       // For synchronous chaining, we push directly to globalMiddleware
-      bunRouter.globalMiddleware.push(middleware)
+      bunRouter.globalMiddleware.push(middleware as any)
       return stacksRouter
     },
 
     // Serve the router
-    async serve(options: ServerOptions = {}): Promise<Server> {
+    async serve(options: ServerOptions = {}): Promise<Server<unknown>> {
       return bunRouter.serve(options)
     },
 
@@ -873,7 +1003,7 @@ export interface StacksRouterInstance {
   group: (options: GroupOptions, callback: () => void | Promise<void>) => StacksRouterInstance | Promise<StacksRouterInstance>
   health: () => StacksRouterInstance
   use: (middleware: ActionHandler) => StacksRouterInstance
-  serve: (options?: ServerOptions) => Promise<Server>
+  serve: (options?: ServerOptions) => Promise<Server<unknown>>
   handleRequest: (req: Request) => Promise<Response>
   importRoutes: () => Promise<void>
 }
@@ -899,6 +1029,6 @@ export async function serverResponse(request: Request, _body?: string): Promise<
 }
 
 // Export serve function that uses the default router
-export async function serve(options: ServerOptions = {}): Promise<Server> {
+export async function serve(options: ServerOptions = {}): Promise<Server<unknown>> {
   return route.serve(options)
 }

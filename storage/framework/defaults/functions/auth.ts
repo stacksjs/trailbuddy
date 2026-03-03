@@ -1,7 +1,6 @@
-/* eslint-disable pickier/no-unused-vars */
 import type { Ref } from 'vue'
 import type { AuthUser, ErrorResponse, LoginError, LoginResponse, MeResponse, RegisterError, RegisterResponse, UserData } from '../types/dashboard'
-import { useStorage } from '@vueuse/core'
+import { useStorage } from '@stacksjs/browser'
 import { ref } from 'vue'
 
 const token = useStorage('token', '')
@@ -27,14 +26,14 @@ const isAuthenticated = ref(false)
 
 export interface AuthComposable {
   isAuthenticated: Ref<boolean>
-  user: Ref<UserData | null>
+  user: { value: UserData | null }
   login: (user: AuthUser) => Promise<LoginResponse | LoginError>
   register: (user: AuthUser) => Promise<RegisterResponse | RegisterError>
   fetchAuthUser: () => Promise<UserData | null>
   checkAuthentication: () => Promise<boolean>
   logout: () => void
   getToken: () => string | null
-  token: Ref<string | null>
+  token: { value: string | null }
 }
 
 export function useAuth(): AuthComposable {
@@ -182,7 +181,8 @@ export function useAuth(): AuthComposable {
 // Strict auth guard middleware
 // Usage: call in setup() of page/component, or in router beforeEach
 // Pass { guest: true } for guest-only pages
-export function authGuard({ guest = false }: { guest?: boolean } = {}): void {
+export function authGuard(options: { guest?: boolean } = {}): void {
+  const guest = options.guest ?? false
   const { isAuthenticated } = useAuth()
 
   if (guest) {

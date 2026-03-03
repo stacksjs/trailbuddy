@@ -1,6 +1,7 @@
-import type { ShippingRateJsonResponse, ShippingRateUpdate } from '@stacksjs/orm'
 import { db } from '@stacksjs/database'
 import { formatDate } from '@stacksjs/orm'
+type ShippingRateJsonResponse = ModelRow<typeof ShippingRate>
+type ShippingRateUpdate = UpdateModelData<typeof ShippingRate>
 
 /**
  * Update a shipping rate
@@ -27,7 +28,7 @@ export async function update(id: number, data: ShippingRateUpdate): Promise<Ship
     if (!result)
       throw new Error('Failed to update shipping rate')
 
-    return result
+    return result as ShippingRateJsonResponse
   }
   catch (error) {
     if (error instanceof Error) {

@@ -1,4 +1,3 @@
-import type { PasswordResetsRequestType } from '@stacksjs/orm'
 import { Action } from '@stacksjs/actions'
 import { RateLimiter } from '@stacksjs/auth'
 import { User } from '@stacksjs/orm'
@@ -10,13 +9,13 @@ export default new Action({
   name: 'SendPasswordResetEmailAction',
   description: 'Send Password Reset Email',
   method: 'POST',
-  model: 'PasswordResets',
+  model: PasswordResets,
   validations: {
     email: {
       rule: schema.string().email().required(),
     },
   },
-  async handle(request: PasswordResetsRequestType) {
+  async handle(request) {
     console.log('[Action] SendPasswordResetEmailAction.handle() called')
 
     const email = request.get('email')

@@ -1,4 +1,3 @@
-import type { RequestInstance } from '@stacksjs/types'
 import { Action } from '@stacksjs/actions'
 import { response } from '@stacksjs/router'
 
@@ -20,7 +19,7 @@ export default new Action({
         return response.json({ error: 'Prompt is required' }, 422)
       }
 
-      const bun = await import('bun')
+      const { $: _$ } = await import('bun')
 
       // Use Claude to generate a short title (max 5 words)
       const titlePrompt = `Summarize this user request into a very short title (2-5 words max, no quotes, no punctuation at end). Just output the title, nothing else.
@@ -28,7 +27,7 @@ export default new Action({
 User request: "${prompt.substring(0, 500)}"`
 
       try {
-        const result = await bun.$`claude --print --dangerously-skip-permissions ${titlePrompt}`.quiet()
+        const result = await _$`claude --print --dangerously-skip-permissions ${titlePrompt}`.quiet()
         const title = result.text().trim()
           .replace(/^["']|["']$/g, '') // Remove surrounding quotes
           .replace(/[.!?]$/, '') // Remove trailing punctuation

@@ -1,19 +1,8 @@
-import type { Buffer } from 'node:buffer'
+import { Buffer } from 'node:buffer'
 import { basename } from 'node:path'
-import { Readable } from 'node:stream'
-import {
-  CopyObjectCommand,
-  DeleteObjectCommand,
-  GetObjectCommand,
-  HeadObjectCommand,
-  ListObjectsV2Command,
-  PutObjectCommand,
-  type S3Client,
-} from '@aws-sdk/client-s3'
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { S3Client } from '@stacksjs/ts-cloud'
 import type {
   ChecksumOptions,
-  DirectoryEntry,
   DirectoryListing,
   FileContents,
   ListOptions,
@@ -25,10 +14,10 @@ import type {
   TemporaryUrlOptions,
   Visibility,
 } from '../types'
-import { createDirectoryListing, normalizeExpiryToMilliseconds } from '../types'
+import { normalizeExpiryToMilliseconds } from '../types'
 
 /**
- * AWS S3 storage adapter
+ * AWS S3 storage adapter using ts-cloud S3Client
  */
 export class S3StorageAdapter implements StorageAdapter {
   private client: S3Client
@@ -56,16 +45,8 @@ export class S3StorageAdapter implements StorageAdapter {
   private stripPrefix(path: string): string {
     if (!this.prefix)
       return path
-    return path.replace(new RegExp(`^${this.prefix}/`), '')
-  }
-
-  private async streamToBuffer(stream: Readable): Promise<Buffer> {
-    const chunks: Buffer[] = []
-    return new Promise((resolve, reject) => {
-      stream.on('data', chunk => chunks.push(Buffer.from(chunk)))
-      stream.on('error', reject)
-      stream.on('end', () => resolve(Buffer.concat(chunks)))
-    })
+    const prefixWithSlash = `${this.prefix}/`
+    return path.startsWith(prefixWithSlash) ? path.slice(prefixWithSlash.length) : path
   }
 
   private async contentsToBuffer(contents: FileContents): Promise<Buffer> {
@@ -99,36 +80,30 @@ export class S3StorageAdapter implements StorageAdapter {
     const key = this.prefixPath(path)
     const body = await this.contentsToBuffer(contents)
 
-    await this.client.send(
-      new PutObjectCommand({
-        Bucket: this.bucket,
-        Key: key,
-        Body: body,
-        ContentType: this.detectMimeType(path),
-      }),
-    )
+    await this.client.putObject({
+      bucket: this.bucket,
+      key,
+      body,
+      contentType: this.detectMimeType(path),
+    })
   }
 
   async read(path: string): Promise<FileContents> {
     const key = this.prefixPath(path)
+    const response = await this.client.getObject(this.bucket, key)
 
-    const response = await this.client.send(
-      new GetObjectCommand({
-        Bucket: this.bucket,
-        Key: key,
-      }),
-    )
-
-    if (!response.Body) {
+    if (!response) {
       throw new Error(`Failed to read file: ${path}`)
     }
 
-    return await this.streamToBuffer(response.Body as Readable)
+    // getObject returns a string
+    return Buffer.from(response)
   }
 
   async readToString(path: string): Promise<string> {
-    const buffer = await this.readToBuffer(path)
-    return buffer.toString('utf8')
+    const key = this.prefixPath(path)
+    const response = await this.client.getObject(this.bucket, key)
+    return response
   }
 
   async readToBuffer(path: string): Promise<Buffer> {
@@ -143,48 +118,25 @@ export class S3StorageAdapter implements StorageAdapter {
 
   async deleteFile(path: string): Promise<void> {
     const key = this.prefixPath(path)
-
-    await this.client.send(
-      new DeleteObjectCommand({
-        Bucket: this.bucket,
-        Key: key,
-      }),
-    )
+    await this.client.deleteObject(this.bucket, key)
   }
 
   async deleteDirectory(path: string): Promise<void> {
     const prefix = this.prefixPath(path)
+    const normalizedPrefix = prefix.endsWith('/') ? prefix : `${prefix}/`
 
-    // List all objects in the directory
-    const listResponse = await this.client.send(
-      new ListObjectsV2Command({
-        Bucket: this.bucket,
-        Prefix: prefix.endsWith('/') ? prefix : `${prefix}/`,
-      }),
-    )
+    const objects = await this.client.listAllObjects({ bucket: this.bucket, prefix: normalizedPrefix })
+    const keys = objects.map(obj => obj.Key)
 
-    if (!listResponse.Contents || listResponse.Contents.length === 0) {
+    if (keys.length === 0) {
       return
     }
 
-    // Delete all objects
-    await Promise.all(
-      listResponse.Contents.map(obj =>
-        obj.Key
-          ? this.client.send(
-            new DeleteObjectCommand({
-              Bucket: this.bucket,
-              Key: obj.Key,
-            }),
-          )
-          : Promise.resolve(),
-      ),
-    )
+    await this.client.deleteObjects(this.bucket, keys)
   }
 
   async createDirectory(_path: string): Promise<void> {
     // S3 doesn't have actual directories, they're implicit
-    // No-op for S3
   }
 
   async moveFile(from: string, to: string): Promise<void> {
@@ -196,41 +148,30 @@ export class S3StorageAdapter implements StorageAdapter {
     const fromKey = this.prefixPath(from)
     const toKey = this.prefixPath(to)
 
-    await this.client.send(
-      new CopyObjectCommand({
-        Bucket: this.bucket,
-        CopySource: `${this.bucket}/${fromKey}`,
-        Key: toKey,
-      }),
-    )
+    await this.client.copyObject({
+      sourceBucket: this.bucket,
+      sourceKey: fromKey,
+      destinationBucket: this.bucket,
+      destinationKey: toKey,
+    })
   }
 
   async stat(path: string): Promise<StatEntry> {
     const key = this.prefixPath(path)
 
-    try {
-      const response = await this.client.send(
-        new HeadObjectCommand({
-          Bucket: this.bucket,
-          Key: key,
-        }),
-      )
+    const result = await this.client.headObject(this.bucket, key)
 
-      return {
-        path,
-        type: 'file',
-        visibility: 'private' as Visibility, // S3 ACLs would need to be checked for actual visibility
-        size: response.ContentLength || 0,
-        lastModified: response.LastModified?.getTime() || Date.now(),
-        mimeType: response.ContentType,
-        metadata: response.Metadata,
-      }
+    if (!result) {
+      throw new Error(`File not found: ${path}`)
     }
-    catch (error: any) {
-      if (error.name === 'NotFound') {
-        throw new Error(`File not found: ${path}`)
-      }
-      throw error
+
+    return {
+      path,
+      type: 'file',
+      visibility: 'private' as Visibility,
+      size: result.ContentLength || 0,
+      lastModified: result.LastModified ? new Date(result.LastModified).getTime() : Date.now(),
+      mimeType: result.ContentType,
     }
   }
 
@@ -240,87 +181,71 @@ export class S3StorageAdapter implements StorageAdapter {
 
   private async *createAsyncIterator(path: string, deep: boolean): DirectoryListing {
     const prefix = this.prefixPath(path)
-    const delimiter = deep ? undefined : '/'
+    const normalizedPrefix = prefix ? `${prefix}/` : undefined
 
-    let continuationToken: string | undefined
-
-    do {
-      const response = await this.client.send(
-        new ListObjectsV2Command({
-          Bucket: this.bucket,
-          Prefix: prefix ? `${prefix}/` : undefined,
-          Delimiter: delimiter,
-          ContinuationToken: continuationToken,
-        }),
-      )
-
-      // Files
-      if (response.Contents) {
-        for (const obj of response.Contents) {
-          if (obj.Key) {
-            yield {
-              path: this.stripPrefix(obj.Key),
-              type: 'file',
-            }
-          }
+    if (deep) {
+      const objects = await this.client.listAllObjects({ bucket: this.bucket, prefix: normalizedPrefix })
+      for (const obj of objects) {
+        yield {
+          path: this.stripPrefix(obj.Key),
+          type: 'file',
         }
       }
+    }
+    else {
+      let continuationToken: string | undefined
 
-      // Directories (common prefixes)
-      if (response.CommonPrefixes) {
-        for (const prefix of response.CommonPrefixes) {
-          if (prefix.Prefix) {
-            yield {
-              path: this.stripPrefix(prefix.Prefix.replace(/\/$/, '')),
-              type: 'directory',
-            }
+      do {
+        const result = await this.client.listObjects({
+          bucket: this.bucket,
+          prefix: normalizedPrefix,
+          continuationToken,
+        })
+
+        for (const obj of result.objects || []) {
+          yield {
+            path: this.stripPrefix(obj.Key),
+            type: 'file',
           }
         }
-      }
 
-      continuationToken = response.NextContinuationToken
-    } while (continuationToken)
+        continuationToken = result.nextContinuationToken
+      } while (continuationToken)
+    }
   }
 
   async changeVisibility(_path: string, _visibility: Visibility): Promise<void> {
-    // Would need to use PutObjectAclCommand to change ACLs
-    // For now, this is a no-op
+    // Would need to use putObjectAcl to change ACLs
   }
 
   async visibility(_path: string): Promise<Visibility> {
-    // Would need to check object ACLs
     return 'private' as Visibility
   }
 
   async fileExists(path: string): Promise<boolean> {
     const key = this.prefixPath(path)
-
     try {
-      await this.client.send(
-        new HeadObjectCommand({
-          Bucket: this.bucket,
-          Key: key,
-        }),
-      )
-      return true
+      const result = await this.client.headObject(this.bucket, key)
+      return !!result
     }
-    catch {
+    catch (error: any) {
+      // Expected for non-existent files (404/NoSuchKey)
+      if (!error.message?.includes('404') && !error.message?.includes('NoSuchKey') && !error.message?.includes('NotFound')) {
+        console.debug(`[s3] Unexpected error checking file existence for ${path}: ${error.message}`)
+      }
       return false
     }
   }
 
   async directoryExists(path: string): Promise<boolean> {
     const prefix = this.prefixPath(path)
+    const result = await this.client.listObjects({
+      bucket: this.bucket,
+      prefix: `${prefix}/`,
+      maxKeys: 1,
+    })
 
-    const response = await this.client.send(
-      new ListObjectsV2Command({
-        Bucket: this.bucket,
-        Prefix: `${prefix}/`,
-        MaxKeys: 1,
-      }),
-    )
-
-    return (response.Contents?.length || 0) > 0 || (response.CommonPrefixes?.length || 0) > 0
+    return (result.objects || []).length > 0
   }
 
   async publicUrl(path: string, options: PublicUrlOptions = {}): Promise<string> {
@@ -333,12 +258,12 @@ export class S3StorageAdapter implements StorageAdapter {
     const key = this.prefixPath(path)
     const expiresIn = Math.floor(normalizeExpiryToMilliseconds(options.expiresIn) / 1000)
 
-    const command = new GetObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
+    return await this.client.getSignedUrl({
+      bucket: this.bucket,
+      key,
+      expiresIn,
+      operation: 'getObject',
     })
-
-    return await getSignedUrl(this.client, command, { expiresIn })
   }
 
   async checksum(path: string, options: ChecksumOptions = {}): Promise<string> {

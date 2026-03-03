@@ -8,7 +8,7 @@ import { runAction } from '@stacksjs/actions'
 import { italic, outro, prompts, runCommand } from '@stacksjs/cli'
 import { app, email as emailConfig, cloud as cloudConfig } from '@stacksjs/config'
 import { addDomain, hasUserDomainBeenAddedToCloud } from '@stacksjs/dns'
-import { encryptEnv } from '@stacksjs/env'
+import { encryptEnv, env } from '@stacksjs/env'
 import { Action } from '@stacksjs/enums'
 import { path as p } from '@stacksjs/path'
 import { ExitCode } from '@stacksjs/types'
@@ -42,8 +42,8 @@ function loadAwsCredentialsFromFile(): { accessKeyId?: string, secretAccessKey?:
     const content = readFileSync(credentialsPath, 'utf-8')
     const lines = content.split('\n')
 
-    // Try to find credentials in order: stacks profile, default profile, any profile
-    const profiles = ['stacks', 'default']
+    // Try to find credentials in order: default profile, then stacks profile
+    const profiles = ['default', 'stacks']
     let currentProfile = ''
     let credentials: { accessKeyId?: string, secretAccessKey?: string } = {}
     const profileCredentials: Record<string, { accessKeyId?: string, secretAccessKey?: string }> = {}
@@ -113,12 +113,12 @@ function loadAwsCredentialsFromFile(): { accessKeyId?: string, secretAccessKey?:
 /**
  * Set up email DNS records (DKIM CNAMEs and MX record) after SES identity is created
  */
-async function setupEmailDnsRecords(emailDomain: string, region: string, logger: typeof log): Promise<void> {
+async function setupEmailDnsRecords(emailDomain: string, region: string, logger: typeof log, options?: { mode?: 'server' | 'serverless', mailSubdomain?: string }): Promise<void> {
   logger.info('Setting up email DNS records...')
 
   try {
-    const { SESClient } = await import('ts-cloud/aws')
-    const { Route53Client } = await import('ts-cloud/aws')
+    const { SESClient } = await import('@stacksjs/ts-cloud')
+    const { Route53Client } = await import('@stacksjs/ts-cloud')
 
     const ses = new SESClient(region)
     const route53 = new Route53Client(region)
@@ -179,6 +179,13 @@ async function setupEmailDnsRecords(emailDomain: string, region: string, logger:
     }
 
     // Add MX record for receiving emails
+    // In 'server' mode, MX points to the mail server itself
+    // In 'serverless' mode, MX points to SES inbound
+    const mailSubdomain = options?.mailSubdomain || 'mail'
+    const mxTarget = options?.mode === 'server'
+      ? `10 ${mailSubdomain}.${emailDomain}`
+      : `10 inbound-smtp.${region}.amazonaws.com`
+
     try {
       await route53.changeResourceRecordSets({
         HostedZoneId: hostedZoneId,
@@ -189,12 +196,12 @@ async function setupEmailDnsRecords(emailDomain: string, region: string, logger:
               Name: emailDomain,
               Type: 'MX',
               TTL: 300,
-              ResourceRecords: [{ Value: `10 inbound-smtp.${region}.amazonaws.com` }],
+              ResourceRecords: [{ Value: mxTarget }],
             },
           }],
         },
       })
-      logger.success('Added MX record for receiving emails')
+      logger.success(`Added MX record: ${mxTarget}`)
     } catch (e: any) {
       logger.warn(`Failed to add MX record: ${e.message}`)
     }
@@ -264,7 +271,7 @@ async function setupEmailDnsRecords(emailDomain: string, region: string, logger:
  */
 async function createDefaultMailUser(appName: string, emailDomain: string, region: string, logger: typeof log): Promise<void> {
   try {
-    const { DynamoDBClient } = await import('ts-cloud/aws')
+    const { DynamoDBClient } = await import('@stacksjs/ts-cloud')
     const crypto = await import('crypto')
 
     const dynamodb = new DynamoDBClient(region)
@@ -339,6 +346,145 @@ async function createDefaultMailUser(appName: string, emailDomain: string, regio
   }
 }
 
+/**
+ * Upload mail server binary/source to S3
+ * For 'server' mode: uploads the Linux x86_64 binary from ts-smtp-server package
+ * For 'serverless' mode: uploads the TypeScript server code
+ */
+async function uploadMailServerToS3(bucketName: string, region: string, mode: string): Promise<void> {
+  try {
+    const { S3Client: S3 } = await import('@stacksjs/ts-cloud')
+    const s3Client = new S3(region)
+
+    if (mode === 'serverless') {
+      // Upload TypeScript/Bun server code
+      const serverTsPath = p.frameworkPath('core/mail-server/server.ts')
+      if (existsSync(serverTsPath)) {
+        const serverCode = readFileSync(serverTsPath, 'utf-8')
+        await s3Client.putObject({
+          bucket: bucketName,
+          key: 'mail-server/server.ts',
+          body: serverCode,
+          contentType: 'text/typescript',
+        })
+        log.success('Uploaded serverless mail server code to S3')
+      }
+
+      const pkgPath = p.frameworkPath('core/mail-server/package.json')
+      if (existsSync(pkgPath)) {
+        const pkgJson = readFileSync(pkgPath, 'utf-8')
+        await s3Client.putObject({
+          bucket: bucketName,
+          key: 'mail-server/package.json',
+          body: pkgJson,
+          contentType: 'application/json',
+        })
+      }
+      return
+    }
+
+    // Server mode: try to find and upload the Linux x86_64 binary from ts-smtp-server
+    let binaryUploaded = false
+
+    try {
+      // Try to import from ts-smtp-server package (installed via bun link)
+      // @ts-ignore - ts-smtp-server may not be installed
+      const { getLinuxBinaryPath, getSourcePath } = await import('ts-smtp-server')
+
+      const linuxBinaryPath = getLinuxBinaryPath('x86_64')
+      if (linuxBinaryPath && existsSync(linuxBinaryPath)) {
+        log.info(`Uploading Linux binary from ts-smtp-server: ${linuxBinaryPath}`)
+        const binaryContent = readFileSync(linuxBinaryPath)
+        await s3Client.putObject({
+          bucket: bucketName,
+          key: 'mail-server/smtp-server',
+          body: binaryContent,
+          contentType: 'application/octet-stream',
+        })
+        log.success('Uploaded Linux x86_64 mail server binary to S3')
+        binaryUploaded = true
+      }
+
+      // Also upload source tarball as fallback
+      const sourcePath = getSourcePath()
+      if (existsSync(sourcePath)) {
+        log.info('Uploading source tarball as fallback...')
+        const { execSync } = await import('child_process')
+        const tarballPath = '/tmp/mail-server-source.tar.gz'
+        execSync(`tar -czf ${tarballPath} -C "${sourcePath}" --exclude='.git' --exclude='zig-out' --exclude='zig-cache' --exclude='.zig-cache' .`, { stdio: 'inherit' })
+        const tarballContent = readFileSync(tarballPath)
+        await s3Client.putObject({
+          bucket: bucketName,
+          key: 'mail-server/source.tar.gz',
+          body: tarballContent,
+          contentType: 'application/gzip',
+        })
+        log.success('Uploaded source tarball to S3')
+      }
+    }
+    catch {
+      // ts-smtp-server not linked — fall back to well-known paths
+      log.debug('ts-smtp-server package not found, trying well-known paths...')
+
+      const wellKnownPaths = [
+        join(homedir(), 'Code', 'Libraries', 'mail'),
+        join(homedir(), 'Code', 'mail'),
+      ]
+
+      for (const zigPath of wellKnownPaths) {
+        if (!existsSync(zigPath))
+          continue
+
+        log.info(`Found mail server source at ${zigPath}`)
+
+        // Look for pre-built Linux binary in the package bin/ or zig-out/
+        const binaryPaths = [
+          join(zigPath, 'packages', 'ts-smtp-server', 'bin', 'smtp-server-x86_64-linux'),
+          join(zigPath, 'zig-out', 'bin', 'x86_64-linux', 'smtp-server-x86_64-linux'),
+        ]
+
+        for (const binaryPath of binaryPaths) {
+          if (existsSync(binaryPath)) {
+            log.info(`Uploading Linux binary from ${binaryPath}`)
+            const binaryContent = readFileSync(binaryPath)
+            await s3Client.putObject({
+              bucket: bucketName,
+              key: 'mail-server/smtp-server',
+              body: binaryContent,
+              contentType: 'application/octet-stream',
+            })
+            log.success('Uploaded Linux x86_64 mail server binary to S3')
+            binaryUploaded = true
+            break
+          }
+        }
+
+        // Upload source tarball
+        const { execSync } = await import('child_process')
+        const tarballPath = '/tmp/mail-server-source.tar.gz'
+        execSync(`tar -czf ${tarballPath} -C "${zigPath}" --exclude='.git' --exclude='zig-out' --exclude='zig-cache' --exclude='.zig-cache' .`, { stdio: 'inherit' })
+        const tarballContent = readFileSync(tarballPath)
+        await s3Client.putObject({
+          bucket: bucketName,
+          key: 'mail-server/source.tar.gz',
+          body: tarballContent,
+          contentType: 'application/gzip',
+        })
+        log.success('Uploaded source tarball to S3')
+        break
+      }
+    }
+
+    if (!binaryUploaded) {
+      log.warn('No pre-built Linux binary found. The server will build from source on first boot (this takes longer).')
+      log.info('To pre-build: cd ~/Code/Libraries/mail/packages/ts-smtp-server && bun run build:linux-x64')
+    }
+  }
+  catch (uploadErr: any) {
+    log.debug(`Could not upload mail server to S3 (bucket may not exist yet): ${uploadErr.message}`)
+  }
+}
+
 export function deploy(buddy: CLI): void {
   const descriptions = {
     deploy: 'Deploy your project',
@@ -360,10 +506,10 @@ export function deploy(buddy: CLI): void {
     .option('--yes', descriptions.yes, { default: false })
     .option('--staging', descriptions.staging, { default: false })
     .option('--verbose', descriptions.verbose, { default: false })
-    .action(async (env: string | undefined, options: DeployOptions) => {
+    .action(async (envArg: string | undefined, options: DeployOptions) => {
       log.debug('Running `buddy deploy` ...', options)
 
-      const deployEnv = env || 'production'
+      const deployEnv = envArg || 'production'
 
       // Clear AWS_PROFILE to prevent credential conflicts when static credentials are provided
       // AWS SDK's defaultProvider prefers profile over static credentials, causing InvalidClientTokenId errors
@@ -391,8 +537,8 @@ export function deploy(buddy: CLI): void {
         }
       }
 
-      // Get domain from options, production env, Bun.env, or config
-      const envUrl = typeof Bun !== 'undefined' ? Bun.env.APP_URL : process.env.APP_URL
+      // Get domain from options, production env, env, or config
+      const envUrl = env.APP_URL
       const domain = options.domain || productionUrl || envUrl || app.url
 
       if ((options.prod || deployEnv === 'production' || deployEnv === 'prod') && !options.yes)
@@ -539,8 +685,8 @@ async function promptAndSaveCredentials() {
   const { setEnv } = await import('@stacksjs/env')
 
   // Set and encrypt the credentials
-  await setEnv('AWS_ACCESS_KEY_ID', accessKeyId, { file: '.env.production', encrypt: true })
-  await setEnv('AWS_SECRET_ACCESS_KEY', secretAccessKey, { file: '.env.production', encrypt: true })
+  await setEnv('AWS_ACCESS_KEY_ID', accessKeyId, { file: '.env.production', encrypt: true } as any)
+  await setEnv('AWS_SECRET_ACCESS_KEY', secretAccessKey, { file: '.env.production', encrypt: true } as any)
   await setEnv('AWS_REGION', region || 'us-east-1', { file: '.env.production' })
 
   // Update process.env
@@ -625,7 +771,7 @@ async function checkIfAwsIsBootstrapped(options?: DeployOptions) {
     log.info('Ensuring AWS cloud stack exists...')
 
     // Check if AWS credentials are configured in env vars (non-empty values)
-    let hasCredentials = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
+    let hasCredentials: any = process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
 
     // Try to load from environment-specific .env file first
     if (!hasCredentials) {
@@ -707,10 +853,10 @@ async function checkIfAwsIsBootstrapped(options?: DeployOptions) {
     const stackName = `${appName}-cloud`
 
     // Use ts-cloud's CloudFormation client
-    const { CloudFormationClient } = await import('ts-cloud/aws')
+    const { AWSCloudFormationClient } = await import('@stacksjs/ts-cloud')
 
     // Don't pass AWS_PROFILE when we have static credentials to avoid conflicts
-    const cfnClient = new CloudFormationClient(
+    const cfnClient = new AWSCloudFormationClient(
       process.env.AWS_REGION || 'us-east-1'
     )
 
@@ -719,14 +865,16 @@ async function checkIfAwsIsBootstrapped(options?: DeployOptions) {
     let needsEmailUpdate = false
 
     try {
-      const result = await cfnClient.describeStacks({ stackName })
+      const stack = (await cfnClient.describeStacks({ stackName })).Stacks?.[0]
 
-      if (result.Stacks && result.Stacks.length > 0) {
+      if (stack) {
         stackExists = true
         log.success('Cloud stack exists')
 
         // Check if email infrastructure is already deployed and matches config
-        const resources = await cfnClient.listStackResources(stackName)
+        const { AWSCloudFormationClient } = await import('@stacksjs/ts-cloud')
+        const awsCfnClient = new AWSCloudFormationClient(process.env.AWS_REGION || 'us-east-1')
+        const resources = await awsCfnClient.listStackResources(stackName)
         const hasEmailBucket = resources.StackResourceSummaries?.some(
           (r: any) => r.LogicalResourceId === 'EmailBucket'
         )
@@ -750,7 +898,7 @@ async function checkIfAwsIsBootstrapped(options?: DeployOptions) {
         )
 
         // Get current email domain from stack outputs to check if it needs updating
-        const currentEmailDomain = result.Stacks[0]?.Outputs?.find(
+        const currentEmailDomain = stack.Outputs?.find(
           (o: any) => o.OutputKey === 'EmailDomain'
         )?.OutputValue
 
@@ -778,7 +926,7 @@ async function checkIfAwsIsBootstrapped(options?: DeployOptions) {
         }
 
         // Always update if mail server mode changed or instance needs replacement
-        const currentMode = stackOutputs.find(
+        const currentMode = (stack.Outputs || []).find(
           (o: any) => o.OutputKey === 'MailServerMode'
         )?.OutputValue
         const configuredMode = emailConfig?.server?.mode || 'serverless'
@@ -808,8 +956,14 @@ async function checkIfAwsIsBootstrapped(options?: DeployOptions) {
     }
 
     if (!stackExists) {
-      log.info('Cloud stack not found')
+      log.info('Cloud stack not found, will be created by deploy action')
     }
+
+    // Stack creation/update is handled by the deploy action's deployStack() function
+    // which uses InfrastructureGenerator and handles large templates via S3 upload
+    return true
+
+    // Legacy template generation below - kept for reference but no longer used
     log.info('Creating/updating cloud infrastructure. This may take a few moments...')
 
     // Get email configuration
@@ -1384,7 +1538,9 @@ async function getAuthUser(event) {
       const creds = Buffer.from(auth.split(' ')[1], 'base64').toString('utf-8');
       const [email, password] = creds.split(':');
       if (email && password && await authenticate(email, password)) return email;
-    } catch (e) {}
+    } catch (e) {
+      log.debug('Operation failed: ' + (e instanceof Error ? e.message : String(e)))
+    }
   }
   return null;
 }
@@ -1424,7 +1580,9 @@ async function listMessages(userEmail, mailbox = 'INBOX') {
           s3Key: obj.Key,
         });
       }
-    } catch (e) {}
+    } catch (e) {
+      log.debug('Operation failed: ' + (e instanceof Error ? e.message : String(e)))
+    }
   }
   return messages.sort((a, b) => new Date(b.date) - new Date(a.date));
 }
@@ -1597,8 +1755,7 @@ exports.handler = async (event) => {
 
       // Get mail server config from email config
       const mailServerConfig = emailConfig?.server?.instance || {}
-      const mailServerMode = emailConfig?.server?.mode || 'serverless'
-      const mailServerPath = emailConfig?.server?.serverPath || '/Users/chrisbreuer/Code/mail'
+      const mailServerMode = emailConfig?.server?.mode || 'server'
       // For 'server' mode, use x86_64 instance (Zig compilation), for 'serverless' use ARM
       const instanceType = mailServerConfig.type || (mailServerMode === 'server' ? 't3.small' : 't4g.nano')
       const _useSpot = mailServerConfig.spot || false
@@ -1972,9 +2129,9 @@ echo "Starting mail server setup (server mode - Zig) at $(date)"
 dnf update -y
 dnf install -y git wget curl htop vim openssl sqlite certbot awscli python3 python3-pip fail2ban
 
-# Install Zig (0.13.0 stable for compatibility)
+# Install Zig (0.15.1 - matches build.zig.zon requirement)
 echo "Installing Zig..."
-ZIG_VERSION="0.13.0"
+ZIG_VERSION="0.15.1"
 cd /tmp
 wget https://ziglang.org/download/\${ZIG_VERSION}/zig-linux-x86_64-\${ZIG_VERSION}.tar.xz
 tar -xf zig-linux-x86_64-\${ZIG_VERSION}.tar.xz
@@ -1985,18 +2142,25 @@ zig version
 # Create smtp-server user
 useradd -r -s /bin/bash -d /opt/smtp-server -m smtp-server || true
 
-# Clone SMTP server repository from S3 or GitHub
+# Set up SMTP server directory
 mkdir -p /opt/smtp-server && cd /opt/smtp-server
 
-# Try to download pre-built binary from S3 first
-aws s3 cp s3://${emailBucketName}/mail-server/smtp-server ./smtp-server --region ${region} && chmod +x ./smtp-server || {
-  echo "Pre-built binary not found, building from source..."
+# Try to download pre-built Linux binary from S3 first
+aws s3 cp s3://${emailBucketName}/mail-server/smtp-server ./smtp-server --region ${region} && chmod +x ./smtp-server && {
+  # Verify it's actually a Linux ELF binary
+  file ./smtp-server | grep -q "ELF" || {
+    echo "Downloaded binary is not a Linux ELF binary, building from source..."
+    rm -f ./smtp-server
+    false
+  }
+} || {
+  echo "Pre-built binary not found or invalid, building from source..."
   # Download source from S3 or clone from GitHub
   aws s3 cp s3://${emailBucketName}/mail-server/source.tar.gz ./source.tar.gz --region ${region} && tar -xzf source.tar.gz || {
     git clone https://github.com/stacksjs/mail.git .
   }
   chown -R smtp-server:smtp-server /opt/smtp-server
-  sudo -u smtp-server zig build -Doptimize=ReleaseFast
+  zig build -Doptimize=ReleaseFast
   cp zig-out/bin/smtp-server ./smtp-server
 }
 
@@ -2004,22 +2168,29 @@ aws s3 cp s3://${emailBucketName}/mail-server/smtp-server ./smtp-server --region
 mkdir -p /var/lib/smtp-server /var/log/smtp-server /var/spool/mail /etc/smtp-server /var/lib/smtp-server/backups
 chown -R smtp-server:smtp-server /var/lib/smtp-server /var/log/smtp-server /var/spool/mail
 
-# Generate TLS certificates
+# Generate TLS certificates via Let's Encrypt (preferred) or self-signed fallback
 certbot certonly --standalone -d ${mailSubdomain}.${emailDomain} --non-interactive --agree-tos --email admin@${emailDomain} || {
-  echo "Generating self-signed certificates..."
+  echo "Let's Encrypt failed, generating self-signed certificates..."
   openssl req -x509 -nodes -days 365 -newkey rsa:2048 \\
     -keyout /etc/smtp-server/smtp-server.key \\
     -out /etc/smtp-server/smtp-server.crt \\
     -subj "/C=US/ST=State/L=City/O=Organization/CN=${mailSubdomain}.${emailDomain}"
 }
-chmod 600 /etc/smtp-server/smtp-server.key 2>/dev/null || true
-chown smtp-server:smtp-server /etc/smtp-server/smtp-server.* 2>/dev/null || true
 
 # Link Let's Encrypt certs if available
 if [ -d "/etc/letsencrypt/live/${mailSubdomain}.${emailDomain}" ]; then
   ln -sf /etc/letsencrypt/live/${mailSubdomain}.${emailDomain}/fullchain.pem /etc/smtp-server/smtp-server.crt
   ln -sf /etc/letsencrypt/live/${mailSubdomain}.${emailDomain}/privkey.pem /etc/smtp-server/smtp-server.key
 fi
+
+chmod 600 /etc/smtp-server/smtp-server.key 2>/dev/null || true
+chown smtp-server:smtp-server /etc/smtp-server/smtp-server.* 2>/dev/null || true
+
+# Set up certbot auto-renewal cron
+cat > /etc/cron.d/certbot-renew << 'CRON'
+0 3 * * * root certbot renew --quiet --deploy-hook "systemctl restart smtp-server" >> /var/log/certbot-renew.log 2>&1
+CRON
+chmod 644 /etc/cron.d/certbot-renew
 
 # Create environment configuration
 cat > /etc/smtp-server/smtp-server.env << EOF
@@ -2086,7 +2257,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/lib/smtp-server /var/log/smtp-server /var/spool/mail
+ReadWritePaths=/var/lib/smtp-server /var/log/smtp-server /var/spool/mail /etc/smtp-server
 
 # Allow binding to privileged ports
 AmbientCapabilities=CAP_NET_BIND_SERVICE
@@ -2095,7 +2266,7 @@ AmbientCapabilities=CAP_NET_BIND_SERVICE
 WantedBy=multi-user.target
 SYSTEMD
 
-# Configure fail2ban
+# Configure fail2ban for SMTP
 systemctl enable fail2ban
 systemctl start fail2ban
 
@@ -2104,9 +2275,13 @@ systemctl daemon-reload
 systemctl enable smtp-server
 systemctl start smtp-server
 
-# Wait and check status
+# Wait and verify the server is running
 sleep 5
-systemctl status smtp-server
+systemctl status smtp-server || true
+
+# Health check - verify ports are listening
+echo "Checking listening ports..."
+ss -tlnp | grep -E "(${smtpPort}|${smtpsPort}|${submissionPort})" || echo "Warning: mail ports not yet listening"
 
 echo "Mail server setup complete at $(date)"
 `
@@ -2231,81 +2406,15 @@ echo "Mail server setup complete at $(date)"
 
       log.success(`Email infrastructure added to template (mode: ${mailServerMode})`)
 
-      // Upload mail server code to S3 (if bucket exists)
-      try {
-        const { S3Client: S3 } = await import('ts-cloud/aws')
-        const s3Client = new S3(region)
-
-        if (mailServerMode === 'serverless') {
-          // Upload TypeScript/Bun server code
-          const serverTsPath = p.frameworkPath('core/mail-server/server.ts')
-          if (existsSync(serverTsPath)) {
-            const serverCode = readFileSync(serverTsPath, 'utf-8')
-            await s3Client.putObject({
-              bucket: emailBucketName,
-              key: 'mail-server/server.ts',
-              body: serverCode,
-              contentType: 'text/typescript',
-            })
-            log.success('Uploaded serverless mail server code to S3')
-          }
-
-          // Upload package.json
-          const pkgPath = p.frameworkPath('core/mail-server/package.json')
-          if (existsSync(pkgPath)) {
-            const pkgJson = readFileSync(pkgPath, 'utf-8')
-            await s3Client.putObject({
-              bucket: emailBucketName,
-              key: 'mail-server/package.json',
-              body: pkgJson,
-              contentType: 'application/json',
-            })
-          }
-        } else {
-          // Server mode: Upload Zig mail server source as tarball
-          const zigMailServerPath = mailServerPath
-          if (existsSync(zigMailServerPath)) {
-            log.info(`Packaging Zig mail server from ${zigMailServerPath}...`)
-            // Create a tarball of the source code
-            const { execSync } = await import('child_process')
-            const tarballPath = '/tmp/mail-server-source.tar.gz'
-            execSync(`tar -czf ${tarballPath} -C ${zigMailServerPath} --exclude='.git' --exclude='zig-out' --exclude='zig-cache' --exclude='.zig-cache' .`, { stdio: 'inherit' })
-
-            const tarballContent = readFileSync(tarballPath)
-            await s3Client.putObject({
-              bucket: emailBucketName,
-              key: 'mail-server/source.tar.gz',
-              body: tarballContent,
-              contentType: 'application/gzip',
-            })
-            log.success('Uploaded Zig mail server source to S3')
-
-            // Also try to upload pre-built binary if it exists
-            const binaryPath = `${zigMailServerPath}/zig-out/bin/smtp-server`
-            if (existsSync(binaryPath)) {
-              const binaryContent = readFileSync(binaryPath)
-              await s3Client.putObject({
-                bucket: emailBucketName,
-                key: 'mail-server/smtp-server',
-                body: binaryContent,
-                contentType: 'application/octet-stream',
-              })
-              log.success('Uploaded pre-built Zig mail server binary to S3')
-            }
-          } else {
-            log.warn(`Zig mail server path not found: ${zigMailServerPath}`)
-          }
-        }
-      } catch (uploadErr: any) {
-        log.debug(`Could not upload mail server to S3 (bucket may not exist yet): ${uploadErr.message}`)
-      }
+      // Upload mail server code/binary to S3 (if bucket exists)
+      await uploadMailServerToS3(emailBucketName, region, mailServerMode)
     }
 
     try {
       if (stackExists && needsEmailUpdate) {
         // Update existing stack with email infrastructure
         log.info('Updating stack with email infrastructure...')
-        const result = await cfnClient.updateStack({
+        const stackId = await cfnClient.updateStack({
           stackName,
           templateBody: JSON.stringify(template),
           capabilities: ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
@@ -2315,7 +2424,7 @@ echo "Mail server setup complete at $(date)"
           ],
         })
 
-        log.info(`Stack update initiated: ${result.StackId}`)
+        log.info(`Stack update initiated: ${stackId}`)
         log.info('Waiting for stack update to complete...')
 
         // Wait for stack update to complete
@@ -2325,56 +2434,22 @@ echo "Mail server setup complete at $(date)"
 
         // Set up email DNS records after stack update
         if (enableEmailServer) {
-          await setupEmailDnsRecords(emailDomain, region, log)
+          const serverMode = emailConfig?.server?.mode || 'server'
+          const mailSubdomain = emailConfig?.server?.subdomain || 'mail'
+          await setupEmailDnsRecords(emailDomain, region, log, { mode: serverMode, mailSubdomain })
 
           // Create default mail user if configured
           await createDefaultMailUser(appName, emailDomain, region, log)
 
-          // Upload mail server code to S3 now that bucket exists
-          try {
-            const { S3Client: S3 } = await import('ts-cloud/aws')
-            const s3Client = new S3(region)
-            const serverMode = emailConfig?.server?.mode || 'serverless'
-
-            if (serverMode === 'serverless') {
-              const serverTsPath = p.frameworkPath('core/mail-server/server.ts')
-              if (existsSync(serverTsPath)) {
-                const serverCode = readFileSync(serverTsPath, 'utf-8')
-                await s3Client.putObject({
-                  bucket: emailBucketName,
-                  key: 'mail-server/server.ts',
-                  body: serverCode,
-                  contentType: 'text/typescript',
-                })
-                log.success('Mail server code uploaded to S3')
-              }
-            } else {
-              // Server mode: package and upload Zig source
-              const zigPath = emailConfig?.server?.serverPath || '/Users/chrisbreuer/Code/mail'
-              if (existsSync(zigPath)) {
-                const { execSync } = await import('child_process')
-                const tarballPath = '/tmp/mail-server-source.tar.gz'
-                execSync(`tar -czf ${tarballPath} -C ${zigPath} --exclude='.git' --exclude='zig-out' --exclude='zig-cache' --exclude='.zig-cache' .`, { stdio: 'inherit' })
-                const tarballContent = readFileSync(tarballPath)
-                await s3Client.putObject({
-                  bucket: emailBucketName,
-                  key: 'mail-server/source.tar.gz',
-                  body: tarballContent,
-                  contentType: 'application/gzip',
-                })
-                log.success('Zig mail server source uploaded to S3')
-              }
-            }
-          } catch (e: any) {
-            log.debug(`S3 upload after stack update: ${e.message}`)
-          }
+          // Upload mail server code/binary to S3 now that bucket exists
+          await uploadMailServerToS3(emailBucketName, region, serverMode)
         }
 
         return true
       }
       else {
         // Create new stack
-        const result = await cfnClient.createStack({
+        const stackId = await cfnClient.createStack({
           stackName,
           templateBody: JSON.stringify(template),
           capabilities: ['CAPABILITY_IAM', 'CAPABILITY_NAMED_IAM'],
@@ -2384,7 +2459,7 @@ echo "Mail server setup complete at $(date)"
           ],
         })
 
-        log.info(`Stack creation initiated: ${result.StackId}`)
+        log.info(`Stack creation initiated: ${stackId}`)
         log.info('Waiting for stack creation to complete...')
 
         // Wait for stack creation to complete
@@ -2394,7 +2469,12 @@ echo "Mail server setup complete at $(date)"
 
         // Set up email DNS records after stack creation
         if (enableEmailServer) {
-          await setupEmailDnsRecords(emailDomain, region, log)
+          const serverMode = emailConfig?.server?.mode || 'server'
+          const mailSubdomain = emailConfig?.server?.subdomain || 'mail'
+          await setupEmailDnsRecords(emailDomain, region, log, { mode: serverMode, mailSubdomain })
+
+          // Upload mail server code/binary to S3 now that bucket exists
+          await uploadMailServerToS3(emailBucketName, region, serverMode)
         }
 
         return true

@@ -6,9 +6,12 @@
   "private": true,
   "exports": {
     ".": {
+      "bun": "./index.ts",
       "types": "./index.ts",
       "import": "./index.ts"
     }
   },
-  "dependencies": {}
+  "dependencies": {
+    "@stacksjs/ts-cloud": "^0.1.11"
+  }
 }

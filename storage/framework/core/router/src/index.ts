@@ -10,11 +10,15 @@
 // Re-export everything from bun-router (includes response factory)
 export * from '@stacksjs/bun-router'
 
-// Export Stacks-specific action resolver
-export { createStacksRouter, route, serve, serverResponse } from './stacks-router'
+// Export Stacks-specific action resolver and URL helper
+export { createStacksRouter, route, serve, serverResponse, url } from './stacks-router'
 
 // Export request context helpers
 export { getCurrentRequest, request, runWithRequest, setCurrentRequest } from './request-context'
+
+// Export Middleware class for defining route middleware
+export { Middleware } from './middleware'
+export type { MiddlewareConfig, Request } from './middleware'
 
 // Export route loader
 export { loadRoutes } from './route-loader'

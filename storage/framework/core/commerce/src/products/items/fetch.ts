@@ -1,4 +1,4 @@
-import type { ProductJsonResponse } from '@stacksjs/orm'
+type ProductJsonResponse = ModelRow<typeof Product>
 import { db } from '@stacksjs/database'
 
 /**
@@ -35,7 +35,7 @@ export async function fetchById(id: number): Promise<ProductJsonResponse | undef
       ...model,
       manufacturer,
       category,
-    }
+    } as unknown as ProductJsonResponse
   }
 
   return undefined
@@ -49,11 +49,11 @@ export async function fetchAll(): Promise<ProductJsonResponse[]> {
   const models = await db.selectFrom('products').selectAll().execute()
 
   // Get the IDs of all manufacturers and categories
-  const manufacturerIds = models.map(model => model.manufacturer_id).filter(id => id !== null && id !== undefined)
-  const categoryIds = models.map(model => model.category_id).filter(id => id !== null && id !== undefined)
+  const manufacturerIds = models.map((model: any) => model.manufacturer_id).filter((id: any) => id !== null && id !== undefined)
+  const categoryIds = models.map((model: any) => model.category_id).filter((id: any) => id !== null && id !== undefined)
 
-  let manufacturersQuery = db.selectFrom('manufacturers')
-  let categoriesQuery = db.selectFrom('categories')
+  let manufacturersQuery = db.selectFrom('manufacturers') as any
+  let categoriesQuery = db.selectFrom('categories') as any
 
   if (manufacturerIds.length > 0) {
     manufacturersQuery = manufacturersQuery.where('id', 'in', manufacturerIds)
@@ -68,18 +68,18 @@ export async function fetchAll(): Promise<ProductJsonResponse[]> {
   const allCategories = await categoriesQuery.selectAll().execute()
 
   // Group manufacturers and categories by ID
-  const manufacturersById = allManufacturers.reduce((acc, manufacturer) => {
+  const manufacturersById = allManufacturers.reduce((acc: any, manufacturer: any) => {
     acc[manufacturer.id] = manufacturer
     return acc
   }, {} as Record<number, typeof allManufacturers[0]>)
 
-  const categoriesById = allCategories.reduce((acc, category) => {
+  const categoriesById = allCategories.reduce((acc: any, category: any) => {
     acc[category.id] = category
     return acc
   }, {} as Record<number, typeof allCategories[0]>)
 
   // Attach manufacturers and categories to each product
-  return models.map(model => ({
+  return models.map((model: any) => ({
     ...model,
     manufacturer: model.manufacturer_id ? manufacturersById[model.manufacturer_id] : null,
     category: model.category_id ? categoriesById[model.category_id] : null,
@@ -101,7 +101,7 @@ export async function getProductsByManufacturer(manufacturerId: number): Promise
       .orderBy('name')
       .execute()
 
-    return products
+    return products as ProductJsonResponse[]
   }
   catch (error) {
     if (error instanceof Error) {
@@ -127,7 +127,7 @@ export async function getProductsByCategory(categoryId: number): Promise<Product
       .orderBy('name')
       .execute()
 
-    return products
+    return products as ProductJsonResponse[]
   }
   catch (error) {
     if (error instanceof Error) {
@@ -152,7 +152,7 @@ export async function getProductByUuid(uuid: string): Promise<ProductJsonRespons
       .where('uuid', '=', uuid)
       .executeTakeFirst()
 
-    return product
+    return product as ProductJsonResponse | undefined
   }
   catch (error) {
     if (error instanceof Error) {
@@ -177,7 +177,7 @@ export async function formatProductOptions(): Promise<{ id: number, name: string
       .execute()
 
     // Filter out any results with undefined/null values to match the return type
-    return results.filter(result =>
+    return results.filter((result: any) =>
       result.name !== null
       && result.name !== undefined
       && result.uuid !== null
@@ -212,7 +212,7 @@ export async function getProductsByPriceRange(minPrice: number, maxPrice: number
       .orderBy('price')
       .execute()
 
-    return products
+    return products as ProductJsonResponse[]
   }
   catch (error) {
     if (error instanceof Error) {

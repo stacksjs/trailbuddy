@@ -1,4 +1,5 @@
-import type { CouponJsonResponse, NewCoupon } from '@stacksjs/orm'
+type CouponJsonResponse = ModelRow<typeof Coupon>
+type NewCoupon = NewModelData<typeof Coupon>
 import { db } from '@stacksjs/database'
 
 /**
@@ -24,7 +25,7 @@ export async function store(data: NewCoupon): Promise<CouponJsonResponse | undef
         .selectAll()
         .executeTakeFirst()
 
-      return coupon
+      return coupon as CouponJsonResponse
     }
 
     return undefined

@@ -5,17 +5,8 @@
  * Uses AsyncLocalStorage for proper request isolation in async contexts.
  */
 
+import type { EnhancedRequest } from '@stacksjs/bun-router'
 import { AsyncLocalStorage } from 'node:async_hooks'
-
-// Type for enhanced request with all our added methods
-interface EnhancedRequest extends Request {
-  bearerToken: () => string | null
-  user: () => Promise<any>
-  userToken: () => Promise<any>
-  tokenCan: (ability: string) => Promise<boolean>
-  tokenCant: (ability: string) => Promise<boolean>
-  [key: string]: any
-}
 
 // AsyncLocalStorage for request context
 const requestStorage = new AsyncLocalStorage<EnhancedRequest>()
@@ -24,13 +15,10 @@ const requestStorage = new AsyncLocalStorage<EnhancedRequest>()
  * Set the current request context
  * Called by middleware/router when handling a request
  */
-export function setCurrentRequest(_req: EnhancedRequest): void {
-  // Note: This only works within the async context started by runWithRequest
-  const store = requestStorage.getStore()
-  if (store) {
-    // If we're in a context, we can't replace it - this is expected
-    return
-  }
+export function setCurrentRequest(req: EnhancedRequest): void {
+  // Use enterWith to set the request context for the current async scope.
+  // This is useful for testing and middleware that operate outside of runWithRequest.
+  requestStorage.enterWith(req)
 }
 
 /**
@@ -60,16 +48,16 @@ export function getCurrentRequest(): EnhancedRequest | undefined {
  * - tokenCant(ability) - Check if token doesn't have an ability (async)
  */
 export const request = new Proxy({} as EnhancedRequest, {
-  get(_target, prop: string) {
+  get(_target, prop: string): any {
     const currentRequest = getCurrentRequest()
 
     if (!currentRequest) {
       // Return safe defaults when no request context
       if (prop === 'bearerToken') {
-        return () => null
+        return (): any => null
       }
       if (prop === 'user' || prop === 'userToken') {
-        return async () => undefined
+        return async (): Promise<any> => undefined
       }
       if (prop === 'tokenCan' || prop === 'tokenCant') {
         return async () => false

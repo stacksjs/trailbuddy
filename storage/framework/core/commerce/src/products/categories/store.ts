@@ -1,4 +1,5 @@
-import type { CategoryJsonResponse, NewCategory } from '@stacksjs/orm'
+type CategoryJsonResponse = ModelRow<typeof Category>
+type NewCategory = NewModelData<typeof Category>
 import { db } from '@stacksjs/database'
 import { slug } from '@stacksjs/strings'
 import { fetchById } from './fetch'
@@ -71,7 +72,7 @@ export async function findOrCreateByName(data: Partial<CategorizableTable>): Pro
     .executeTakeFirst()
 
   if (existingCategory)
-    return existingCategory
+    return existingCategory as CategoryJsonResponse
 
   const categoryData = {
     name: data.name,

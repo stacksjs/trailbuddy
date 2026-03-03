@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 // thanks to https://github.com/sindresorhus/detect-indent for much of this!
 
 // Detect either spaces or tabs but not both to properly handle tabs for indentation and spaces for alignment
@@ -22,14 +21,14 @@ const INDENT_TYPE_TAB = 'tab'
  * ```
  */
 function makeIndentsMap(string: string, ignoreSingleSpaces: boolean = true) {
-  const indents = new Map()
+  const indents = new Map<string, [number, number]>()
 
   // Remember the size of previous line's indentation
   let previousSize = 0
   let previousIndentType
 
   // Indents key (ident type + size of the indents/unindents)
-  let key
+  let key: string = ''
 
   for (const line of string.split(/\n/g)) {
     if (!line) {
@@ -41,7 +40,7 @@ function makeIndentsMap(string: string, ignoreSingleSpaces: boolean = true) {
     let indentType
     let use
     let weight
-    let entry
+    let entry: [number, number] | undefined
     const matches = line.match(INDENT_REGEX)
 
     if (matches === null) {
@@ -146,14 +145,10 @@ export function detectIndent(string: string): { amount: number, type?: string, i
 
   const keyOfMostUsedIndent = getMostUsedKey(indents)
 
-  let type
-  let amount = 0
-  let indent = ''
-
-  if (keyOfMostUsedIndent !== undefined) {
-    ({ type, amount } = decodeIndentsKey(keyOfMostUsedIndent))
-    indent = makeIndentString(type, amount)
-  }
+  const decoded = keyOfMostUsedIndent !== undefined ? decodeIndentsKey(keyOfMostUsedIndent) : undefined
+  const type = decoded?.type
+  const amount = decoded?.amount ?? 0
+  const indent = decoded ? makeIndentString(type, amount) : ''
 
   return {
     amount,

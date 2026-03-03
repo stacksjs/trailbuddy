@@ -1,4 +1,3 @@
-import type { PageRequestType } from '@stacksjs/orm'
 import { Action } from '@stacksjs/actions'
 import { authors, pages } from '@stacksjs/cms'
 import { response } from '@stacksjs/router'
@@ -7,8 +6,8 @@ export default new Action({
   name: 'Page Store',
   description: 'Page Store ORM Action',
   method: 'POST',
-  model: 'Page',
-  async handle(request: PageRequestType) {
+  model: Page,
+  async handle(request) {
     await request.validate()
 
     const author = await authors.findOrCreate({

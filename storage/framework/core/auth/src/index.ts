@@ -21,15 +21,19 @@ export * from './gate'
 export * from './policy'
 export * from './authorizable'
 
+// Role-Based Access Control (RBAC)
+export * from './rbac'
+
+// Email Verification
+export * from './email-verification'
+
+// Session-based Authentication (SPA Cookie Auth)
+export * from './session-auth'
+
 // TOTP (Two-Factor Authentication) - re-export from ts-auth
 export {
   generateTOTP,
   verifyTOTP,
   generateTOTPSecret,
   totpKeyUri,
-  // QR Code generation
-  generateQRCodeSVG,
-  generateQRCodeDataURL,
-  createQRCode,
-  QRErrorCorrection,
-} from 'ts-auth'
+} from '@stacksjs/ts-auth'

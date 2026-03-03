@@ -1,7 +1,5 @@
-/* eslint-disable pickier/no-unused-vars */
-import type { ReceiptJsonResponse } from '@stacksjs/orm'
 import { db } from '@stacksjs/database'
-import { formatDate } from '@stacksjs/orm'
+type ReceiptJsonResponse = ModelRow<typeof Receipt>
 
 /**
  * Fetch a print log by ID
@@ -11,14 +9,14 @@ export async function fetchById(id: number): Promise<ReceiptJsonResponse | undef
     .selectFrom('receipts')
     .where('id', '=', id)
     .selectAll()
-    .executeTakeFirst()
+    .executeTakeFirst() as ReceiptJsonResponse | undefined
 }
 
 /**
  * Fetch all print logs
  */
 export async function fetchAll(): Promise<ReceiptJsonResponse[]> {
-  return await db.selectFrom('receipts').selectAll().execute()
+  return await db.selectFrom('receipts').selectAll().execute() as ReceiptJsonResponse[]
 }
 
 /**
@@ -29,8 +27,8 @@ export async function fetchAll(): Promise<ReceiptJsonResponse[]> {
  * @returns Object containing counts for each status and total
  */
 export async function fetchPrintJobStats(
-  startDate: Date,
-  endDate: Date,
+  _startDate: Date | number,
+  _endDate: Date | number,
 ): Promise<{
     total: number
     success: number
@@ -40,29 +38,32 @@ export async function fetchPrintJobStats(
     averagePages: number
     averageDuration: number
   }> {
+  const start = typeof _startDate === 'number' ? _startDate : _startDate.getTime()
+  const end = typeof _endDate === 'number' ? _endDate : _endDate.getTime()
+
   const stats = await db
     .selectFrom('receipts')
-    .where('timestamp', '>=', formatDate(startDate))
-    .where('timestamp', '<=', endDate)
-    .select([
-      db.fn.count<number>('id').as('total'),
-      db.fn.count<number>('id').filterWhere('status', '=', 'success').as('success'),
-      db.fn.count<number>('id').filterWhere('status', '=', 'failed').as('failed'),
-      db.fn.count<number>('id').filterWhere('status', '=', 'warning').as('warning'),
-      db.fn.avg<number>('size').as('averageSize'),
-      db.fn.avg<number>('pages').as('averagePages'),
-      db.fn.avg<number>('duration').as('averageDuration'),
-    ])
+    .where('timestamp', '>=', start)
+    .where('timestamp', '<=', end)
+    .select(((eb: any) => [
+      eb.fn.count('id').as('total'),
+      eb.fn.count('id').filterWhere('status', '=', 'success').as('success'),
+      eb.fn.count('id').filterWhere('status', '=', 'failed').as('failed'),
+      eb.fn.count('id').filterWhere('status', '=', 'warning').as('warning'),
+      eb.fn.avg('size').as('averageSize'),
+      eb.fn.avg('pages').as('averagePages'),
+      eb.fn.avg('duration').as('averageDuration'),
+    ]) as any)
     .executeTakeFirst()
 
   return {
-    total: stats?.total || 0,
-    success: stats?.success || 0,
-    failed: stats?.failed || 0,
-    warning: stats?.warning || 0,
-    averageSize: Math.round(stats?.averageSize || 0),
-    averagePages: Math.round(stats?.averagePages || 0),
-    averageDuration: Math.round(stats?.averageDuration || 0),
+    total: (stats as any)?.total || 0,
+    success: (stats as any)?.success || 0,
+    failed: (stats as any)?.failed || 0,
+    warning: (stats as any)?.warning || 0,
+    averageSize: Math.round((stats as any)?.averageSize || 0),
+    averagePages: Math.round((stats as any)?.averagePages || 0),
+    averageDuration: Math.round((stats as any)?.averageDuration || 0),
   }
 }
 
@@ -74,8 +75,8 @@ export async function fetchPrintJobStats(
  * @returns Object containing success rate percentage and detailed counts
  */
 export async function fetchSuccessRate(
-  startDate: Date,
-  endDate: Date,
+  _startDate: Date | number,
+  _endDate: Date | number,
 ): Promise<{
     successRate: number
     total: number
@@ -83,22 +84,25 @@ export async function fetchSuccessRate(
     failed: number
     warning: number
   }> {
+  const start = typeof _startDate === 'number' ? _startDate : _startDate.getTime()
+  const end = typeof _endDate === 'number' ? _endDate : _endDate.getTime()
+
   const stats = await db
     .selectFrom('receipts')
-    .where('timestamp', '>=', formatDate(startDate))
-    .where('timestamp', '<=', formatDate(endDate))
-    .select([
-      db.fn.count<number>('id').as('total'),
-      db.fn.count<number>('id').filterWhere('status', '=', 'success').as('success'),
-      db.fn.count<number>('id').filterWhere('status', '=', 'failed').as('failed'),
-      db.fn.count<number>('id').filterWhere('status', '=', 'warning').as('warning'),
-    ])
+    .where('timestamp', '>=', start)
+    .where('timestamp', '<=', end)
+    .select(((eb: any) => [
+      eb.fn.count('id').as('total'),
+      eb.fn.count('id').filterWhere('status', '=', 'success').as('success'),
+      eb.fn.count('id').filterWhere('status', '=', 'failed').as('failed'),
+      eb.fn.count('id').filterWhere('status', '=', 'warning').as('warning'),
+    ]) as any)
     .executeTakeFirst()
 
-  const total = stats?.total || 0
-  const success = stats?.success || 0
-  const failed = stats?.failed || 0
-  const warning = stats?.warning || 0
+  const total = (stats as any)?.total || 0
+  const success = (stats as any)?.success || 0
+  const failed = (stats as any)?.failed || 0
+  const warning = (stats as any)?.warning || 0
 
   // Calculate success rate as percentage of successful jobs vs total jobs
   const successRate = total > 0 ? Math.round((success / total) * 100) : 0
@@ -120,28 +124,31 @@ export async function fetchSuccessRate(
  * @returns Object containing total pages and average pages per receipt
  */
 export async function fetchPageStats(
-  startDate: Date,
-  endDate: Date,
+  _startDate: Date | number,
+  _endDate: Date | number,
 ): Promise<{
     totalPages: number
     averagePagesPerReceipt: number
     totalReceipts: number
   }> {
+  const start = typeof _startDate === 'number' ? _startDate : _startDate.getTime()
+  const end = typeof _endDate === 'number' ? _endDate : _endDate.getTime()
+
   const stats = await db
     .selectFrom('receipts')
-    .where('timestamp', '>=', formatDate(startDate))
-    .where('timestamp', '<=', formatDate(endDate))
-    .select([
-      db.fn.count<number>('id').as('totalReceipts'),
-      db.fn.sum<number>('pages').as('totalPages'),
-      db.fn.avg<number>('pages').as('averagePagesPerReceipt'),
-    ])
+    .where('timestamp', '>=', start)
+    .where('timestamp', '<=', end)
+    .select(((eb: any) => [
+      eb.fn.count('id').as('totalReceipts'),
+      eb.fn.sum('pages').as('totalPages'),
+      eb.fn.avg('pages').as('averagePagesPerReceipt'),
+    ]) as any)
     .executeTakeFirst()
 
   return {
-    totalPages: stats?.totalPages || 0,
-    averagePagesPerReceipt: Math.round(stats?.averagePagesPerReceipt || 0),
-    totalReceipts: stats?.totalReceipts || 0,
+    totalPages: (stats as any)?.totalPages || 0,
+    averagePagesPerReceipt: Math.round((stats as any)?.averagePagesPerReceipt || 0),
+    totalReceipts: (stats as any)?.totalReceipts || 0,
   }
 }
 
@@ -153,31 +160,34 @@ export async function fetchPageStats(
  * @returns Object containing average print time and related statistics
  */
 export async function fetchPrintTimeStats(
-  startDate: Date,
-  endDate: Date,
+  _startDate: Date | number,
+  _endDate: Date | number,
 ): Promise<{
     averageDuration: number
     minDuration: number
     maxDuration: number
     totalJobs: number
   }> {
+  const start = typeof _startDate === 'number' ? _startDate : _startDate.getTime()
+  const end = typeof _endDate === 'number' ? _endDate : _endDate.getTime()
+
   const stats = await db
     .selectFrom('receipts')
-    .where('timestamp', '>=', formatDate(startDate))
-    .where('timestamp', '<=', formatDate(endDate))
-    .select([
-      db.fn.count<number>('id').as('totalJobs'),
-      db.fn.avg<number>('duration').as('averageDuration'),
-      db.fn.min<number>('duration').as('minDuration'),
-      db.fn.max<number>('duration').as('maxDuration'),
-    ])
+    .where('timestamp', '>=', start)
+    .where('timestamp', '<=', end)
+    .select(((eb: any) => [
+      eb.fn.count('id').as('totalJobs'),
+      eb.fn.avg('duration').as('averageDuration'),
+      eb.fn.min('duration').as('minDuration'),
+      eb.fn.max('duration').as('maxDuration'),
+    ]) as any)
     .executeTakeFirst()
 
   return {
-    averageDuration: Math.round(stats?.averageDuration || 0),
-    minDuration: stats?.minDuration || 0,
-    maxDuration: stats?.maxDuration || 0,
-    totalJobs: stats?.totalJobs || 0,
+    averageDuration: Math.round((stats as any)?.averageDuration || 0),
+    minDuration: (stats as any)?.minDuration || 0,
+    maxDuration: (stats as any)?.maxDuration || 0,
+    totalJobs: (stats as any)?.totalJobs || 0,
   }
 }
 
@@ -189,8 +199,8 @@ export async function fetchPrintTimeStats(
  * @returns Object containing prints per hour statistics
  */
 export async function fetchPrintsPerHour(
-  startDate: Date,
-  endDate: Date,
+  _startDate: Date | number,
+  _endDate: Date | number,
 ): Promise<{
     totalPrints: number
     totalHours: number
@@ -200,15 +210,18 @@ export async function fetchPrintsPerHour(
       count: number
     }>
   }> {
+  const start = typeof _startDate === 'number' ? _startDate : _startDate.getTime()
+  const end = typeof _endDate === 'number' ? _endDate : _endDate.getTime()
+
   const receipts = await db
     .selectFrom('receipts')
-    .where('timestamp', '>=', formatDate(startDate))
-    .where('timestamp', '<=', formatDate(endDate))
+    .where('timestamp', '>=', start)
+    .where('timestamp', '<=', end)
     .selectAll()
     .execute()
 
   const totalPrints = receipts.length
-  const totalHours = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60))
+  const totalHours = Math.ceil((end - start) / (1000 * 60 * 60))
   const printsPerHour = totalHours > 0 ? Math.round(totalPrints / totalHours) : 0
 
   const hourlyBreakdown = Array.from({ length: 24 }, (_, i) => ({
@@ -216,8 +229,8 @@ export async function fetchPrintsPerHour(
     count: 0,
   }))
 
-  receipts.forEach((receipt) => {
-    const date = new Date(receipt.timestamp)
+  receipts.forEach((receipt: any) => {
+    const date = new Date(Number(receipt.timestamp))
     const hour = date.getHours()
     hourlyBreakdown[hour].count++
   })

@@ -1,4 +1,3 @@
-import type { RequestInstance } from '@stacksjs/types'
 import { Action } from '@stacksjs/actions'
 import { response } from '@stacksjs/router'
 
@@ -13,10 +12,10 @@ export default new Action({
   method: 'POST',
   async handle(_request: RequestInstance) {
     try {
-      const bun = await import('bun')
+      const { $: _$ } = await import('bun')
 
       // Find and kill claude CLI processes
-      await bun.$`pkill -f "claude --print" || true`.quiet().nothrow()
+      const _result = await _$`pkill -f "claude --print" || true`.quiet().nothrow()
 
       return response.json({
         success: true,

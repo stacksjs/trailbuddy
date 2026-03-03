@@ -1,36 +1,68 @@
-import type { Model } from '@stacksjs/types'
+import { defineModel } from '@stacksjs/orm'
 import { schema } from '@stacksjs/validation'
 
-export default {
-  name: 'Subscriber', // defaults to the sanitized file name
-  table: 'subscribers', // defaults to the lowercase, plural name of the model name (or the name of the model file)
-  primaryKey: 'id', // defaults to `id`
-  autoIncrement: true, // defaults to true
+export default defineModel({
+  name: 'Subscriber',
+  table: 'subscribers',
+  primaryKey: 'id',
+  autoIncrement: true,
+  belongsTo: ['User'],
+  hasMany: ['SubscriberEmail'],
 
   traits: {
-    useTimestamps: true, // defaults to true
+    useUuid: true,
+    useTimestamps: true,
     useSeeder: {
-      // defaults to a count of 10
       count: 10,
+    },
+    useApi: {
+      uri: 'subscribers',
+      routes: ['index', 'store', 'show', 'update', 'destroy'],
     },
   },
 
   attributes: {
-    subscribed: {
+    email: {
+      unique: true,
+      required: true,
       fillable: true,
       validation: {
-        rule: schema.boolean().required(),
+        rule: schema.string().email().max(255),
         message: {
-          boolean: 'subscribed must be a boolean',
-          required: 'subscribed is required',
+          string: 'email must be a string',
+          required: 'email is required',
+          email: 'email must be a valid email address',
+          max: 'email must have a maximum of 255 characters',
         },
       },
+      factory: faker => faker.internet.email(),
+    },
 
-      factory: faker => faker.datatype.boolean(),
+    status: {
+      required: true,
+      fillable: true,
+      default: 'subscribed',
+      validation: {
+        rule: schema.enum(['subscribed', 'unsubscribed', 'pending', 'bounced']),
+        message: {
+          enum: 'status must be one of: subscribed, unsubscribed, pending, bounced',
+        },
+      },
+      factory: faker => faker.helpers.arrayElement(['subscribed', 'subscribed', 'subscribed', 'unsubscribed', 'pending']),
+    },
+
+    source: {
+      required: false,
+      fillable: true,
+      default: 'homepage',
+      validation: {
+        rule: schema.string().max(100),
+        message: {
+          string: 'source must be a string',
+          max: 'source must have a maximum of 100 characters',
+        },
+      },
+      factory: faker => faker.helpers.arrayElement(['homepage', 'blog', 'landing-page', 'api', 'import']),
     },
   },
-
-  dashboard: {
-    highlight: true,
-  },
-} satisfies Model
+} as const)

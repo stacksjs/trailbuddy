@@ -1,5 +1,6 @@
 // Import dependencies
-import type { NewShippingZone, ShippingZoneJsonResponse } from '@stacksjs/orm'
+type ShippingZoneJsonResponse = ModelRow<typeof ShippingZone>
+type NewShippingZone = NewModelData<typeof ShippingZone>
 import { randomUUIDv7 } from 'bun'
 import { db } from '@stacksjs/database'
 import { fetchById } from './fetch'
@@ -15,7 +16,6 @@ export async function store(data: NewShippingZone): Promise<ShippingZoneJsonResp
     const zoneData = {
       ...data,
       uuid: randomUUIDv7(),
-      shipping_method_id: 1,
     }
 
     const result = await db

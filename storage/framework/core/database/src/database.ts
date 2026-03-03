@@ -8,6 +8,7 @@
 
 import type { QueryBuilder, QueryBuilderConfig, SupportedDialect } from 'bun-query-builder'
 import { createQueryBuilder, setConfig } from 'bun-query-builder'
+import { env as stacksEnv } from '@stacksjs/env'
 
 export interface DatabaseConnectionConfig {
   /** Database name or file path (for SQLite) */
@@ -75,7 +76,7 @@ export interface DatabaseOptions {
  * ```
  */
 export class Database {
-  private _queryBuilder: QueryBuilder | null = null
+  private _queryBuilder: QueryBuilder<any> | null = null
   private _options: DatabaseOptions
   private _initialized = false
 
@@ -121,7 +122,7 @@ export class Database {
    * Get the query builder instance
    * Lazily initializes the connection on first access
    */
-  get query(): QueryBuilder {
+  get query(): QueryBuilder<any> {
     if (!this._queryBuilder) {
       this.initialize()
     }
@@ -138,10 +139,10 @@ export class Database {
     // Configure bun-query-builder
     setConfig({
       dialect: this._options.driver,
-      database: this._options.connection,
+      database: this._options.connection as any,
       verbose: this._options.verbose,
-      timestamps: this._options.timestamps,
-      softDeletes: this._options.softDeletes,
+      timestamps: this._options.timestamps as any,
+      softDeletes: this._options.softDeletes as any,
       hooks: this._options.hooks,
     })
 
@@ -241,35 +242,35 @@ export class Database {
    * Create a new Database instance from environment variables
    */
   static fromEnv(): Database {
-    const env = typeof Bun !== 'undefined' ? Bun.env : process.env
-    const driver = (env.DB_CONNECTION as SupportedDialect) || 'sqlite'
+    // Uses the typed env proxy from @stacksjs/env (imported at top of file as stacksEnv)
+    const driver = (stacksEnv.DB_CONNECTION as SupportedDialect) || 'sqlite'
 
     let connection: DatabaseConnectionConfig
 
     switch (driver) {
       case 'sqlite':
         connection = {
-          database: env.DB_DATABASE || 'database/stacks.sqlite',
+          database: stacksEnv.DB_DATABASE || 'database/stacks.sqlite',
         }
         break
 
       case 'mysql':
         connection = {
-          database: env.DB_DATABASE || 'stacks',
-          host: env.DB_HOST || '127.0.0.1',
-          port: Number(env.DB_PORT) || 3306,
-          username: env.DB_USERNAME || 'root',
-          password: env.DB_PASSWORD || '',
+          database: stacksEnv.DB_DATABASE || 'stacks',
+          host: stacksEnv.DB_HOST || '127.0.0.1',
+          port: stacksEnv.DB_PORT || 3306,
+          username: stacksEnv.DB_USERNAME || 'root',
+          password: stacksEnv.DB_PASSWORD || '',
         }
         break
 
       case 'postgres':
         connection = {
-          database: env.DB_DATABASE || 'stacks',
-          host: env.DB_HOST || '127.0.0.1',
-          port: Number(env.DB_PORT) || 5432,
-          username: env.DB_USERNAME || '',
-          password: env.DB_PASSWORD || '',
+          database: stacksEnv.DB_DATABASE || 'stacks',
+          host: stacksEnv.DB_HOST || '127.0.0.1',
+          port: stacksEnv.DB_PORT || 5432,
+          username: stacksEnv.DB_USERNAME || '',
+          password: stacksEnv.DB_PASSWORD || '',
         }
         break
 
@@ -280,7 +281,7 @@ export class Database {
     return new Database({
       driver,
       connection,
-      verbose: env.APP_ENV !== 'production',
+      verbose: stacksEnv.APP_ENV !== 'prod',
     })
   }
 }

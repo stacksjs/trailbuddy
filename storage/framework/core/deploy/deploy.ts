@@ -5,13 +5,10 @@
  * Replaces aws-cli and aws-sdk with native TypeScript implementation.
  */
 
-import { S3Client } from 'ts-cloud/src/aws/s3'
-import { CloudFrontClient } from 'ts-cloud/src/aws/cloudfront'
-import { CloudFormationClient } from 'ts-cloud/src/aws/cloudformation'
-import { InfrastructureGenerator } from 'ts-cloud/src/generators/infrastructure'
+import { S3Client, AWSCloudFrontClient as CloudFrontClient, AWSCloudFormationClient as CloudFormationClient, InfrastructureGenerator } from '@stacksjs/ts-cloud'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import type { CloudConfig } from '@ts-cloud/types'
+import type { CloudConfig } from '@stacksjs/ts-cloud'
 
 // Import tsCloud config from Stacks config system
 import { tsCloud as config } from '~/config/cloud'

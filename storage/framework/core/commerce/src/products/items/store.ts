@@ -1,4 +1,5 @@
-import type { NewProduct, ProductJsonResponse } from '@stacksjs/orm'
+type ProductJsonResponse = ModelRow<typeof Product>
+type NewProduct = NewModelData<typeof Product>
 import { randomUUIDv7 } from 'bun'
 import { db } from '@stacksjs/database'
 import { fetchById } from './fetch'
@@ -55,7 +56,7 @@ export async function bulkStore(data: NewProduct[]): Promise<number> {
   let createdCount = 0
 
   try {
-    await db.transaction().execute(async (trx) => {
+    await (db as any).transaction().execute(async (trx: any) => {
       for (const item of data) {
         const itemData = {
           ...item,

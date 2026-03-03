@@ -72,7 +72,7 @@ export async function validateField(modelFile: string, params: RequestData): Pro
     const result = await validator.validate(params)
 
     if (!result.valid) {
-      reportError(result.errors)
+      reportError(result.errors as any)
       throw new HttpError(422, JSON.stringify(result.errors))
     }
 
@@ -81,6 +81,8 @@ export async function validateField(modelFile: string, params: RequestData): Pro
   catch (error: any) {
     if (error instanceof HttpError)
       throw error
+
+    throw new HttpError(500, error?.message || 'An unexpected validation error occurred')
   }
 }
 
@@ -115,5 +117,7 @@ export async function customValidate(attributes: CustomAttributes, params: Reque
   catch (error: any) {
     if (error instanceof HttpError)
       throw error
+
+    throw new HttpError(500, error?.message || 'An unexpected validation error occurred')
   }
 }

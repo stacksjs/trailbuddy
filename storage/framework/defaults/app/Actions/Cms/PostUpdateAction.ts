@@ -1,4 +1,3 @@
-import type { PostRequestType } from '@stacksjs/orm'
 import { Action } from '@stacksjs/actions'
 import { posts } from '@stacksjs/cms'
 import { formatDate } from '@stacksjs/orm'
@@ -10,8 +9,8 @@ export default new Action({
   name: 'Post Update',
   description: 'Post Update ORM Action',
   method: 'PATCH',
-  model: 'Post',
-  async handle(request: PostRequestType) {
+  model: Post,
+  async handle(request) {
     await request.validate()
 
     const id = request.getParam('id')

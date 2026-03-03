@@ -1,6 +1,7 @@
 import type { Action as ActionType } from '@stacksjs/actions'
-import type { Err, Ok, Result } from '@stacksjs/error-handling'
-import type { ActionOptions, CliOptions, CommandError, Readable, Subprocess, Writable } from '@stacksjs/types'
+import type { Result } from '@stacksjs/error-handling'
+import type { ActionOptions, CliOptions, CommandError, Subprocess } from '@stacksjs/types'
+import process from 'node:process'
 import { buddyOptions, runCommand, runCommands } from '@stacksjs/cli'
 import { err } from '@stacksjs/error-handling'
 import { log } from '@stacksjs/logging'
@@ -23,21 +24,25 @@ export async function runAction(action: Action, options?: ActionOptions): Promis
   // Special case: handle dev/views directly for maximum performance
   if (action === 'dev/views') {
     try {
-      log.success('🚀 Starting STX development server on http://localhost:3456\n')
+      const port = Number(process.env.PORT) || 3000
 
       // Import and call serve function directly - no subprocess!
       const { serve } = await import('bun-plugin-stx/serve')
       await serve({
-        patterns: ['resources/views'],
-        port: 3456,
+        patterns: ['resources/views', 'storage/framework/defaults/resources/views'],
+        port,
+        componentsDir: 'storage/framework/defaults/components/Dashboard',
+        layoutsDir: 'resources/layouts',
+        partialsDir: 'resources/views',
+        quiet: true,
       })
 
       // This will never return since serve runs forever
       // eslint-disable-next-line no-unreachable
-      return { ok: true, value: {} as Subprocess }
+      return { ok: true, value: {} as Subprocess } as any
     }
     catch (error) {
-      return err(`Failed to start dev server: ${error}`)
+      return err(`Failed to start dev server: ${error}`) as any
     }
   }
 
@@ -61,7 +66,7 @@ export async function runAction(action: Action, options?: ActionOptions): Promis
 
       if (relativePath === action || file.endsWith(`${action}.ts`) || file.endsWith(`${action}.js`)) {
         // Direct filename match - import and execute immediately
-        return ((await import(file)).default as ActionType).handle()
+        return ((await import(file)).default as ActionType).handle(undefined as unknown as Parameters<ActionType['handle']>[0])
       }
       // Collect all files for potential name matching (only if direct match fails)
       matchingFiles.push(file)
@@ -96,6 +101,8 @@ export async function runAction(action: Action, options?: ActionOptions): Promis
     cwd: options?.cwd || p.projectPath(),
     stdio: [options?.stdin ?? 'inherit', 'pipe', 'pipe'],
     ...options,
+    // Suppress stdout for dev actions (output handled by unified dev output)
+    ...(isDevAction && !options?.verbose && { quiet: true }),
   }
 
   return await runCommand(cmd, optionsWithCwd)
@@ -111,7 +118,7 @@ export async function runAction(action: Action, options?: ActionOptions): Promis
 export async function runActions(
   actions: Action[],
   options?: ActionOptions,
-): Promise<Ok<Subprocess<Writable, Readable, Readable>, Error>[] | Err<never, string>> {
+): Promise<any> {
   if (!actions.length)
     return err('No actions were specified')
 

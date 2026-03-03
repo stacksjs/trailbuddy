@@ -1,4 +1,3 @@
-import type { PostRequestType } from '@stacksjs/orm'
 import { Action } from '@stacksjs/actions'
 import { authors, posts } from '@stacksjs/cms'
 import { response } from '@stacksjs/router'
@@ -9,8 +8,8 @@ export default new Action({
   name: 'Post Store',
   description: 'Post Store ORM Action',
   method: 'POST',
-  model: 'Post',
-  async handle(request: PostRequestType) {
+  model: Post,
+  async handle(request) {
     await request.validate()
 
     const categoryName = request.get('category')
