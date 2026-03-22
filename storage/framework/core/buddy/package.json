@@ -98,7 +98,6 @@
     "@stacksjs/database": "^0.70.23",
     "@stacksjs/desktop": "^0.70.23",
     "@stacksjs/dns": "^0.70.23",
-    "@stacksjs/docs": "^0.70.23",
     "@stacksjs/email": "^0.70.23",
     "@stacksjs/enums": "^0.70.23",
     "@stacksjs/error-handling": "^0.70.23",
