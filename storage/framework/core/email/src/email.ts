@@ -47,6 +47,29 @@ export class Email {
     this.onSuccess = options.onSuccess
   }
 
+  private async renderTemplate(): Promise<string> {
+    if (!this.template) return ''
+
+    try {
+      // Try to load the template file from resources/views/emails
+      const { path: p } = await import('@stacksjs/path')
+      const templatePath = p.resourcesPath(`views/emails/${this.template}.html`)
+      const file = Bun.file(templatePath)
+      if (await file.exists()) {
+        return await file.text()
+      }
+    }
+    catch {
+      // Template file not found, fall back to template as raw HTML
+    }
+
+    // If template looks like HTML, use it directly; otherwise wrap it
+    if (this.template.includes('<')) {
+      return this.template
+    }
+    return `<p>${this.template}</p>`
+  }
+
   async send(to?: string): Promise<EmailHandlerResult> {
     const recipient = to || this.to
     if (!recipient) {
@@ -62,7 +85,7 @@ export class Email {
           address: config.email.from?.address || 'no-reply@stacksjs.com',
         },
         subject: this.subject,
-        html: `<p>Email: ${this.template}</p>`, // Placeholder - should render template
+        html: await this.renderTemplate(),
       })
 
       if (this.onSuccess) {
@@ -118,13 +141,71 @@ class Mail {
     })
   }
 
-  // Optional method to switch drivers on the fly
-  public use(driver: string): this {
+  // Create a new Mail instance with a different driver (doesn't mutate the singleton)
+  public use(driver: string): Mail {
     if (!this.drivers.has(driver)) {
       throw new Error(`Email driver '${driver}' is not available`)
     }
-    this.defaultDriver = driver
-    return this
+    const instance = new Mail({ defaultDriver: driver })
+    return instance
+  }
+
+  /**
+   * Queue an email for background sending via the job system.
+   * Falls back to synchronous send if queue driver is 'sync'.
+   */
+  public async queue(message: EmailMessage): Promise<void> {
+    try {
+      const { job } = await import('@stacksjs/queue')
+      await job('SendEmail', {
+        message,
+        driver: this.defaultDriver,
+      })
+        .onQueue('emails')
+        .dispatch()
+    }
+    catch {
+      // Queue system not available, fall back to sync send
+      await this.send(message)
+    }
+  }
+
+  /**
+   * Queue an email for sending after a delay (in seconds).
+   */
+  public async later(delaySeconds: number, message: EmailMessage): Promise<void> {
+    try {
+      const { job } = await import('@stacksjs/queue')
+      await job('SendEmail', {
+        message,
+        driver: this.defaultDriver,
+      })
+        .onQueue('emails')
+        .delay(delaySeconds)
+        .dispatch()
+    }
+    catch {
+      // Queue system not available, fall back to sync send
+      await this.send(message)
+    }
+  }
+
+  /**
+   * Queue an email on a specific named queue.
+   */
+  public async queueOn(queueName: string, message: EmailMessage): Promise<void> {
+    try {
+      const { job } = await import('@stacksjs/queue')
+      await job('SendEmail', {
+        message,
+        driver: this.defaultDriver,
+      })
+        .onQueue(queueName)
+        .dispatch()
+    }
+    catch {
+      await this.send(message)
+    }
   }
 }
 

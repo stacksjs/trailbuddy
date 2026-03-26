@@ -74,7 +74,10 @@ export const manageSubscription: SubscriptionManager = (() => {
     if (!activeSubscription)
       throw new Error('No active subscription for user!')
 
-    const subscriptionId = activeSubscription.subscription?.provider_id || ''
+    const subscriptionId = activeSubscription.subscription?.provider_id
+    if (!subscriptionId) {
+      throw new Error('Active subscription has no provider ID')
+    }
 
     const subscription = await stripe.subscriptions.retrieve(subscriptionId)
 
@@ -95,7 +98,11 @@ export const manageSubscription: SubscriptionManager = (() => {
 
     const updatedSubscription = await stripe.subscriptions.retrieve(subscriptionId)
 
-    await updateSubscription(activeSubscription.subscription?.id as number, type, updatedSubscription)
+    if (!activeSubscription.subscription?.id) {
+      throw new Error('Active subscription has no database ID')
+    }
+
+    await updateSubscription(activeSubscription.subscription.id, type, updatedSubscription)
 
     return updatedSubscription
   }
@@ -131,16 +138,16 @@ export const manageSubscription: SubscriptionManager = (() => {
     await db.updateTable('subscriptions').set({ provider_status: 'canceled' }).where('provider_id', '=', subscriptionId).executeTakeFirst()
   }
 
-  async function isActive(subscription: SubscriptionsTable): Promise<boolean> {
+  function isActive(subscription: SubscriptionsTable): boolean {
     return (subscription as Record<string, unknown>).provider_status === 'active'
   }
 
-  async function isTrial(subscription: SubscriptionsTable): Promise<boolean> {
+  function isTrial(subscription: SubscriptionsTable): boolean {
     return (subscription as Record<string, unknown>).provider_status === 'trialing'
   }
 
-  async function isIncomplete(_user: UserModel, type: string): Promise<boolean> {
-    const subscription = await db.selectFrom('subscriptions').where('type', '=', type).selectAll().executeTakeFirst()
+  async function isIncomplete(user: UserModel, type: string): Promise<boolean> {
+    const subscription = await db.selectFrom('subscriptions').where('user_id', '=', user.id).where('type', '=', type).selectAll().executeTakeFirst()
 
     if (!subscription)
       return false

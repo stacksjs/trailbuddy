@@ -55,7 +55,7 @@ export default defineModel({
           url: 'Poster must be a valid URL',
         },
       },
-      factory: faker => faker.image.url(),
+      factory: faker => faker.image.url().substring(0, 255),
     },
 
     content: {
@@ -66,6 +66,7 @@ export default defineModel({
         rule: schema.string().min(10).max(1000),
         message: {
           min: 'Post body must have a minimum of 10 characters',
+          max: 'Post body must have a maximum of 1000 characters',
         },
       },
       factory: faker => faker.lorem.paragraphs(1),

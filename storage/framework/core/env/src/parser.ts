@@ -133,7 +133,7 @@ function expandVariables(value: string, env: Record<string, string | undefined>)
  * Only a small set of safe commands are allowed to prevent
  * arbitrary code execution from tampered .env files.
  */
-const ALLOWED_ENV_COMMANDS = new Set(['date', 'hostname', 'whoami', 'uname', 'pwd', 'echo'])
+const ALLOWED_ENV_COMMANDS = new Set(['date', 'hostname', 'whoami', 'uname', 'pwd', 'echo', 'printf', 'cat', 'basename', 'dirname'])
 
 function expandCommands(value: string): string {
   // Match $(command) patterns
@@ -142,7 +142,7 @@ function expandCommands(value: string): string {
       const parts = command.trim().split(/\s+/)
       const executable = parts[0]
 
-      if (!ALLOWED_ENV_COMMANDS.has(executable)) {
+      if (!executable || !ALLOWED_ENV_COMMANDS.has(executable)) {
         console.warn(`[env] Blocked command substitution for disallowed command: ${executable}`)
         return ''
       }
@@ -155,9 +155,11 @@ function expandCommands(value: string): string {
       if (result.exitCode === 0) {
         return new TextDecoder().decode(result.stdout).trim()
       }
+
+      console.warn(`[env] Command substitution failed (exit code ${result.exitCode}): ${executable}`)
     }
-    catch {
-      // Command execution failed, return empty string
+    catch (error) {
+      console.warn(`[env] Command substitution error: ${error instanceof Error ? error.message : String(error)}`)
     }
 
     return ''
@@ -196,9 +198,11 @@ export async function loadEnvFiles(
         allParsed[key] = value
       }
     }
-    catch (error) {
-      // File doesn't exist or can't be read
-      continue
+    catch (error: any) {
+      if (error?.code === 'ENOENT') {
+        continue
+      }
+      allErrors.push(`Failed to read ${file}: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 

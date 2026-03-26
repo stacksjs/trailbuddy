@@ -1,0 +1,1 @@
+/Users/glennmichaeltorregosa/Documents/Projects/trailbuddy/pantry/markdown-it/bin/markdown-it.mjs

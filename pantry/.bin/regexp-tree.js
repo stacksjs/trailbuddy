@@ -1,0 +1,1 @@
+/Users/glennmichaeltorregosa/Documents/Projects/trailbuddy/pantry/regexp-tree/dist/bin/regexp-tree.js

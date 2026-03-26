@@ -19,6 +19,7 @@ const log = {
 import { err, handleError, ok } from '@stacksjs/error-handling'
 import { path } from '@stacksjs/path'
 import {
+  createQueryBuilder,
   executeMigration as qbExecuteMigration,
   generateMigration as qbGenerateMigration,
   resetConnection,
@@ -175,7 +176,9 @@ function preprocessSqliteMigrations(): void {
           }
 
           try {
-            const columns = (sqliteDb as any).prepare(`PRAGMA table_info("${tableName}")`).all() as Array<{ name: string }>
+            // Sanitize table name to prevent SQL injection (only allow alphanumeric and underscores)
+            const safeTableName = tableName.replace(/[^a-zA-Z0-9_]/g, '')
+            const columns = (sqliteDb as any).prepare(`PRAGMA table_info("${safeTableName}")`).all() as Array<{ name: string }>
             if (columns.length === 0) {
               // Table doesn't exist yet — column will be absent from CREATE TABLE
               log.info(`Skipping DROP COLUMN "${columnName}" — table "${tableName}" does not exist yet: ${file}`)
@@ -218,11 +221,93 @@ function preprocessSqliteMigrations(): void {
 }
 
 /**
+ * Ensure the target database exists for PostgreSQL/MySQL.
+ * SQLite creates files automatically; server-based databases need an explicit CREATE DATABASE.
+ * Uses bun-query-builder's createQueryBuilder + unsafe() to connect to the admin database
+ * and issue CREATE DATABASE before switching to the target database for migrations.
+ */
+async function ensureDatabaseExists(): Promise<void> {
+  const dialect = getDialect()
+
+  if (dialect === 'sqlite')
+    return
+
+  const connectionConfig = dbConfig.connections[dialect] as any
+  const dbName = (connectionConfig?.name || 'stacks').replace(/['"]/g, '')
+  const host = connectionConfig?.host || 'localhost'
+  const port = connectionConfig?.port || (dialect === 'postgres' ? 5432 : 3306)
+  const username = connectionConfig?.username || (dialect === 'postgres' ? process.env.USER || 'postgres' : 'root')
+  const password = connectionConfig?.password || ''
+
+  // The admin database to connect to for CREATE DATABASE
+  const adminDatabase = dialect === 'postgres' ? 'postgres' : 'mysql'
+
+  try {
+    // Configure bun-query-builder to connect to the admin database
+    setConfig({
+      dialect,
+      database: {
+        database: adminDatabase,
+        host,
+        port,
+        username,
+        password,
+      },
+    })
+    resetConnection()
+
+    const adminDb = createQueryBuilder()
+
+    if (dialect === 'postgres') {
+      try {
+        await adminDb.unsafe(`CREATE DATABASE "${dbName}"`)
+        log.info(`Created database "${dbName}"`)
+      }
+      catch (e: any) {
+        // 42P04 = database already exists
+        if (e?.message?.includes('already exists') || e?.errno === '42P04') {
+          log.info(`Database "${dbName}" already exists`)
+        }
+        else {
+          throw e
+        }
+      }
+    }
+    else if (dialect === 'mysql') {
+      try {
+        await adminDb.unsafe(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``)
+        log.info(`Ensured database "${dbName}" exists`)
+      }
+      catch (e: any) {
+        if (e?.message?.includes('database exists')) {
+          log.info(`Database "${dbName}" already exists`)
+        }
+        else {
+          throw e
+        }
+      }
+    }
+
+    // Reset connection so configureQueryBuilder() can reconnect to the target database
+    resetConnection()
+  }
+  catch (error: any) {
+    log.warn(`Could not auto-create database "${dbName}": ${error?.message || error}`)
+    log.info('If the database already exists, this warning can be ignored.')
+    // Reset connection state regardless of failure
+    resetConnection()
+  }
+}
+
+/**
  * Run database migrations
  */
 export async function runDatabaseMigration(): Promise<Result<string, Error>> {
   try {
     log.info('Migrating database...')
+
+    // Ensure the database exists before running migrations (PostgreSQL/MySQL)
+    await ensureDatabaseExists()
 
     // Configure bun-query-builder with stacks database settings
     configureQueryBuilder()

@@ -9,11 +9,7 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "paths": {
-      "ts-mocker": ["../types/ts-mocker.d.ts"],
-      "@stacksjs/dnsx": ["../types/dnsx.d.ts"],
-      "ts-cloud-core": ["../types/ts-cloud-core.d.ts"],
       "@stacksjs/*": ["./*/src"],
-      "@stacksjs/utils/*": ["./utils/src/*"],
       "stacks/*": ["./*/src"],
       "buddy": ["./buddy/src/index.ts"],
       "buddy/*": ["./buddy/src/*"],
@@ -24,7 +20,8 @@
       "Models/*": ["../../../app/Models/*"],
       "Notifications/*": ["../../../app/Notifications/*"],
       "~/*": ["../../../*"],
-      "@/*": ["../../../resources/*"]
+      "@/*": ["../../../resources/*"],
+      "*": ["../../../pantry/*"]
     },
     "resolveJsonModule": true,
     "types": [
@@ -46,17 +43,9 @@
     "isolatedModules": true,
     "skipLibCheck": true
   },
-  "vueCompilerOptions": {
-    "plugins": [
-      "@vue-macros/volar/define-models",
-      "@vue-macros/volar/define-slots"
-    ]
-  },
   "include": [
     "../../../*.stx",
     "../../../**/*.stx",
-    "../../../*.vue",
-    "../../../**/*.vue",
     "../../../*.ts",
     "../../../**/*.ts",
     "../../../*.yaml",
@@ -69,13 +58,12 @@
   "exclude": [
     "../../../dist",
     "../../../dist/**",
-    "../../../node_modules",
-    "../../../node_modules/**",
+    "../../../pantry",
+    "../../../pantry/**",
     "../**/cdk.out",
     "../**/dist",
     "../**/fixtures",
     "**/node_modules",
-    "**/node_modules/**",
     "../**/out",
     "../server/app",
     "../server/config",

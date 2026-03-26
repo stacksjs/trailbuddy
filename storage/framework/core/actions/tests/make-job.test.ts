@@ -1,16 +1,5 @@
-import { afterEach, describe, expect, it, mock } from 'bun:test'
+import { afterEach, describe, expect, it } from 'bun:test'
 import { existsSync, unlinkSync } from 'node:fs'
-
-// Mock logging to prevent process hanging
-mock.module('@stacksjs/logging', () => ({
-  log: {
-    debug: () => {},
-    info: () => {},
-    warn: () => {},
-    error: () => {},
-    success: () => {},
-  },
-}))
 
 const { makeJob } = await import('../src/make-job')
 const { userJobsPath } = await import('@stacksjs/path')
@@ -114,7 +103,7 @@ describe('makeJob', () => {
       createdFiles.push(filePath)
 
       const content = await get(filePath)
-      expect(content).toContain('async handle(payload: any)')
+      expect(content).toContain('async handle(payload: Record<string, unknown>)')
       expect(content).toContain('return { success: true }')
     })
 

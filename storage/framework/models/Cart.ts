@@ -127,9 +127,9 @@ export default defineModel({
       order: 10,
       fillable: true,
       validation: {
-        rule: schema.string().required(),
+        rule: schema.string().optional(),
       },
-      factory: () => 'test-coupon-id',
+      factory: () => null,
     },
   },
 

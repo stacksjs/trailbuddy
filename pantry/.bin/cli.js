@@ -1,0 +1,1 @@
+/Users/glennmichaeltorregosa/Documents/Projects/trailbuddy/pantry/ts-pantry/dist/bin/cli.js

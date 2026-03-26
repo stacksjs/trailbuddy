@@ -1,0 +1,1 @@
+/Users/glennmichaeltorregosa/Documents/Projects/trailbuddy/pantry/secretlint/bin/secretlint.js

@@ -67,7 +67,12 @@ export class Broadcast {
       channelName = `presence-${channel}`
     }
 
-    server.broadcast(channelName, event, data)
+    try {
+      server.broadcast(channelName, event, data)
+    }
+    catch (err) {
+      log.error(`[Broadcast] Failed to broadcast event '${event}' to channel '${channelName}':`, err)
+    }
   }
 
   /**
@@ -89,13 +94,27 @@ export async function runBroadcast(name: string, payload?: any): Promise<void> {
   const { appPath } = await import('@stacksjs/path')
   const bun = await import('bun')
 
-  const broadcastFiles = (bun as any).globSync([appPath('Broadcasts/**/*.ts')], { absolute: true })
+  let broadcastFiles: string[]
+  try {
+    broadcastFiles = (bun as any).globSync([appPath('Broadcasts/**/*.ts')], { absolute: true })
+  }
+  catch (error) {
+    throw new Error(`Failed to scan broadcast files: ${error instanceof Error ? error.message : String(error)}`)
+  }
+
   const broadcastFile = broadcastFiles.find((file: string) => file.endsWith(`${name}.ts`))
 
   if (!broadcastFile)
     throw new Error(`Broadcast ${name} not found`)
 
-  const broadcastModule = await import(broadcastFile)
+  let broadcastModule: any
+  try {
+    broadcastModule = await import(broadcastFile)
+  }
+  catch (error) {
+    throw new Error(`Failed to import broadcast '${name}': ${error instanceof Error ? error.message : String(error)}`)
+  }
+
   const instance = broadcastModule.default as BroadcastInstance
 
   // Handle using handle() method

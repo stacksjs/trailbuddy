@@ -1,8 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+@extends('layouts/default')
+
+@push('head')
   <title>Territory Game - TrailBuddy</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,7 +34,7 @@
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     .pulse { animation: pulse 2s infinite; }
   </style>
-</head>
+@endpush
 
 <script server>
 import { defineProps, withDefaults } from 'stx'
@@ -91,7 +89,7 @@ const userStats: UserTerritoryStats = {
 const currentUserId = 0 // Will be set from auth
 </script>
 
-<body class="antialiased bg-gray-50">
+@section('content')
   <!-- Navigation -->
   <Navbar />
 
@@ -386,5 +384,4 @@ const currentUserId = 0 // Will be set from auth
       }
     })
   </script>
-</body>
-</html>
+@endsection

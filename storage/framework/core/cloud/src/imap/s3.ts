@@ -203,7 +203,7 @@ export class S3Client {
           allObjects.push({
             Key: obj.Key,
             LastModified: obj.LastModified || '',
-            Size: Number.parseInt(obj.Size || '0'),
+            Size: Number.parseInt(obj.Size || '0', 10),
             ETag: obj.ETag,
           })
         }
@@ -247,7 +247,7 @@ export class S3Client {
         objects.push({
           Key: item.Key || '',
           LastModified: item.LastModified || '',
-          Size: Number.parseInt(item.Size || '0'),
+          Size: Number.parseInt(item.Size || '0', 10),
           ETag: item.ETag,
         })
         // Respect maxKeys
@@ -769,7 +769,13 @@ export class S3Client {
     }
 
     const text = await response.text()
-    return JSON.parse(text) as any
+
+    try {
+      return JSON.parse(text) as any
+    }
+    catch {
+      throw new Error(`Failed to parse bucket policy JSON: ${text.slice(0, 200)}`)
+    }
   }
 
   /**
@@ -851,7 +857,13 @@ export class S3Client {
    */
   async getObjectJson<T = any>(bucket: string, key: string): Promise<T> {
     const content = await this.getObject(bucket, key)
-    return JSON.parse(content) as T
+
+    try {
+      return JSON.parse(content) as T
+    }
+    catch {
+      throw new Error(`Failed to parse JSON from s3://${bucket}/${key}`)
+    }
   }
 
   /**

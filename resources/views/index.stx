@@ -1,8 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+@extends('layouts/default')
+
+@push('head')
   <title>TrailBuddy - Discover & Track Your Trail Adventures</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -58,7 +56,7 @@
     /* Filter button active state */
     .filter-btn.active { background: #059669; color: white; }
   </style>
-</head>
+@endpush
 
 <script server>
 import { defineProps, withDefaults } from 'stx'
@@ -127,7 +125,7 @@ const achievements: Achievement[] = []
 const featuredTrail: Trail | null = null
 </script>
 
-<body class="antialiased bg-gray-50">
+@section('content')
   <!-- Navigation -->
   <Navbar />
 
@@ -533,5 +531,4 @@ const featuredTrail: Trail | null = null
       }
     })
   </script>
-</body>
-</html>
+@endsection

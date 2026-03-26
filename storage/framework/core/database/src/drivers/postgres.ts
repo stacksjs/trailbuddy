@@ -11,7 +11,7 @@ import { ok } from '@stacksjs/error-handling'
 import { fetchOtherModelRelations, getModelName, getPivotTables, getTableName } from '@stacksjs/orm'
 import { path } from '@stacksjs/path'
 import { fs, globSync } from '@stacksjs/storage'
-import { snakeCase } from '@stacksjs/strings'
+import { plural, snakeCase } from '@stacksjs/strings'
 import {
   arrangeColumns,
   checkPivotMigration,
@@ -63,7 +63,7 @@ async function dropCommonPostgresTables(): Promise<void> {
   await db.unsafe('DROP TABLE IF EXISTS "comments" CASCADE').execute()
   await db.unsafe('DROP TABLE IF EXISTS "tags" CASCADE').execute()
   await db.unsafe('DROP TABLE IF EXISTS "taggables" CASCADE').execute()
-  await db.unsafe('DROP TABLE IF EXISTS "commenteable_upvotes" CASCADE').execute()
+  await db.unsafe('DROP TABLE IF EXISTS "commentable_upvotes" CASCADE').execute()
 }
 
 export async function generatePostgresTraitMigrations(): Promise<void> {
@@ -214,7 +214,7 @@ async function createTableMigration(modelPath: string) {
         migrationContent += `.unique()`
       if (fieldOptions.default !== undefined) {
         if (typeof fieldOptions.default === 'string')
-          migrationContent += `.defaultTo('${fieldOptions.default}')`
+          migrationContent += `.defaultTo('${fieldOptions.default.replace(/'/g, "\\'")}')`
         else if (fieldOptions.default === null)
           migrationContent += `.defaultTo(null)`
         else
@@ -296,8 +296,7 @@ async function createTableMigration(modelPath: string) {
   const migrationFileName = `${timestamp}-create-${tableName}-table.ts`
   const migrationFilePath = path.userMigrationsPath(migrationFileName)
 
-  // Assuming fs.writeFileSync is available or use an equivalent method
-  Bun.write(migrationFilePath, migrationContent)
+  await Bun.write(migrationFilePath, migrationContent)
 
   log.success(`Created migration: ${italic(migrationFileName)}`)
 }
@@ -334,7 +333,7 @@ export async function createPostgresForeignKeyMigrations(modelPath: string): Pro
   const migrationFileName = `${timestamp}-add-foreign-keys-to-${tableName}-table.ts`
   const migrationFilePath = path.userMigrationsPath(migrationFileName)
 
-  Bun.write(migrationFilePath, migrationContent)
+  await Bun.write(migrationFilePath, migrationContent)
 
   log.success(`Created foreign key migration: ${italic(migrationFileName)}`)
 }
@@ -400,7 +399,7 @@ async function createPivotTableMigration(model: Model, modelPath: string) {
     // Add foreign key constraints
     migrationContent += `  await (db as any).schema\n`
     migrationContent += `    .alterTable('${pivotTable.table}')\n`
-    migrationContent += `    .addForeignKeyConstraint('${pivotTable.table}_${pivotTable.firstForeignKey}_fkey', ['${pivotTable.firstForeignKey}'], '${pivotTable.table.split('_')[0]}', ['id'], (cb) => cb.onDelete('cascade'))\n`
+    migrationContent += `    .addForeignKeyConstraint('${pivotTable.table}_${pivotTable.firstForeignKey}_fkey', ['${pivotTable.firstForeignKey}'], '${plural(pivotTable.firstForeignKey?.replace(/_id$/, '') || '')}', ['id'], (cb) => cb.onDelete('cascade'))\n`
     migrationContent += `    .execute()\n\n`
 
     // Add unique constraint to prevent duplicate relationships
@@ -428,7 +427,7 @@ async function createPivotTableMigration(model: Model, modelPath: string) {
     const migrationFileName = `${timestamp}-create-${pivotTable.table}-table.ts`
     const migrationFilePath = path.userMigrationsPath(migrationFileName)
 
-    Bun.write(migrationFilePath, migrationContent)
+    await Bun.write(migrationFilePath, migrationContent)
 
     // Mark this pivot table as processed
     processedPivotTables.add(pivotTable.table)
@@ -522,7 +521,7 @@ async function createAlterTableMigration(modelPath: string) {
     const migrationFileName = `${timestamp}-alter-${tableName}-table.ts`
     const migrationFilePath = path.userMigrationsPath(migrationFileName)
 
-    Bun.write(migrationFilePath, migrationContent)
+    await Bun.write(migrationFilePath, migrationContent)
     log.success(`Created alter migration: ${italic(migrationFileName)}`)
   }
 }

@@ -178,7 +178,7 @@ export function mailCommands(buddy: CLI): void {
         // Dynamic import of the proxy
         // @ts-ignore
         const { ImapProxy } = await import('../../mail-server/src/proxy/imap-proxy')
-        const proxy = new ImapProxy(parseInt(options.port), apiUrl)
+        const proxy = new ImapProxy(Number.parseInt(options.port, 10), apiUrl)
         await proxy.start()
 
         // Keep running
@@ -309,8 +309,9 @@ export function mailCommands(buddy: CLI): void {
         log.info(`Found instance: ${instanceId}`)
 
         const lines = options.lines || '50'
-        const filterCmd = options.filter
-          ? ` | grep -iE '${options.filter}'`
+        const sanitizedFilter = options.filter ? options.filter.replace(/[^a-zA-Z0-9_.@\s-]/g, '') : ''
+        const filterCmd = sanitizedFilter
+          ? ` | grep -iE '${sanitizedFilter}'`
           : ''
 
         // Check both service names (smtp-server for Zig mode, mail-server for serverless)
@@ -360,9 +361,14 @@ export function mailCommands(buddy: CLI): void {
         if (options.follow) {
           console.log('')
           log.info('Following logs (Ctrl+C to stop)...')
-          const poll = setInterval(async () => {
+          let polling = false
+          const poll = setInterval(() => {
+            if (polling) return
+            polling = true
             console.log('')
-            await fetchLogs()
+            fetchLogs()
+              .catch(e => log.error('Log polling failed:', e))
+              .finally(() => { polling = false })
           }, 5000)
 
           await new Promise<void>((resolve) => {
@@ -567,7 +573,7 @@ export function mailCommands(buddy: CLI): void {
       loadEnvFiles()
 
       const domain = process.env.APP_DOMAIN || process.env.MAIL_DOMAIN || 'stacksjs.com'
-      const port = parseInt(options.port)
+      const port = Number.parseInt(options.port, 10)
       const mailboxes = ['chris', 'blake', 'glenn']
 
       // Build users map from env vars
@@ -787,13 +793,18 @@ async function requestAwsPort25(
     )
 
     if (result.includes('caseId')) {
-      const caseId = JSON.parse(result).caseId
-      log.success(`Support case created: ${caseId}`)
-      console.log('')
-      console.log('  AWS will process this within 24-48 hours.')
-      console.log('  Check status: aws support describe-cases --region us-east-1')
-      console.log('')
-      process.exit(ExitCode.Success)
+      try {
+        const caseId = JSON.parse(result).caseId
+        log.success(`Support case created: ${caseId}`)
+        log.info('')
+        log.info('  AWS will process this within 24-48 hours.')
+        log.info('  Check status: aws support describe-cases --region us-east-1')
+        log.info('')
+        process.exit(ExitCode.Success)
+      }
+      catch {
+        log.error('Failed to parse AWS support case response')
+      }
     }
   } catch {
     // Support API not available (no Business plan) — fall back to web form

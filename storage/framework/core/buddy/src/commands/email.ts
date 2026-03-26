@@ -68,7 +68,7 @@ export function email(buddy: CLI): void {
         const { SESClient } = await import('@stacksjs/ts-cloud')
         const ses = new SESClient(process.env.AWS_REGION || 'us-east-1')
 
-        const emailDomain = emailConfig?.from?.address?.split('@')[1] || 'stacksjs.com'
+        const emailDomain = (emailConfig?.from?.address?.includes('@') ? emailConfig.from.address.split('@')[1] : undefined) || 'stacksjs.com'
         console.log(`Domain: ${emailDomain}`)
 
         const identity = await withTimeout(ses.getEmailIdentity(emailDomain))
@@ -108,7 +108,7 @@ export function email(buddy: CLI): void {
         const { SESClient } = await import('@stacksjs/ts-cloud')
         const ses = new SESClient(process.env.AWS_REGION || 'us-east-1')
 
-        const emailDomain = emailConfig?.from?.address?.split('@')[1] || 'stacksjs.com'
+        const emailDomain = (emailConfig?.from?.address?.includes('@') ? emailConfig.from.address.split('@')[1] : undefined) || 'stacksjs.com'
         const from = `noreply@${emailDomain}`
 
         const result = await withTimeout(ses.sendEmail({
@@ -166,7 +166,7 @@ export function email(buddy: CLI): void {
     .action(async () => {
       console.log('\n📧 Configured Mailboxes\n')
 
-      const emailDomain = emailConfig?.from?.address?.split('@')[1] || 'stacksjs.com'
+      const emailDomain = (emailConfig?.from?.address?.includes('@') ? emailConfig.from.address.split('@')[1] : undefined) || 'stacksjs.com'
       const mailboxes = emailConfig?.mailboxes || []
 
       console.log(`Domain: ${emailDomain}`)
@@ -312,7 +312,7 @@ export function email(buddy: CLI): void {
 
       const region = process.env.AWS_REGION || 'us-east-1'
       const appName = (process.env.APP_NAME || 'stacks').toLowerCase().replace(/[^a-z0-9-]/g, '-')
-      const emailDomain = emailConfig?.from?.address?.split('@')[1] || 'stacksjs.com'
+      const emailDomain = (emailConfig?.from?.address?.includes('@') ? emailConfig.from.address.split('@')[1] : undefined) || 'stacksjs.com'
       const bucketName = options?.bucket || `${appName}-production-email`
 
       // If --raw flag, show raw email content
@@ -379,10 +379,17 @@ export function email(buddy: CLI): void {
         try {
           const inboxData = await withTimeout(s3.getObject(bucketName, inboxKey))
           if (inboxData) {
-            inboxEmails = JSON.parse(inboxData) as any[]
-            source = 'mailboxes'
+            try {
+              inboxEmails = JSON.parse(inboxData) as any[]
+              source = 'mailboxes'
+            }
+            catch {
+              // Malformed JSON in inbox — start fresh
+              inboxEmails = []
+            }
           }
-        } catch (e) {
+        }
+        catch {
           // inbox.json doesn't exist yet
         }
 
@@ -595,8 +602,16 @@ export function email(buddy: CLI): void {
           let existing: any[] = []
           try {
             const existingData = await s3.getObject(bucketName, inboxJsonKey)
-            if (existingData) existing = JSON.parse(existingData) as any[]
-          } catch (e) {
+            if (existingData) {
+              try {
+                existing = JSON.parse(existingData) as any[]
+              }
+              catch {
+                existing = []
+              }
+            }
+          }
+          catch {
             // No existing inbox
           }
 

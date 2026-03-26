@@ -345,6 +345,27 @@ async function seedModel(model: SeederModel, options: SeederConfig): Promise<See
   const startTime = Date.now()
 
   try {
+    // Check if the table exists before attempting to seed
+    try {
+      await db.selectFrom(model.table as any).limit(0).execute()
+    }
+    catch (tableErr: any) {
+      const msg = tableErr?.message || ''
+      // Only skip for missing table errors, not for other connection issues
+      if (msg.includes('does not exist') || msg.includes('no such table') || msg.includes("doesn't exist")) {
+        log.info(`  Skipping ${model.name}: table "${model.table}" does not exist`)
+        return {
+          model: model.name,
+          table: model.table,
+          count: 0,
+          success: true,
+          duration: Date.now() - startTime,
+        }
+      }
+      // Re-throw other errors (connection issues, etc.)
+      throw tableErr
+    }
+
     // Generate records
     const records = await generateRecords(model, options.verbose)
 

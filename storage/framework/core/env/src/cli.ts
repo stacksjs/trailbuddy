@@ -148,11 +148,11 @@ export function encryptEnv(options: EncryptOptions = {}): { success: boolean, ou
       // Check if key should be encrypted
       let shouldEncrypt = true
 
-      if (options.key && !key.match(new RegExp(options.key))) {
+      if (options.key && !key.includes(options.key)) {
         shouldEncrypt = false
       }
 
-      if (options.excludeKey && key.match(new RegExp(options.excludeKey))) {
+      if (options.excludeKey && key.includes(options.excludeKey)) {
         shouldEncrypt = false
       }
 
@@ -260,7 +260,7 @@ export function decryptEnv(options: DecryptOptions = {}): { success: boolean, ou
       // Check if key should be decrypted
       let shouldDecrypt = value.startsWith('encrypted:')
 
-      if (options.key && !key.match(new RegExp(options.key))) {
+      if (options.key && !key.includes(options.key)) {
         shouldDecrypt = false
       }
 

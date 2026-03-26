@@ -14,7 +14,7 @@ export { Job } from './action'
 // =============================================================================
 // Stacks job helper for dispatching file-based jobs
 // =============================================================================
-export { job, runJob } from './job'
+export { job, jobBatch, runJob } from './job'
 
 // =============================================================================
 // Job discovery (for app/Jobs directory)
@@ -48,7 +48,9 @@ export {
 // =============================================================================
 export {
   emitQueueEvent,
+  getGlobalMetrics,
   getQueueEvents,
+  getWorkerTracker,
   onQueueEvent,
   OnQueueEvent,
   QueueEvents,
@@ -57,6 +59,7 @@ export {
   type QueueEventHandler,
   type QueueEventPayload,
   type QueueEventType,
+  type TrackedWorker,
 } from './events'
 
 // =============================================================================
@@ -104,6 +107,23 @@ export {
 } from './testing'
 
 // =============================================================================
+// Job batches
+// =============================================================================
+export {
+  Batch,
+  DispatchedBatch,
+  PendingBatch,
+  getBatchCallbacks,
+  isBatchCancelled,
+  recordBatchJobCompletion,
+  recordBatchJobFailure,
+  type BatchableJob,
+  type BatchOptions,
+  type BatchRecord,
+  type BatchStatus,
+} from './batch'
+
+// =============================================================================
 // Worker functions (for queue:work command)
 // =============================================================================
 export {
@@ -114,3 +134,14 @@ export {
   startProcessor,
   stopProcessor,
 } from './worker'
+
+// =============================================================================
+// Redis queue driver
+// =============================================================================
+// Redis driver is lazily loaded to avoid requiring bun-queue when not using Redis.
+// Use: const { RedisQueue } = await import('@stacksjs/queue/drivers/redis')
+// Or access via the queue manager which dynamically imports the driver.
+export async function getRedisQueue() {
+  const { RedisQueue } = await import('./drivers/redis')
+  return RedisQueue
+}

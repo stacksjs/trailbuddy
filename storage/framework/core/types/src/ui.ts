@@ -1,9 +1,9 @@
-import type { HeadwindOptions } from 'headwind'
+import type { CrosswindOptions } from 'crosswind'
 
 export type Font = 'inter' | 'mona' | 'hubot'
 export type Icon = 'heroicons' | 'hugeicons'
 export type WebFontsProviders = 'google' | 'bunny' | 'fontshare'
-export type Shortcuts = HeadwindOptions['shortcuts']
+export type Shortcuts = CrosswindOptions['shortcuts']
 
 export interface FontInfo {
   title: string
@@ -118,7 +118,7 @@ export interface UiOptions {
    * reset styles are utilized. You may set this value to `null`
    * if you prefer not applying any default stylesheets.
    *
-   * @url https://github.com/stacksjs/headwind
+   * @url https://github.com/cwcss/crosswind
    * @todo preset needs to be added via a Vite plugin on development & build
    * @example
    * ```ts
@@ -162,10 +162,10 @@ export interface UiOptions {
   icons: Icon | Icon[]
   // icons: Record<string, () => Promise<any>>
 
-  theme: HeadwindOptions['theme']
-  // plugins: HeadwindOptions['plugins']
-  // corePlugins: HeadwindOptions['corePlugins']
-  variants: HeadwindOptions['variants']
+  theme: CrosswindOptions['theme']
+  // plugins: CrosswindOptions['plugins']
+  // corePlugins: CrosswindOptions['corePlugins']
+  variants: CrosswindOptions['variants']
   // darkMode: UserConfig['darkMode']
   // extend: UserConfig['extend']
   // screens: UserConfig['screens']

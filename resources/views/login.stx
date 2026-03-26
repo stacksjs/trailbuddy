@@ -1,8 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+@extends('layouts/default')
+
+@push('head')
   <title>Login - TrailBuddy</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -45,14 +43,14 @@
       to { transform: rotate(360deg); }
     }
   </style>
-</head>
+@endpush
 
 <script server>
 import { defineProps, withDefaults } from 'stx'
 // Login page - client-side auth
 </script>
 
-<body class="antialiased bg-gradient-to-br from-emerald-50 via-white to-teal-50 min-h-screen">
+@section('content')
   <!-- Header -->
   <div class="absolute top-0 left-0 right-0 p-6">
     <a href="/" class="inline-flex items-center text-emerald-600 font-bold text-xl">
@@ -285,5 +283,4 @@ import { defineProps, withDefaults } from 'stx'
       }
     })
   </script>
-</body>
-</html>
+@endsection

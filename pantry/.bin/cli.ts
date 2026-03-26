@@ -1,0 +1,1 @@
+/Users/glennmichaeltorregosa/Documents/Projects/trailbuddy/pantry/@stacksjs/bun-router/bin/cli.ts

@@ -11,7 +11,15 @@ import { existsSync, fs } from './fs'
  */
 export async function readJsonFile(name: string, cwd?: string): Promise<JsonFile> {
   const file = await readTextFile(name, cwd)
-  const data = JSON.parse(file.data)
+
+  let data: unknown
+  try {
+    data = JSON.parse(file.data)
+  }
+  catch (error) {
+    throw new Error(`Failed to parse JSON file "${name}": ${(error as Error).message}`)
+  }
+
   const indent = detectIndent(file.data).indent
   const newline = detectNewline(file.data)
 
@@ -94,7 +102,7 @@ function isFile(path: string): boolean {
 }
 
 export function doesExist(path: string): boolean {
-  return !isFile(path) || !isFolder(path)
+  return isFile(path) || isFolder(path)
 }
 
 export function doesNotExist(path: string): boolean {

@@ -5,16 +5,14 @@ export const defaults: StacksOptions = {
   ai: {
     deploy: false,
     models: [
-      'amazon.titan-embed-text-v1',
-      'amazon.titan-text-express-v1',
-      'amazon.titan-embed-image-v1',
-      'amazon.titan-image-generator-v1',
-      'anthropic.claude-v1',
-      'anthropic.claude-v2',
-      'anthropic.claude-v2:1',
-      'anthropic.claude-instant-v1',
-      'meta.llama2-13b-chat-v1',
-      'meta.llama2-70b-chat-v1',
+      'anthropic.claude-sonnet-4-20250514-v1:0',
+      'anthropic.claude-haiku-4-20250514-v1:0',
+      'anthropic.claude-3-5-sonnet-20241022-v2:0',
+      'amazon.titan-embed-text-v2:0',
+      'amazon.titan-text-premier-v1:0',
+      'amazon.titan-image-generator-v2:0',
+      'meta.llama3-1-70b-instruct-v1:0',
+      'meta.llama3-1-8b-instruct-v1:0',
     ],
   },
 
@@ -437,24 +435,6 @@ export const defaults: StacksOptions = {
     author: 'Chris Breuer',
     contributors: ['Chris Breuer <chris@stacksjs.com>'],
     defaultLanguage: 'en',
-
-    vueComponents: {
-      name: 'hello-world-vue',
-      description: 'Your Vue component library description',
-      keywords: ['component', 'library', 'vue', 'vite', 'typescript', 'javascript'],
-      tags: [
-        {
-          name: ['HelloWorld', 'AppHelloWorld'],
-          description: 'The Hello World custom element, built via this framework.',
-          attributes: [
-            {
-              name: 'greeting',
-              description: 'The greeting.',
-            },
-          ],
-        },
-      ],
-    },
 
     webComponents: {
       name: 'hello-world-elements',

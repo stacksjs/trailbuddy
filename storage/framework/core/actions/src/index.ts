@@ -32,6 +32,9 @@ export {
   make as runMake,
 } from './make'
 
+export { discoverPackages } from './discover-packages'
+export { installStack, uninstallStack, listStacks } from './stacks'
+export type { DiscoveredPackagesManifest, PackageStacksMeta } from './discover-packages'
 export { makeJob } from './make-job'
 export { makeCommand } from './make-command'
 export { makePolicy } from './make-policy'

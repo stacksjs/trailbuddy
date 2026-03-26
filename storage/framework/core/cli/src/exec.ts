@@ -32,6 +32,7 @@ export async function exec(command: string | string[], options?: CliOptions): Pr
     return err(handleError(`Failed to parse command: ${cmd}`, options))
 
   const cwd = options?.cwd ?? process.cwd()
+  const timeoutMs = options?.timeoutMs
 
   const proc = Bun.spawn(cmd, {
     // ...options,
@@ -63,7 +64,31 @@ export async function exec(command: string | string[], options?: CliOptions): Pr
     }
   }
 
-  const exited = await proc.exited
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
+  const exited = await Promise.race([
+    proc.exited,
+    new Promise<number>((resolve) => {
+      if (!timeoutMs)
+        return
+
+      timeoutId = setTimeout(() => {
+        try {
+          proc.kill()
+        }
+        catch {
+        }
+
+        resolve(ExitCode.FatalError)
+      }, timeoutMs)
+    }),
+  ])
+
+  if (timeoutId)
+    clearTimeout(timeoutId)
+
+  if (timeoutMs && exited === ExitCode.FatalError && proc.exitCode === null)
+    return err(handleError(`Command timed out after ${timeoutMs}ms: ${italic(cmd.join(' '))} in ${italic(cwd)}`, options))
+
   if (exited === ExitCode.Success)
     return ok(proc)
 
@@ -116,21 +141,16 @@ export async function execSync(command: string | string[], options?: CliOptions)
 
 function exitHandler(
   type: 'spawn' | 'spawnSync',
-  subprocess: Subprocess,
+  _subprocess: Subprocess,
   exitCode: number | null,
   signalCode: number | null,
   error?: Error,
 ) {
-  log.debug(`exitHandler: ${type}`)
-  log.debug('subprocess', subprocess)
-  log.debug('exitCode', exitCode)
-  log.debug('signalCode', signalCode)
+  log.debug(`exitHandler: ${type}, exitCode: ${exitCode}, signalCode: ${signalCode}`)
 
   if (error) {
-    log.error(error)
-    throw error
+    // Log but don't throw — onExit callbacks can't propagate exceptions.
+    // The caller checks proc.exited for the exit code instead.
+    log.debug('Process error:', error.message)
   }
-
-  if (exitCode !== ExitCode.Success && exitCode)
-    throw new Error(`Command exited with code ${exitCode}`)
 }

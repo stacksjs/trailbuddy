@@ -1,7 +1,7 @@
-import type { Ref } from 'vue'
+import type { Ref } from '@stacksjs/stx'
 import type { AuthUser, ErrorResponse, LoginError, LoginResponse, MeResponse, RegisterError, RegisterResponse, UserData } from '../types/dashboard'
 import { useStorage } from '@stacksjs/browser'
-import { ref } from 'vue'
+import { ref } from '@stacksjs/stx'
 
 const token = useStorage('token', '')
 const user = useStorage<UserData | null>('user', null, undefined, {
@@ -94,6 +94,11 @@ export function useAuth(): AuthComposable {
       body: JSON.stringify(user),
     })
 
+    if (!response.ok) {
+      const errorData = await response.json() as RegisterError
+      return errorData
+    }
+
     const data = await response.json() as RegisterResponse | RegisterError
 
     if (isRegisterError(data)) {
@@ -149,7 +154,7 @@ export function useAuth(): AuthComposable {
         await fetch(`${baseUrl}/logout`, {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${token.value}`,
             Accept: 'application/json',
           },
         })
@@ -184,6 +189,9 @@ export function useAuth(): AuthComposable {
 export function authGuard(options: { guest?: boolean } = {}): void {
   const guest = options.guest ?? false
   const { isAuthenticated } = useAuth()
+
+  // Guard against SSR — window is only available in the browser
+  if (typeof window === 'undefined') return
 
   if (guest) {
     // Guest-only page: block if authenticated

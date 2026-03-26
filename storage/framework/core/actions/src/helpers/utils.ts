@@ -20,30 +20,33 @@ type Action = ActionPath | ActionName | string
  * @returns The result of the command.
  */
 export async function runAction(action: Action, options?: ActionOptions): Promise<Result<Subprocess, CommandError>> {
-
   // Special case: handle dev/views directly for maximum performance
   if (action === 'dev/views') {
     try {
       const port = Number(process.env.PORT) || 3000
 
-      // Load project-level STX config for component/layout/partial paths
-      let stxConfig: Record<string, string> = {}
-      try {
-        const configModule = await import(`${process.cwd()}/config/stx.ts`)
-        stxConfig = configModule.default || {}
+      // Ensure pantry packages are resolvable for compiled dependencies
+      // that import @stacksjs/* packages at runtime
+      const pantryPath = p.projectPath('pantry')
+      if (!process.env.NODE_PATH?.includes(pantryPath)) {
+        process.env.NODE_PATH = process.env.NODE_PATH ? `${pantryPath}:${process.env.NODE_PATH}` : pantryPath
+        // @ts-expect-error - force Bun/Node to re-read module paths
+        require('module').Module._initPaths?.()
       }
-      catch {
-        // No stx config found, use defaults
-      }
-
-      const componentsDir = stxConfig.componentsDir || 'resources/components'
 
       // Import and call serve function directly - no subprocess!
-      const { serve } = await import('bun-plugin-stx/serve')
+      // Try standard resolution first, then fall back to pantry path
+      let serve: any
+      try {
+        ;({ serve } = await import('bun-plugin-stx/serve'))
+      }
+      catch {
+        ;({ serve } = await import(p.projectPath('pantry/bun-plugin-stx/dist/serve.js')))
+      }
       await serve({
         patterns: ['resources/views', 'storage/framework/defaults/resources/views'],
         port,
-        componentsDir,
+        componentsDir: 'storage/framework/defaults/components/Dashboard',
         layoutsDir: 'resources/layouts',
         partialsDir: 'resources/views',
         quiet: true,
@@ -78,7 +81,7 @@ export async function runAction(action: Action, options?: ActionOptions): Promis
 
       if (relativePath === action || file.endsWith(`${action}.ts`) || file.endsWith(`${action}.js`)) {
         // Direct filename match - import and execute immediately
-        return ((await import(file)).default as ActionType).handle(undefined as unknown as Parameters<ActionType['handle']>[0])
+        return await ((await import(file)).default as ActionType).handle(undefined as unknown as Parameters<ActionType['handle']>[0])
       }
       // Collect all files for potential name matching (only if direct match fails)
       matchingFiles.push(file)
@@ -101,7 +104,7 @@ export async function runAction(action: Action, options?: ActionOptions): Promis
   }
 
   // or else, just run the action normally by assuming the action is core Action,  stored in p.actionsPath
-  const opts = buddyOptions()
+  const opts = buddyOptions(options) || ''
   const path = p.relativeActionsPath(`src/${action}.ts`)
 
   // Use --watch for dev actions to enable hot reloading
@@ -109,10 +112,21 @@ export async function runAction(action: Action, options?: ActionOptions): Promis
   const watchFlag = isDevAction ? '--watch' : ''
   const cmd = `bun ${watchFlag} ${path} ${opts}`.trimEnd()
 
+  // Ensure pantry packages are resolvable via NODE_PATH
+  // This allows compiled pantry packages (e.g., bun-plugin-stx/serve.js) to
+  // import their dependencies like @stacksjs/stx at runtime
+  const pantryNodePath = p.projectPath('pantry')
+  const existingNodePath = process.env.NODE_PATH
+  const nodePath = existingNodePath ? `${pantryNodePath}:${existingNodePath}` : pantryNodePath
+
   const optionsWithCwd: CliOptions = {
     cwd: options?.cwd || p.projectPath(),
-    stdio: [options?.stdin ?? 'inherit', 'pipe', 'pipe'],
     ...options,
+    // Explicitly set stdout/stderr to 'inherit' when verbose so subprocess
+    // output (including log.info which writes to stderr) is always visible
+    stdout: options?.verbose ? 'inherit' : undefined,
+    stderr: options?.verbose ? 'inherit' : undefined,
+    env: { ...options?.env, NODE_PATH: nodePath },
     // Suppress stdout for dev actions (output handled by unified dev output)
     ...(isDevAction && !options?.verbose && { quiet: true }),
   }
@@ -139,7 +153,7 @@ export async function runActions(
       return err(`The specified action "${action}" does not exist`)
   }
 
-  const opts = buddyOptions()
+  const opts = buddyOptions(options) || ''
 
   const o = {
     cwd: options?.cwd || p.projectPath(),

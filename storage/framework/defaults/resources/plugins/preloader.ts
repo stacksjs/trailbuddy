@@ -50,7 +50,7 @@ if (!skipPreloader) {
 // This allows using Action, response, Activity, etc. without ANY imports
 async function loadAutoImports() {
   const { Glob } = await import('bun')
-  const { path } = await import('@stacksjs/path')
+  const path = await import('@stacksjs/path')
 
   // CRITICAL: Never overwrite these built-in globals
   const protectedGlobals = new Set([
@@ -171,6 +171,72 @@ async function loadAutoImports() {
       // Directory may not exist
     }
   }
+
+  // 4. Load all Job instances from app/Jobs into globalThis
+  // This enables using SendWelcomeEmail.dispatch() without imports
+  const jobsDir = path.userJobsPath()
+  const loadedJobs = new Set<string>()
+
+  try {
+    for await (const file of glob.scan({
+      cwd: jobsDir,
+      absolute: true,
+      onlyFiles: true,
+    })) {
+      if (file.endsWith('.d.ts') || file.endsWith('/index.ts')) continue
+
+      const jobName = file.split('/').pop()?.replace('.ts', '') || ''
+      if (!jobName || loadedJobs.has(jobName) || protectedGlobals.has(jobName)) continue
+
+      try {
+        const module = await import(file)
+        if (module.default) {
+          (globalThis as any)[jobName] = module.default
+          loadedJobs.add(jobName)
+        }
+      } catch {
+        // Job may have unresolved dependencies during bootstrap
+      }
+    }
+  } catch {
+    // Directory may not exist
+  }
+
+  // 5. Load all Controller classes into globalThis
+  // This enables using ComingSoonController without imports
+  // Priority: user controllers > default controllers
+  const controllerDirs = [
+    path.userControllersPath(),
+    path.storagePath('framework/defaults/app/Controllers'),
+  ]
+  const loadedControllers = new Set<string>()
+
+  for (const dir of controllerDirs) {
+    try {
+      for await (const file of glob.scan({
+        cwd: dir,
+        absolute: true,
+        onlyFiles: true,
+      })) {
+        if (file.endsWith('.d.ts') || file.endsWith('/index.ts')) continue
+
+        const controllerName = file.split('/').pop()?.replace('.ts', '') || ''
+        if (!controllerName || loadedControllers.has(controllerName) || protectedGlobals.has(controllerName)) continue
+
+        try {
+          const module = await import(file)
+          if (module.default) {
+            (globalThis as any)[controllerName] = module.default
+            loadedControllers.add(controllerName)
+          }
+        } catch {
+          // Controller may have unresolved dependencies during bootstrap
+        }
+      }
+    } catch {
+      // Directory may not exist
+    }
+  }
 }
 
 // Load auto-imports for server/API contexts (serve, any server process)
@@ -178,4 +244,13 @@ async function loadAutoImports() {
 const skipAutoImports = skipPreloader || ['--version', '-v', 'version', '--help', '-h', 'help'].includes(args[0])
 if (!skipAutoImports) {
   await loadAutoImports()
+
+  // Run package auto-discovery after all imports are loaded
+  try {
+    const { discoverPackages } = await import('@stacksjs/actions')
+    await discoverPackages()
+  }
+  catch {
+    // Discovery may fail during early bootstrap — not critical
+  }
 }

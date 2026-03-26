@@ -2,6 +2,7 @@ import type { MakeOptions } from '@stacksjs/types'
 import type { TemplateKey } from './templates'
 import process from 'node:process'
 import { italic, runCommand } from '@stacksjs/cli'
+import { ExitCode } from '@stacksjs/types'
 import { localUrl } from '@stacksjs/config'
 import { Action } from '@stacksjs/enums'
 import { handleError } from '@stacksjs/error-handling'
@@ -54,7 +55,7 @@ export async function invoke(options: MakeOptions): Promise<void> {
   if (options.page)
     await makePage(options)
   if (options.stack)
-    makeStack(options)
+    await makeStack(options)
 }
 
 export async function make(options: MakeOptions): Promise<void> {
@@ -70,7 +71,7 @@ export async function makeAction(options: MakeOptions): Promise<void> {
   }
   catch (error) {
     log.error('There was an error creating your action', error)
-    process.exit()
+    process.exit(ExitCode.FatalError)
   }
 }
 
@@ -83,7 +84,7 @@ export async function makeComponent(options: MakeOptions): Promise<void> {
   }
   catch (error) {
     log.error('There was an error creating your component', error)
-    process.exit()
+    process.exit(ExitCode.FatalError)
   }
 }
 
@@ -106,12 +107,12 @@ export function makeDatabase(options: MakeOptions): void {
   }
   catch (error) {
     log.error('There was an error creating your database', error)
-    process.exit()
+    process.exit(ExitCode.FatalError)
   }
 }
 
 export function createDatabase(options: MakeOptions): void {
-  console.log('createDatabase options', options) // wip
+  log.debug('createDatabase options', options)
 }
 
 export function factory(options: MakeOptions): void {
@@ -123,12 +124,45 @@ export function factory(options: MakeOptions): void {
   }
   catch (error) {
     log.error('There was an error creating your factory', error)
-    process.exit()
+    process.exit(ExitCode.FatalError)
   }
 }
 
-export function createFactory(options: MakeOptions): void {
-  console.log('options', options) // wip
+export async function createFactory(options: MakeOptions): Promise<void> {
+  const name = options.name || 'MyFactory'
+  const factoryName = name.endsWith('Factory') ? name : `${name}Factory`
+
+  try {
+    const { path: p } = await import('@stacksjs/path')
+    const factoryDir = p.userDatabasePath('factories')
+    const factoryPath = `${factoryDir}/${factoryName}.ts`
+
+    // Check if factory already exists
+    const file = Bun.file(factoryPath)
+    if (await file.exists()) {
+      log.warn(`Factory ${factoryName} already exists at ${factoryPath}`)
+      return
+    }
+
+    const modelName = name.replace(/Factory$/, '')
+    const content = `import type { ${modelName}Model } from '@stacksjs/orm'
+
+export function ${factoryName}(): Partial<${modelName}Model> {
+  return {
+    // Define your factory attributes here
+  }
+}
+
+export default ${factoryName}
+`
+
+    await Bun.write(factoryPath, content)
+    log.success(`Created factory: ${factoryPath}`)
+  }
+  catch (error) {
+    log.error(`Failed to create factory ${factoryName}`, error)
+    throw error
+  }
 }
 
 export async function makeNotification(options: MakeOptions): Promise<void> {
@@ -140,7 +174,7 @@ export async function makeNotification(options: MakeOptions): Promise<void> {
   }
   catch (error) {
     log.error('There was an error creating your notification', error)
-    process.exit()
+    process.exit(ExitCode.FatalError)
   }
 }
 
@@ -153,7 +187,7 @@ export async function makePage(options: MakeOptions): Promise<void> {
   }
   catch (error) {
     log.error('There was an error creating your page', error)
-    process.exit()
+    process.exit(ExitCode.FatalError)
   }
 }
 
@@ -171,7 +205,7 @@ export async function makeFunction(options: MakeOptions): Promise<void> {
   }
   catch (error) {
     log.error('There was an error creating your function', error)
-    process.exit()
+    process.exit(ExitCode.FatalError)
   }
 }
 
@@ -189,7 +223,7 @@ export async function makeLanguage(options: MakeOptions): Promise<void> {
   }
   catch (error) {
     log.error('There was an error creating your language.', error)
-    process.exit()
+    process.exit(ExitCode.FatalError)
   }
 }
 
@@ -198,19 +232,42 @@ export async function createLanguage(options: MakeOptions): Promise<void> {
   await createFileWithTemplate(p.resourcesPath(`lang/${name}.yml`), 'language', name)
 }
 
-export function makeStack(options: MakeOptions): void {
+export async function makeStack(options: MakeOptions): Promise<void> {
   try {
     const name = options.name
     log.info(`Creating your ${name} stack...`)
-    const path = resolve(process.cwd(), name)
+    const stackDir = resolve(process.cwd(), name)
 
-    // await spawn(`giget stacks ${path}`)
-    log.success('Successfully scaffolded your project')
-    log.info(`cd ${path} && bun install`)
+    if (doesFolderExist(stackDir)) {
+      log.error(`Directory "${name}" already exists`)
+      process.exit(ExitCode.FatalError)
+    }
+
+    // Create directory structure
+    await createFolder(stackDir)
+    const dirs = ['app/Actions', 'app/Models', 'config', 'database/migrations', 'resources/views', 'resources/components', 'resources/functions', 'routes', 'public']
+    for (const dir of dirs) {
+      await createFolder(resolve(stackDir, dir))
+    }
+
+    // Derive a short name from the package name
+    const shortName = name.replace(/^@[^/]+\//, '').replace(/-stack$/, '')
+
+    // Create package.json
+    await createFileWithTemplate(resolve(stackDir, 'package.json'), 'stackPackageJson', name, shortName)
+
+    log.success(`Successfully scaffolded your "${name}" stack`)
+    log.info('')
+    log.info(`  cd ${name}`)
+    log.info('  # Add your models, actions, views, etc.')
+    log.info('  # Then publish: bun publish')
+    log.info('')
+    log.info('  Users install it with:')
+    log.info(`  buddy stack:install ${name}`)
   }
   catch (error) {
     log.error('There was an error creating your stack', error)
-    process.exit()
+    process.exit(ExitCode.FatalError)
   }
 }
 

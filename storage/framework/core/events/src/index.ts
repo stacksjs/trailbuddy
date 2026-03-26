@@ -106,16 +106,49 @@ export default function mitt<Events extends Record<EventType, unknown>>(
 
       if (handlers) {
         ;(handlers as EventHandlerList<Events[keyof Events]>).slice().forEach((handler) => {
-          if (evt !== undefined)
-            handler(evt)
+          try {
+            if (evt !== undefined)
+              handler(evt)
+          }
+          catch (err) {
+            console.error(`[Events] Handler error for '${String(type)}':`, err)
+          }
         })
       }
+
+      // Pattern matching: fire handlers registered with glob-like patterns (e.g., 'user:*')
+      const typeStr = String(type)
+      ;(all as EventHandlerMap<Events>).forEach((patternHandlers, key) => {
+        const keyStr = String(key)
+        // Skip exact matches (already handled) and the '*' wildcard (handled below)
+        if (keyStr === typeStr || keyStr === '*') return
+        // Check glob patterns like 'user:*' or '*.created'
+        if (keyStr.includes('*')) {
+          const regex = new RegExp(`^${keyStr.replace(/\*/g, '.*')}$`)
+          if (regex.test(typeStr)) {
+            ;(patternHandlers as WildCardEventHandlerList<Events>).slice().forEach((handler) => {
+              try {
+                handler(type, evt as any)
+              }
+              catch (err) {
+                console.error(`[Events] Pattern handler '${keyStr}' error for '${typeStr}':`, err)
+              }
+            })
+          }
+        }
+      })
+
       handlers = (all as EventHandlerMap<Events>).get('*')
 
       if (handlers) {
         ;(handlers as WildCardEventHandlerList<Events>).slice().forEach((handler) => {
-          if (evt !== undefined)
-            handler(type, evt)
+          try {
+            if (evt !== undefined)
+              handler(type, evt)
+          }
+          catch (err) {
+            console.error(`[Events] Wildcard handler error for '${String(type)}':`, err)
+          }
         })
       }
     },

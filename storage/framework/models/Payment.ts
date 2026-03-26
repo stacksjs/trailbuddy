@@ -28,14 +28,18 @@ export default defineModel({
     observe: true,
   },
 
-  belongsTo: ['Order', 'Customer'], // For order_id and customer_id
+  belongsTo: ['Order', 'Customer'],
 
   attributes: {
     amount: {
       order: 3,
       fillable: true,
       validation: {
-        rule: schema.number().required().min(1),
+        rule: schema.number().required().min(0.01).max(999999.99),
+        message: {
+          min: 'Amount must be at least 0.01',
+          max: 'Amount cannot exceed 999,999.99',
+        },
       },
       factory: faker => faker.number.int({ min: 1000, max: 50000 }),
     },
@@ -122,6 +126,7 @@ export default defineModel({
       order: 12,
       unique: true,
       fillable: true,
+      foreignKey: false, // This is a payment processor transaction ID string, not a FK to transactions table
       validation: {
         rule: schema.string(),
       },

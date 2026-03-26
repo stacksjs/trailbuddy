@@ -14,7 +14,7 @@ export interface ManagePaymentMethod {
   setUserDefaultPayment: (user: UserModel, paymentMethodId: string) => Promise<Stripe.Response<Stripe.Customer>>
   setDefaultPaymentMethod: (user: UserModel, paymentMethodId: number) => Promise<Stripe.Response<Stripe.Customer>>
   storePaymentMethod: (user: UserModel, paymentMethodId: Stripe.PaymentMethod) => Promise<PaymentMethodInstance>
-  deletePaymentMethod: (user: UserModel, paymentMethodId: number) => Promise<Stripe.Response<Stripe.PaymentMethod>>
+  deletePaymentMethod: (user: UserModel, paymentMethodId: string | number) => Promise<Stripe.Response<Stripe.PaymentMethod>>
   retrievePaymentMethod: (user: UserModel, paymentMethodId: number) => Promise<PaymentMethodInstance | undefined>
   retrieveDefaultPaymentMethod: (user: UserModel) => Promise<PaymentMethodInstance | undefined>
   listPaymentMethods: (user: UserModel, cardType?: string) => Promise<Selectable<PaymentMethodsTable>[]>
@@ -37,7 +37,7 @@ export const managePaymentMethod: ManagePaymentMethod = (() => {
 
     if (stripePaymentMethod.customer !== user.stripe_id) {
       stripePaymentMethod = await stripe.paymentMethods.attach(stripePaymentMethod.id, {
-        customer: user.stripe_id || '',
+        customer: user.stripe_id!,
       })
     }
 
@@ -55,20 +55,27 @@ export const managePaymentMethod: ManagePaymentMethod = (() => {
 
     const paymentMethodModel = await db.selectFrom('payment_methods').where('provider_id', '=', paymentMethodId).selectAll().executeTakeFirst()
 
+    if (!user.stripe_id) {
+      throw new Error('User has no Stripe ID')
+    }
+
     if (paymentMethod.customer !== user.stripe_id) {
       await stripe.paymentMethods.attach(paymentMethod.id, {
-        customer: user.stripe_id || '',
+        customer: user.stripe_id,
       })
     }
 
-    const updatedCustomer = await stripe.customers.update(user?.stripe_id || '', {
+    const updatedCustomer = await stripe.customers.update(user.stripe_id, {
       invoice_settings: {
         default_payment_method: paymentMethodId,
       },
     })
 
+    // Clear existing defaults before setting new one
+    await db.updateTable('payment_methods').set({ is_default: false }).where('user_id', '=', user.id).executeTakeFirst()
+
     if (paymentMethodModel) {
-      updateDefault(paymentMethodModel as unknown as PaymentMethodInstance)
+      await updateDefault(paymentMethodModel as unknown as PaymentMethodInstance)
     }
 
     return updatedCustomer
@@ -81,17 +88,25 @@ export const managePaymentMethod: ManagePaymentMethod = (() => {
 
     const pm = await db.selectFrom('payment_methods').where('id', '=', paymentId).selectAll().executeTakeFirst()
 
-    const paymentMethod = await stripe.paymentMethods.retrieve(String(pm?.provider_id))
+    if (!pm?.provider_id) {
+      throw new Error(`Payment method with id ${paymentId} not found`)
+    }
+
+    const paymentMethod = await stripe.paymentMethods.retrieve(String(pm.provider_id))
 
     if (paymentMethod.customer !== user.stripe_id) {
       await stripe.paymentMethods.attach(paymentMethod.id, {
-        customer: user.stripe_id || '',
+        customer: user.stripe_id!,
       })
     }
 
-    const updatedCustomer = await stripe.customers.update(user?.stripe_id || '', {
+    if (!user.stripe_id) {
+      throw new Error('User has no Stripe ID')
+    }
+
+    const updatedCustomer = await stripe.customers.update(user.stripe_id, {
       invoice_settings: {
-        default_payment_method: String(pm?.provider_id),
+        default_payment_method: String(pm.provider_id),
       },
     })
 
@@ -123,7 +138,7 @@ export const managePaymentMethod: ManagePaymentMethod = (() => {
 
     if (paymentMethod.customer !== user.stripe_id) {
       await stripe.paymentMethods.attach(paymentMethod.id, {
-        customer: user.stripe_id || '',
+        customer: user.stripe_id!,
       })
     }
 
@@ -138,22 +153,29 @@ export const managePaymentMethod: ManagePaymentMethod = (() => {
     return paymentMethod as unknown as PaymentMethodInstance
   }
 
-  async function deletePaymentMethod(user: UserModel, paymentMethodId: number): Promise<Stripe.Response<Stripe.PaymentMethod>> {
+  async function deletePaymentMethod(user: UserModel, paymentMethodId: string | number): Promise<Stripe.Response<Stripe.PaymentMethod>> {
     if (!user.hasStripeId()) {
       throw new Error('Customer does not exist in Stripe')
     }
 
-    const pm = await PaymentMethod.find(paymentMethodId)
+    // Support both numeric database IDs and Stripe payment method ID strings (pm_xxx)
+    const pm = typeof paymentMethodId === 'string'
+      ? await db.selectFrom('payment_methods').where('provider_id', '=', paymentMethodId).selectAll().executeTakeFirst() as PaymentMethodInstance | undefined
+      : await PaymentMethod.find(paymentMethodId)
 
-    const paymentMethod = await stripe.paymentMethods.retrieve(String(pm?.provider_id))
+    if (!pm?.provider_id) {
+      throw new Error(`Payment method with id ${paymentMethodId} not found`)
+    }
+
+    const paymentMethod = await stripe.paymentMethods.retrieve(String(pm.provider_id))
 
     if (paymentMethod.customer !== user.stripe_id) {
       throw new Error('Payment method does not belong to this customer')
     }
 
-    pm?.delete()
+    await pm.delete()
 
-    return await stripe.paymentMethods.detach(String(pm?.provider_id))
+    return await stripe.paymentMethods.detach(String(pm.provider_id))
   }
 
   async function updatePaymentMethod(user: UserModel, paymentMethodId: string, updateParams?: Stripe.PaymentMethodUpdateParams): Promise<Stripe.Response<Stripe.PaymentMethod>> {
@@ -177,7 +199,7 @@ export const managePaymentMethod: ManagePaymentMethod = (() => {
       throw new Error('Customer does not exist in Stripe')
     }
 
-    const paymentMethods = await db.selectFrom('payment_methods').selectAll().where('is_default', '=', false).where('user_id', '=', user.id).execute()
+    const paymentMethods = await db.selectFrom('payment_methods').selectAll().where('user_id', '=', user.id).execute()
 
     return paymentMethods as unknown as Selectable<PaymentMethodsTable>[]
   }

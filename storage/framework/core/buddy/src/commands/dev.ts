@@ -12,7 +12,7 @@ import {
 } from '@stacksjs/actions'
 import { bold, cyan, dim, green, intro, log, outro, prompts, runCommand } from '@stacksjs/cli'
 import { Action } from '@stacksjs/enums'
-import { libsPath } from '@stacksjs/path'
+import { libsPath, projectPath } from '@stacksjs/path'
 import { ExitCode } from '@stacksjs/types'
 import { version } from '../../package.json'
 
@@ -60,35 +60,50 @@ export function dev(buddy: CLI): void {
       // if (result.isErr)
       //   log.warn('While checking if port 443 is open, we noticed it may be in use')
 
-      switch (server) {
-        case 'frontend':
-          await runFrontendDevServer(options)
-          break
-        case 'api':
-          await runApiDevServer(options)
-          break
-        case 'components':
-          await runComponentsDevServer(options)
-          break
-        case 'dashboard':
-          await runDashboardDevServer(options)
-          break
-        case 'desktop':
-          await runDesktopDevServer(options)
-          break
-        case 'system-tray':
-          await runSystemTrayDevServer(options)
-          break
-        // case 'email':
-        //   await runEmailDevServer(options)
-        //   break
-        case 'docs':
-          await runDocsDevServer(options)
-          break
-        default:
-      }
+      // Determine the target server from positional arg or flags
+      const target = server
+        || (options.frontend ? 'frontend' : undefined)
+        || (options.api ? 'api' : undefined)
+        || (options.components ? 'components' : undefined)
+        || ((options as any).dashboard ? 'dashboard' : undefined)
+        || (options.desktop ? 'desktop' : undefined)
+        || ((options as any).systemTray || (options as any)['system-tray'] ? 'system-tray' : undefined)
+        || (options.docs ? 'docs' : undefined)
 
-      if (wantsInteractive(options)) {
+      if (target) {
+        // Run only the requested server (pass verbose to prevent output suppression)
+        const serverOptions = { ...options, verbose: true }
+        switch (target) {
+          case 'frontend':
+            await runFrontendDevServer(serverOptions)
+            break
+          case 'api':
+            await runApiDevServer(serverOptions)
+            break
+          case 'components':
+            await runComponentsDevServer(serverOptions)
+            break
+          case 'dashboard':
+            await runDashboardDevServer(serverOptions)
+            break
+          case 'desktop':
+            await runDesktopDevServer(serverOptions)
+            break
+          case 'system-tray':
+            await runSystemTrayDevServer(serverOptions)
+            break
+          // case 'email':
+          //   await runEmailDevServer(serverOptions)
+          //   break
+          case 'docs':
+            await runDocsDevServer(serverOptions)
+            break
+          default:
+            log.error(`Unknown server: ${target}`)
+            process.exit(ExitCode.InvalidArgument)
+        }
+      }
+      else if (wantsInteractive(options)) {
         const answer = await (prompts as any)({
           type: 'select',
           name: 'value',
@@ -127,19 +142,9 @@ export function dev(buddy: CLI): void {
         }
       }
       else {
-        if (options.components)
-          await runComponentsDevServer(options)
-        else if ((options as any).dashboard)
-          await runDashboardDevServer(options)
-        else if (options.docs)
-          await runDocsDevServer(options)
-        else if (options.api)
-          await runApiDevServer(options)
-        // else if (options.email)
-        //   await runEmailDevServer(options)
+        // No specific server requested - start everything
+        await startDevelopmentServer(options, perf)
       }
-
-      await startDevelopmentServer(options, perf)
 
       outro('Exited', { startTime: perf, useSeconds: true })
       process.exit(ExitCode.Success)
@@ -166,7 +171,7 @@ export function dev(buddy: CLI): void {
           { startTime: perf, useSeconds: true },
           result.error,
         )
-        process.exit()
+        process.exit(ExitCode.FatalError)
       }
 
       console.log('')
@@ -189,7 +194,7 @@ export function dev(buddy: CLI): void {
           { startTime: perf, useSeconds: true },
           result.error,
         )
-        process.exit()
+        process.exit(ExitCode.FatalError)
       }
 
       console.log('')
@@ -212,7 +217,7 @@ export function dev(buddy: CLI): void {
           { startTime: perf, useSeconds: true },
           result.error,
         )
-        process.exit()
+        process.exit(ExitCode.FatalError)
       }
 
       console.log('')
@@ -274,9 +279,9 @@ export function dev(buddy: CLI): void {
 export async function startDevelopmentServer(options: DevOptions, startTime?: number): Promise<void> {
   const appUrl = process.env.APP_URL
   const frontendPort = Number(process.env.PORT) || 3000
-  const apiPort = 3008
+  const apiPort = Number(process.env.PORT_API) || 3008
   const docsPort = Number(process.env.PORT_DOCS) || 3006
-  const dashboardPort = Number(process.env.PORT_ADMIN) || 3456
+  const dashboardPort = Number(process.env.PORT_ADMIN) || 3002
   const hasCustomDomain = appUrl && appUrl !== 'localhost' && !appUrl.includes('localhost:')
   const domain = hasCustomDomain ? appUrl.replace(/^https?:\/\//, '') : null
   const apiDomain = domain ? `api.${domain}` : null
@@ -306,6 +311,10 @@ export async function startDevelopmentServer(options: DevOptions, startTime?: nu
     console.log(`  ${dim('➜')}  ${dim('Proxy')}:       ${dim(`localhost:${dashboardPort} → ${dashboardDomain}`)}`)
   }
   console.log()
+
+  // Signal subprocesses that the main dev server manages the reverse proxy,
+  // so they don't start their own (which would conflict on port 443)
+  process.env.STACKS_PROXY_MANAGED = '1'
 
   // Clean up child processes on exit to prevent orphaned processes
   let isExiting = false
@@ -364,14 +373,17 @@ async function startReverseProxy(options: DevOptions): Promise<void> {
   const docsDomain = `docs.${domain}`
   const dashboardDomain = `dashboard.${domain}`
   const frontendPort = Number(process.env.PORT) || 3000
-  const apiPort = 3008
+  const apiPort = Number(process.env.PORT_API) || 3008
   const docsPort = Number(process.env.PORT_DOCS) || 3006
-  const dashboardPort = Number(process.env.PORT_ADMIN) || 3456
+  const dashboardPort = Number(process.env.PORT_ADMIN) || 3002
   const sslBasePath = `${process.env.HOME}/.stacks/ssl`
   const verbose = options.verbose ?? false
 
   try {
-    const { startProxies } = await import('@stacksjs/rpx')
+    // Resolve rpx from the project root (buddy's nested copy may lack src/ files
+    // needed for Bun's "bun" export condition in the package.json)
+    const rpxPath = projectPath('node_modules/@stacksjs/rpx')
+    const { startProxies } = await import(rpxPath)
 
     // Use multi-proxy mode so rpx generates a SINGLE cert covering all domains
     await startProxies({

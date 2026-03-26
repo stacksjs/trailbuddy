@@ -115,10 +115,10 @@ async function watchFolders() {
     if (filename === null)
       return
 
-    log.info(`Detected ${event} in app/Actions/${filename}`)
-    log.info('Invalidating module cache for Actions...')
+    log.info(`Detected ${event} in built actions/${filename}`)
+    log.info('Invalidating module cache for built Actions...')
 
-    const actionPath = path.appPath(`Actions/${filename}`)
+    const actionPath = path.builtUserActionsPath(`src/${filename}`)
     if (invalidateModuleCache(actionPath)) {
       // Update the global cache buster to force fresh imports
       ;(Router as any).updateCacheBuster()
@@ -188,7 +188,7 @@ handleEvents()
 
 process.on('SIGINT', () => {
   log.info(`Exited using Ctrl-C`)
-  process.exit()
+  process.exit(0)
 })
 
 // @ts-expect-error - somehow type is not recognized

@@ -14,15 +14,28 @@ function stripAnsi(str: string): string {
 import * as path from '@stacksjs/path'
 import { ExitCode } from '@stacksjs/types'
 
+/**
+ * Context information attached to errors for better debugging.
+ */
+export interface ErrorContext {
+  requestId?: string
+  url?: string
+  method?: string
+  userId?: string | number
+  ip?: string
+  userAgent?: string
+  [key: string]: unknown
+}
+
 type ErrorMessage = string
 
 export class ErrorHandler {
   static isTestEnvironment = false
-  static shouldExitProcess = true
+  static shouldExitProcess = false
 
   static handle(err: Error | ErrorMessage | unknown, options?: LogErrorOptions): Error {
     if (!this.isTestEnvironment)
-      this.shouldExitProcess = options?.shouldExit !== false
+      this.shouldExitProcess = options?.shouldExit === true
     if (options?.silent !== true)
       this.writeErrorToConsole(err)
 
@@ -60,13 +73,17 @@ export class ErrorHandler {
     return err
   }
 
-  static async writeErrorToFile(err: Error | unknown): Promise<void> {
+  static async writeErrorToFile(err: Error | unknown, context?: ErrorContext): Promise<void> {
     if (!(err instanceof Error)) {
       console.error('Error is not an instance of Error:', err)
       return
     }
 
-    const formattedError = `[${new Date().toISOString()}] ${err.name}: ${err.message}\n`
+    const contextStr = context
+      ? ` | url=${context.url || 'N/A'} method=${context.method || 'N/A'} user=${context.userId || 'anonymous'}`
+      : ''
+    const stackLine = err.stack ? `\n${err.stack.split('\n').slice(1, 4).join('\n')}` : ''
+    const formattedError = `[${new Date().toISOString()}] ${err.name}: ${err.message}${contextStr}${stackLine}\n`
     const logFilePath = path.logsPath('stacks.log') ?? path.logsPath('errors.log')
 
     try {
@@ -134,9 +151,7 @@ export async function writeToLogFile(message: string, options?: WriteOptions): P
   const logFile = options?.logFile ?? defaultLogPath
   const dirPath = dirname(logFile)
 
-  if (!fs.existsSync(dirPath)) {
-    await fs.promises.mkdir(dirPath, { recursive: true })
-  }
+  await fs.promises.mkdir(dirPath, { recursive: true })
 
   // Write to the log file
   await fs.promises.appendFile(logFile, formattedMessage)
@@ -177,7 +192,9 @@ export function handleError(
     logMessage += `\nContext: ${JSON.stringify(contextData, null, 2)}`
   }
 
-  writeToLogFile(logMessage)
+  writeToLogFile(logMessage).catch((err) => {
+    console.error('Failed to write error log:', err)
+  })
 
   // Create a new Error with the combined message
   const error = new Error(errorMessage)
@@ -185,5 +202,5 @@ export function handleError(
     Object.assign(error, err)
   }
 
-  return ErrorHandler.handle(error, { ...options as ErrorOptions, message: errorMessage })
+  return ErrorHandler.handle(error, { ...options as LogErrorOptions, message: errorMessage })
 }

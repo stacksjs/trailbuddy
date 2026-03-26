@@ -150,17 +150,17 @@ export class Auth {
 
     const email = credentials[username]
 
-    let hashCheck = false
-    const user = await User.where('email', '=', email).first()
-
-    const authPass = credentials[password] || ''
-
-    if (user?.password) {
-      hashCheck = await verifyHash(authPass, user.password)
-    }
-
+    // Validate email first to avoid unnecessary work and prevent timing leaks
     if (!email)
       return false
+
+    const user = await User.where('email', '=', email).first()
+    const authPass = credentials[password] || ''
+
+    // Always run hash verification to prevent timing-based user enumeration
+    // If user doesn't exist, verify against a dummy hash
+    const hashToVerify = user?.password || '$2b$12$000000000000000000000uGByljkdFkOJRCRiYZGFOAstyLlSgTSW'
+    const hashCheck = await verifyHash(authPass, hashToVerify)
 
     if (hashCheck && user) {
       RateLimiter.resetAttempts(email)
@@ -185,11 +185,13 @@ export class Auth {
       return false
 
     const user = await User.where('email', '=', email).first()
-    if (!user?.password)
-      return false
-
     const authPass = credentials[password] || ''
-    return verifyHash(authPass, user.password)
+
+    // Always run hash verification to prevent timing-based user enumeration
+    const hashToVerify = user?.password || '$2b$12$000000000000000000000uGByljkdFkOJRCRiYZGFOAstyLlSgTSW'
+    const hashCheck = await verifyHash(authPass, hashToVerify)
+
+    return hashCheck && !!user
   }
 
   /**
@@ -759,13 +761,13 @@ export class Auth {
       return false
 
     const user = await User.where('email', '=', email).first()
-    if (!user?.password)
-      return false
-
     const authPass = credentials[password] || ''
-    const hashCheck = await verifyHash(authPass, user.password)
 
-    if (hashCheck) {
+    // Always run hash verification to prevent timing-based user enumeration
+    const hashToVerify = user?.password || '$2b$12$000000000000000000000uGByljkdFkOJRCRiYZGFOAstyLlSgTSW'
+    const hashCheck = await verifyHash(authPass, hashToVerify)
+
+    if (hashCheck && user) {
       this.authUser = user
       return true
     }

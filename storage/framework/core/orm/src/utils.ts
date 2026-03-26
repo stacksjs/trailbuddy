@@ -415,9 +415,6 @@ export function getHiddenAttributes(attributes: AttributesElements | undefined):
     return []
 
   return Object.keys(attributes).filter((key) => {
-    if (attributes === undefined)
-      return false
-
     return attributes[key]?.hidden === true
   })
 }
@@ -430,9 +427,6 @@ export function getGuardedAttributes(model: Model): string[] {
 
   return Object.keys(attributes)
     .filter((key) => {
-      if (attributes === undefined)
-        return false
-
       return attributes[key]?.guarded === true
     })
     .map((attribute: any) => snakeCase(attribute))
@@ -658,6 +652,8 @@ export function findUserModel(modelName: string): string {
 
 export function formatDate(date: Date | number | string): string {
   const d = typeof date === 'number' ? new Date(date) : typeof date === 'string' ? new Date(date) : date
+  if (Number.isNaN(d.getTime()))
+    throw new Error(`Invalid date value: ${String(date)}`)
   return d.toISOString().replace('T', ' ').split('.')[0]
 }
 

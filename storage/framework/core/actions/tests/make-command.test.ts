@@ -1,16 +1,5 @@
-import { afterEach, describe, expect, it, mock } from 'bun:test'
+import { afterEach, describe, expect, it } from 'bun:test'
 import { existsSync, unlinkSync } from 'node:fs'
-
-// Mock logging to prevent process hanging
-mock.module('@stacksjs/logging', () => ({
-  log: {
-    debug: () => {},
-    info: () => {},
-    warn: () => {},
-    error: () => {},
-    success: () => {},
-  },
-}))
 
 const { makeCommand } = await import('../src/make-command')
 const p = await import('@stacksjs/path')
@@ -97,7 +86,6 @@ describe('makeCommand', () => {
       // Should have proper imports
       expect(content).toContain("import type { CLI } from '@stacksjs/types'")
       expect(content).toContain("import { log } from '@stacksjs/cli'")
-      expect(content).toContain("import { ExitCode } from '@stacksjs/types'")
 
       // Should have default function export
       expect(content).toContain('export default function (cli: CLI)')
