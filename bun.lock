@@ -184,7 +184,7 @@
       "name": "@stacksjs/browser",
       "version": "0.70.23",
       "dependencies": {
-        "@stripe/stripe-js": "^8.7.0",
+        "@stripe/stripe-js": "^9.0.0",
         "bun-query-builder": "^0.1.12",
         "ofetch": "^1.5.1",
         "perfect-debounce": "^2.1.0",
@@ -683,7 +683,7 @@
       "devDependencies": {
         "@stacksjs/config": "workspace:*",
         "@stacksjs/utils": "workspace:*",
-        "@stripe/stripe-js": "^8.7.0",
+        "@stripe/stripe-js": "^9.0.0",
         "better-dx": "^0.2.5",
         "stripe": "^20.3.1",
       },
@@ -1394,7 +1394,7 @@
 
     "@stacksjs/whois": ["@stacksjs/whois@workspace:storage/framework/core/whois"],
 
-    "@stripe/stripe-js": ["@stripe/stripe-js@8.9.0", "", {}, "sha512-OJkXvUI5GAc56QdiSRimQDvWYEqn475J+oj8RzRtFTCPtkJNO2TWW619oDY+nn1ExR+2tCVTQuRQBbR4dRugww=="],
+    "@stripe/stripe-js": ["@stripe/stripe-js@9.0.0", "", {}, "sha512-UtUK7LFglQSNVIOwcRBaxfzq4wkfU8CT2f2uQVEeu65jTP6wicxFshYdYCke9Tfd0PCxhOe/b8rwJjr5EiDCfQ=="],
 
     "@textlint/ast-node-types": ["@textlint/ast-node-types@15.5.2", "", {}, "sha512-fCaOxoup5LIyBEo7R1oYWE7V4bSX0KQeHh66twon9e9usaLE3ijgF8QjYsR6joCssdeCHVd0wHm7ppsEyTr6vg=="],
 
