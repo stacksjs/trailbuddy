@@ -685,7 +685,7 @@
         "@stacksjs/utils": "workspace:*",
         "@stripe/stripe-js": "^8.7.0",
         "better-dx": "^0.2.5",
-        "stripe": "^20.3.1",
+        "stripe": "^21.0.0",
       },
     },
     "storage/framework/core/plugins": {
@@ -2146,7 +2146,7 @@
 
     "strip-literal": ["strip-literal@2.1.1", "", { "dependencies": { "js-tokens": "^9.0.1" } }, "sha512-631UJ6O00eNGfMiWG78ck80dfBab8X6IVFB51jZK5Icd7XAs60Z5y7QdSd/wGIklnWvRbUNloVzhOKKmutxQ6Q=="],
 
-    "stripe": ["stripe@20.4.0", "", { "peerDependencies": { "@types/node": ">=16" }, "optionalPeers": ["@types/node"] }, "sha512-F/aN1IQ9vHmlyLNi3DkiIbyzQb6gyBG0uYFd/VrEVQSc9BLtlgknPUx0EvzZdBMRLFuRaPFIFd7Mxwtg7Pbwzw=="],
+    "stripe": ["stripe@21.0.0", "", { "peerDependencies": { "@types/node": ">=18" }, "optionalPeers": ["@types/node"] }, "sha512-VlQ1QhjQAhmCgY3g3BgfZFLo8AkJw1r9zTrG4hdjSDX2AcwS5sPz4eHJG0zfzCO8zO/md0Xe+zrkxRqg604ZWA=="],
 
     "strnum": ["strnum@2.2.0", "", {}, "sha512-Y7Bj8XyJxnPAORMZj/xltsfo55uOiyHcU2tnAVzHUnSJR/KsEX+9RoDeXEnsXtl/CX4fAcrt64gZ13aGaWPeBg=="],
 
