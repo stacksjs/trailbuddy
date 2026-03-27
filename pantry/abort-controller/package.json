@@ -12,7 +12,7 @@
     "node": ">=6.5"
   },
   "dependencies": {
-    "event-target-shim": "^5.0.0"
+    "event-target-shim": "^6.0.2"
   },
   "browser": "./browser.js",
   "devDependencies": {
