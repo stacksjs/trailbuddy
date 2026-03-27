@@ -64,7 +64,7 @@
     "@types/jest": "^29.2.4",
     "@types/node": "^20.2.5",
     "eslint": "^8.30.0",
-    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jest": "^28.3.0",
     "eslint-plugin-jsdoc": "^48.1.0",
     "globals": "^13.24.0",
