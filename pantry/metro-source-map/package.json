@@ -26,7 +26,7 @@
     "nullthrows": "^1.1.1",
     "ob1": "0.83.5",
     "source-map": "^0.5.6",
-    "vlq": "^1.0.0"
+    "vlq": "^2.0.4"
   },
   "license": "MIT",
   "devDependencies": {
