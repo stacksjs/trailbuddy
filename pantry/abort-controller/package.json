@@ -23,7 +23,7 @@
     "@mysticatea/eslint-plugin": "^8.0.1",
     "@mysticatea/spy": "^0.1.2",
     "@types/mocha": "^5.2.5",
-    "@types/node": "^10.12.18",
+    "@types/node": "^25.5.0",
     "assert": "^1.4.1",
     "codecov": "^3.1.0",
     "dts-bundle-generator": "^2.0.0",
