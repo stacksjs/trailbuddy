@@ -22,19 +22,19 @@
     "@babel/types": "^7.29.0",
     "flow-enums-runtime": "^0.0.6",
     "invariant": "^2.2.4",
-    "metro-symbolicate": "0.83.5",
+    "metro-symbolicate": "0.84.2",
     "nullthrows": "^1.1.1",
-    "ob1": "0.83.5",
-    "source-map": "^0.5.6",
-    "vlq": "^1.0.0"
+    "ob1": "0.84.2",
+    "source-map": "^0.7.6",
+    "vlq": "^1.0.1"
   },
   "license": "MIT",
   "devDependencies": {
-    "@babel/core": "^7.25.2",
-    "@babel/parser": "^7.29.0",
-    "terser": "^5.15.0"
+    "@babel/core": "^7.29.0",
+    "@babel/parser": "^7.29.2",
+    "terser": "^5.46.1"
   },
   "engines": {
-    "node": ">=20.19.4"
+    "node": ">=20.20.2"
   }
 }

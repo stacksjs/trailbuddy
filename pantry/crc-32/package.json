@@ -17,10 +17,10 @@
 		"exit-on-epipe": "~1.0.1",
 		"mocha": "~2.5.3",
 		"blanket": "~1.2.3",
-		"codepage": "~1.10.0",
-		"@sheetjs/uglify-js": "~2.7.3",
+		"codepage": "~1.15.0",
+		"@sheetjs/uglify-js": "~2.7.4",
 		"@types/node": "^8.0.7",
-		"dtslint": "^0.1.2",
+		"dtslint": "^0.9.9",
 		"typescript": "2.2.0"
 	},
 	"repository": { "type": "git", "url": "git://github.com/SheetJS/js-crc32.git" },
@@ -39,5 +39,5 @@
 	"files": ["crc32.js", "crc32c.js", "bin/crc32.njs", "LICENSE", "README.md", "types/index.d.ts", "types/*.json"],
 	"bugs": { "url": "https://github.com/SheetJS/js-crc32/issues" },
 	"license": "Apache-2.0",
-	"engines": { "node": ">=0.8" }
+	"engines": { "node": ">=0.12.18" }
 }

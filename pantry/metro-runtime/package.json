@@ -24,16 +24,16 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@babel/runtime": "^7.25.0",
+    "@babel/runtime": "^7.29.2",
     "flow-enums-runtime": "^0.0.6"
   },
   "devDependencies": {
-    "@babel/core": "^7.25.2",
+    "@babel/core": "^7.29.0",
     "react": "19.2.3",
     "react-refresh": "^0.14.0",
-    "react-test-renderer": "19.2.3"
+    "react-test-renderer": "19.2.4"
   },
   "engines": {
-    "node": ">=20.19.4"
+    "node": ">=20.20.2"
   }
 }

@@ -10,7 +10,7 @@
 		"url": "github.com/kevva"
 	},
 	"engines": {
-		"node": ">=8"
+		"node": ">=8.17.0"
 	},
 	"scripts": {
 		"test": "xo && ava"
@@ -28,7 +28,7 @@
 		"shebang-regex": "^3.0.0"
 	},
 	"devDependencies": {
-		"ava": "^2.3.0",
-		"xo": "^0.24.0"
+		"ava": "^2.4.0",
+		"xo": "^0.61.1"
 	}
 }

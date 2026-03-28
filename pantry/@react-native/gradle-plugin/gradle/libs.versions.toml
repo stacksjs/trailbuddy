@@ -1,12 +1,12 @@
 [versions]
-agp = "8.12.0"
-gson = "2.8.9"
-guava = "31.0.1-jre"
+agp = "8.13.2"
+gson = "2.13.2"
+guava = "31.1-jre"
 javapoet = "1.13.0"
 junit = "4.13.2"
-kotlin = "2.1.20"
-assertj = "3.25.1"
-ktfmt = "0.22.0"
+kotlin = "2.3.20"
+assertj = "3.27.7"
+ktfmt = "0.26.0"
 
 [libraries]
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }

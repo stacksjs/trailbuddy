@@ -37,14 +37,14 @@
     "postversion": "auto-changelog && git add CHANGELOG.md && git commit --no-edit --amend && git tag -f \"v$(node -e \"console.log(require('./package.json').version)\")\""
   },
   "engines": {
-    "node": ">= 6"
+    "node": ">= 6.17.1"
   },
   "dependencies": {
-    "asynckit": "^0.4.0",
+    "asynckit": "^0.5.0",
     "combined-stream": "^1.0.8",
     "es-set-tostringtag": "^2.1.0",
     "hasown": "^2.0.2",
-    "mime-types": "^2.1.12"
+    "mime-types": "^2.1.35"
   },
   "devDependencies": {
     "@ljharb/eslint-config": "^21.4.0",
@@ -60,12 +60,12 @@
     "in-publish": "^2.0.1",
     "is-node-modern": "^1.0.0",
     "istanbul": "^0.4.5",
-    "js-randomness-predictor": "^1.5.5",
+    "js-randomness-predictor": "^1.5.6",
     "obake": "^0.1.2",
     "pkgfiles": "^2.3.2",
     "pre-commit": "^1.2.2",
     "puppeteer": "^1.20.0",
-    "request": "~2.87.0",
+    "request": "~2.88.2",
     "rimraf": "^2.7.1",
     "semver": "^6.3.1",
     "tape": "^5.9.0"

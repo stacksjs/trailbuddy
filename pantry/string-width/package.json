@@ -17,7 +17,7 @@
 	},
 	"sideEffects": false,
 	"engines": {
-		"node": ">=18"
+		"node": ">=18.20.8"
 	},
 	"scripts": {
 		"test": "xo && ava && tsd"
@@ -58,7 +58,7 @@
 	},
 	"devDependencies": {
 		"ava": "^5.3.1",
-		"tsd": "^0.29.0",
-		"xo": "^0.56.0"
+		"tsd": "^0.33.0",
+		"xo": "^0.61.1"
 	}
 }

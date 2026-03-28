@@ -50,15 +50,15 @@
   "devDependencies": {
     "@nodelib/fs.walk": "^1.2.8",
     "@types/node": "^20.12.11",
-    "c8": "^7.12.0",
-    "eslint-config-prettier": "^8.6.0",
-    "mkdirp": "^3.0.0",
-    "prettier": "^3.2.5",
-    "rimraf": "^5.0.1",
-    "tap": "^18.7.2",
+    "c8": "^7.14.0",
+    "eslint-config-prettier": "^8.10.2",
+    "mkdirp": "^3.0.1",
+    "prettier": "^3.8.1",
+    "rimraf": "^5.0.10",
+    "tap": "^18.8.0",
     "ts-node": "^10.9.2",
-    "tshy": "^1.14.0",
-    "typedoc": "^0.25.12",
+    "tshy": "^1.18.0",
+    "typedoc": "^0.28.18",
     "typescript": "^5.4.3"
   },
   "tap": {

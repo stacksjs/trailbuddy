@@ -66,6 +66,6 @@
     "@jridgewell/trace-mapping": "^0.3.24"
   },
   "devDependencies": {
-    "source-map": "0.6.1"
+    "source-map": "0.7.6"
   }
 }

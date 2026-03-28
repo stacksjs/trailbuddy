@@ -22,37 +22,37 @@
   },
   "bugs": "https://github.com/stripe/stripe-node/issues",
   "engines": {
-    "node": ">=16"
+    "node": ">=16.20.2"
   },
   "main": "cjs/stripe.cjs.node.js",
   "types": "types/index.d.ts",
   "devDependencies": {
-    "@types/chai": "^4.3.4",
-    "@types/chai-as-promised": "^7.1.5",
-    "@types/mocha": "^10.0.1",
+    "@types/chai": "^4.3.20",
+    "@types/chai-as-promised": "^7.1.8",
+    "@types/mocha": "^10.0.10",
     "@types/node": "~22",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
-    "chai": "^4.3.6",
-    "chai-as-promised": "~7.1.1",
+    "chai": "^4.5.0",
+    "chai-as-promised": "~7.1.2",
     "eslint": "^7.32.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-chai-friendly": "^0.7.2",
-    "eslint-plugin-import": "^2.27.5",
+    "eslint-config-prettier": "^8.10.2",
+    "eslint-plugin-chai-friendly": "^0.7.4",
+    "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-prettier": "^3.4.1",
     "mocha": "^8.4.0",
-    "mocha-junit-reporter": "^2.1.0",
-    "nock": "^13.2.9",
-    "node-fetch": "^2.6.7",
+    "mocha-junit-reporter": "^2.2.1",
+    "nock": "^13.5.6",
+    "node-fetch": "^2.7.0",
     "nyc": "^15.1.0",
-    "prettier": "^1.16.4",
-    "ts-node": "^10.9.1",
+    "prettier": "^1.19.1",
+    "ts-node": "^10.9.2",
     "typescript": "^4.9.4",
     "undici-types": "^7.8.0"
   },
   "resolutions": {
-    "minimist": "1.2.6",
-    "nanoid": "^3.2.0"
+    "minimist": "1.2.8",
+    "nanoid": "^3.3.11"
   },
   "dependencies": {},
   "peerDependencies": {

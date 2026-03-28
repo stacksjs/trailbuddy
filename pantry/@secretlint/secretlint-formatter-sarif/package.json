@@ -57,14 +57,14 @@
     "trailingComma": "none"
   },
   "dependencies": {
-    "node-sarif-builder": "^3.2.0"
+    "node-sarif-builder": "^3.4.0"
   },
   "devDependencies": {
     "@secretlint/types": "^10.2.2",
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.0.15",
     "escape-string-regexp": "^5.0.0",
-    "mocha": "^11.7.1",
+    "mocha": "^11.7.5",
     "prettier": "^2.8.8",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"

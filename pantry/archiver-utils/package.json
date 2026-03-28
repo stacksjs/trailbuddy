@@ -25,7 +25,7 @@
     "file.js"
   ],
   "engines": {
-    "node": ">= 14"
+    "node": ">= 14.21.3"
   },
   "scripts": {
     "test": "mocha --reporter dot"
@@ -40,9 +40,9 @@
     "readable-stream": "^4.0.0"
   },
   "devDependencies": {
-    "chai": "4.4.1",
+    "chai": "4.5.0",
     "mkdirp": "3.0.1",
-    "mocha": "10.3.0",
-    "rimraf": "5.0.5"
+    "mocha": "10.8.2",
+    "rimraf": "5.0.10"
   }
 }

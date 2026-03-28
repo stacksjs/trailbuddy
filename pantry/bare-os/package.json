@@ -38,9 +38,9 @@
     "bare": ">=1.14.0"
   },
   "devDependencies": {
-    "brittle": "^3.1.1",
-    "cmake-bare": "^1.1.6",
-    "prettier": "^3.4.2",
+    "brittle": "^3.19.1",
+    "cmake-bare": "^1.7.7",
+    "prettier": "^3.8.1",
     "prettier-config-holepunch": "^2.0.0"
   }
 }

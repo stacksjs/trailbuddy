@@ -8,7 +8,7 @@
     "mime": "cli.js"
   },
   "engines": {
-    "node": ">=4"
+    "node": ">=4.9.1"
   },
   "contributors": [
     {
@@ -21,9 +21,9 @@
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
-    "github-release-notes": "0.13.1",
-    "mime-db": "1.31.0",
-    "mime-score": "1.1.0"
+    "github-release-notes": "0.17.3",
+    "mime-db": "1.54.0",
+    "mime-score": "1.2.0"
   },
   "scripts": {
     "prepare": "node src/build.js",

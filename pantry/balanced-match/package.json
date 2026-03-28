@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "matcha": "^0.7.0",
-    "tape": "^4.6.0"
+    "tape": "^4.17.0"
   },
   "keywords": [
     "match",

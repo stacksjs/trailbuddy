@@ -7,7 +7,7 @@
 	"funding": "https://github.com/chalk/chalk?sponsor=1",
 	"main": "source",
 	"engines": {
-		"node": ">=10"
+		"node": ">=10.24.1"
 	},
 	"scripts": {
 		"test": "xo && nyc ava && tsd",
@@ -42,18 +42,18 @@
 	],
 	"dependencies": {
 		"ansi-styles": "^4.1.0",
-		"supports-color": "^7.1.0"
+		"supports-color": "^7.2.0"
 	},
 	"devDependencies": {
 		"ava": "^2.4.0",
-		"coveralls": "^3.0.7",
-		"execa": "^4.0.0",
-		"import-fresh": "^3.1.0",
+		"coveralls": "^3.1.1",
+		"execa": "^4.1.0",
+		"import-fresh": "^3.3.1",
 		"matcha": "^0.7.0",
-		"nyc": "^15.0.0",
+		"nyc": "^15.1.0",
 		"resolve-from": "^5.0.0",
-		"tsd": "^0.7.4",
-		"xo": "^0.28.2"
+		"tsd": "^0.33.0",
+		"xo": "^0.61.1"
 	},
 	"xo": {
 		"rules": {

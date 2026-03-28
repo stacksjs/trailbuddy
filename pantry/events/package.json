@@ -19,15 +19,15 @@
   },
   "main": "./events.js",
   "engines": {
-    "node": ">=0.8.x"
+    "node": ">=0.12.18"
   },
   "devDependencies": {
-    "airtap": "^1.0.0",
-    "functions-have-names": "^1.2.1",
-    "has": "^1.0.3",
-    "has-symbols": "^1.0.1",
+    "airtap": "^1.0.2",
+    "functions-have-names": "^1.2.3",
+    "has": "^1.0.4",
+    "has-symbols": "^1.1.0",
     "isarray": "^2.0.5",
-    "tape": "^5.0.0"
+    "tape": "^5.9.0"
   },
   "scripts": {
     "test": "node tests/index.js",

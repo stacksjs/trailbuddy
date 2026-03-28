@@ -10,10 +10,10 @@
     "safe-buffer": "~5.2.0"
   },
   "devDependencies": {
-    "babel-polyfill": "^6.23.0",
-    "core-util-is": "^1.0.2",
+    "babel-polyfill": "^6.26.0",
+    "core-util-is": "^1.0.3",
     "inherits": "^2.0.3",
-    "tap": "~0.4.8"
+    "tap": "~0.7.1"
   },
   "scripts": {
     "test": "tap test/parallel/*.js && node test/verify-dependencies",

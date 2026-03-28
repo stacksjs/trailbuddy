@@ -43,11 +43,11 @@
   ],
   "license": "MIT",
   "engines": {
-    "node": ">=0.8"
+    "node": ">=0.12.18"
   },
   "dependencies": {},
   "devDependencies": {
-    "nodeunit": "~0.9.0"
+    "nodeunit": "~0.11.3"
   },
   "optionalDependencies": {},
   "scripts": {

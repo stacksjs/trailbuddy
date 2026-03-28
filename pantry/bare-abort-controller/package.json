@@ -39,8 +39,8 @@
     "bare-events": "^2.7.0"
   },
   "devDependencies": {
-    "brittle": "^3.3.2",
-    "prettier": "^3.4.2",
+    "brittle": "^3.19.1",
+    "prettier": "^3.8.1",
     "prettier-config-holepunch": "^1.0.0"
   }
 }

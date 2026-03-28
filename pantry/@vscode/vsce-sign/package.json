@@ -7,7 +7,7 @@
   },
   "license": "SEE LICENSE IN LICENSE.txt",
   "devDependencies": {
-    "mocha": "^10.0.0"
+    "mocha": "^10.8.2"
   },
   "optionalDependencies": {
     "@vscode/vsce-sign-darwin-arm64": "2.0.6",

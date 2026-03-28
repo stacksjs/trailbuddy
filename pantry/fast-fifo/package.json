@@ -9,8 +9,8 @@
   ],
   "dependencies": {},
   "devDependencies": {
-    "standard": "^17.1.0",
-    "brittle": "^3.3.2"
+    "standard": "^17.1.2",
+    "brittle": "^3.19.1"
   },
   "scripts": {
     "test": "standard && brittle test.js"

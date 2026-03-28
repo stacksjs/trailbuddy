@@ -32,9 +32,9 @@
     "lru-cache": "^6.0.0"
   },
   "devDependencies": {
-    "standard": "^16.0.3",
+    "standard": "^16.0.4",
     "standard-version": "^9.1.0",
-    "tap": "^15.1.6"
+    "tap": "^15.2.3"
   },
   "files": [
     "index.js",
@@ -42,7 +42,7 @@
     "git-host-info.js"
   ],
   "engines": {
-    "node": ">=10"
+    "node": ">=10.24.1"
   },
   "tap": {
     "color": 1,

@@ -9,7 +9,7 @@
     "url": "git@github.com:facebook/hermes.git"
   },
   "dependencies": {
-    "hermes-parser": "0.32.0"
+    "hermes-parser": "0.34.0"
   },
   "files": [
     "dist",
@@ -17,6 +17,6 @@
     "README.md"
   ],
   "devDependencies": {
-    "@babel/core": "^7.22.5"
+    "@babel/core": "^7.29.0"
   }
 }

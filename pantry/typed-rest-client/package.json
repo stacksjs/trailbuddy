@@ -29,18 +29,18 @@
   },
   "homepage": "https://github.com/Microsoft/typed-rest-client#readme",
   "devDependencies": {
-    "@types/mocha": "^2.2.44",
+    "@types/mocha": "^2.2.48",
     "@types/node": "^6.0.92",
-    "@types/shelljs": "0.7.4",
+    "@types/shelljs": "0.10.0",
     "mocha": "^6.2.3",
     "nock": "9.6.1",
     "semver": "4.3.3",
-    "shelljs": "^0.8.5",
+    "shelljs": "^0.10.0",
     "typescript": "3.1.5"
   },
   "dependencies": {
-    "qs": "^6.9.1",
+    "qs": "^6.15.0",
     "tunnel": "0.0.6",
-    "underscore": "^1.12.1"
+    "underscore": "^1.13.8"
   }
 }

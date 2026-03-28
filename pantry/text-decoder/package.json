@@ -31,9 +31,9 @@
     "b4a": "^1.6.4"
   },
   "devDependencies": {
-    "brittle": "^3.3.2",
-    "lunte": "^1.3.0",
-    "prettier": "^3.6.2",
+    "brittle": "^3.19.1",
+    "lunte": "^1.6.0",
+    "prettier": "^3.8.1",
     "prettier-config-holepunch": "^1.0.0"
   }
 }

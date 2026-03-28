@@ -41,18 +41,18 @@
     "picomatch": "^4.0.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.2.3",
+    "@biomejs/biome": "^2.4.9",
     "@types/node": "^24.3.1",
     "@types/picomatch": "^4.0.2",
     "fast-glob": "^3.3.3",
-    "fs-fixture": "^2.8.1",
+    "fs-fixture": "^2.12.0",
     "glob": "^11.0.3",
-    "tinybench": "^5.0.1",
-    "tsdown": "^0.14.2",
+    "tinybench": "^5.1.0",
+    "tsdown": "^0.21.7",
     "typescript": "^5.9.2"
   },
   "engines": {
-    "node": ">=12.0.0"
+    "node": ">=12.22.12"
   },
   "publishConfig": {
     "provenance": true

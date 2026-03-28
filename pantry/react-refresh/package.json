@@ -29,11 +29,11 @@
     "directory": "packages/react"
   },
   "engines": {
-    "node": ">=0.10.0"
+    "node": ">=0.12.18"
   },
   "devDependencies": {
-    "react-16-8": "npm:react@16.8.0",
-    "react-dom-16-8": "npm:react-dom@16.8.0",
-    "scheduler-0-13": "npm:scheduler@0.13.0"
+    "react-16-8": "npm:react@16.14.0",
+    "react-dom-16-8": "npm:react-dom@16.14.0",
+    "scheduler-0-13": "npm:scheduler@0.27.0"
   }
 }

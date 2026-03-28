@@ -202,7 +202,7 @@
     },
     "scripts": {},
     "dependencies": {
-        "csstype": "^3.2.2"
+        "csstype": "^3.2.3"
     },
     "peerDependencies": {},
     "typesPublisherContentHash": "daae8d23e06b3d45da3803abb3f0bad661cffb4c40282d6886d8dfde7d5eea01",

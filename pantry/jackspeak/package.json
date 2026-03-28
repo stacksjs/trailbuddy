@@ -59,11 +59,11 @@
   },
   "devDependencies": {
     "@types/node": "^20.7.0",
-    "@types/pkgjs__parseargs": "^0.10.1",
-    "prettier": "^3.2.5",
+    "@types/pkgjs__parseargs": "^0.10.3",
+    "prettier": "^3.8.1",
     "tap": "^18.8.0",
-    "tshy": "^1.14.0",
-    "typedoc": "^0.25.1",
+    "tshy": "^1.18.0",
+    "typedoc": "^0.28.18",
     "typescript": "^5.2.2"
   },
   "dependencies": {

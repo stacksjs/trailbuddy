@@ -18,10 +18,10 @@
   "browser": "./browser.js",
   "main": "./index.js",
   "engines": {
-    "node": ">= 0.6.0"
+    "node": ">= 0.12.18"
   },
   "devDependencies": {
-    "mocha": "2.2.1",
-    "zuul": "^3.10.3"
+    "mocha": "2.5.3",
+    "zuul": "^3.12.0"
   }
 }

@@ -26,15 +26,15 @@
   },
   "dependencies": {
     "@react-native/dev-middleware": "0.84.1",
-    "debug": "^4.4.0",
+    "debug": "^4.4.3",
     "invariant": "^2.2.4",
-    "metro": "^0.83.3",
-    "metro-config": "^0.83.3",
-    "metro-core": "^0.83.3",
+    "metro": "^0.84.2",
+    "metro-config": "^0.84.2",
+    "metro-core": "^0.84.2",
     "semver": "^7.1.3"
   },
   "devDependencies": {
-    "metro-resolver": "^0.83.3"
+    "metro-resolver": "^0.84.2"
   },
   "peerDependencies": {
     "@react-native-community/cli": "*",
@@ -49,6 +49,6 @@
     }
   },
   "engines": {
-    "node": ">= 20.19.4"
+    "node": ">= 20.20.2"
   }
 }

@@ -17,7 +17,7 @@
     "test": "tape test/*.js | tap-spec"
   },
   "engines": {
-    "node": ">=6"
+    "node": ">=6.17.1"
   },
   "keywords": [
     "ansi",
@@ -30,6 +30,6 @@
   "types": "kleur.d.ts",
   "devDependencies": {
     "tap-spec": "^5.0.0",
-    "tape": "^4.9.1"
+    "tape": "^4.17.0"
   }
 }

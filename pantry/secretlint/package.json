@@ -66,7 +66,7 @@
     "@secretlint/formatter": "^10.2.2",
     "@secretlint/node": "^10.2.2",
     "@secretlint/profiler": "^10.2.2",
-    "debug": "^4.4.1",
+    "debug": "^4.4.3",
     "globby": "^14.1.0",
     "read-pkg": "^9.0.1"
   },
@@ -76,14 +76,14 @@
     "@secretlint/types": "^10.2.2",
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.0.15",
-    "mocha": "^11.7.1",
+    "mocha": "^11.7.5",
     "prettier": "^2.8.8",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },
   "packageManager": "yarn@1.22.22",
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=20.20.2"
   },
   "gitHead": "847bc9d0a22dfad986861f78863b370da4963aba"
 }

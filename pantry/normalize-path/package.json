@@ -18,14 +18,14 @@
   ],
   "main": "index.js",
   "engines": {
-    "node": ">=0.10.0"
+    "node": ">=0.12.18"
   },
   "scripts": {
     "test": "mocha"
   },
   "devDependencies": {
     "gulp-format-md": "^1.0.0",
-    "minimist": "^1.2.0",
+    "minimist": "^1.2.8",
     "mocha": "^3.5.3"
   },
   "keywords": [

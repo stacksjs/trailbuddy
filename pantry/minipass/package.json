@@ -54,15 +54,15 @@
     "endOfLine": "lf"
   },
   "devDependencies": {
-    "@types/end-of-stream": "^1.4.2",
+    "@types/end-of-stream": "^1.4.4",
     "@types/node": "^25.2.3",
-    "end-of-stream": "^1.4.0",
+    "end-of-stream": "^1.4.5",
     "node-abort-controller": "^3.1.1",
     "prettier": "^3.8.1",
-    "tap": "^21.6.1",
-    "through2": "^2.0.3",
+    "tap": "^21.6.2",
+    "through2": "^2.0.5",
     "tshy": "^3.3.2",
-    "typedoc": "^0.28.17"
+    "typedoc": "^0.28.18"
   },
   "repository": "https://github.com/isaacs/minipass",
   "keywords": [

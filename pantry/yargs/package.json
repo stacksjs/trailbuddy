@@ -54,33 +54,33 @@
   ],
   "dependencies": {
     "cliui": "^8.0.1",
-    "escalade": "^3.1.1",
+    "escalade": "^3.2.0",
     "get-caller-file": "^2.0.5",
     "require-directory": "^2.1.1",
     "string-width": "^4.2.3",
-    "y18n": "^5.0.5",
+    "y18n": "^5.0.8",
     "yargs-parser": "^21.1.1"
   },
   "devDependencies": {
-    "@types/chai": "^4.2.11",
-    "@types/mocha": "^9.0.0",
+    "@types/chai": "^4.3.20",
+    "@types/mocha": "^9.1.1",
     "@types/node": "^18.0.0",
-    "c8": "^7.7.0",
-    "chai": "^4.2.0",
+    "c8": "^7.14.0",
+    "chai": "^4.5.0",
     "chalk": "^4.0.0",
-    "coveralls": "^3.0.9",
+    "coveralls": "^3.1.1",
     "cpr": "^3.0.1",
-    "cross-env": "^7.0.2",
+    "cross-env": "^7.0.3",
     "cross-spawn": "^7.0.0",
-    "eslint": "^7.23.0",
-    "gts": "^3.0.0",
+    "eslint": "^7.32.0",
+    "gts": "^3.1.1",
     "hashish": "0.0.4",
-    "mocha": "^9.0.0",
+    "mocha": "^9.2.2",
     "rimraf": "^3.0.2",
-    "rollup": "^2.23.0",
-    "rollup-plugin-cleanup": "^3.1.1",
+    "rollup": "^2.80.0",
+    "rollup-plugin-cleanup": "^3.2.1",
     "rollup-plugin-terser": "^7.0.2",
-    "rollup-plugin-ts": "^2.0.4",
+    "rollup-plugin-ts": "^2.0.7",
     "typescript": "^4.0.2",
     "which": "^2.0.0",
     "yargs-test-extends": "^1.0.1"
@@ -118,6 +118,6 @@
   ],
   "license": "MIT",
   "engines": {
-    "node": ">=12"
+    "node": ">=12.22.12"
   }
 }

@@ -45,10 +45,10 @@
   "homepage": "https://github.com/holepunchto/bare-events#readme",
   "devDependencies": {
     "bare-abort-controller": "^1.0.0",
-    "brittle": "^3.3.2",
-    "prettier": "^3.4.2",
+    "brittle": "^3.19.1",
+    "prettier": "^3.8.1",
     "prettier-config-holepunch": "^2.0.0",
-    "uncaughts": "^1.1.1"
+    "uncaughts": "^1.1.3"
   },
   "peerDependencies": {
     "bare-abort-controller": "*"

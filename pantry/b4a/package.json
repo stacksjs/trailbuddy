@@ -33,9 +33,9 @@
   },
   "homepage": "https://github.com/holepunchto/b4a#readme",
   "devDependencies": {
-    "brittle": "^3.5.2",
+    "brittle": "^3.19.1",
     "nanobench": "^3.0.0",
-    "prettier": "^3.6.2",
+    "prettier": "^3.8.1",
     "prettier-config-holepunch": "^1.0.0"
   },
   "peerDependencies": {

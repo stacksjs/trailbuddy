@@ -30,8 +30,8 @@
     "buffer-crc32": "~0.2.3"
   },
   "devDependencies": {
-    "bl": "~1.0.0",
-    "istanbul": "~0.3.4",
+    "bl": "~1.2.3",
+    "istanbul": "~0.4.5",
     "pend": "~1.2.0"
   },
   "files": [

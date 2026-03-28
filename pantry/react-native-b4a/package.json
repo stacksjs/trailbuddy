@@ -45,7 +45,7 @@
     "react-native": "*"
   },
   "devDependencies": {
-    "prettier": "^3.3.3",
+    "prettier": "^3.8.1",
     "prettier-config-standard": "^7.0.0"
   }
 }

@@ -36,7 +36,7 @@
 		"watch:test": "npm run test -- --watch"
 	},
 	"engines": {
-		"node": ">= 20"
+		"node": ">= 20.20.2"
 	},
 	"dependencies": {
 		"@azure/identity": "^4.1.0",
@@ -70,29 +70,29 @@
 		"yazl": "^2.2.2"
 	},
 	"devDependencies": {
-		"@microsoft/api-extractor": "^7.33.7",
-		"@types/cheerio": "^0.22.29",
+		"@microsoft/api-extractor": "^7.57.7",
+		"@types/cheerio": "^0.22.35",
 		"@types/glob": "^8.1.0",
-		"@types/hosted-git-info": "^3.0.2",
-		"@types/markdown-it": "^0.0.2",
-		"@types/mime": "^1",
-		"@types/minimatch": "^3.0.3",
+		"@types/hosted-git-info": "^3.0.5",
+		"@types/markdown-it": "^0.0.9",
+		"@types/mime": "^1.3.5",
+		"@types/minimatch": "^3.0.5",
 		"@types/mocha": "^7.0.2",
 		"@types/node": "^16.11.7",
-		"@types/read": "^0.0.28",
-		"@types/semver": "^6.0.0",
-		"@types/tmp": "^0.2.2",
-		"@types/url-join": "^4.0.1",
-		"@types/xml2js": "^0.4.4",
-		"@types/yauzl": "^2.9.2",
-		"@types/yazl": "^2.4.2",
-		"mocha": "^11.1.0",
-		"source-map-support": "^0.4.2",
-		"ts-node": "^10.9.1",
+		"@types/read": "^0.0.32",
+		"@types/semver": "^6.2.7",
+		"@types/tmp": "^0.2.6",
+		"@types/url-join": "^4.0.3",
+		"@types/xml2js": "^0.4.14",
+		"@types/yauzl": "^2.10.3",
+		"@types/yazl": "^2.4.6",
+		"mocha": "^11.7.5",
+		"source-map-support": "^0.5.21",
+		"ts-node": "^10.9.2",
 		"typescript": "^4.3.2"
 	},
 	"optionalDependencies": {
-		"keytar": "^7.7.0"
+		"keytar": "^7.9.0"
 	},
 	"mocha": {
 		"require": [

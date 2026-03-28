@@ -41,7 +41,7 @@
     "dist"
   ],
   "engines": {
-    "node": ">=14"
+    "node": ">=14.21.3"
   },
   "dependencies": {
     "cross-spawn": "^7.0.6",
@@ -81,13 +81,13 @@
   "author": "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me/)",
   "license": "ISC",
   "devDependencies": {
-    "@types/cross-spawn": "^6.0.2",
+    "@types/cross-spawn": "^6.0.6",
     "@types/node": "^18.15.11",
-    "@types/tap": "^15.0.8",
-    "prettier": "^3.3.2",
-    "tap": "^21.1.0",
-    "tshy": "^3.0.2",
-    "typedoc": "^0.24.2",
+    "@types/tap": "^15.0.12",
+    "prettier": "^3.8.1",
+    "tap": "^21.6.2",
+    "tshy": "^3.3.2",
+    "typedoc": "^0.28.18",
     "typescript": "^5.0.2"
   },
   "funding": {
