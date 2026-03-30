@@ -122,12 +122,12 @@ const typeLabels = {
 
     <!-- View All Link -->
     <div class="px-4 py-3 bg-gray-50 border-t border-gray-100">
-      <a href="/territories/leaderboard" class="text-emerald-600 font-medium text-sm hover:text-emerald-700 transition flex items-center justify-center">
+      <StxLink to="/territories/leaderboard" class="text-emerald-600 font-medium text-sm hover:text-emerald-700 transition flex items-center justify-center">
         View Full Leaderboard
         <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
-      </a>
+      </StxLink>
     </div>
   </div>
 </template>
