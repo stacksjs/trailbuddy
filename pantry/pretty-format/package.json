@@ -19,7 +19,7 @@
   },
   "author": "James Kyle <me@thejameskyle.com>",
   "dependencies": {
-    "@jest/schemas": "^29.6.3",
+    "@jest/schemas": "^30.0.5",
     "ansi-styles": "^5.0.0",
     "react-is": "^18.0.0"
   },
