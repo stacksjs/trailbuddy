@@ -7,7 +7,7 @@
     "directory": "packages/jest-create-cache-key-function"
   },
   "dependencies": {
-    "@jest/types": "^29.6.3"
+    "@jest/types": "^30.3.0"
   },
   "devDependencies": {
     "@types/node": "*",
