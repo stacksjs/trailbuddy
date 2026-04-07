@@ -54,7 +54,7 @@
   },
   "dependencies": {
     "@secretlint/config-loader": "^10.2.2",
-    "@secretlint/core": "^10.2.2",
+    "@secretlint/core": "^11.6.0",
     "@secretlint/formatter": "^10.2.2",
     "@secretlint/profiler": "^10.2.2",
     "@secretlint/source-creator": "^10.2.2",
