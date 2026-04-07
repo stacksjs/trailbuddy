@@ -62,7 +62,7 @@
     "tabWidth": 4
   },
   "dependencies": {
-    "@secretlint/config-creator": "^10.2.2",
+    "@secretlint/config-creator": "^11.6.0",
     "@secretlint/formatter": "^10.2.2",
     "@secretlint/node": "^10.2.2",
     "@secretlint/profiler": "^10.2.2",
