@@ -57,7 +57,7 @@
     "@secretlint/core": "^10.2.2",
     "@secretlint/formatter": "^10.2.2",
     "@secretlint/profiler": "^10.2.2",
-    "@secretlint/source-creator": "^10.2.2",
+    "@secretlint/source-creator": "^11.6.0",
     "@secretlint/types": "^10.2.2",
     "debug": "^4.4.1",
     "p-map": "^7.0.3"
