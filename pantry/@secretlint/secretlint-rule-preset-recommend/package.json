@@ -61,7 +61,7 @@
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.4",
-    "@secretlint/secretlint-rule-1password": "^10.2.2",
+    "@secretlint/secretlint-rule-1password": "^11.6.0",
     "@secretlint/secretlint-rule-aws": "^10.2.2",
     "@secretlint/secretlint-rule-azure": "^10.2.2",
     "@secretlint/secretlint-rule-basicauth": "^10.2.2",
