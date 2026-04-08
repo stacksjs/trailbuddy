@@ -70,7 +70,7 @@
     "@secretlint/secretlint-rule-github": "^10.2.2",
     "@secretlint/secretlint-rule-linear": "^10.2.2",
     "@secretlint/secretlint-rule-npm": "^10.2.2",
-    "@secretlint/secretlint-rule-openai": "^10.2.2",
+    "@secretlint/secretlint-rule-openai": "^11.6.0",
     "@secretlint/secretlint-rule-privatekey": "^10.2.2",
     "@secretlint/secretlint-rule-sendgrid": "^10.2.2",
     "@secretlint/secretlint-rule-shopify": "^10.2.2",
