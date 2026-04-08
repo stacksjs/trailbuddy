@@ -68,7 +68,7 @@
     "@secretlint/secretlint-rule-filter-comments": "^10.2.2",
     "@secretlint/secretlint-rule-gcp": "^10.2.2",
     "@secretlint/secretlint-rule-github": "^10.2.2",
-    "@secretlint/secretlint-rule-linear": "^10.2.2",
+    "@secretlint/secretlint-rule-linear": "^11.6.0",
     "@secretlint/secretlint-rule-npm": "^10.2.2",
     "@secretlint/secretlint-rule-openai": "^10.2.2",
     "@secretlint/secretlint-rule-privatekey": "^10.2.2",
