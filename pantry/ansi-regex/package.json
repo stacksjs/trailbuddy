@@ -53,7 +53,7 @@
 		"pattern"
 	],
 	"devDependencies": {
-		"ansi-escapes": "^5.0.0",
+		"ansi-escapes": "^7.3.0",
 		"ava": "^3.15.0",
 		"tsd": "^0.21.0",
 		"xo": "^0.54.2"
