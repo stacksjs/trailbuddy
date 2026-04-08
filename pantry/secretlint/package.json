@@ -72,7 +72,7 @@
   },
   "devDependencies": {
     "@secretlint/secretlint-rule-example": "^10.2.2",
-    "@secretlint/secretlint-rule-preset-recommend": "^10.2.2",
+    "@secretlint/secretlint-rule-preset-recommend": "^11.6.0",
     "@secretlint/types": "^10.2.2",
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.0.15",
