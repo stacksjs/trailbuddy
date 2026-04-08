@@ -73,7 +73,7 @@
     "@secretlint/secretlint-rule-openai": "^10.2.2",
     "@secretlint/secretlint-rule-privatekey": "^10.2.2",
     "@secretlint/secretlint-rule-sendgrid": "^10.2.2",
-    "@secretlint/secretlint-rule-shopify": "^10.2.2",
+    "@secretlint/secretlint-rule-shopify": "^11.6.0",
     "@secretlint/secretlint-rule-slack": "^10.2.2",
     "@secretlint/tester": "^10.2.2",
     "@secretlint/types": "^10.2.2",
