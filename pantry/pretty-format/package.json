@@ -21,7 +21,7 @@
   "dependencies": {
     "@jest/schemas": "^29.6.3",
     "ansi-styles": "^5.0.0",
-    "react-is": "^18.0.0"
+    "react-is": "^19.2.5"
   },
   "devDependencies": {
     "@types/react": "^17.0.3",
