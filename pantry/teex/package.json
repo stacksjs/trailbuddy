@@ -7,7 +7,7 @@
     "streamx": "^2.12.5"
   },
   "devDependencies": {
-    "standard": "^14.3.4",
+    "standard": "^17.1.2",
     "tape": "^5.0.1"
   },
   "scripts": {
