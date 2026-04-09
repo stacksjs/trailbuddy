@@ -16,7 +16,7 @@
     "minimatch": "^5.1.0"
   },
   "devDependencies": {
-    "jasmine": "^4.6.0",
+    "jasmine": "^7.0.0-pre.0",
     "mkdirp": "^2.1.6",
     "nyc": "^15.1.0",
     "rimraf": "^3.0.2",
