@@ -42,7 +42,7 @@
 	],
 	"devDependencies": {
 		"ava": "^1.4.1",
-		"fast-levenshtein": "^2.0.6",
+		"fast-levenshtein": "^3.0.0",
 		"ld": "^0.1.0",
 		"levdist": "^2.2.9",
 		"levenshtein": "^1.0.5",
