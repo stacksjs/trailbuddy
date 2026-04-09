@@ -56,7 +56,7 @@
     "eslint": "^8.57.1",
     "fake": "^0.2.2",
     "far": "^0.0.7",
-    "formidable": "^1.2.6",
+    "formidable": "^3.5.4",
     "in-publish": "^2.0.1",
     "is-node-modern": "^1.0.0",
     "istanbul": "^0.4.5",
