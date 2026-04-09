@@ -68,7 +68,7 @@
     "@secretlint/profiler": "^10.2.2",
     "debug": "^4.4.1",
     "globby": "^14.1.0",
-    "read-pkg": "^9.0.1"
+    "read-pkg": "^10.1.0"
   },
   "devDependencies": {
     "@secretlint/secretlint-rule-example": "^10.2.2",
