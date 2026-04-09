@@ -20,7 +20,7 @@
 		"codepage": "~1.10.0",
 		"@sheetjs/uglify-js": "~2.7.3",
 		"@types/node": "^8.0.7",
-		"dtslint": "^0.1.2",
+		"dtslint": "^4.2.1",
 		"typescript": "2.2.0"
 	},
 	"repository": { "type": "git", "url": "git://github.com/SheetJS/js-crc32.git" },
