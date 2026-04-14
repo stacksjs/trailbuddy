@@ -1,0 +1,3 @@
+<script client>
+  const dark = useDark()
+</script>

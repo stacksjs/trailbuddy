@@ -1,0 +1,228 @@
+@extends('layouts/default')
+
+@section('title', 'Territory Details — TrailBuddy')
+
+@section('content')
+<script client>
+  useHead({ title: 'Territory Details — TrailBuddy' })
+
+  const loading = state(true)
+  const territory = state(null)
+  const owner = state(null)
+  const conquestHistory = state([])
+  const currentUser = state(null)
+  const isOwner = () => territory() && currentUser() && territory().get('user_id') === currentUser().id
+
+  onMount(async () => {
+    try {
+      const user = await auth.user()
+      currentUser.set(user)
+
+      const id = route.params.id
+      const [territoryData, historyData] = await Promise.all([
+        Territory.find(id),
+        Conquest.where('territory_id', id).orderByDesc('created_at').limit(20).get(),
+      ])
+
+      territory.set(territoryData)
+      conquestHistory.set(historyData)
+
+      if (territoryData) {
+        const ownerData = await User.find(territoryData.get('user_id'))
+        owner.set(ownerData)
+      }
+    } catch (err) {
+      console.error('Failed to load territory:', err)
+    } finally {
+      loading.set(false)
+    }
+  })
+</script>
+
+  <!-- Loading -->
+  <div @show="loading()" class="flex items-center justify-center py-32">
+    <div class="h-8 w-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+  </div>
+
+  <div @show="!loading() && territory()">
+    <!-- Territory Header -->
+    <section class="overflow-hidden relative pb-16 pt-24 bg-gradient-to-br from-emerald-600 to-emerald-700 via-teal-600">
+      <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute h-80 w-80 bg-white/10 rounded-full blur-3xl -right-40 -top-40"></div>
+        <div class="absolute h-80 w-80 bg-teal-400/20 rounded-full blur-3xl -bottom-40 -left-40"></div>
+      </div>
+
+      <div class="relative mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+        <div class="flex flex-col gap-6 items-start justify-between md:flex-row md:items-center">
+          <div>
+            <div class="flex gap-3 items-center mb-3">
+              <span
+                class="px-3 py-1 font-semibold text-sm rounded-full"
+                :class="text-white' text-white' : ? 'bg-orange-500 'bg-white/20 isOwner()"
+                :text="isOwner() ? 'Your Territory' : 'Enemy Territory'"
+              ></span>
+              <span
+                class="px-3 py-1 font-semibold text-sm rounded-full"
+                :class="text-white' text-white' : ? 'bg-emerald-300/30 'bg-red-500 'contested' === territory().get('status')"
+                :text="territory().get('status') === 'contested' ? 'Contested' : 'Secure'"
+              ></span>
+            </div>
+            <h1 class="mb-2 font-bold font-display text-3xl text-white md:text-4xl" :text="territory().get('name') || 'Unnamed Territory'"></h1>
+            <p class="text-lg text-white/70">
+              Owned by <span class="font-semibold text-white" :text="isOwner() ? 'You' : (owner()?.get('name') || 'Unknown')"></span>
+            </p>
+          </div>
+          <div class="flex gap-3">
+            <StxLink @show="!isOwner()" to="/record" class="flex items-center px-6 py-3 font-semibold text-orange-700 text-sm bg-white hover:bg-gray-100 rounded-xl shadow-lg transition">
+              <svg class="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+              </svg>
+              Conquer This
+            </StxLink>
+            <StxLink @show="isOwner()" to="/record" class="flex items-center px-6 py-3 font-semibold text-sm text-white bg-white/20 hover:bg-white/30 rounded-xl transition">
+              <svg class="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              Defend
+            </StxLink>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="mx-auto px-4 py-8 sm:px-6 lg:px-8 max-w-7xl">
+      <div class="grid gap-8 lg:grid-cols-3">
+        <!-- Main content -->
+        <div class="lg:col-span-2 space-y-8">
+          <!-- Map -->
+          <div class="overflow-hidden p-0 card">
+            <div class="flex items-center justify-center h-80 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-slate-700 dark:to-slate-800">
+              <div class="text-center text-gray-400 dark:text-slate-500">
+                <svg class="mb-2 mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+                <p class="text-sm">Territory Boundary Map</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Territory Stats -->
+          <div class="grid gap-4 grid-cols-2 sm:grid-cols-4">
+            <div class="text-center card">
+              <p class="font-bold text-2xl text-emerald-600" :text="((territory().get('areaSize') || 0) / 1000).toFixed(1)"></p>
+              <p class="metric-label">km²</p>
+            </div>
+            <div class="text-center card">
+              <p class="font-bold text-2xl text-blue-600" :text="territory().get('conquestCount') ?? 0"></p>
+              <p class="metric-label">Times Conquered</p>
+            </div>
+            <div class="text-center card">
+              <p class="font-bold text-2xl text-orange-600" :text="territory().get('defendCount') ?? 0"></p>
+              <p class="metric-label">Defenses</p>
+            </div>
+            <div class="text-center card">
+              <p class="font-bold text-2xl text-purple-600" :text="territory().get('totalRunners') ?? 0"></p>
+              <p class="metric-label">Runners Through</p>
+            </div>
+          </div>
+
+          <!-- Conquest History -->
+          <div>
+            <h2 class="mb-4 font-bold font-display text-gray-900 text-xl dark:text-white">Conquest History</h2>
+            <div class="space-y-3">
+              <template @for="event in conquestHistory()">
+                <div class="flex gap-4 items-center card">
+                  <div
+                    class="flex items-center justify-center shrink-0 h-10 w-10 font-bold text-sm rounded-full"
+                    :class="text-emerald-600' text-orange-600' dark:bg-emerald-900/20 dark:bg-orange-900/20 : ? 'bg-emerald-100 'bg-orange-100 'conquered' === event.get('status')"
+                    :text="(event.get('attackerName') || 'U').charAt(0)"
+                  ></div>
+                  <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-gray-900 text-sm dark:text-white">
+                      <span :text="event.get('attackerName') || 'Runner'"></span>
+                      <span :text="event.get('status') === 'conquered' ? ' conquered this territory' : ' failed to conquer'"></span>
+                    </p>
+                    <p class="text-gray-500 text-xs dark:text-slate-400" :text="event.get('created_at') || ''"></p>
+                  </div>
+                  <span
+                    class="shrink-0 px-2 py-1 font-medium text-xs rounded-full"
+                    :class="text-emerald-700 text-orange-700 dark:text-emerald-400' dark:text-orange-400' dark:bg-emerald-900/30 dark:bg-orange-900/30 : ? 'bg-emerald-100 'bg-orange-100 'conquered' === event.get('status')"
+                    :text="event.get('status') === 'conquered' ? 'Conquered' : 'Defended'"
+                  ></span>
+                </div>
+              </template>
+
+              <div @show="conquestHistory().length === 0" class="py-8 text-center text-gray-400 text-sm dark:text-slate-500">
+                <p>No conquest attempts on this territory yet.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+          <!-- Owner card -->
+          <div class="p-6 bg-white dark:bg-slate-800 border border-gray-100 rounded-2xl dark:border-slate-700 shadow-sm">
+            <h3 class="mb-4 font-bold text-gray-900 text-lg dark:text-white">Current Owner</h3>
+            <div class="flex gap-4 items-center mb-4">
+              <div class="flex items-center justify-center h-14 w-14 font-bold text-emerald-600 text-xl bg-emerald-100 dark:bg-emerald-900/30 rounded-full" :text="(owner()?.get('name') || 'U').charAt(0)"></div>
+              <div>
+                <p class="font-bold text-gray-900 dark:text-white" :text="isOwner() ? 'You' : (owner()?.get('name') || 'Unknown')"></p>
+                <p class="text-gray-500 text-sm dark:text-slate-400">Claimed <span :text="territory().get('claimedAt') || 'recently'"></span></p>
+              </div>
+            </div>
+            <div @show="!isOwner()" class="pt-4 border-gray-100 border-t dark:border-slate-700">
+              <StxLink to="/record" class="block px-4 py-3 w-full font-semibold text-center text-white bg-orange-600 hover:bg-orange-700 rounded-xl transition">
+                Challenge for Territory
+              </StxLink>
+            </div>
+          </div>
+
+          <!-- How to conquer -->
+          <div class="p-6 bg-white dark:bg-slate-800 border border-gray-100 rounded-2xl dark:border-slate-700 shadow-sm">
+            <h3 class="mb-4 font-bold text-gray-900 text-lg dark:text-white">How to Conquer</h3>
+            <div class="space-y-4">
+              <div class="flex gap-3">
+                <div class="flex items-center justify-center shrink-0 h-8 w-8 font-bold text-orange-600 text-sm bg-orange-100 dark:bg-orange-900/20 rounded-lg">1</div>
+                <div>
+                  <p class="font-medium text-gray-900 text-sm dark:text-white">Run through it</p>
+                  <p class="text-gray-500 text-xs dark:text-slate-400">Your route must cross through the territory boundary.</p>
+                </div>
+              </div>
+              <div class="flex gap-3">
+                <div class="flex items-center justify-center shrink-0 h-8 w-8 font-bold text-orange-600 text-sm bg-orange-100 dark:bg-orange-900/20 rounded-lg">2</div>
+                <div>
+                  <p class="font-medium text-gray-900 text-sm dark:text-white">Run a loop</p>
+                  <p class="text-gray-500 text-xs dark:text-slate-400">Close your loop to carve out the area you're claiming.</p>
+                </div>
+              </div>
+              <div class="flex gap-3">
+                <div class="flex items-center justify-center shrink-0 h-8 w-8 font-bold text-orange-600 text-sm bg-orange-100 dark:bg-orange-900/20 rounded-lg">3</div>
+                <div>
+                  <p class="font-medium text-gray-900 text-sm dark:text-white">Claim the split</p>
+                  <p class="text-gray-500 text-xs dark:text-slate-400">The portion your route carves through becomes yours.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nearby Territories -->
+          <div class="p-6 bg-white dark:bg-slate-800 border border-gray-100 rounded-2xl dark:border-slate-700 shadow-sm">
+            <h3 class="mb-4 font-bold text-gray-900 text-lg dark:text-white">Nearby Territories</h3>
+            <p class="py-4 text-center text-gray-400 text-sm dark:text-slate-500">Other territories in this area will appear here.</p>
+            <StxLink to="/territories" class="block px-4 py-2 w-full font-medium text-center text-emerald-600 text-sm hover:bg-emerald-50 dark:hover:bg-emerald-900/10 rounded-lg transition">View All Territories</StxLink>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Not found state -->
+  <div @show="!loading() && !territory()" class="py-32 text-center">
+    <svg class="mb-4 mx-auto h-16 w-16 text-gray-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+    </svg>
+    <p class="font-medium text-gray-500 dark:text-slate-400">Territory not found</p>
+    <StxLink to="/territories" class="inline-block mt-4 px-6 py-2 font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition">Back to Territories</StxLink>
+  </div>
+@endsection

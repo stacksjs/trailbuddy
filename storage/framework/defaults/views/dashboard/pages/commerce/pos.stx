@@ -31,64 +31,64 @@ function statusClass(s) {
   return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
 }
 </script>
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+<div class="p-6 min-h-screen bg-gray-50 dark:bg-gray-900">
     <div class="flex items-start justify-between mb-8">
       <div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Point of Sale</h1>
-        <p class="text-gray-500 dark:text-gray-400 mt-1">Manage POS terminals and transactions</p>
+        <h1 class="font-bold text-3xl text-gray-900 dark:text-white">Point of Sale</h1>
+        <p class="mt-1 text-gray-500 dark:text-gray-400">Manage POS terminals and transactions</p>
       </div>
-      <div class="flex items-center gap-3">
-        <button class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Reports</button>
-        <button class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">New Sale</button>
+      <div class="flex gap-3 items-center">
+        <button class="px-4 py-2 font-medium text-gray-700 text-sm dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 rounded-lg dark:border-gray-600">Reports</button>
+        <button class="px-4 py-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg">New Sale</button>
       </div>
     </div>
 
     <div class="flex flex-col gap-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
         @foreach (todayStats as stat)
-          <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-            <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stat.value }}</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ stat.label }}</div>
+          <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700">
+            <div class="font-bold text-2xl text-gray-900 dark:text-white">{{ stat.value }}</div>
+            <div class="mt-1 text-gray-500 text-sm dark:text-gray-400">{{ stat.label }}</div>
           </div>
         @endforeach
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-lg transition-shadow">
+      <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
+        <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
           <div class="flex items-center justify-between mb-4">
             <span class="font-semibold text-gray-900 dark:text-white">Terminals</span>
-            <button class="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Add Terminal</button>
+            <button class="px-3 py-1.5 font-medium text-gray-500 text-xs dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Add Terminal</button>
           </div>
-          <div class="divide-y divide-gray-100 dark:divide-gray-700">
+          <div class="divide-gray-100 divide-y dark:divide-gray-700">
             @foreach (terminals as terminal)
-              <div class="flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+              <div class="flex gap-3 items-center p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                 <div class="flex-1 min-w-0">
                   <div class="font-medium text-gray-900 dark:text-white">{{ terminal.name }}</div>
-                  <div class="text-sm text-gray-500 dark:text-gray-400">{{ terminal.id }} &middot; {{ terminal.location }}</div>
+                  <div class="text-gray-500 text-sm dark:text-gray-400">{{ terminal.id }} &middot; {{ terminal.location }}</div>
                 </div>
-                <div class="flex items-center gap-3">
-                  <span class="text-gray-500 dark:text-gray-400 text-sm">{{ terminal.lastTransaction }}</span>
-                  <span class="px-2.5 py-1 text-xs font-semibold rounded-full {{ statusClass(terminal.status) }}">{{ terminal.status }}</span>
+                <div class="flex gap-3 items-center">
+                  <span class="text-gray-500 text-sm dark:text-gray-400">{{ terminal.lastTransaction }}</span>
+                  <span class="px-2.5 py-1 font-semibold text-xs rounded-full {{ }} statusClass(terminal.status)">{{ terminal.status }}</span>
                 </div>
               </div>
             @endforeach
           </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-lg transition-shadow">
+        <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
           <div class="flex items-center justify-between mb-4">
             <span class="font-semibold text-gray-900 dark:text-white">Recent Transactions</span>
-            <button class="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">View All</button>
+            <button class="px-3 py-1.5 font-medium text-gray-500 text-xs dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">View All</button>
           </div>
-          <div class="divide-y divide-gray-100 dark:divide-gray-700">
+          <div class="divide-gray-100 divide-y dark:divide-gray-700">
             @foreach (recentTransactions as txn)
-              <div class="flex items-center gap-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+              <div class="flex gap-3 items-center p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                 <div class="flex-1 min-w-0">
                   <div class="font-medium text-gray-900 dark:text-white">{{ txn.id }}</div>
-                  <div class="text-sm text-gray-500 dark:text-gray-400">{{ txn.terminal }} &middot; {{ txn.time }}</div>
+                  <div class="text-gray-500 text-sm dark:text-gray-400">{{ txn.terminal }} &middot; {{ txn.time }}</div>
                 </div>
-                <div class="flex items-center gap-3">
-                  <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{{ txn.method }}</span>
+                <div class="flex gap-3 items-center">
+                  <span class="px-2.5 py-1 font-semibold text-gray-600 text-xs dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-full">{{ txn.method }}</span>
                   <span class="font-semibold">{{ txn.amount }}</span>
                 </div>
               </div>

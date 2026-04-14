@@ -1,0 +1,283 @@
+@extends('layouts/default')
+
+@section('title', 'Trail Details — TrailBuddy')
+
+@section('content')
+<script client>
+  useHead({ title: 'Trail Details — TrailBuddy' })
+
+  const loading = state(true)
+  const trail = state(null)
+  const reviews = state([])
+  const segments = state([])
+  const saved = state(false)
+  const reviewTab = state('reviews')
+
+  onMount(() => {
+    const id = Number(route.params.id)
+    const t = window.tb.findById('trails', id)
+    trail.set(t)
+    reviews.set(window.tb.getList('reviews').filter(r => r.trail_id === id))
+    segments.set(window.tb.getList('segments').filter(s => s.trail_id === id))
+    loading.set(false)
+  })
+</script>
+
+  <!-- Loading -->
+  <div @show="loading()" class="flex items-center justify-center py-32">
+    <div class="animate-spin w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full"></div>
+  </div>
+
+  <div @show="!loading() && trail()">
+    <!-- Hero image -->
+    <section class="relative h-72 sm:h-96 bg-gradient-to-br from-emerald-700 to-teal-800 overflow-hidden">
+      <div class="absolute inset-0 bg-black/30"></div>
+      <div class="absolute inset-0 overflow-hidden">
+        <div class="absolute -top-20 -right-20 w-60 h-60 bg-white/5 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/50 to-transparent"></div>
+      </div>
+      <div class="relative h-full flex items-end px-4 mx-auto max-w-7xl sm:px-6 lg:px-8 pb-8">
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="px-2.5 py-1 rounded-full text-xs font-semibold capitalize" :class="'difficulty-' + (trail().difficulty || 'moderate')" :text="trail().difficulty || 'moderate'"></span>
+            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/20 text-white" :text="trail().distance + ' mi'"></span>
+          </div>
+          <h1 class="font-display text-3xl md:text-4xl font-bold text-white mb-2" :text="trail().name"></h1>
+          <p class="text-white/70 flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            </svg>
+            <span :text="trail().location"></span>
+          </p>
+        </div>
+        <div class="flex gap-2">
+          <button @click="saved.set(!saved())" class="p-3 rounded-xl backdrop-blur-sm transition" :class="saved() ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'">
+            <svg class="w-5 h-5" :fill="saved() ? 'currentColor' : 'none'" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+          </button>
+          <StxLink to="/record" class="px-5 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+            </svg>
+            Start
+          </StxLink>
+        </div>
+      </div>
+    </section>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="grid lg:grid-cols-3 gap-8">
+        <!-- Main -->
+        <div class="lg:col-span-2 space-y-8">
+          <!-- Stats bar -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="card text-center">
+              <p class="text-2xl font-bold text-emerald-600" :text="trail().distance"></p>
+              <p class="metric-label">Miles</p>
+            </div>
+            <div class="card text-center">
+              <p class="text-2xl font-bold text-blue-600" :text="(trail().elevation || 0).toLocaleString()"></p>
+              <p class="metric-label">Elev (ft)</p>
+            </div>
+            <div class="card text-center">
+              <p class="text-2xl font-bold text-orange-600" :text="trail().estimatedTime"></p>
+              <p class="metric-label">Est. Time</p>
+            </div>
+            <div class="card text-center">
+              <div class="flex items-center justify-center gap-1">
+                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                <span class="text-2xl font-bold" :text="trail().rating"></span>
+              </div>
+              <p class="metric-label" :text="trail().reviewCount + ' reviews'"></p>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="card">
+            <h2 class="font-bold text-lg text-gray-900 dark:text-white mb-3">About This Trail</h2>
+            <p class="text-gray-600 dark:text-slate-400 leading-relaxed" :text="trail().description"></p>
+            <div @show="trail().tags && trail().tags.length > 0" class="flex flex-wrap gap-2 mt-4">
+              <template @for="tag in (trail().tags || [])">
+                <span class="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-xs font-medium rounded-full" :text="tag"></span>
+              </template>
+            </div>
+          </div>
+
+          <!-- Map placeholder -->
+          <div class="card p-0 overflow-hidden">
+            <div class="h-64 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center">
+              <div class="text-center text-gray-400 dark:text-slate-500">
+                <svg class="w-12 h-12 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+                <p class="text-sm font-medium">Trail Map</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Segments -->
+          <div @show="segments().length > 0">
+            <h2 class="font-bold text-lg text-gray-900 dark:text-white mb-4">Segments</h2>
+            <div class="space-y-3">
+              <template @for="seg in segments()">
+                <div class="card flex items-center gap-4">
+                  <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-sm dark:text-white" :text="seg.name"></p>
+                    <p class="text-xs text-gray-500 dark:text-slate-400" :text="seg.distance + ' mi · ' + Math.abs(seg.elevation) + ' ft ' + (seg.elevation >= 0 ? 'gain' : 'drop')"></p>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <p class="text-sm font-bold dark:text-white" :text="seg.yourTime || '—'"></p>
+                    <p class="text-xs text-gray-500 dark:text-slate-400" :text="seg.yourRank ? '#' + seg.yourRank + ' of ' + seg.totalAttempts : 'Not attempted'"></p>
+                  </div>
+                  <div class="text-right shrink-0">
+                    <p class="text-xs text-yellow-600 font-medium">CR</p>
+                    <p class="text-xs text-gray-500 dark:text-slate-400" :text="seg.leaderTime + ' · ' + seg.leaderName"></p>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Reviews & Conditions tabs -->
+          <div>
+            <div class="flex gap-1 mb-4 border-b border-gray-200 dark:border-slate-700">
+              <button @click="reviewTab.set('reviews')" :class="reviewTab() === 'reviews' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-4 py-3 text-sm font-medium border-b-2 transition" :text="'Reviews (' + reviews().length + ')'"></button>
+              <button @click="reviewTab.set('conditions')" :class="reviewTab() === 'conditions' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-4 py-3 text-sm font-medium border-b-2 transition">Trail Conditions</button>
+            </div>
+
+            <!-- Reviews -->
+            <div @show="reviewTab() === 'reviews'" class="space-y-4">
+              <template @for="review in reviews()">
+                <div class="card">
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-3">
+                      <div class="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600 text-sm font-bold" :text="(review.userName || 'U').charAt(0)"></div>
+                      <div>
+                        <p class="font-semibold text-sm dark:text-white" :text="review.userName"></p>
+                        <p class="text-xs text-gray-500 dark:text-slate-400" :text="window.tb.timeAgo(review.created_at)"></p>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-0.5">
+                      <template @for="i in 5">
+                        <svg class="w-4 h-4" :class="i <= review.rating ? 'text-yellow-400' : 'text-gray-200 dark:text-slate-600'" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      </template>
+                    </div>
+                  </div>
+                  <p class="text-sm text-gray-600 dark:text-slate-400" :text="review.text"></p>
+                </div>
+              </template>
+              <div @show="reviews().length === 0" class="text-center py-8 text-gray-400 dark:text-slate-500">
+                <p>No reviews yet. Be the first!</p>
+              </div>
+            </div>
+
+            <!-- Conditions -->
+            <div @show="reviewTab() === 'conditions'" class="space-y-3">
+              <div class="card">
+                <h3 class="font-semibold text-sm text-gray-900 dark:text-white mb-2">Current Conditions</h3>
+                <p class="text-sm text-gray-600 dark:text-slate-400" :text="trail().conditions || 'No recent condition reports'"></p>
+              </div>
+              <template @for="review in reviews().filter(r => r.conditions)">
+                <div class="card flex items-start gap-3">
+                  <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center text-blue-600 text-xs font-bold shrink-0" :text="(review.userName || 'U').charAt(0)"></div>
+                  <div>
+                    <p class="text-sm font-medium text-gray-900 dark:text-white" :text="review.conditions"></p>
+                    <p class="text-xs text-gray-500 dark:text-slate-400" :text="review.userName + ' · ' + window.tb.timeAgo(review.created_at)"></p>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+          <!-- Quick info -->
+          <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-700">
+            <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-4">Trail Info</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-700">
+                <span class="text-sm text-gray-500 dark:text-slate-400">Difficulty</span>
+                <span class="text-sm font-medium capitalize" :class="'difficulty-' + trail().difficulty" :text="trail().difficulty"></span>
+              </div>
+              <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-700">
+                <span class="text-sm text-gray-500 dark:text-slate-400">Distance</span>
+                <span class="text-sm font-medium dark:text-white" :text="trail().distance + ' mi'"></span>
+              </div>
+              <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-700">
+                <span class="text-sm text-gray-500 dark:text-slate-400">Elevation Gain</span>
+                <span class="text-sm font-medium dark:text-white" :text="(trail().elevation || 0).toLocaleString() + ' ft'"></span>
+              </div>
+              <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-slate-700">
+                <span class="text-sm text-gray-500 dark:text-slate-400">Est. Time</span>
+                <span class="text-sm font-medium dark:text-white" :text="trail().estimatedTime"></span>
+              </div>
+              <div class="flex items-center justify-between py-2">
+                <span class="text-sm text-gray-500 dark:text-slate-400">Rating</span>
+                <div class="flex items-center gap-1">
+                  <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <span class="text-sm font-medium dark:text-white" :text="trail().rating + ' (' + trail().reviewCount + ')'"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Weather placeholder -->
+          <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-700">
+            <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-4">Weather</h3>
+            <div class="text-center py-4">
+              <p class="text-4xl mb-2">☀️</p>
+              <p class="text-2xl font-bold dark:text-white">72°F</p>
+              <p class="text-sm text-gray-500 dark:text-slate-400">Clear skies</p>
+              <p class="text-xs text-gray-400 dark:text-slate-500 mt-2">Wind: 8 mph NW · Humidity: 45%</p>
+            </div>
+          </div>
+
+          <!-- Nearby trails -->
+          <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-slate-700">
+            <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-4">Nearby Trails</h3>
+            <div class="space-y-3">
+              <template @for="nearby in window.tb.getList('trails').filter(t => t.id !== trail().id).slice(0, 3)">
+                <StxLink :to="'/trail/' + nearby.id" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition block">
+                  <div class="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center shrink-0">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium dark:text-white truncate" :text="nearby.name"></p>
+                    <p class="text-xs text-gray-500 dark:text-slate-400" :text="nearby.distance + ' mi · ' + nearby.difficulty"></p>
+                  </div>
+                  <div class="flex items-center gap-0.5 text-xs shrink-0">
+                    <svg class="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <span :text="nearby.rating"></span>
+                  </div>
+                </StxLink>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Not found -->
+  <div @show="!loading() && !trail()" class="text-center py-32">
+    <p class="text-gray-500 dark:text-slate-400 font-medium">Trail not found</p>
+    <StxLink to="/trails" class="inline-block mt-4 px-6 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Browse Trails</StxLink>
+  </div>
+@endsection

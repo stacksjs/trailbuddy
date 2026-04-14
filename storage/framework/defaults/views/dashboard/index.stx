@@ -77,10 +77,10 @@ function getStatusDotClass(status) {
 </script>
 <DashboardLayout>
   <!-- Page Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
     <div>
-      <h1 class="text-2xl font-semibold text-neutral-900 dark:text-white">Dashboard</h1>
-      <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+      <h1 class="font-semibold text-2xl text-neutral-900 dark:text-white">Dashboard</h1>
+      <p class="mt-1 text-neutral-500 text-sm dark:text-neutral-400">
         Welcome back! Here's an overview of your system.
       </p>
     </div>
@@ -97,7 +97,7 @@ function getStatusDotClass(status) {
   </div>
 
   <!-- Stats Cards -->
-  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-8">
     @foreach(stats as stat)
       <StatsCard
         title="{{ stat.title }}"
@@ -112,22 +112,22 @@ function getStatusDotClass(status) {
 
   <!-- Quick Links -->
   <div class="mb-8">
-    <h2 class="text-base font-semibold text-neutral-900 dark:text-white mb-4">Quick Links</h2>
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <h2 class="mb-4 font-semibold text-base text-neutral-900 dark:text-white">Quick Links</h2>
+    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
       @foreach(quickLinks as link)
         <a href="{{ link.href }}">
           <Card hoverable class="h-full">
-            <div class="flex items-center gap-4">
-              <div class="{{ link.color }} flex-shrink-0 rounded-xl p-3">
-                <div class="{{ link.icon }} h-6 w-6 text-white"></div>
+            <div class="flex gap-4 items-center">
+              <div class="flex-shrink-0 p-3 rounded-xl {{ }} link.color">
+                <div class="h-6 w-6 text-white {{ }} link.icon"></div>
               </div>
-              <div class="min-w-0 flex-1">
-                <p class="text-sm font-medium text-neutral-900 dark:text-white">{{ link.name }}</p>
-                <p class="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400 truncate">
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-neutral-900 text-sm dark:text-white">{{ link.name }}</p>
+                <p class="mt-0.5 text-neutral-500 text-sm truncate dark:text-neutral-400">
                   {{ link.description }}
                 </p>
               </div>
-              <div class="i-hugeicons-arrow-right-01 h-5 w-5 text-neutral-400 flex-shrink-0"></div>
+              <div class="flex-shrink-0 h-5 w-5 text-neutral-400 i-hugeicons-arrow-right-01"></div>
             </div>
           </Card>
         </a>
@@ -136,33 +136,33 @@ function getStatusDotClass(status) {
   </div>
 
   <!-- System Health and Recent Activity -->
-  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+  <div class="grid gap-6 grid-cols-1 lg:grid-cols-2">
     <!-- System Health -->
     <Card>
       <div slot="header" class="flex items-center justify-between">
-        <h3 class="text-base font-semibold text-neutral-900 dark:text-white">System Health</h3>
+        <h3 class="font-semibold text-base text-neutral-900 dark:text-white">System Health</h3>
         <a href="/health">
           <Button variant="ghost" size="sm">
             View all
-            <div class="i-hugeicons-arrow-right-01 w-4 h-4 ml-1"></div>
+            <div class="ml-1 h-4 w-4 i-hugeicons-arrow-right-01"></div>
           </Button>
         </a>
       </div>
 
-      <div class="divide-y divide-neutral-200 dark:divide-neutral-700 -mx-6 -mb-6">
+      <div class="-mb-6 -mx-6 divide-neutral-200 divide-y dark:divide-neutral-700">
         @foreach(systemHealth as service)
           <div class="flex items-center justify-between px-6 py-3.5">
-            <div class="flex items-center gap-3">
-              <span class="h-2.5 w-2.5 rounded-full {{ getStatusDotClass(service.status) }}"></span>
-              <span class="text-sm font-medium text-neutral-700 dark:text-neutral-200">
+            <div class="flex gap-3 items-center">
+              <span class="h-2.5 w-2.5 rounded-full {{ }} getStatusDotClass(service.status)"></span>
+              <span class="font-medium text-neutral-700 text-sm dark:text-neutral-200">
                 {{ service.name }}
               </span>
             </div>
-            <div class="flex items-center gap-4">
-              <span class="text-sm text-neutral-500 dark:text-neutral-400">
+            <div class="flex gap-4 items-center">
+              <span class="text-neutral-500 text-sm dark:text-neutral-400">
                 {{ service.latency }}
               </span>
-              <span class="text-sm text-neutral-500 dark:text-neutral-400 hidden sm:block">
+              <span class="hidden sm:block text-neutral-500 text-sm dark:text-neutral-400">
                 {{ service.uptime }}
               </span>
               <Badge variant="{{ getStatusVariant(service.status) }}" size="sm">
@@ -177,26 +177,26 @@ function getStatusDotClass(status) {
     <!-- Recent Activity -->
     <Card>
       <div slot="header" class="flex items-center justify-between">
-        <h3 class="text-base font-semibold text-neutral-900 dark:text-white">Recent Activity</h3>
+        <h3 class="font-semibold text-base text-neutral-900 dark:text-white">Recent Activity</h3>
         <a href="/data/activity">
           <Button variant="ghost" size="sm">
             View all
-            <div class="i-hugeicons-arrow-right-01 w-4 h-4 ml-1"></div>
+            <div class="ml-1 h-4 w-4 i-hugeicons-arrow-right-01"></div>
           </Button>
         </a>
       </div>
 
-      <div class="divide-y divide-neutral-200 dark:divide-neutral-700 -mx-6 -mb-6">
+      <div class="-mb-6 -mx-6 divide-neutral-200 divide-y dark:divide-neutral-700">
         @foreach(recentActivity as activity)
-          <div class="flex items-center gap-4 px-6 py-3.5">
-            <div class="{{ getActivityStyles(activity.status) }} flex-shrink-0 rounded-lg p-2">
-              <div class="{{ getActivityIcon(activity.type) }} h-5 w-5"></div>
+          <div class="flex gap-4 items-center px-6 py-3.5">
+            <div class="flex-shrink-0 p-2 rounded-lg {{ }} getActivityStyles(activity.status)">
+              <div class="h-5 w-5 {{ }} getActivityIcon(activity.type)"></div>
             </div>
-            <div class="min-w-0 flex-1">
-              <p class="text-sm font-medium text-neutral-900 dark:text-white truncate">
+            <div class="flex-1 min-w-0">
+              <p class="font-medium text-neutral-900 text-sm truncate dark:text-white">
                 {{ activity.title }}
               </p>
-              <p class="text-sm text-neutral-500 dark:text-neutral-400">
+              <p class="text-neutral-500 text-sm dark:text-neutral-400">
                 {{ activity.time }}
               </p>
             </div>
@@ -210,70 +210,70 @@ function getStatusDotClass(status) {
   <div class="mt-8">
     <Card>
       <div slot="header">
-        <h3 class="text-base font-semibold text-neutral-900 dark:text-white">Resources & Documentation</h3>
+        <h3 class="font-semibold text-base text-neutral-900 dark:text-white">Resources & Documentation</h3>
       </div>
 
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div class="rounded-xl bg-blue-50 dark:bg-blue-900/20 p-5">
+      <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="p-5 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
           <div class="flex gap-4">
             <div class="flex-shrink-0 p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg">
-              <div class="i-hugeicons-book-open-02 h-5 w-5 text-blue-600 dark:text-blue-400"></div>
+              <div class="h-5 w-5 text-blue-600 dark:text-blue-400 i-hugeicons-book-open-02"></div>
             </div>
             <div>
-              <h4 class="text-sm font-semibold text-blue-900 dark:text-blue-200">Documentation</h4>
-              <p class="mt-1 text-sm text-blue-700 dark:text-blue-300">
+              <h4 class="font-semibold text-blue-900 text-sm dark:text-blue-200">Documentation</h4>
+              <p class="mt-1 text-blue-700 text-sm dark:text-blue-300">
                 Comprehensive guides and API references for developers.
               </p>
               <a
                 href="https://docs.stacksjs.org"
                 target="_blank"
-                class="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+                class="inline-flex gap-1 items-center mt-3 font-medium text-blue-600 text-sm dark:text-blue-400 hover:text-blue-500"
               >
                 View documentation
-                <div class="i-hugeicons-arrow-right-01 w-4 h-4"></div>
+                <div class="h-4 w-4 i-hugeicons-arrow-right-01"></div>
               </a>
             </div>
           </div>
         </div>
 
-        <div class="rounded-xl bg-green-50 dark:bg-green-900/20 p-5">
+        <div class="p-5 bg-green-50 dark:bg-green-900/20 rounded-xl">
           <div class="flex gap-4">
             <div class="flex-shrink-0 p-2 bg-green-100 dark:bg-green-900/40 rounded-lg">
-              <div class="i-hugeicons-video-01 h-5 w-5 text-green-600 dark:text-green-400"></div>
+              <div class="h-5 w-5 text-green-600 dark:text-green-400 i-hugeicons-video-01"></div>
             </div>
             <div>
-              <h4 class="text-sm font-semibold text-green-900 dark:text-green-200">Video Tutorials</h4>
-              <p class="mt-1 text-sm text-green-700 dark:text-green-300">
+              <h4 class="font-semibold text-green-900 text-sm dark:text-green-200">Video Tutorials</h4>
+              <p class="mt-1 text-green-700 text-sm dark:text-green-300">
                 Step-by-step video guides for common tasks and features.
               </p>
               <a
                 href="#"
-                class="mt-3 inline-flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-500 dark:text-green-400"
+                class="inline-flex gap-1 items-center mt-3 font-medium text-green-600 text-sm dark:text-green-400 hover:text-green-500"
               >
                 Watch tutorials
-                <div class="i-hugeicons-arrow-right-01 w-4 h-4"></div>
+                <div class="h-4 w-4 i-hugeicons-arrow-right-01"></div>
               </a>
             </div>
           </div>
         </div>
 
-        <div class="rounded-xl bg-purple-50 dark:bg-purple-900/20 p-5">
+        <div class="p-5 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
           <div class="flex gap-4">
             <div class="flex-shrink-0 p-2 bg-purple-100 dark:bg-purple-900/40 rounded-lg">
-              <div class="i-hugeicons-user-group h-5 w-5 text-purple-600 dark:text-purple-400"></div>
+              <div class="h-5 w-5 text-purple-600 dark:text-purple-400 i-hugeicons-user-group"></div>
             </div>
             <div>
-              <h4 class="text-sm font-semibold text-purple-900 dark:text-purple-200">Community</h4>
-              <p class="mt-1 text-sm text-purple-700 dark:text-purple-300">
+              <h4 class="font-semibold text-purple-900 text-sm dark:text-purple-200">Community</h4>
+              <p class="mt-1 text-purple-700 text-sm dark:text-purple-300">
                 Join our community forums for support and discussions.
               </p>
               <a
                 href="https://discord.gg/stacksjs"
                 target="_blank"
-                class="mt-3 inline-flex items-center gap-1 text-sm font-medium text-purple-600 hover:text-purple-500 dark:text-purple-400"
+                class="inline-flex gap-1 items-center mt-3 font-medium text-purple-600 text-sm dark:text-purple-400 hover:text-purple-500"
               >
                 Join community
-                <div class="i-hugeicons-arrow-right-01 w-4 h-4"></div>
+                <div class="h-4 w-4 i-hugeicons-arrow-right-01"></div>
               </a>
             </div>
           </div>

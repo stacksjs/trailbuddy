@@ -39,7 +39,7 @@ const props = defineProps({
         @endif
       </div>
     @endif
-    <div class="{{ props.padding ? 'dashboard-card-content' : '' }}">
+    <div class=": ? '' 'dashboard-card-content' {{ }} props.padding">
       <slot></slot>
     </div>
   </div>

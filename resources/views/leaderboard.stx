@@ -1,0 +1,92 @@
+@extends('layouts/default')
+
+@section('title', 'Leaderboard — TrailBuddy')
+
+@section('content')
+<script client>
+  useHead({ title: 'Leaderboard — TrailBuddy' })
+
+  const loading = state(true)
+  const leaders = state([])
+  const period = state('weekly')
+  const metric = state('distance')
+
+  onMount(async () => {
+    try {
+      const data = await UserStats.orderByDesc('totalDistance').limit(50).get()
+      leaders.set(data)
+    } catch (err) {
+      console.error('Failed to load leaderboard:', err)
+    } finally {
+      loading.set(false)
+    }
+  })
+</script>
+
+  <div class="mx-auto px-4 py-6 sm:px-6 lg:px-8 max-w-3xl">
+    <h1 class="mb-6 font-bold text-2xl dark:text-white">Leaderboard</h1>
+
+    <!-- Period tabs -->
+    <div class="flex gap-2 mb-4">
+      <button @click="period.set('weekly')" :class="text-gray-600 text-white' dark:text-slate-400' dark:bg-slate-800 : ? 'bg-emerald-600 'bg-gray-100 'weekly' === period()" class="px-4 py-2 font-medium text-sm rounded-lg transition">This Week</button>
+      <button @click="period.set('monthly')" :class="text-gray-600 text-white' dark:text-slate-400' dark:bg-slate-800 : ? 'bg-emerald-600 'bg-gray-100 'monthly' === period()" class="px-4 py-2 font-medium text-sm rounded-lg transition">This Month</button>
+      <button @click="period.set('alltime')" :class="text-gray-600 text-white' dark:text-slate-400' dark:bg-slate-800 : ? 'alltime' 'bg-emerald-600 'bg-gray-100 === period()" class="px-4 py-2 font-medium text-sm rounded-lg transition">All Time</button>
+    </div>
+
+    <!-- Metric tabs -->
+    <div class="flex gap-2 mb-6">
+      <button @click="metric.set('distance')" :class="text-emerald-600' text-gray-500 dark:text-slate-400' : ? 'border-emerald-600 'border-transparent 'distance' === metric()" class="px-3 py-1.5 font-medium text-sm border-b-2 transition">Distance</button>
+      <button @click="metric.set('elevation')" :class="text-emerald-600' text-gray-500 dark:text-slate-400' : ? 'border-emerald-600 'border-transparent 'elevation' === metric()" class="px-3 py-1.5 font-medium text-sm border-b-2 transition">Elevation</button>
+      <button @click="metric.set('activities')" :class="text-emerald-600' text-gray-500 dark:text-slate-400' : ? 'activities' 'border-emerald-600 'border-transparent === metric()" class="px-3 py-1.5 font-medium text-sm border-b-2 transition">Activities</button>
+    </div>
+
+    <!-- Loading -->
+    <div @show="loading()" class="flex items-center justify-center py-20">
+      <div class="h-8 w-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+    </div>
+
+    <!-- Top 3 podium -->
+    <div @show="!loading() && leaders().length >= 3" class="grid gap-4 grid-cols-3 mb-8">
+      <!-- 2nd place -->
+      <div class="pt-8 text-center card">
+        <div class="flex items-center justify-center mb-2 mx-auto h-14 w-14 font-bold text-gray-600 text-xl dark:text-slate-300 bg-gray-200 dark:bg-slate-700 rounded-full" :text="(leaders()[1]?.get('userName') || 'U').charAt(0)"></div>
+        <p class="font-semibold text-sm truncate dark:text-white" :text="leaders()[1]?.get('userName') || 'Athlete'"></p>
+        <p class="mt-1 font-bold text-gray-400 text-lg">2nd</p>
+        <p class="font-semibold text-emerald-600 text-sm" :text="(leaders()[1]?.get('totalDistance') || 0).toFixed(1) + ' mi'"></p>
+      </div>
+      <!-- 1st place -->
+      <div class="pt-4 text-center ring-2 ring-yellow-400 card">
+        <div class="mb-1 text-2xl">👑</div>
+        <div class="flex items-center justify-center mb-2 mx-auto h-16 w-16 font-bold text-2xl text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 rounded-full" :text="(leaders()[0]?.get('userName') || 'U').charAt(0)"></div>
+        <p class="font-bold text-sm truncate dark:text-white" :text="leaders()[0]?.get('userName') || 'Athlete'"></p>
+        <p class="mt-1 font-bold text-lg text-yellow-500">1st</p>
+        <p class="font-semibold text-emerald-600 text-sm" :text="(leaders()[0]?.get('totalDistance') || 0).toFixed(1) + ' mi'"></p>
+      </div>
+      <!-- 3rd place -->
+      <div class="pt-8 text-center card">
+        <div class="flex items-center justify-center mb-2 mx-auto h-14 w-14 font-bold text-orange-600 text-xl bg-orange-100 dark:bg-orange-900/30 rounded-full" :text="(leaders()[2]?.get('userName') || 'U').charAt(0)"></div>
+        <p class="font-semibold text-sm truncate dark:text-white" :text="leaders()[2]?.get('userName') || 'Athlete'"></p>
+        <p class="mt-1 font-bold text-lg text-orange-400">3rd</p>
+        <p class="font-semibold text-emerald-600 text-sm" :text="(leaders()[2]?.get('totalDistance') || 0).toFixed(1) + ' mi'"></p>
+      </div>
+    </div>
+
+    <!-- Full list -->
+    <div @show="!loading()" class="space-y-2">
+      <template @for="(leader, index) in leaders()">
+        <div class="flex gap-4 items-center py-3 card">
+          <span class="w-8 font-bold text-center text-sm" :class="dark:text-slate-500' : ? 'text-emerald-600' 'text-gray-400 < 3 index" :text="index + 1"></span>
+          <div class="flex items-center justify-center shrink-0 h-10 w-10 font-bold text-gray-600 text-sm dark:text-slate-300 bg-gray-100 dark:bg-slate-700 rounded-full" :text="(leader.get('userName') || 'U').charAt(0)"></div>
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-sm truncate dark:text-white" :text="leader.get('userName') || 'Athlete'"></p>
+            <p class="text-gray-500 text-xs dark:text-slate-400" :text="(leader.get('trailsCompleted') || 0) + ' trails completed'"></p>
+          </div>
+          <div class="shrink-0 text-right">
+            <p class="font-bold text-emerald-600 text-sm" :text="(leader.get('totalDistance') || 0).toFixed(1) + ' mi'"></p>
+            <p class="text-gray-400 text-xs dark:text-slate-500" :text="(leader.get('totalElevation') || 0).toLocaleString() + ' ft'"></p>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+@endsection

@@ -19,38 +19,38 @@ try {
   // API not available
 }
 </script>
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+<div class="p-6 min-h-screen bg-gray-50 dark:bg-gray-900">
     <div class="flex items-start justify-between mb-8">
       <div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">SEO Settings</h1>
-        <p class="text-gray-500 dark:text-gray-400 mt-1">Configure search engine optimization</p>
+        <h1 class="font-bold text-3xl text-gray-900 dark:text-white">SEO Settings</h1>
+        <p class="mt-1 text-gray-500 dark:text-gray-400">Configure search engine optimization</p>
       </div>
-      <div class="flex items-center gap-3">
-        <button class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Save Changes</button>
+      <div class="flex gap-3 items-center">
+        <button class="px-4 py-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg">Save Changes</button>
       </div>
     </div>
 
     <div class="flex flex-col gap-6">
-      <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-lg transition-shadow">
+      <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
         <div class="flex items-center justify-between mb-4">
           <span class="font-semibold text-gray-900 dark:text-white">Default Meta Tags</span>
         </div>
         <div class="text-gray-600 dark:text-gray-400">
           <div class="mb-4">
-            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">Site Title</label>
-            <input type="text" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="{{ seoData.title }}" />
+            <label class="block mb-1.5 font-semibold text-gray-500 text-xs tracking-wide uppercase dark:text-gray-400">Site Title</label>
+            <input type="text" class="px-3 py-2 w-full text-gray-900 text-sm dark:text-white bg-white dark:bg-gray-800 border border-gray-300 rounded-lg dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500" value="{{ seoData.title }}" />
           </div>
           <div class="mb-4">
-            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">Meta Description</label>
-            <textarea class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">{{ seoData.description }}</textarea>
+            <label class="block mb-1.5 font-semibold text-gray-500 text-xs tracking-wide uppercase dark:text-gray-400">Meta Description</label>
+            <textarea class="px-3 py-2 w-full text-gray-900 text-sm dark:text-white bg-white dark:bg-gray-800 border border-gray-300 rounded-lg dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">{{ seoData.description }}</textarea>
           </div>
           <div class="mb-4">
-            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">Keywords</label>
-            <input type="text" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="{{ seoData.keywords.join(', ') }}" />
+            <label class="block mb-1.5 font-semibold text-gray-500 text-xs tracking-wide uppercase dark:text-gray-400">Keywords</label>
+            <input type="text" class="px-3 py-2 w-full text-gray-900 text-sm dark:text-white bg-white dark:bg-gray-800 border border-gray-300 rounded-lg dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500" value="{{ seoData.keywords.join(', ') }}" />
           </div>
           <div class="mb-4">
-            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1.5">OG Image URL</label>
-            <input type="text" class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="{{ seoData.ogImage }}" />
+            <label class="block mb-1.5 font-semibold text-gray-500 text-xs tracking-wide uppercase dark:text-gray-400">OG Image URL</label>
+            <input type="text" class="px-3 py-2 w-full text-gray-900 text-sm dark:text-white bg-white dark:bg-gray-800 border border-gray-300 rounded-lg dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500" value="{{ seoData.ogImage }}" />
           </div>
         </div>
       </div>

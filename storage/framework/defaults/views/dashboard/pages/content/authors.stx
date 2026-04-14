@@ -17,30 +17,30 @@ try {
   // API not available
 }
 </script>
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+<div class="p-6 min-h-screen bg-gray-50 dark:bg-gray-900">
     <div class="flex items-start justify-between mb-8">
       <div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Authors</h1>
-        <p class="text-gray-500 dark:text-gray-400 mt-1">Manage content authors</p>
+        <h1 class="font-bold text-3xl text-gray-900 dark:text-white">Authors</h1>
+        <p class="mt-1 text-gray-500 dark:text-gray-400">Manage content authors</p>
       </div>
-      <div class="flex items-center gap-3">
-        <button class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">Add Author</button>
+      <div class="flex gap-3 items-center">
+        <button class="px-4 py-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg">Add Author</button>
       </div>
     </div>
 
     <div class="flex flex-col gap-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         @foreach (authors as author)
-          <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-lg transition-shadow">
-            <div class="flex items-center gap-4">
-              <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 flex items-center justify-center font-semibold text-sm">{{ author.avatar }}</div>
+          <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
+            <div class="flex gap-4 items-center">
+              <div class="flex items-center justify-center h-12 w-12 font-semibold text-blue-700 text-sm dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 rounded-full">{{ author.avatar }}</div>
               <div>
                 <div class="font-semibold text-gray-900 dark:text-white">{{ author.name }}</div>
-                <div class="text-sm text-gray-500 dark:text-gray-400">{{ author.email }}</div>
+                <div class="text-gray-500 text-sm dark:text-gray-400">{{ author.email }}</div>
               </div>
             </div>
-            <div class="mt-4 flex justify-between items-center">
-              <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{{ author.role }}</span>
+            <div class="flex items-center justify-between mt-4">
+              <span class="px-2.5 py-1 font-semibold text-gray-600 text-xs dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-full">{{ author.role }}</span>
               <span class="text-gray-500 dark:text-gray-400">{{ author.posts }} posts</span>
             </div>
           </div>

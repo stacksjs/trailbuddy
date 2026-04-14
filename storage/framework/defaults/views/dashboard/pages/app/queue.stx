@@ -29,75 +29,75 @@ function statusClass(s) {
   return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
 }
 </script>
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+<div class="p-6 min-h-screen bg-gray-50 dark:bg-gray-900">
   <div class="flex items-start justify-between mb-8">
     <div>
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Queue</h1>
-      <p class="text-gray-500 dark:text-gray-400 mt-1">Monitor job queues powered by bun-queue</p>
+      <h1 class="font-bold text-3xl text-gray-900 dark:text-white">Queue</h1>
+      <p class="mt-1 text-gray-500 dark:text-gray-400">Monitor job queues powered by bun-queue</p>
     </div>
   </div>
 
   <!-- Summary Stats -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-      <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Queues</div>
-      <div class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ stats.totalQueues }}</div>
+  <div class="grid gap-4 grid-cols-2 md:grid-cols-4 mb-6">
+    <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700">
+      <div class="font-medium text-gray-500 text-sm dark:text-gray-400">Total Queues</div>
+      <div class="mt-1 font-bold text-2xl text-gray-900 dark:text-white">{{ stats.totalQueues }}</div>
     </div>
-    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-      <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Active Jobs</div>
-      <div class="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{{ stats.activeJobs }}</div>
+    <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700">
+      <div class="font-medium text-gray-500 text-sm dark:text-gray-400">Active Jobs</div>
+      <div class="mt-1 font-bold text-2xl text-blue-600 dark:text-blue-400">{{ stats.activeJobs }}</div>
     </div>
-    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-      <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Completed</div>
-      <div class="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{{ stats.completedJobs }}</div>
+    <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700">
+      <div class="font-medium text-gray-500 text-sm dark:text-gray-400">Completed</div>
+      <div class="mt-1 font-bold text-2xl text-green-600 dark:text-green-400">{{ stats.completedJobs }}</div>
     </div>
-    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-      <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Failed</div>
-      <div class="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{{ stats.failedJobs }}</div>
+    <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700">
+      <div class="font-medium text-gray-500 text-sm dark:text-gray-400">Failed</div>
+      <div class="mt-1 font-bold text-2xl text-red-600 dark:text-red-400">{{ stats.failedJobs }}</div>
     </div>
   </div>
 
   @if (!queueConnected)
-    <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800 p-12 text-center">
+    <div class="p-12 text-center bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 rounded-xl dark:border-yellow-800">
       <svg class="mx-auto h-12 w-12 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
       </svg>
-      <h3 class="mt-4 text-lg font-medium text-yellow-900 dark:text-yellow-200">Queue Not Connected</h3>
+      <h3 class="mt-4 font-medium text-lg text-yellow-900 dark:text-yellow-200">Queue Not Connected</h3>
       <p class="mt-2 text-yellow-700 dark:text-yellow-300">The bun-queue devtools API is not running on port 4400. Start your queue worker to see queue data here.</p>
     </div>
   @elseif (queues.length === 0)
-    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center">
+    <div class="p-12 text-center bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700">
       <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
       </svg>
-      <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">No Queues Found</h3>
+      <h3 class="mt-4 font-medium text-gray-900 text-lg dark:text-white">No Queues Found</h3>
       <p class="mt-2 text-gray-500 dark:text-gray-400">Start a queue worker to see queue data here.</p>
     </div>
   @else
     <!-- Queue Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+    <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-6">
       @foreach (queues as queue)
-        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 hover:shadow-lg transition-shadow">
+        <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
           <div class="flex items-center justify-between mb-4">
             <span class="font-semibold text-gray-900 dark:text-white">{{ queue.name }}</span>
-            <span class="px-2.5 py-1 text-xs font-semibold rounded-full {{ statusClass(queue.status) }}">{{ queue.status }}</span>
+            <span class="px-2.5 py-1 font-semibold text-xs rounded-full {{ }} statusClass(queue.status)">{{ queue.status }}</span>
           </div>
-          <div class="grid grid-cols-2 gap-4 mt-4">
+          <div class="grid gap-4 grid-cols-2 mt-4">
             <div>
-              <div class="text-2xl font-semibold text-gray-900 dark:text-white">{{ queue.pending }}</div>
-              <div class="text-sm text-gray-500 dark:text-gray-400">Pending</div>
+              <div class="font-semibold text-2xl text-gray-900 dark:text-white">{{ queue.pending }}</div>
+              <div class="text-gray-500 text-sm dark:text-gray-400">Pending</div>
             </div>
             <div>
-              <div class="text-2xl font-semibold text-blue-600 dark:text-blue-400">{{ queue.active }}</div>
-              <div class="text-sm text-gray-500 dark:text-gray-400">Active</div>
+              <div class="font-semibold text-2xl text-blue-600 dark:text-blue-400">{{ queue.active }}</div>
+              <div class="text-gray-500 text-sm dark:text-gray-400">Active</div>
             </div>
             <div>
-              <div class="text-2xl font-semibold text-red-600 dark:text-red-400">{{ queue.failed }}</div>
-              <div class="text-sm text-gray-500 dark:text-gray-400">Failed</div>
+              <div class="font-semibold text-2xl text-red-600 dark:text-red-400">{{ queue.failed }}</div>
+              <div class="text-gray-500 text-sm dark:text-gray-400">Failed</div>
             </div>
             <div>
-              <div class="text-2xl font-semibold text-green-600 dark:text-green-400">{{ queue.completed }}</div>
-              <div class="text-sm text-gray-500 dark:text-gray-400">Completed</div>
+              <div class="font-semibold text-2xl text-green-600 dark:text-green-400">{{ queue.completed }}</div>
+              <div class="text-gray-500 text-sm dark:text-gray-400">Completed</div>
             </div>
           </div>
         </div>

@@ -19,11 +19,11 @@ const props = defineProps({
 }
 </script>
 <div class="dashboard-table-container">
-    <table class="dashboard-table {{ props.striped ? 'striped' : '' }} {{ props.hoverable ? 'hoverable' : '' }}">
+    <table class=": : ? ? '' '' 'hoverable' 'striped' {{ {{ }} }} dashboard-table props.hoverable props.striped">
       <thead>
         <tr>
           @foreach (props.columns as column)
-            <th class="{{ column.align ? 'text-' + column.align : '' }}">
+            <th class=": ? '' 'text-' {{ }} + column.align column.align">
               {{ column.label }}
             </th>
           @endforeach
@@ -33,7 +33,7 @@ const props = defineProps({
         @foreach (props.data as row)
           <tr>
             @foreach (props.columns as column)
-              <td class="{{ column.align ? 'text-' + column.align : '' }}">
+              <td class=": ? '' 'text-' {{ }} + column.align column.align">
                 @if (column.render)
                   {{ column.render(row[column.key], row) }}
                 @else

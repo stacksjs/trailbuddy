@@ -1,122 +1,36 @@
 @extends('layouts/default')
 
-@push('head')
-  <title>Territory Game - TrailBuddy</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-    .font-display {
-      font-family: 'Outfit', sans-serif;
-    }
-
-    /* Custom scrollbar */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: #f1f5f9; }
-    ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-
-    /* Navbar states */
-    #navbar { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-    #navbar.scrolled { background: rgba(255, 255, 255, 0.95); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    #navbar.scrolled .nav-link { color: #374151 !important; }
-    #navbar.scrolled .nav-link:hover { color: #059669 !important; }
-    #navbar.scrolled .nav-logo { color: #059669 !important; }
-
-    /* Territory card hover */
-    .territory-card { transition: all 0.3s ease; }
-    .territory-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
-
-    /* Pulse animation for live indicator */
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    .pulse { animation: pulse 2s infinite; }
-  </style>
-@endpush
-
-<script server>
-import { defineProps, withDefaults } from 'stx'
-
-// TypeScript interfaces for type safety (matching browser models)
-interface Territory {
-  id: number
-  name: string
-  ownerName: string
-  ownerAvatar: string
-  areaSize: number
-  conquestCount: number
-  claimedAt: string
-  isOwned: boolean
-}
-
-interface LeaderboardEntry {
-  rank: number
-  userId: number
-  userName: string
-  userAvatar: string
-  totalAreaOwned: number
-  totalTerritoriesOwned: number
-  territoriesConquered: number
-}
-
-interface UserTerritoryStats {
-  totalTerritoriesOwned: number
-  totalAreaOwned: number
-  territoriesClaimed: number
-  territoriesConquered: number
-  territoriesLost: number
-  territoriesDefended: number
-  weeklyRank: number
-  allTimeRank: number
-}
-
-// Initial empty state - will be populated by client-side API calls
-const territories: Territory[] = []
-const leaderboardEntries: LeaderboardEntry[] = []
-const userStats: UserTerritoryStats = {
-  totalTerritoriesOwned: 0,
-  totalAreaOwned: 0,
-  territoriesClaimed: 0,
-  territoriesConquered: 0,
-  territoriesLost: 0,
-  territoriesDefended: 0,
-  weeklyRank: 0,
-  allTimeRank: 0
-}
-
-const currentUserId = 0 // Will be set from auth
-</script>
+@section('title', 'Territory Game — TrailBuddy')
 
 @section('content')
-  <!-- Navigation -->
-  <Navbar />
+<script client>
+  useHead({ title: 'Territory Game — TrailBuddy' })
+</script>
 
   <!-- Hero Section -->
-  <section class="relative bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700 pt-24 pb-16 overflow-hidden">
+  <section class="overflow-hidden relative pb-16 pt-24 bg-gradient-to-br from-emerald-600 to-emerald-700 via-teal-600">
     <div class="absolute inset-0 overflow-hidden">
-      <div class="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
-      <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-400/20 rounded-full blur-3xl"></div>
+      <div class="absolute h-80 w-80 bg-white/10 rounded-full blur-3xl -right-40 -top-40"></div>
+      <div class="absolute h-80 w-80 bg-teal-400/20 rounded-full blur-3xl -bottom-40 -left-40"></div>
     </div>
 
-    <div class="relative px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+    <div class="relative mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
       <div class="text-center">
-        <h1 class="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+        <h1 class="mb-6 font-bold font-display text-4xl text-white md:text-5xl lg:text-6xl">
           Conquer Your Territory
         </h1>
-        <p class="text-xl text-white/80 max-w-2xl mx-auto mb-8">
+        <p class="mb-8 mx-auto max-w-2xl text-white/80 text-xl">
           Run loops to claim land. Run through others' territories to conquer them. Build your empire one run at a time.
         </p>
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button class="w-full sm:w-auto px-8 py-4 text-lg font-semibold text-emerald-700 bg-white rounded-full hover:bg-gray-100 transition shadow-xl flex items-center justify-center">
-            <svg class="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="flex flex-col gap-4 items-center justify-center sm:flex-row">
+          <button class="flex items-center justify-center px-8 py-4 w-full sm:w-auto font-semibold text-emerald-700 text-lg bg-white hover:bg-gray-100 rounded-full shadow-xl transition">
+            <svg class="mr-2 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             Start a Run
           </button>
-          <a href="#how-it-works" class="w-full sm:w-auto px-8 py-4 text-lg font-semibold text-white border-2 border-white/30 rounded-full hover:bg-white/10 transition flex items-center justify-center">
+          <a href="#how-it-works" class="flex items-center justify-center px-8 py-4 w-full sm:w-auto font-semibold text-lg text-white hover:bg-white/10 border-2 border-white/30 rounded-full transition">
             How It Works
           </a>
         </div>
@@ -125,50 +39,50 @@ const currentUserId = 0 // Will be set from auth
   </section>
 
   <!-- Map Section -->
-  <section class="py-12 px-4 mx-auto max-w-7xl sm:px-6 lg:px-8 -mt-8">
+  <section class="-mt-8 mx-auto px-4 py-12 sm:px-6 lg:px-8 max-w-7xl">
     <TerritoryMap :centerLat="37.7749" :centerLng="-122.4194" :zoom="13" :currentUserId="currentUserId" />
   </section>
 
   <!-- Stats & Territories Grid -->
-  <section class="py-12 px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-    <div class="grid lg:grid-cols-3 gap-8">
+  <section class="mx-auto px-4 py-12 sm:px-6 lg:px-8 max-w-7xl">
+    <div class="grid gap-8 lg:grid-cols-3">
       <!-- Main Content - Territories -->
       <div class="lg:col-span-2">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="font-display text-2xl font-bold text-gray-900">Nearby Territories</h2>
+          <h2 class="font-bold font-display text-2xl text-gray-900">Nearby Territories</h2>
           <div class="flex items-center space-x-2">
             <button
               @click="setFilter('all')"
-              :class="filter() === 'all' ? 'text-emerald-600 bg-emerald-50' : 'text-gray-600 hover:bg-gray-100'"
-              class="px-4 py-2 text-sm font-medium rounded-lg transition"
+              :class="bg-emerald-50' hover:bg-gray-100' : ? 'all' 'text-emerald-600 'text-gray-600 === filter()"
+              class="px-4 py-2 font-medium text-sm rounded-lg transition"
             >All</button>
             <button
               @click="setFilter('mine')"
-              :class="filter() === 'mine' ? 'text-emerald-600 bg-emerald-50' : 'text-gray-600 hover:bg-gray-100'"
-              class="px-4 py-2 text-sm font-medium rounded-lg transition"
+              :class="bg-emerald-50' hover:bg-gray-100' : ? 'mine' 'text-emerald-600 'text-gray-600 === filter()"
+              class="px-4 py-2 font-medium text-sm rounded-lg transition"
             >Mine</button>
             <button
               @click="setFilter('contested')"
-              :class="filter() === 'contested' ? 'text-emerald-600 bg-emerald-50' : 'text-gray-600 hover:bg-gray-100'"
-              class="px-4 py-2 text-sm font-medium rounded-lg transition"
+              :class="bg-emerald-50' hover:bg-gray-100' : ? 'contested' 'text-emerald-600 'text-gray-600 === filter()"
+              class="px-4 py-2 font-medium text-sm rounded-lg transition"
             >Contested</button>
           </div>
         </div>
 
         <!-- Territory grid - reactive with STX -->
-        <div class="grid md:grid-cols-2 gap-6">
+        <div class="grid gap-6 md:grid-cols-2">
           <!-- Loading state -->
-          <div @show="loading()" class="col-span-2 text-center py-12">
-            <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent"></div>
+          <div @show="loading()" class="col-span-2 py-12 text-center">
+            <div class="inline-block h-8 w-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
             <p class="mt-4 text-gray-500">Loading territories...</p>
           </div>
 
           <!-- Empty state -->
-          <div @show="!loading() && filteredTerritories().length === 0" class="col-span-2 text-center py-12 text-gray-500">
-            <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div @show="!loading() && filteredTerritories().length === 0" class="col-span-2 py-12 text-center text-gray-500">
+            <svg class="mb-4 mx-auto h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
             </svg>
-            <p class="text-lg font-medium">No territories found</p>
+            <p class="font-medium text-lg">No territories found</p>
             <p class="mt-1">Start a run to claim your first territory!</p>
           </div>
 
@@ -187,8 +101,8 @@ const currentUserId = 0 // Will be set from auth
           @endfor
         </div>
 
-        <div class="text-center mt-8">
-          <button class="px-6 py-3 bg-white text-gray-700 font-semibold rounded-full border-2 border-gray-200 hover:border-emerald-500 hover:text-emerald-600 transition">
+        <div class="mt-8 text-center">
+          <button class="px-6 py-3 font-semibold text-gray-700 hover:text-emerald-600 bg-white border-2 border-gray-200 rounded-full hover:border-emerald-500 transition">
             Load More Territories
           </button>
         </div>
@@ -197,76 +111,76 @@ const currentUserId = 0 // Will be set from auth
       <!-- Sidebar -->
       <div class="space-y-6">
         <!-- Stats Card - reactive -->
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 class="font-bold text-lg text-gray-900 mb-4 flex items-center">
-            <svg class="w-5 h-5 mr-2 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm">
+          <h3 class="flex items-center mb-4 font-bold text-gray-900 text-lg">
+            <svg class="mr-2 h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
             Your Territory Stats
           </h3>
 
           <!-- Loading state -->
-          <div @show="loading()" class="text-center py-8 text-gray-400">
-            <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-emerald-500 border-t-transparent"></div>
+          <div @show="loading()" class="py-8 text-center text-gray-400">
+            <div class="inline-block h-6 w-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
 
           <!-- Stats grid -->
-          <div @show="!loading() && userStats()" class="grid grid-cols-2 gap-4">
-            <div class="text-center p-4 bg-emerald-50 rounded-xl">
-              <p class="text-2xl font-bold text-emerald-600" @text="userStats()?.get('totalTerritoriesOwned') ?? 0"></p>
-              <p class="text-sm text-gray-600">Territories</p>
+          <div @show="!loading() && userStats()" class="grid gap-4 grid-cols-2">
+            <div class="p-4 text-center bg-emerald-50 rounded-xl">
+              <p class="font-bold text-2xl text-emerald-600" @text="userStats()?.get('totalTerritoriesOwned') ?? 0"></p>
+              <p class="text-gray-600 text-sm">Territories</p>
             </div>
-            <div class="text-center p-4 bg-blue-50 rounded-xl">
-              <p class="text-2xl font-bold text-blue-600" @text="formatAreaSize(userStats()?.get('totalAreaOwned') ?? 0)"></p>
-              <p class="text-sm text-gray-600">Total Area</p>
+            <div class="p-4 text-center bg-blue-50 rounded-xl">
+              <p class="font-bold text-2xl text-blue-600" @text="formatAreaSize(userStats()?.get('totalAreaOwned') ?? 0)"></p>
+              <p class="text-gray-600 text-sm">Total Area</p>
             </div>
-            <div class="text-center p-4 bg-orange-50 rounded-xl">
-              <p class="text-2xl font-bold text-orange-600" @text="userStats()?.get('territoriesConquered') ?? 0"></p>
-              <p class="text-sm text-gray-600">Conquered</p>
+            <div class="p-4 text-center bg-orange-50 rounded-xl">
+              <p class="font-bold text-2xl text-orange-600" @text="userStats()?.get('territoriesConquered') ?? 0"></p>
+              <p class="text-gray-600 text-sm">Conquered</p>
             </div>
-            <div class="text-center p-4 bg-purple-50 rounded-xl">
-              <p class="text-2xl font-bold text-purple-600">#<span @text="userStats()?.get('weeklyRank') ?? '-'"></span></p>
-              <p class="text-sm text-gray-600">Weekly Rank</p>
+            <div class="p-4 text-center bg-purple-50 rounded-xl">
+              <p class="font-bold text-2xl text-purple-600">#<span @text="userStats()?.get('weeklyRank') ?? '-'"></span></p>
+              <p class="text-gray-600 text-sm">Weekly Rank</p>
             </div>
           </div>
 
           <!-- No stats state -->
-          <div @show="!loading() && !userStats()" class="text-center py-8 text-gray-500">
+          <div @show="!loading() && !userStats()" class="py-8 text-center text-gray-500">
             <p>No stats yet. Claim your first territory!</p>
           </div>
         </div>
 
         <!-- Leaderboard - reactive -->
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h3 class="font-bold text-lg text-gray-900 mb-4 flex items-center">
-            <svg class="w-5 h-5 mr-2 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm">
+          <h3 class="flex items-center mb-4 font-bold text-gray-900 text-lg">
+            <svg class="mr-2 h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
             </svg>
             Leaderboard
           </h3>
 
           <!-- Loading state -->
-          <div @show="loading()" class="text-center py-8 text-gray-400">
-            <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-yellow-500 border-t-transparent"></div>
+          <div @show="loading()" class="py-8 text-center text-gray-400">
+            <div class="inline-block h-6 w-6 border-2 border-t-transparent border-yellow-500 rounded-full animate-spin"></div>
           </div>
 
           <!-- Leaderboard entries -->
           <div @show="!loading()" class="space-y-2">
             @for="(entry, index) in leaderboard()"
               <div
-                class="flex items-center space-x-3 p-3 rounded-lg transition"
-                :class="entry.get('user_id') === currentUser()?.id ? 'bg-emerald-50' : 'hover:bg-gray-50'"
+                class="flex items-center p-3 space-x-3 rounded-lg transition"
+                :class="'hover:bg-gray-50' : ? 'bg-emerald-50' === currentUser()?.id entry.get('user_id')"
               >
                 <span
-                  class="w-6 text-center font-bold"
-                  :class="index < 3 ? 'text-yellow-500' : 'text-gray-400'"
+                  class="w-6 font-bold text-center"
+                  :class=": ? 'text-gray-400' 'text-yellow-500' < 3 index"
                   @text="index + 1"
                 ></span>
                 <div class="flex-1">
                   <p class="font-medium text-gray-900" @text="entry.get('user_id') === currentUser()?.id ? 'You' : `User ${entry.get('user_id')}`"></p>
-                  <p class="text-xs text-gray-500" @text="formatAreaSize(entry.get('totalAreaOwned'))"></p>
+                  <p class="text-gray-500 text-xs" @text="formatAreaSize(entry.get('totalAreaOwned'))"></p>
                 </div>
-                <span class="text-sm font-medium text-gray-600">
+                <span class="font-medium text-gray-600 text-sm">
                   <span @text="entry.get('totalTerritoriesOwned')"></span> territories
                 </span>
               </div>
@@ -279,63 +193,58 @@ const currentUserId = 0 // Will be set from auth
 
   <!-- How It Works Section -->
   <section id="how-it-works" class="py-20 bg-white">
-    <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-      <div class="text-center mb-16">
-        <h2 class="font-display text-3xl md:text-4xl font-bold text-gray-900 mb-4">How Territory Game Works</h2>
-        <p class="text-gray-500 max-w-2xl mx-auto">Claim, defend, and conquer territories through your runs and adventures.</p>
+    <div class="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+      <div class="mb-16 text-center">
+        <h2 class="mb-4 font-bold font-display text-3xl text-gray-900 md:text-4xl">How Territory Game Works</h2>
+        <p class="mx-auto max-w-2xl text-gray-500">Claim, defend, and conquer territories through your runs and adventures.</p>
       </div>
 
-      <div class="grid md:grid-cols-3 gap-8">
+      <div class="grid gap-8 md:grid-cols-3">
         <!-- Claim -->
         <div class="text-center">
-          <div class="w-20 h-20 mx-auto mb-6 bg-emerald-100 rounded-2xl flex items-center justify-center">
-            <svg class="w-10 h-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="flex items-center justify-center mb-6 mx-auto h-20 w-20 bg-emerald-100 rounded-2xl">
+            <svg class="h-10 w-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h3 class="text-xl font-bold text-gray-900 mb-3">Claim Territory</h3>
+          <h3 class="mb-3 font-bold text-gray-900 text-xl">Claim Territory</h3>
           <p class="text-gray-500">Run a closed loop (start and end within 50m) to claim the enclosed area as your territory. Minimum size: 1,000m².</p>
         </div>
 
         <!-- Conquer -->
         <div class="text-center">
-          <div class="w-20 h-20 mx-auto mb-6 bg-orange-100 rounded-2xl flex items-center justify-center">
-            <svg class="w-10 h-10 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="flex items-center justify-center mb-6 mx-auto h-20 w-20 bg-orange-100 rounded-2xl">
+            <svg class="h-10 w-10 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
             </svg>
           </div>
-          <h3 class="text-xl font-bold text-gray-900 mb-3">Conquer Territory</h3>
+          <h3 class="mb-3 font-bold text-gray-900 text-xl">Conquer Territory</h3>
           <p class="text-gray-500">Run through someone else's territory to split and conquer it. The portion your route carves through becomes yours.</p>
         </div>
 
         <!-- Defend -->
         <div class="text-center">
-          <div class="w-20 h-20 mx-auto mb-6 bg-blue-100 rounded-2xl flex items-center justify-center">
-            <svg class="w-10 h-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="flex items-center justify-center mb-6 mx-auto h-20 w-20 bg-blue-100 rounded-2xl">
+            <svg class="h-10 w-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
           </div>
-          <h3 class="text-xl font-bold text-gray-900 mb-3">Defend & Grow</h3>
+          <h3 class="mb-3 font-bold text-gray-900 text-xl">Defend & Grow</h3>
           <p class="text-gray-500">Territories persist forever until conquered. Expand your empire by claiming adjacent areas and defending your land.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Footer -->
-  <Footer />
-
-  <script>
-    // Reactive state
+  <script client>
     const loading = state(true)
-    const currentUser = state<any>(null)
-    const territories = state<any[]>([])
-    const leaderboard = state<any[]>([])
-    const userStats = state<any>(null)
-    const filter = state<'all' | 'mine' | 'contested'>('all')
+    const currentUser = state(null)
+    const territories = state([])
+    const leaderboard = state([])
+    const userStats = state(null)
+    const filter = state('all')
 
-    // Computed: filtered territories
     const filteredTerritories = () => {
       const all = territories()
       const f = filter()
@@ -346,13 +255,11 @@ const currentUserId = 0 // Will be set from auth
       return all.filter(t => t.get('status') === 'contested')
     }
 
-    // Load data on mount
     onMount(async () => {
       try {
         const user = await auth.user()
         currentUser.set(user)
 
-        // Load data in parallel
         const [territoriesData, statsData, leaderboardData] = await Promise.all([
           Territory.orderByDesc('created_at').limit(20).get(),
           user ? TerritoryStats.where('user_id', user.id).first() : null,
@@ -369,19 +276,8 @@ const currentUserId = 0 // Will be set from auth
       }
     })
 
-    // Filter change handler
-    function setFilter(f: 'all' | 'mine' | 'contested') {
+    function setFilter(f) {
       filter.set(f)
     }
-
-    // Navbar scroll behavior
-    window.addEventListener('scroll', () => {
-      const navbar = document.getElementById('navbar')
-      if (window.scrollY > 50) {
-        navbar?.classList.add('scrolled')
-      } else {
-        navbar?.classList.remove('scrolled')
-      }
-    })
   </script>
 @endsection

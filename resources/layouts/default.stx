@@ -1,32 +1,10 @@
-<script server>
-const stylesheetPath = '/assets/styles/main.css'
-const scriptPath = '/assets/scripts/main.ts'
-</script>
+@include('styles')
+@include('theme')
+@include('seed')
+@include('nav')
 
-@stack('head')
-
-<link rel="stylesheet" href="{{ stylesheetPath }}">
-
-@yield('login-screens')
-
-<div class="desktop">
-  <div class="desktop-icons">
-    @yield('desktop-icons')
-  </div>
-
-  @yield('sponsor-icon')
-  @yield('trash-icon')
-  @yield('windows')
-
-  @yield('taskbar')
-</div>
-
-@yield('context-menus')
-@yield('notification-popup')
-
-<main>
-  @yield('content')
+<main class="flex-1">
+  @slot('content')
 </main>
 
-<script type="module" src="{{ scriptPath }}"></script>
-@stack('scripts')
+@include('footer')

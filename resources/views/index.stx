@@ -1,133 +1,11 @@
 @extends('layouts/default')
 
-@push('head')
-  <title>TrailBuddy - Discover & Track Your Trail Adventures</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-    .font-display {
-      font-family: 'Outfit', sans-serif;
-    }
-
-    /* Custom scrollbar */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: #f1f5f9; }
-    ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-
-    /* Navbar states */
-    #navbar { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-    #navbar.scrolled { background: rgba(255, 255, 255, 0.95); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    #navbar.scrolled .nav-link { color: #374151 !important; }
-    #navbar.scrolled .nav-link:hover { color: #059669 !important; }
-    #navbar.scrolled .nav-logo { color: #059669 !important; }
-
-    /* Trail card hover effects */
-    .trail-card { transition: all 0.3s ease; }
-    .trail-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
-    .trail-card:hover .trail-image { transform: scale(1.05); }
-    .trail-image { transition: transform 0.5s ease; }
-
-    /* Stats counter animation */
-    @keyframes countUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .stat-value { animation: countUp 0.6s ease forwards; }
-
-    /* Difficulty badge colors */
-    .difficulty-easy { background: #d1fae5; color: #065f46; }
-    .difficulty-moderate { background: #fef3c7; color: #92400e; }
-    .difficulty-hard { background: #fee2e2; color: #991b1b; }
-
-    /* Hero gradient animation */
-    .hero-gradient { background: linear-gradient(135deg, #065f46 0%, #059669 50%, #34d399 100%); background-size: 200% 200%; animation: gradientShift 8s ease infinite; }
-    @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-
-    /* Map preview styling */
-    .map-preview { background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); position: relative; overflow: hidden; }
-    .map-preview::before { content: ''; position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2394a3b8' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
-
-    /* Activity card pulse */
-    .activity-live { animation: pulse 2s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-    /* Filter button active state */
-    .filter-btn.active { background: #059669; color: white; }
-  </style>
-@endpush
-
-<script server>
-import { defineProps, withDefaults } from 'stx'
-
-// Type definitions for props
-type Difficulty = 'easy' | 'moderate' | 'hard'
-type ActivityType = 'Trail Run' | 'Hike' | 'Walk' | 'Bike'
-
-interface Trail {
-  id: number
-  name: string
-  location: string
-  distance: number
-  elevation: number
-  difficulty: Difficulty
-  rating: number
-  reviews: number
-  time: string
-  image: string
-  tags: string[]
-}
-
-interface Activity {
-  id: number
-  user: string
-  avatar: string
-  trail: string
-  type: ActivityType
-  distance: number
-  time: string
-  pace: string
-  elevation: number
-  date: string
-  kudos: number
-}
-
-interface UserStatsData {
-  totalDistance: number
-  totalTime: string
-  totalElevation: number
-  trailsCompleted: number
-  currentStreak: number
-  longestStreak: number
-}
-
-interface Achievement {
-  name: string
-  icon: string
-  description: string
-  progress: number
-  total: number
-}
-
-// Initial empty arrays - populated by client-side API
-const trails: Trail[] = []
-const recentActivities: Activity[] = []
-const userStats: UserStatsData = {
-  totalDistance: 0,
-  totalTime: '0h 0m',
-  totalElevation: 0,
-  trailsCompleted: 0,
-  currentStreak: 0,
-  longestStreak: 0
-}
-const achievements: Achievement[] = []
-const featuredTrail: Trail | null = null
-</script>
+@section('title', 'Home — TrailBuddy')
 
 @section('content')
-  <!-- Navigation -->
-  <Navbar />
+<script client>
+  useHead({ title: 'Home — TrailBuddy' })
+</script>
 
   <!-- Hero Section -->
   <Hero>
@@ -142,18 +20,18 @@ const featuredTrail: Trail | null = null
         :image="featuredTrail.image"
       >
         <template #floating-card>
-          <div class="absolute -bottom-8 -left-8 bg-white rounded-2xl shadow-xl p-4 w-64 transform -rotate-3">
+          <div class="absolute p-4 w-64 bg-white rounded-2xl shadow-xl transform -bottom-8 -left-8 -rotate-3">
             <div class="flex items-center space-x-3">
-              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" alt="User" class="w-10 h-10 rounded-full object-cover" />
+              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" alt="User" class="object-cover h-10 w-10 rounded-full" />
               <div>
                 <p class="font-semibold text-gray-900 text-sm">Sarah just completed</p>
-                <p class="text-emerald-600 text-sm font-medium">Redwood Canyon Loop</p>
+                <p class="font-medium text-emerald-600 text-sm">Redwood Canyon Loop</p>
               </div>
             </div>
-            <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
+            <div class="flex items-center justify-between mt-3 text-gray-500 text-xs">
               <span>8.4 mi in 58:23</span>
               <span class="flex items-center">
-                <svg class="w-4 h-4 text-red-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="mr-1 h-4 w-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
                 </svg>
                 24 kudos
@@ -169,68 +47,68 @@ const featuredTrail: Trail | null = null
   <SearchFilter activeFilter="all" />
 
   <!-- Explore Trails Section -->
-  <section id="explore" class="py-20 px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+  <section id="explore" class="mx-auto px-4 py-20 sm:px-6 lg:px-8 max-w-7xl">
     <div class="flex items-center justify-between mb-10">
       <div>
-        <h2 class="font-display text-3xl md:text-4xl font-bold text-gray-900">Popular Trails Near You</h2>
-        <p class="text-gray-500 mt-2">Discover the best trails based on your location</p>
+        <h2 class="font-bold font-display text-3xl text-gray-900 md:text-4xl">Popular Trails Near You</h2>
+        <p class="mt-2 text-gray-500">Discover the best trails based on your location</p>
       </div>
-      <a href="#" class="hidden md:flex items-center text-emerald-600 font-semibold hover:text-emerald-700 transition">
+      <a href="#" class="hidden md:flex items-center font-semibold text-emerald-600 hover:text-emerald-700 transition">
         View All
-        <svg class="w-5 h-5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg class="ml-1 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
         </svg>
       </a>
     </div>
 
     <!-- Trail Grid - reactive -->
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
       <!-- Loading state -->
-      <div @show="loading()" class="col-span-3 text-center py-12">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent"></div>
+      <div @show="loading()" class="col-span-3 py-12 text-center">
+        <div class="inline-block h-8 w-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
         <p class="mt-4 text-gray-500">Loading trails...</p>
       </div>
 
       <!-- Trail cards (client-rendered from API data) -->
       <template @for="trail in filteredTrails()">
-        <article class="trail-card bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100">
-          <div class="relative h-48 overflow-hidden">
-            <img :src="trail.get('image') || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&h=600&fit=crop'" :alt="trail.get('name')" class="trail-image w-full h-full object-cover" />
-            <div class="absolute top-4 left-4">
-              <span :class="'px-3 py-1 difficulty-' + (trail.get('difficulty') || 'moderate') + ' rounded-full text-xs font-semibold capitalize'" :text="trail.get('difficulty') || 'moderate'"></span>
+        <article class="overflow-hidden bg-white border border-gray-100 rounded-2xl shadow-md trail-card">
+          <div class="overflow-hidden relative h-48">
+            <img :src="trail.get('image') || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&h=600&fit=crop'" :alt="trail.get('name')" class="object-cover h-full w-full trail-image" />
+            <div class="absolute left-4 top-4">
+              <span :class="py-1 capitalize' font-semibold text-xs rounded-full ' 'moderate') 'px-3 (trail.get('difficulty') + + || difficulty-'" :text="trail.get('difficulty') || 'moderate'"></span>
             </div>
-            <button class="absolute top-4 right-4 p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition shadow-md">
-              <svg class="w-5 h-5 text-gray-600 hover:text-red-500 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <button class="absolute right-4 top-4 p-2 bg-white/90 hover:bg-white rounded-full shadow-md backdrop-blur-sm transition">
+              <svg class="h-5 w-5 text-gray-600 hover:text-red-500 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
             </button>
           </div>
           <div class="p-5">
             <div class="flex items-start justify-between mb-2">
-              <h3 class="font-bold text-lg text-gray-900 hover:text-emerald-600 transition cursor-pointer" :text="trail.get('name') || 'Unknown Trail'"></h3>
+              <h3 class="font-bold text-gray-900 text-lg hover:text-emerald-600 transition cursor-pointer" :text="trail.get('name') || 'Unknown Trail'"></h3>
               <div class="flex items-center space-x-1 text-sm">
-                <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="h-4 w-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                 </svg>
                 <span class="font-semibold text-gray-900" :text="trail.get('rating') || 0"></span>
               </div>
             </div>
-            <p class="text-gray-500 text-sm mb-4 flex items-center">
-              <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <p class="flex items-center mb-4 text-gray-500 text-sm">
+              <svg class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               </svg>
               <span :text="trail.get('location') || 'Unknown Location'"></span>
             </p>
-            <div class="flex items-center justify-between text-sm text-gray-600 border-t border-gray-100 pt-4">
+            <div class="flex items-center justify-between pt-4 text-gray-600 text-sm border-gray-100 border-t">
               <div class="flex items-center space-x-4">
                 <span class="flex items-center">
-                  <svg class="w-4 h-4 mr-1 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg class="mr-1 h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
                   <span :text="(trail.get('distance') || 0) + ' mi'"></span>
                 </span>
                 <span class="flex items-center">
-                  <svg class="w-4 h-4 mr-1 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg class="mr-1 h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
                   </svg>
                   <span :text="(trail.get('elevation') || 0).toLocaleString() + ' ft'"></span>
@@ -243,15 +121,15 @@ const featuredTrail: Trail | null = null
       </template>
 
       <!-- Empty state -->
-      <div @show="!loading() && filteredTrails().length === 0" class="col-span-3 text-center py-12 text-gray-500">
-        <p class="text-lg font-medium">No trails found</p>
+      <div @show="!loading() && filteredTrails().length === 0" class="col-span-3 py-12 text-center text-gray-500">
+        <p class="font-medium text-lg">No trails found</p>
         <p class="mt-1">Try adjusting your filters</p>
       </div>
     </div>
 
     <!-- Load more -->
-    <div class="text-center mt-12">
-      <button class="px-8 py-3 bg-white text-gray-700 font-semibold rounded-full border-2 border-gray-200 hover:border-emerald-500 hover:text-emerald-600 transition shadow-sm">
+    <div class="mt-12 text-center">
+      <button class="px-8 py-3 font-semibold text-gray-700 hover:text-emerald-600 bg-white border-2 border-gray-200 rounded-full hover:border-emerald-500 shadow-sm transition">
         Load More Trails
       </button>
     </div>
@@ -259,72 +137,72 @@ const featuredTrail: Trail | null = null
 
   <!-- Community Activity Section -->
   <section id="community" class="py-20 bg-gradient-to-b from-white to-gray-50">
-    <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-      <div class="text-center mb-12">
-        <h2 class="font-display text-3xl md:text-4xl font-bold text-gray-900 mb-4">Community Activity</h2>
-        <p class="text-gray-500 max-w-2xl mx-auto">See what fellow trail runners and hikers are up to. Get inspired by their adventures.</p>
+    <div class="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+      <div class="mb-12 text-center">
+        <h2 class="mb-4 font-bold font-display text-3xl text-gray-900 md:text-4xl">Community Activity</h2>
+        <p class="mx-auto max-w-2xl text-gray-500">See what fellow trail runners and hikers are up to. Get inspired by their adventures.</p>
       </div>
 
-      <div class="grid lg:grid-cols-3 gap-8">
+      <div class="grid gap-8 lg:grid-cols-3">
         <!-- Activity Feed - reactive -->
         <div class="lg:col-span-2 space-y-6">
           <!-- Loading state -->
-          <div @show="loading()" class="text-center py-12">
-            <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent"></div>
+          <div @show="loading()" class="py-12 text-center">
+            <div class="inline-block h-8 w-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
 
           <!-- Activity cards (client-rendered from API data) -->
           <template @for="activity in activities()">
-            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
+            <div class="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition">
               <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center space-x-3">
-                  <img :src="activity.get('avatar') || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop'" :alt="activity.get('user')" class="w-12 h-12 rounded-full object-cover border-2 border-emerald-100" />
+                  <img :src="activity.get('avatar') || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop'" :alt="activity.get('user')" class="object-cover h-12 w-12 border-2 border-emerald-100 rounded-full" />
                   <div>
                     <p class="font-semibold text-gray-900" :text="activity.get('user') || 'Anonymous'"></p>
-                    <p class="text-sm text-gray-500" :text="(activity.get('date') || '') + ' · ' + (activity.get('type') || activity.get('activityType') || 'Hike')"></p>
+                    <p class="text-gray-500 text-sm" :text="(activity.get('date') || '') + ' · ' + (activity.get('type') || activity.get('activityType') || 'Hike')"></p>
                   </div>
                 </div>
               </div>
-              <h3 class="font-bold text-lg text-gray-900 mb-3" :text="activity.get('trail') || 'Unknown Trail'"></h3>
-              <div class="grid grid-cols-4 gap-4 mb-4">
-                <div class="text-center p-3 bg-gray-50 rounded-xl">
-                  <p class="text-2xl font-bold text-gray-900" :text="activity.get('distance') || 0"></p>
-                  <p class="text-xs text-gray-500">Miles</p>
+              <h3 class="mb-3 font-bold text-gray-900 text-lg" :text="activity.get('trail') || 'Unknown Trail'"></h3>
+              <div class="grid gap-4 grid-cols-4 mb-4">
+                <div class="p-3 text-center bg-gray-50 rounded-xl">
+                  <p class="font-bold text-2xl text-gray-900" :text="activity.get('distance') || 0"></p>
+                  <p class="text-gray-500 text-xs">Miles</p>
                 </div>
-                <div class="text-center p-3 bg-gray-50 rounded-xl">
-                  <p class="text-2xl font-bold text-gray-900" :text="activity.get('time') || '0:00'"></p>
-                  <p class="text-xs text-gray-500">Time</p>
+                <div class="p-3 text-center bg-gray-50 rounded-xl">
+                  <p class="font-bold text-2xl text-gray-900" :text="activity.get('time') || '0:00'"></p>
+                  <p class="text-gray-500 text-xs">Time</p>
                 </div>
-                <div class="text-center p-3 bg-gray-50 rounded-xl">
-                  <p class="text-2xl font-bold text-gray-900" :text="activity.get('pace') || '0:00'"></p>
-                  <p class="text-xs text-gray-500">Pace</p>
+                <div class="p-3 text-center bg-gray-50 rounded-xl">
+                  <p class="font-bold text-2xl text-gray-900" :text="activity.get('pace') || '0:00'"></p>
+                  <p class="text-gray-500 text-xs">Pace</p>
                 </div>
-                <div class="text-center p-3 bg-gray-50 rounded-xl">
-                  <p class="text-2xl font-bold text-gray-900" :text="(activity.get('elevation') || 0).toLocaleString()"></p>
-                  <p class="text-xs text-gray-500">Elev (ft)</p>
+                <div class="p-3 text-center bg-gray-50 rounded-xl">
+                  <p class="font-bold text-2xl text-gray-900" :text="(activity.get('elevation') || 0).toLocaleString()"></p>
+                  <p class="text-gray-500 text-xs">Elev (ft)</p>
                 </div>
               </div>
-              <div class="map-preview h-32 rounded-xl mb-4 flex items-center justify-center">
+              <div class="flex items-center justify-center mb-4 h-32 rounded-xl map-preview">
                 <div class="relative z-10 text-center">
-                  <svg class="w-8 h-8 mx-auto text-sky-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg class="mb-1 mx-auto h-8 w-8 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                   </svg>
-                  <p class="text-sm text-sky-600 font-medium">View Route</p>
+                  <p class="font-medium text-sky-600 text-sm">View Route</p>
                 </div>
               </div>
-              <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+              <div class="flex items-center justify-between pt-4 border-gray-100 border-t">
                 <div class="flex items-center space-x-4">
                   <button class="flex items-center space-x-2 text-gray-500 hover:text-red-500 transition">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
-                    <span class="text-sm font-medium"><span :text="activity.get('kudos') || 0"></span> Kudos</span>
+                    <span class="font-medium text-sm"><span :text="activity.get('kudos') || 0"></span> Kudos</span>
                   </button>
                   <button class="flex items-center space-x-2 text-gray-500 hover:text-emerald-500 transition">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
-                    <span class="text-sm font-medium">Comment</span>
+                    <span class="font-medium text-sm">Comment</span>
                   </button>
                 </div>
               </div>
@@ -332,7 +210,7 @@ const featuredTrail: Trail | null = null
           </template>
 
           <!-- Empty state -->
-          <div @show="!loading() && activities().length === 0" class="text-center py-12 text-gray-500">
+          <div @show="!loading() && activities().length === 0" class="py-12 text-center text-gray-500">
             <p>No recent activities</p>
           </div>
         </div>
@@ -342,17 +220,17 @@ const featuredTrail: Trail | null = null
           <UserStatsCard :stats="userStats" />
 
           <!-- Achievements Card -->
-          <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h3 class="font-bold text-lg text-gray-900 mb-4 flex items-center">
-              <svg class="w-5 h-5 mr-2 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm">
+            <h3 class="flex items-center mb-4 font-bold text-gray-900 text-lg">
+              <svg class="mr-2 h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
               </svg>
               Achievements
             </h3>
             <div class="space-y-4">
               <!-- Loading state -->
-              <div @show="loading()" class="text-center py-4">
-                <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-yellow-500 border-t-transparent"></div>
+              <div @show="loading()" class="py-4 text-center">
+                <div class="inline-block h-6 w-6 border-2 border-t-transparent border-yellow-500 rounded-full animate-spin"></div>
               </div>
 
               <!-- Achievements (client-rendered from API data) -->
@@ -363,14 +241,14 @@ const featuredTrail: Trail | null = null
                       <span class="text-2xl" :text="achievement.get('icon') || '🏆'"></span>
                       <div>
                         <p class="font-semibold text-gray-900 text-sm" :text="achievement.get('name') || 'Achievement'"></p>
-                        <p class="text-xs text-gray-500" :text="achievement.get('description') || ''"></p>
+                        <p class="text-gray-500 text-xs" :text="achievement.get('description') || ''"></p>
                       </div>
                     </div>
                   </div>
-                  <div class="relative h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div class="absolute top-0 left-0 h-full bg-emerald-500 rounded-full transition-all" :style="'width: ' + ((achievement.get('progress') || 0) / (achievement.get('total') || 100) * 100) + '%'"></div>
+                  <div class="overflow-hidden relative h-2 bg-gray-200 rounded-full">
+                    <div class="absolute left-0 top-0 h-full bg-emerald-500 rounded-full transition-all" :style="'width: ' + ((achievement.get('progress') || 0) / (achievement.get('total') || 100) * 100) + '%'"></div>
                   </div>
-                  <p class="text-xs text-gray-500 mt-1 text-right" :text="(achievement.get('progress') || 0) + '/' + (achievement.get('total') || 100)"></p>
+                  <p class="mt-1 text-gray-500 text-right text-xs" :text="(achievement.get('progress') || 0) + '/' + (achievement.get('total') || 100)"></p>
                 </div>
               </template>
             </div>
@@ -384,16 +262,16 @@ const featuredTrail: Trail | null = null
 
   <!-- Features Section -->
   <section id="features" class="py-20 bg-gray-900">
-    <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-      <div class="text-center mb-16">
-        <h2 class="font-display text-3xl md:text-4xl font-bold text-white mb-4">Built for Trail Enthusiasts</h2>
-        <p class="text-gray-400 max-w-2xl mx-auto">Everything you need to discover, track, and share your outdoor adventures.</p>
+    <div class="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+      <div class="mb-16 text-center">
+        <h2 class="mb-4 font-bold font-display text-3xl text-white md:text-4xl">Built for Trail Enthusiasts</h2>
+        <p class="mx-auto max-w-2xl text-gray-400">Everything you need to discover, track, and share your outdoor adventures.</p>
       </div>
 
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         <FeatureCard title="Offline Maps" description="Download trail maps for offline use. Never lose your way, even without cell service." bgColor="bg-emerald-500/20">
           <template #icon>
-            <svg class="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="h-7 w-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
             </svg>
           </template>
@@ -401,7 +279,7 @@ const featuredTrail: Trail | null = null
 
         <FeatureCard title="Real-time Tracking" description="GPS tracking with live stats including pace, distance, elevation gain, and estimated time." bgColor="bg-blue-500/20">
           <template #icon>
-            <svg class="w-7 h-7 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="h-7 w-7 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </template>
@@ -409,7 +287,7 @@ const featuredTrail: Trail | null = null
 
         <FeatureCard title="Community & Social" description="Connect with fellow runners, share routes, give kudos, and join local running groups." bgColor="bg-purple-500/20">
           <template #icon>
-            <svg class="w-7 h-7 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="h-7 w-7 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           </template>
@@ -417,7 +295,7 @@ const featuredTrail: Trail | null = null
 
         <FeatureCard title="Detailed Analytics" description="Track your progress over time with detailed charts, personal records, and training insights." bgColor="bg-orange-500/20">
           <template #icon>
-            <svg class="w-7 h-7 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="h-7 w-7 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
           </template>
@@ -425,7 +303,7 @@ const featuredTrail: Trail | null = null
 
         <FeatureCard title="Safety Alerts" description="Get notified about trail conditions, weather warnings, and wildlife sightings from the community." bgColor="bg-red-500/20">
           <template #icon>
-            <svg class="w-7 h-7 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="h-7 w-7 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </template>
@@ -433,7 +311,7 @@ const featuredTrail: Trail | null = null
 
         <FeatureCard title="Achievements & Challenges" description="Earn badges, complete monthly challenges, and compete on leaderboards with friends." bgColor="bg-yellow-500/20">
           <template #icon>
-            <svg class="w-7 h-7 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="h-7 w-7 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
             </svg>
           </template>
@@ -444,40 +322,37 @@ const featuredTrail: Trail | null = null
 
   <!-- CTA Section -->
   <section class="py-20 bg-gradient-to-r from-emerald-600 to-teal-600">
-    <div class="px-4 mx-auto max-w-4xl sm:px-6 lg:px-8 text-center">
-      <h2 class="font-display text-4xl md:text-5xl font-bold text-white mb-6">Start Your Trail Journey Today</h2>
-      <p class="text-xl text-white/80 mb-10 max-w-2xl mx-auto">Join millions of trail runners, hikers, and outdoor enthusiasts discovering new adventures every day.</p>
-      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <a href="#" class="w-full sm:w-auto px-8 py-4 text-lg font-semibold text-emerald-700 bg-white rounded-full hover:bg-gray-100 transition shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5 flex items-center justify-center">
-          <svg class="w-6 h-6 mr-2" viewBox="0 0 24 24" fill="currentColor">
+    <div class="mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl text-center">
+      <h2 class="mb-6 font-bold font-display text-4xl text-white md:text-5xl">Start Your Trail Journey Today</h2>
+      <p class="mb-10 mx-auto max-w-2xl text-white/80 text-xl">Join millions of trail runners, hikers, and outdoor enthusiasts discovering new adventures every day.</p>
+      <div class="flex flex-col gap-4 items-center justify-center sm:flex-row">
+        <a href="#" class="flex items-center justify-center px-8 py-4 w-full sm:w-auto font-semibold text-emerald-700 text-lg bg-white hover:bg-gray-100 rounded-full shadow-xl hover:shadow-2xl transition transform hover:-translate-y-0.5">
+          <svg class="mr-2 h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
             <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
           </svg>
           App Store
         </a>
-        <a href="#" class="w-full sm:w-auto px-8 py-4 text-lg font-semibold text-emerald-700 bg-white rounded-full hover:bg-gray-100 transition shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5 flex items-center justify-center">
-          <svg class="w-6 h-6 mr-2" viewBox="0 0 24 24" fill="currentColor">
+        <a href="#" class="flex items-center justify-center px-8 py-4 w-full sm:w-auto font-semibold text-emerald-700 text-lg bg-white hover:bg-gray-100 rounded-full shadow-xl hover:shadow-2xl transition transform hover:-translate-y-0.5">
+          <svg class="mr-2 h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
             <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 010 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.802 8.99l-2.303 2.303-8.635-8.635z"/>
           </svg>
           Google Play
         </a>
       </div>
-      <p class="text-white/60 text-sm mt-6">Free to download. Premium features available.</p>
+      <p class="mt-6 text-sm text-white/60">Free to download. Premium features available.</p>
     </div>
   </section>
 
-  <!-- Footer -->
-  <Footer />
-
-  <script>
+  <script client>
     // Reactive state
     const loading = state(true)
-    const currentUser = state<any>(null)
-    const trails = state<any[]>([])
-    const activities = state<any[]>([])
-    const userStats = state<any>(null)
-    const achievements = state<any[]>([])
-    const featuredTrail = state<any>(null)
-    const activeFilter = state<'all' | 'easy' | 'moderate' | 'hard'>('all')
+    const currentUser = state(null)
+    const trails = state([])
+    const activities = state([])
+    const userStats = state(null)
+    const achievements = state([])
+    const featuredTrail = state(null)
+    const activeFilter = state('all')
 
     // Filtered trails
     const filteredTrails = () => {
@@ -493,7 +368,6 @@ const featuredTrail: Trail | null = null
         const user = await auth.user()
         currentUser.set(user)
 
-        // Load data in parallel
         const [trailsData, activitiesData, statsData, achievementsData] = await Promise.all([
           Trail.orderByDesc('rating').limit(6).get(),
           Activity.orderByDesc('created_at').limit(3).get(),
@@ -506,7 +380,6 @@ const featuredTrail: Trail | null = null
         userStats.set(statsData)
         achievements.set(achievementsData)
 
-        // Set featured trail (highest rated hard trail)
         const featured = trailsData.find(t => t.get('difficulty') === 'hard') || trailsData[0]
         featuredTrail.set(featured)
       } catch (error) {
@@ -516,19 +389,8 @@ const featuredTrail: Trail | null = null
       }
     })
 
-    // Filter handler
-    function setFilter(f: 'all' | 'easy' | 'moderate' | 'hard') {
+    function setFilter(f) {
       activeFilter.set(f)
     }
-
-    // Navbar scroll behavior
-    window.addEventListener('scroll', () => {
-      const navbar = document.getElementById('navbar')
-      if (window.scrollY > 50) {
-        navbar?.classList.add('scrolled')
-      } else {
-        navbar?.classList.remove('scrolled')
-      }
-    })
   </script>
 @endsection

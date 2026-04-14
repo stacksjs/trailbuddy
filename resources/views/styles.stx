@@ -1,0 +1,78 @@
+<style>
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+  }
+
+  .font-display {
+    font-family: 'Outfit', system-ui, sans-serif;
+  }
+
+  .nav-active {
+    color: #059669 !important;
+    font-weight: 600;
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, #059669, #34d399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-bg {
+    background: linear-gradient(135deg, #065f46, #059669, #34d399);
+  }
+
+  /* Difficulty badge colors */
+  .difficulty-easy { background: #d1fae5; color: #065f46; }
+  .difficulty-moderate { background: #fef3c7; color: #92400e; }
+  .difficulty-hard { background: #fee2e2; color: #991b1b; }
+
+  /* Trail card hover */
+  .trail-card { transition: all 0.3s ease; }
+  .trail-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
+  .trail-card:hover .trail-image { transform: scale(1.05); }
+  .trail-image { transition: transform 0.5s ease; }
+
+  /* Map preview */
+  .map-preview {
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Component classes */
+  .card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+  }
+
+  .dark .card {
+    background-color: #1e293b;
+    border-color: #334155;
+  }
+
+  .metric-label {
+    font-size: 0.675rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  .dark .metric-label {
+    color: #94a3b8;
+  }
+
+  html.dark {
+    background: #0f172a;
+    color-scheme: dark;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+</style>
