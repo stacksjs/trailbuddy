@@ -27,19 +27,11 @@
     return all
   }
 
-  onMount(async () => {
-    try {
-      const [battlesData, liveData] = await Promise.all([
-        Conquest.orderByDesc('created_at').limit(50).get(),
-        Conquest.where('status', 'active').orderByDesc('created_at').limit(10).get(),
-      ])
-      battles.set(battlesData)
-      liveBattles.set(liveData)
-    } catch (err) {
-      console.error('Failed to load battles:', err)
-    } finally {
-      loading.set(false)
-    }
+  onMount(() => {
+    const all = window.tb.getWrapped('conquests')
+    battles.set(all)
+    liveBattles.set(all.filter(b => b.get('status') === 'active'))
+    loading.set(false)
   })
 </script>
 

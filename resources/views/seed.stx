@@ -207,6 +207,18 @@
     localStorage.setItem('tb_seeded', 'true')
   }
 
+  // Wrap plain objects so they support .get('field') like Stacks models
+  function wrapObj(obj) {
+    if (!obj || typeof obj !== 'object') return obj
+    obj.get = function(key) { return this[key] }
+    return obj
+  }
+
+  function wrapList(arr) {
+    if (!Array.isArray(arr)) return []
+    return arr.map(item => wrapObj({ ...item }))
+  }
+
   // Global helper — available to all pages via window
   window.tb = {
     get(key) {
@@ -218,6 +230,12 @@
     },
     getList(key) {
       return this.get(key) || []
+    },
+    getWrapped(key) {
+      return wrapList(this.getList(key))
+    },
+    getWrappedObj(key) {
+      return wrapObj(this.get(key))
     },
     findById(key, id) {
       return this.getList(key).find(item => item.id === id) || null
@@ -241,5 +259,7 @@
       const weeks = Math.floor(days / 7)
       return weeks + 'w ago'
     },
+    wrap: wrapObj,
+    wrapList,
   }
 </script>

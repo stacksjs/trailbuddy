@@ -344,7 +344,6 @@
   </section>
 
   <script client>
-    // Reactive state
     const loading = state(true)
     const currentUser = state(null)
     const trails = state([])
@@ -354,7 +353,6 @@
     const featuredTrail = state(null)
     const activeFilter = state('all')
 
-    // Filtered trails
     const filteredTrails = () => {
       const all = trails()
       const f = activeFilter()
@@ -362,31 +360,15 @@
       return all.filter(t => t.get('difficulty') === f)
     }
 
-    // Load data on mount
-    onMount(async () => {
-      try {
-        const user = await auth.user()
-        currentUser.set(user)
-
-        const [trailsData, activitiesData, statsData, achievementsData] = await Promise.all([
-          Trail.orderByDesc('rating').limit(6).get(),
-          Activity.orderByDesc('created_at').limit(3).get(),
-          user ? UserStats.where('user_id', user.id).first() : null,
-          Achievement.all(),
-        ])
-
-        trails.set(trailsData)
-        activities.set(activitiesData)
-        userStats.set(statsData)
-        achievements.set(achievementsData)
-
-        const featured = trailsData.find(t => t.get('difficulty') === 'hard') || trailsData[0]
-        featuredTrail.set(featured)
-      } catch (error) {
-        console.error('Failed to load data:', error)
-      } finally {
-        loading.set(false)
-      }
+    onMount(() => {
+      currentUser.set(window.tb.currentUser())
+      trails.set(window.tb.getWrapped('trails').slice(0, 6))
+      activities.set(window.tb.getWrapped('activities').slice(0, 3))
+      userStats.set(window.tb.getWrappedObj('user_stats'))
+      achievements.set(window.tb.getWrapped('achievements'))
+      const allTrails = window.tb.getWrapped('trails')
+      featuredTrail.set(allTrails.find(t => t.get('difficulty') === 'hard') || allTrails[0])
+      loading.set(false)
     })
 
     function setFilter(f) {

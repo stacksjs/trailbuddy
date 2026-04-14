@@ -255,25 +255,24 @@
       return all.filter(t => t.get('status') === 'contested')
     }
 
-    onMount(async () => {
-      try {
-        const user = await auth.user()
-        currentUser.set(user)
-
-        const [territoriesData, statsData, leaderboardData] = await Promise.all([
-          Territory.orderByDesc('created_at').limit(20).get(),
-          user ? TerritoryStats.where('user_id', user.id).first() : null,
-          TerritoryStats.orderByDesc('totalAreaOwned').limit(10).get(),
-        ])
-
-        territories.set(territoriesData)
-        userStats.set(statsData)
-        leaderboard.set(leaderboardData)
-      } catch (error) {
-        console.error('Failed to load territory data:', error)
-      } finally {
-        loading.set(false)
-      }
+    onMount(() => {
+      const user = window.tb.currentUser()
+      currentUser.set(user)
+      territories.set(window.tb.getWrapped('territories'))
+      userStats.set(window.tb.getWrappedObj('conquest_stats'))
+      const users = window.tb.getList('users')
+      const terrs = window.tb.getList('territories')
+      const lb = users.map(u => {
+        const owned = terrs.filter(t => t.user_id === u.id)
+        return window.tb.wrap({
+          user_id: u.id,
+          userName: u.name,
+          totalTerritoriesOwned: owned.length,
+          totalAreaOwned: owned.reduce((sum, t) => sum + (t.areaSize || 0), 0),
+        })
+      }).sort((a, b) => b.get('totalAreaOwned') - a.get('totalAreaOwned')).slice(0, 10)
+      leaderboard.set(lb)
+      loading.set(false)
     })
 
     function setFilter(f) {

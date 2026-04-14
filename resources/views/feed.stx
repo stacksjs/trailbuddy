@@ -17,15 +17,9 @@
     return all.filter(a => a.get('activityType') === f)
   }
 
-  onMount(async () => {
-    try {
-      const data = await Activity.orderByDesc('created_at').limit(20).get()
-      activities.set(data)
-    } catch (err) {
-      console.error('Failed to load feed:', err)
-    } finally {
-      loading.set(false)
-    }
+  onMount(() => {
+    activities.set(window.tb.getWrapped('activities'))
+    loading.set(false)
   })
 </script>
 

@@ -11,15 +11,20 @@
   const period = state('weekly')
   const metric = state('distance')
 
-  onMount(async () => {
-    try {
-      const data = await UserStats.orderByDesc('totalDistance').limit(50).get()
-      leaders.set(data)
-    } catch (err) {
-      console.error('Failed to load leaderboard:', err)
-    } finally {
-      loading.set(false)
-    }
+  onMount(() => {
+    const users = window.tb.getList('users')
+    const activities = window.tb.getList('activities')
+    const lb = users.map(u => {
+      const userActs = activities.filter(a => a.user_id === u.id)
+      return window.tb.wrap({
+        userName: u.name,
+        totalDistance: userActs.reduce((sum, a) => sum + (a.distance || 0), 0),
+        totalElevation: userActs.reduce((sum, a) => sum + (a.elevation_gain || 0), 0),
+        trailsCompleted: new Set(userActs.map(a => a.trail_id)).size,
+      })
+    }).sort((a, b) => b.get('totalDistance') - a.get('totalDistance'))
+    leaders.set(lb)
+    loading.set(false)
   })
 </script>
 

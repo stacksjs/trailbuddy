@@ -23,15 +23,9 @@
     return result
   }
 
-  onMount(async () => {
-    try {
-      const data = await Trail.orderByDesc('rating').get()
-      trails.set(data)
-    } catch (err) {
-      console.error('Failed to load trails:', err)
-    } finally {
-      loading.set(false)
-    }
+  onMount(() => {
+    trails.set(window.tb.getWrapped('trails'))
+    loading.set(false)
   })
 </script>
 

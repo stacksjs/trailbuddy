@@ -24,27 +24,11 @@
   }
 
   onMount(async () => {
-    try {
-      const currentUser = await auth.user()
-      user.set(currentUser)
-
-      if (currentUser) {
-        const [conquestsData, statsData] = await Promise.all([
-          Conquest.where('attacker_id', currentUser.id)
-            .orWhere('defender_id', currentUser.id)
-            .orderByDesc('created_at')
-            .limit(30)
-            .get(),
-          ConquestStats.where('user_id', currentUser.id).first(),
-        ])
-        conquests.set(conquestsData)
-        conquestStats.set(statsData)
-      }
-    } catch (err) {
-      console.error('Failed to load conquests:', err)
-    } finally {
-      loading.set(false)
-    }
+    const currentUser = window.tb.currentUser()
+    user.set(currentUser)
+    conquests.set(window.tb.getWrapped('conquests'))
+    conquestStats.set(window.tb.getWrappedObj('conquest_stats'))
+    loading.set(false)
   })
 </script>
 

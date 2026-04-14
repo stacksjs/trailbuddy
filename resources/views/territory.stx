@@ -13,29 +13,20 @@
   const currentUser = state(null)
   const isOwner = () => territory() && currentUser() && territory().get('user_id') === currentUser().id
 
-  onMount(async () => {
-    try {
-      const user = await auth.user()
-      currentUser.set(user)
+  onMount(() => {
+    const user = window.tb.currentUser()
+    currentUser.set(user)
 
-      const id = route.params.id
-      const [territoryData, historyData] = await Promise.all([
-        Territory.find(id),
-        Conquest.where('territory_id', id).orderByDesc('created_at').limit(20).get(),
-      ])
+    const id = Number(route.params.id)
+    const t = window.tb.findById('territories', id)
+    territory.set(t ? window.tb.wrap(t) : null)
+    conquestHistory.set(window.tb.getWrapped('conquests').filter(c => c.get('territory_id') === id))
 
-      territory.set(territoryData)
-      conquestHistory.set(historyData)
-
-      if (territoryData) {
-        const ownerData = await User.find(territoryData.get('user_id'))
-        owner.set(ownerData)
-      }
-    } catch (err) {
-      console.error('Failed to load territory:', err)
-    } finally {
-      loading.set(false)
+    if (t) {
+      const o = window.tb.findById('users', t.user_id)
+      owner.set(o ? window.tb.wrap(o) : null)
     }
+    loading.set(false)
   })
 </script>
 

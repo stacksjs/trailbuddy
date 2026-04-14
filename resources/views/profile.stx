@@ -13,26 +13,13 @@
   const achievements = state([])
   const activeTab = state('activities')
 
-  onMount(async () => {
-    try {
-      const currentUser = await auth.user()
-      user.set(currentUser)
-
-      if (currentUser) {
-        const [statsData, activitiesData, achievementsData] = await Promise.all([
-          UserStats.where('user_id', currentUser.id).first(),
-          Activity.where('user_id', currentUser.id).orderByDesc('created_at').limit(10).get(),
-          Achievement.all(),
-        ])
-        stats.set(statsData)
-        recentActivities.set(activitiesData)
-        achievements.set(achievementsData)
-      }
-    } catch (err) {
-      console.error('Failed to load profile:', err)
-    } finally {
-      loading.set(false)
-    }
+  onMount(() => {
+    const currentUser = window.tb.currentUser()
+    user.set(currentUser)
+    stats.set(window.tb.getWrappedObj('user_stats'))
+    recentActivities.set(window.tb.getWrapped('activities').filter(a => a.get('user_id') === 1))
+    achievements.set(window.tb.getWrapped('achievements'))
+    loading.set(false)
   })
 </script>
 

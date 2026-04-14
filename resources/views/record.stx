@@ -42,7 +42,34 @@
     paused.set(false)
     gpsStatus.set('stopped')
     if (timer) clearInterval(timer)
-    // TODO: save activity via API
+
+    // Save activity to localStorage
+    const activities = window.tb.getList('activities')
+    const newId = Math.max(...activities.map(a => a.id), 0) + 1
+    const newActivity = {
+      id: newId,
+      user_id: 1,
+      userName: 'You',
+      trail_id: null,
+      trail_name: activityType() + ' Activity',
+      title: activityType() + ' — ' + new Date().toLocaleDateString(),
+      activityType: activityType(),
+      distance: distance(),
+      duration: formatTime(elapsed()),
+      moving_time: formatTime(elapsed()),
+      pace: distance() > 0 ? formatTime(Math.round(elapsed() / distance())) + '/mi' : '--',
+      elevation_gain: elevation(),
+      calories: Math.round(elapsed() / 60 * 10),
+      heartRateAvg: null,
+      heartRateMax: null,
+      cadence: null,
+      splits: [],
+      kudos_count: 0,
+      comments: [],
+      created_at: new Date().toISOString(),
+    }
+    activities.unshift(newActivity)
+    window.tb.set('activities', activities)
   }
 </script>
 

@@ -22,24 +22,11 @@
     return all
   }
 
-  onMount(async () => {
-    try {
-      const currentUser = await auth.user()
-      user.set(currentUser)
-
-      if (currentUser) {
-        const data = await Challenge.where('challenger_id', currentUser.id)
-          .orWhere('challenged_id', currentUser.id)
-          .orderByDesc('created_at')
-          .limit(30)
-          .get()
-        challenges.set(data)
-      }
-    } catch (err) {
-      console.error('Failed to load challenges:', err)
-    } finally {
-      loading.set(false)
-    }
+  onMount(() => {
+    const currentUser = window.tb.currentUser()
+    user.set(currentUser)
+    challenges.set(window.tb.getWrapped('challenges'))
+    loading.set(false)
   })
 </script>
 
