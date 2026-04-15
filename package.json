@@ -26,8 +26,8 @@
     "fresh": "./buddy fresh",
     "clean": "./buddy clean",
     "upgrade": "./buddy upgrade",
-    "dev": "./buddy dev",
-    "development": "./buddy dev",
+    "dev": "bun ./storage/framework/core/buddy/src/cli.ts dev",
+    "development": "bun ./storage/framework/core/buddy/src/cli.ts dev",
     "build": "./buddy build",
     "prod": "./buddy build",
     "deploy": "./buddy deploy",
@@ -65,6 +65,7 @@
     "sqlite": "^3.47.2"
   },
   "dependencies": {
+    "@stacksjs/stx": "link:@stacksjs/stx",
     "stacks": "workspace:*"
   },
   "workspaces": [

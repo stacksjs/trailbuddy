@@ -54,6 +54,15 @@ if [ -x "${PANTRY_LOCAL_BIN}/bun" ]; then
   run_buddy "$@"
 fi
 
+# Fast commands that don't need pantry — use system bun directly
+case "$1" in
+  dev|build|test|lint|lint:fix|format|format:check|--version|-v|version|--help|-h|help|"")
+    if command -v bun >/dev/null 2>&1; then
+      exec env PATH="${PANTRY_LOCAL_BIN}:${USER_LOCAL_BIN}:${PATH}" bun "${BUDDY_ENTRY}" "$@"
+    fi
+    ;;
+esac
+
 if ! command -v pantry >/dev/null 2>&1; then
   if [ ! -x "${PANTRY_INSTALLER}" ]; then
     echo "Pantry installer not found at ${PANTRY_INSTALLER}" >&2
