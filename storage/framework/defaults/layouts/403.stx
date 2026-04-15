@@ -2,7 +2,7 @@
 const searchQuery = props.searchQuery || ''
 </script>
 
-<script client>
+<script client lang="ts">
 const router = useRouter()
 
 const handleSearch = (e) => {

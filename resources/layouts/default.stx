@@ -1,6 +1,6 @@
 @include('styles')
 @include('theme')
-@include('seed')
+@include('stores')
 @include('nav')
 
 <main class="flex-1">

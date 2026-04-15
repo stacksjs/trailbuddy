@@ -213,7 +213,7 @@ function statusClass(s) {
     @endif
   </div>
 </DashboardLayout>
-<script client>
+<script client lang="ts">
 var _root = useRef('pageRoot')
 onMount(function() {
   var el = _root.current;

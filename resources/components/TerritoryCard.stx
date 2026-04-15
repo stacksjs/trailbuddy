@@ -37,7 +37,7 @@ const formattedArea = formatArea(props.areaSize)
 </script>
 
 <template>
-  <div class="overflow-hidden bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-lg duration-300 transition-all territory-card" :class="'ring-2 { } props.isOwned ring-emerald-500':">
+  <div class="overflow-hidden bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-lg duration-300 transition-all territory-card" :class="props.isOwned ? 'ring-2 ring-emerald-500' : ''">
     <!-- Territory Preview Map -->
     <div class="relative h-32 bg-gradient-to-br from-emerald-100 to-teal-100">
       <div class="flex absolute inset-0 items-center justify-center">

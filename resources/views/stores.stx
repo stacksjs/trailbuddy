@@ -1,0 +1,517 @@
+<script client lang="ts">
+  // ===== Types =====
+  interface User {
+    id: number
+    name: string
+    email: string
+    avatar: string | null
+    joinedAt: string
+  }
+
+  interface Trail {
+    id: number
+    name: string
+    location: string
+    difficulty: 'easy' | 'moderate' | 'hard'
+    distance: number
+    elevation: number
+    estimatedTime: string
+    rating: number
+    reviewCount: number
+    description: string
+    lat: number
+    lng: number
+    image: string | null
+    tags: string[]
+    conditions: string
+  }
+
+  interface Split {
+    mile: number
+    pace: string
+    elev: number
+  }
+
+  interface Comment {
+    user_id: number
+    userName: string
+    text: string
+    created_at: string
+  }
+
+  interface Activity {
+    id: number
+    user_id: number
+    userName: string
+    trail_id: number | null
+    trail_name: string
+    title: string
+    activityType: 'Trail Run' | 'Hike' | 'Walk' | 'Bike'
+    distance: number
+    duration: string
+    moving_time: string
+    pace: string
+    elevation_gain: number
+    calories: number
+    heartRateAvg: number | null
+    heartRateMax: number | null
+    cadence: number | null
+    splits: Split[]
+    kudos_count: number
+    comments: Comment[]
+    created_at: string
+  }
+
+  interface Territory {
+    id: number
+    name: string
+    user_id: number
+    areaSize: number
+    conquestCount: number
+    defendCount: number
+    totalRunners: number
+    status: 'secure' | 'contested'
+    claimedAt: string
+    lat: number
+    lng: number
+  }
+
+  interface Conquest {
+    id: number
+    territory_id: number
+    territoryName: string
+    attacker_id: number
+    attackerName: string
+    defender_id: number
+    defenderName: string
+    status: 'active' | 'conquered' | 'defended'
+    areaCaptured: number
+    runDistance: number
+    description: string
+    created_at: string
+  }
+
+  interface Challenge {
+    id: number
+    challenger_id: number
+    challengerName: string
+    challenged_id: number
+    challengedName: string
+    territory_id: number
+    territoryName: string
+    status: 'active' | 'pending' | 'completed'
+    winner_id?: number
+    areaAtStake: number
+    deadline: string
+    created_at: string
+  }
+
+  interface Review {
+    id: number
+    trail_id: number
+    user_id: number
+    userName: string
+    rating: number
+    text: string
+    conditions: string
+    created_at: string
+  }
+
+  interface Club {
+    id: number
+    name: string
+    description: string
+    memberCount: number
+    location: string
+    type: 'Running' | 'Hiking' | 'Mixed' | 'Territory Game'
+    isPrivate: boolean
+    weeklyDistance: number
+    activitiesThisWeek: number
+    members: number[]
+    created_at: string
+  }
+
+  interface Achievement {
+    id: number
+    name: string
+    description: string
+    icon: string
+    progress: number
+    total: number
+    unlockedAt: string | null
+  }
+
+  interface Notification {
+    id: number
+    type: 'kudos' | 'comment' | 'conquest_attack' | 'conquest_defend' | 'conquest_win' | 'challenge' | 'achievement' | 'club'
+    title: string
+    message: string
+    link: string
+    read: boolean
+    created_at: string
+  }
+
+  interface Segment {
+    id: number
+    name: string
+    trail_id: number
+    distance: number
+    elevation: number
+    leaderTime: string
+    leaderName: string
+    yourTime: string | null
+    yourRank: number | null
+    totalAttempts: number
+  }
+
+  interface UserStats {
+    user_id: number
+    totalDistance: number
+    totalElevation: number
+    trailsCompleted: number
+    totalActivities: number
+    currentStreak: number
+    longestStreak: number
+    totalTime: string
+    avgPace: string
+    totalCalories: number
+    weeklyDistance: number
+    weeklyElevation: number
+    weeklyActivities: number
+    monthlyDistance: number
+    monthlyElevation: number
+    personalRecords: {
+      fastestMile: string
+      longestRun: number
+      biggestClimb: number
+      longestStreak: number
+    }
+    weeklyHistory: Array<{ week: string, distance: number, elevation: number }>
+  }
+
+  interface ConquestStats {
+    user_id: number
+    totalConquests: number
+    territoriesLost: number
+    successfulDefenses: number
+    winRate: number
+    powerRating: number
+    longestConquestStreak: number
+    totalAreaConquered: number
+    uniqueRivalsBeaten: number
+  }
+
+  // ===== Seed data =====
+  const now = Date.now()
+  const ago = (days: number, hours = 0): string =>
+    new Date(now - days * 86400000 - hours * 3600000).toISOString()
+
+  const seedUsers: User[] = [
+    { id: 1, name: 'You', email: 'you@trailbuddy.app', avatar: null, joinedAt: '2025-09-15' },
+    { id: 2, name: 'Sarah Chen', email: 'sarah@example.com', avatar: null, joinedAt: '2025-06-01' },
+    { id: 3, name: 'Marcus Johnson', email: 'marcus@example.com', avatar: null, joinedAt: '2025-03-20' },
+    { id: 4, name: 'Emily Rodriguez', email: 'emily@example.com', avatar: null, joinedAt: '2025-07-10' },
+    { id: 5, name: 'Jake Thompson', email: 'jake@example.com', avatar: null, joinedAt: '2025-01-05' },
+    { id: 6, name: 'Aisha Patel', email: 'aisha@example.com', avatar: null, joinedAt: '2025-08-22' },
+    { id: 7, name: 'Ryan O\'Brien', email: 'ryan@example.com', avatar: null, joinedAt: '2025-04-18' },
+    { id: 8, name: 'Lisa Park', email: 'lisa@example.com', avatar: null, joinedAt: '2025-11-01' },
+  ]
+
+  const seedTrails: Trail[] = [
+    { id: 1, name: 'Eagle Peak Summit', location: 'Rocky Mountain NP, CO', difficulty: 'hard', distance: 8.4, elevation: 2847, estimatedTime: '5h 30m', rating: 4.8, reviewCount: 342, description: 'A challenging summit hike with breathtaking 360-degree views of the Continental Divide.', lat: 40.3428, lng: -105.6836, image: null, tags: ['summit', 'views', 'wildflowers'], conditions: 'Mostly clear, some snow above treeline' },
+    { id: 2, name: 'Riverside Loop Trail', location: 'Great Smoky Mountains, TN', difficulty: 'easy', distance: 3.2, elevation: 420, estimatedTime: '1h 30m', rating: 4.5, reviewCount: 891, description: 'A gentle loop trail along the Little River, perfect for families.', lat: 35.6532, lng: -83.5070, image: null, tags: ['family-friendly', 'river', 'wildflowers'], conditions: 'Trail in great condition' },
+    { id: 3, name: 'Cascade Falls Trail', location: 'Yosemite NP, CA', difficulty: 'moderate', distance: 5.6, elevation: 1250, estimatedTime: '3h', rating: 4.9, reviewCount: 1203, description: 'Follow the misty trail to one of the most spectacular waterfalls in the Sierra Nevada.', lat: 37.7346, lng: -119.5632, image: null, tags: ['waterfall', 'scenic', 'photography'], conditions: 'Falls flowing strong' },
+    { id: 4, name: 'Desert Ridge Trail', location: 'Joshua Tree NP, CA', difficulty: 'moderate', distance: 6.1, elevation: 890, estimatedTime: '3h 15m', rating: 4.3, reviewCount: 456, description: 'Wind through unique rock formations and Joshua Tree groves.', lat: 33.8734, lng: -115.9010, image: null, tags: ['desert', 'sunset', 'rock formations'], conditions: 'Hot and dry, bring extra water' },
+    { id: 5, name: 'Redwood Creek Trail', location: 'Muir Woods, CA', difficulty: 'easy', distance: 2.8, elevation: 280, estimatedTime: '1h 15m', rating: 4.7, reviewCount: 2105, description: 'Walk among ancient coastal redwoods, some over 1,000 years old.', lat: 37.8970, lng: -122.5811, image: null, tags: ['redwoods', 'old-growth', 'peaceful'], conditions: 'Slightly muddy after rain' },
+    { id: 6, name: 'Thunder Mountain Loop', location: 'Sedona, AZ', difficulty: 'hard', distance: 7.9, elevation: 2100, estimatedTime: '4h 45m', rating: 4.6, reviewCount: 678, description: 'An epic loop through Sedona\'s red rock country with technical sections and jaw-dropping views.', lat: 34.8697, lng: -111.7610, image: null, tags: ['red rock', 'technical', 'panoramic'], conditions: 'Dry and rocky' },
+    { id: 7, name: 'Lakeshore Path', location: 'Glacier NP, MT', difficulty: 'easy', distance: 4.2, elevation: 350, estimatedTime: '2h', rating: 4.4, reviewCount: 567, description: 'A peaceful walk along the shore of Lake McDonald with views of snow-capped peaks.', lat: 48.5285, lng: -113.9750, image: null, tags: ['lake', 'mountain views', 'peaceful'], conditions: 'Trail open, wildflowers in bloom' },
+    { id: 8, name: 'Appalachian Overlook', location: 'Shenandoah NP, VA', difficulty: 'moderate', distance: 5.3, elevation: 1450, estimatedTime: '3h 30m', rating: 4.5, reviewCount: 389, description: 'A rewarding ridge hike with multiple overlooks showcasing blue-hazed Appalachian Mountains.', lat: 38.2928, lng: -78.6796, image: null, tags: ['ridge', 'overlook', 'fall colors'], conditions: 'Excellent, fall colors emerging' },
+    { id: 9, name: 'Coastal Bluff Trail', location: 'Big Sur, CA', difficulty: 'moderate', distance: 4.8, elevation: 780, estimatedTime: '2h 30m', rating: 4.8, reviewCount: 1456, description: 'Dramatic Pacific Ocean views from towering sea cliffs.', lat: 36.2704, lng: -121.8081, image: null, tags: ['ocean', 'cliffs', 'whales'], conditions: 'Windy, dress in layers' },
+    { id: 10, name: 'Pine Valley Loop', location: 'Cuyamaca Rancho SP, CA', difficulty: 'easy', distance: 3.6, elevation: 480, estimatedTime: '1h 45m', rating: 4.2, reviewCount: 234, description: 'A gentle loop through a recovering pine forest with meadow crossings and a babbling creek.', lat: 32.9355, lng: -116.5600, image: null, tags: ['forest', 'creek', 'running'], conditions: 'Well maintained' },
+    { id: 11, name: 'Granite Peak Scramble', location: 'Beartooth Mountains, MT', difficulty: 'hard', distance: 12.4, elevation: 4200, estimatedTime: '8h', rating: 4.7, reviewCount: 128, description: 'Montana\'s highest point. A serious alpine scramble.', lat: 45.1633, lng: -109.8075, image: null, tags: ['alpine', 'scramble', 'highpoint'], conditions: 'Snow on upper sections' },
+    { id: 12, name: 'Wildflower Meadow Trail', location: 'Mount Rainier NP, WA', difficulty: 'moderate', distance: 5.8, elevation: 1100, estimatedTime: '3h', rating: 4.6, reviewCount: 845, description: 'Famous for its summer wildflower displays with Mount Rainier as a backdrop.', lat: 46.7856, lng: -121.7353, image: null, tags: ['wildflowers', 'mountain', 'wildlife'], conditions: 'Peak wildflower season' },
+  ]
+
+  const seedActivities: Activity[] = [
+    { id: 1, user_id: 1, userName: 'You', trail_id: 3, trail_name: 'Cascade Falls Trail', title: 'Morning Falls Run', activityType: 'Trail Run', distance: 5.6, duration: '52:18', moving_time: '49:03', pace: '8:47/mi', elevation_gain: 1250, calories: 624, heartRateAvg: 152, heartRateMax: 178, cadence: 164, splits: [{ mile: 1, pace: '9:12', elev: 180 }, { mile: 2, pace: '8:55', elev: 220 }, { mile: 3, pace: '8:34', elev: 310 }, { mile: 4, pace: '8:28', elev: 280 }, { mile: 5, pace: '8:41', elev: 200 }], kudos_count: 14, comments: [{ user_id: 2, userName: 'Sarah Chen', text: 'Beautiful route!', created_at: ago(0, 2) }], created_at: ago(0, 3) },
+    { id: 2, user_id: 2, userName: 'Sarah Chen', trail_id: 1, trail_name: 'Eagle Peak Summit', title: 'Summit Push', activityType: 'Hike', distance: 8.4, duration: '5:12:30', moving_time: '4:48:00', pace: '34:17/mi', elevation_gain: 2847, calories: 1450, heartRateAvg: 138, heartRateMax: 165, cadence: null, splits: [], kudos_count: 28, comments: [], created_at: ago(0, 8) },
+    { id: 3, user_id: 1, userName: 'You', trail_id: 5, trail_name: 'Redwood Creek Trail', title: 'Easy Recovery Run', activityType: 'Trail Run', distance: 2.8, duration: '26:45', moving_time: '25:30', pace: '9:06/mi', elevation_gain: 280, calories: 312, heartRateAvg: 135, heartRateMax: 148, cadence: 168, splits: [{ mile: 1, pace: '9:30', elev: 120 }, { mile: 2, pace: '8:55', elev: 100 }], kudos_count: 8, comments: [], created_at: ago(1, 2) },
+    { id: 4, user_id: 3, userName: 'Marcus Johnson', trail_id: 6, trail_name: 'Thunder Mountain Loop', title: 'Red Rock Crusher', activityType: 'Trail Run', distance: 7.9, duration: '1:08:34', moving_time: '1:05:12', pace: '8:14/mi', elevation_gain: 2100, calories: 920, heartRateAvg: 158, heartRateMax: 182, cadence: 170, splits: [], kudos_count: 35, comments: [], created_at: ago(1, 6) },
+    { id: 5, user_id: 4, userName: 'Emily Rodriguez', trail_id: 2, trail_name: 'Riverside Loop Trail', title: 'Sunset Stroll', activityType: 'Walk', distance: 3.2, duration: '58:20', moving_time: '52:00', pace: '16:15/mi', elevation_gain: 420, calories: 245, heartRateAvg: 105, heartRateMax: 120, cadence: null, splits: [], kudos_count: 12, comments: [], created_at: ago(1, 10) },
+    { id: 6, user_id: 1, userName: 'You', trail_id: 9, trail_name: 'Coastal Bluff Trail', title: 'Windy Cliff Run', activityType: 'Trail Run', distance: 4.8, duration: '42:05', moving_time: '40:15', pace: '8:23/mi', elevation_gain: 780, calories: 520, heartRateAvg: 148, heartRateMax: 172, cadence: 166, splits: [{ mile: 1, pace: '8:40', elev: 150 }, { mile: 2, pace: '8:12', elev: 200 }, { mile: 3, pace: '8:05', elev: 230 }, { mile: 4, pace: '8:30', elev: 150 }], kudos_count: 21, comments: [], created_at: ago(2, 4) },
+    { id: 7, user_id: 5, userName: 'Jake Thompson', trail_id: 11, trail_name: 'Granite Peak Scramble', title: 'Montana Highpoint!', activityType: 'Hike', distance: 12.4, duration: '7:45:00', moving_time: '6:55:00', pace: '33:28/mi', elevation_gain: 4200, calories: 2800, heartRateAvg: 142, heartRateMax: 175, cadence: null, splits: [], kudos_count: 56, comments: [], created_at: ago(2, 12) },
+    { id: 8, user_id: 6, userName: 'Aisha Patel', trail_id: 12, trail_name: 'Wildflower Meadow Trail', title: 'Meadow Magic', activityType: 'Hike', distance: 5.8, duration: '2:45:00', moving_time: '2:30:00', pace: '25:52/mi', elevation_gain: 1100, calories: 680, heartRateAvg: 125, heartRateMax: 145, cadence: null, splits: [], kudos_count: 19, comments: [], created_at: ago(3, 5) },
+    { id: 9, user_id: 1, userName: 'You', trail_id: 10, trail_name: 'Pine Valley Loop', title: 'Lunch Run', activityType: 'Trail Run', distance: 3.6, duration: '30:12', moving_time: '29:00', pace: '8:03/mi', elevation_gain: 480, calories: 390, heartRateAvg: 145, heartRateMax: 162, cadence: 172, splits: [], kudos_count: 6, comments: [], created_at: ago(3, 8) },
+    { id: 10, user_id: 7, userName: 'Ryan O\'Brien', trail_id: 4, trail_name: 'Desert Ridge Trail', title: 'Desert Dawn', activityType: 'Trail Run', distance: 6.1, duration: '55:42', moving_time: '53:00', pace: '8:41/mi', elevation_gain: 890, calories: 710, heartRateAvg: 150, heartRateMax: 174, cadence: 162, splits: [], kudos_count: 15, comments: [], created_at: ago(3, 14) },
+    { id: 11, user_id: 2, userName: 'Sarah Chen', trail_id: 8, trail_name: 'Appalachian Overlook', title: 'Ridge Ramble', activityType: 'Hike', distance: 5.3, duration: '3:10:00', moving_time: '2:50:00', pace: '32:05/mi', elevation_gain: 1450, calories: 720, heartRateAvg: 130, heartRateMax: 155, cadence: null, splits: [], kudos_count: 22, comments: [], created_at: ago(4, 3) },
+    { id: 12, user_id: 1, userName: 'You', trail_id: 6, trail_name: 'Thunder Mountain Loop', title: 'Red Rock Adventure', activityType: 'Trail Run', distance: 7.9, duration: '1:12:40', moving_time: '1:08:00', pace: '8:36/mi', elevation_gain: 2100, calories: 880, heartRateAvg: 155, heartRateMax: 180, cadence: 160, splits: [], kudos_count: 31, comments: [], created_at: ago(5, 2) },
+    { id: 13, user_id: 8, userName: 'Lisa Park', trail_id: 7, trail_name: 'Lakeshore Path', title: 'Golden Hour Walk', activityType: 'Walk', distance: 4.2, duration: '1:12:00', moving_time: '1:05:00', pace: '15:28/mi', elevation_gain: 350, calories: 310, heartRateAvg: 100, heartRateMax: 115, cadence: null, splits: [], kudos_count: 9, comments: [], created_at: ago(5, 8) },
+    { id: 14, user_id: 3, userName: 'Marcus Johnson', trail_id: 9, trail_name: 'Coastal Bluff Trail', title: 'Cliff Tempo', activityType: 'Trail Run', distance: 9.6, duration: '1:15:20', moving_time: '1:12:00', pace: '7:30/mi', elevation_gain: 1560, calories: 1080, heartRateAvg: 162, heartRateMax: 186, cadence: 174, splits: [], kudos_count: 42, comments: [], created_at: ago(6, 1) },
+    { id: 15, user_id: 1, userName: 'You', trail_id: 2, trail_name: 'Riverside Loop Trail', title: 'Recovery Jog', activityType: 'Trail Run', distance: 3.2, duration: '30:45', moving_time: '29:15', pace: '9:08/mi', elevation_gain: 420, calories: 340, heartRateAvg: 132, heartRateMax: 145, cadence: 166, splits: [], kudos_count: 5, comments: [], created_at: ago(6, 6) },
+    { id: 16, user_id: 4, userName: 'Emily Rodriguez', trail_id: 12, trail_name: 'Wildflower Meadow Trail', title: 'Flower Power Ride', activityType: 'Bike', distance: 11.6, duration: '48:30', moving_time: '45:00', pace: '15.5 mph', elevation_gain: 1100, calories: 580, heartRateAvg: 140, heartRateMax: 168, cadence: 85, splits: [], kudos_count: 17, comments: [], created_at: ago(7, 3) },
+  ]
+
+  const seedTerritories: Territory[] = [
+    { id: 1, name: 'Cascade Ridge Zone', user_id: 1, areaSize: 45000, conquestCount: 3, defendCount: 5, totalRunners: 12, status: 'secure', claimedAt: ago(14), lat: 37.74, lng: -119.56 },
+    { id: 2, name: 'Riverside Flats', user_id: 2, areaSize: 28000, conquestCount: 1, defendCount: 2, totalRunners: 8, status: 'secure', claimedAt: ago(21), lat: 35.65, lng: -83.51 },
+    { id: 3, name: 'Desert Crown', user_id: 3, areaSize: 72000, conquestCount: 6, defendCount: 8, totalRunners: 22, status: 'contested', claimedAt: ago(7), lat: 33.87, lng: -115.90 },
+    { id: 4, name: 'Redwood Sanctuary', user_id: 1, areaSize: 35000, conquestCount: 2, defendCount: 4, totalRunners: 15, status: 'secure', claimedAt: ago(30), lat: 37.90, lng: -122.58 },
+    { id: 5, name: 'Thunder Mesa', user_id: 5, areaSize: 58000, conquestCount: 9, defendCount: 3, totalRunners: 28, status: 'contested', claimedAt: ago(3), lat: 34.87, lng: -111.76 },
+    { id: 6, name: 'Bluff Runner\'s Edge', user_id: 3, areaSize: 41000, conquestCount: 4, defendCount: 6, totalRunners: 18, status: 'secure', claimedAt: ago(10), lat: 36.27, lng: -121.81 },
+    { id: 7, name: 'Pine Valley North', user_id: 4, areaSize: 22000, conquestCount: 1, defendCount: 1, totalRunners: 6, status: 'secure', claimedAt: ago(28), lat: 32.94, lng: -116.56 },
+    { id: 8, name: 'Summit Kingdom', user_id: 5, areaSize: 95000, conquestCount: 12, defendCount: 7, totalRunners: 35, status: 'contested', claimedAt: ago(5), lat: 40.34, lng: -105.68 },
+    { id: 9, name: 'Lakeshore Domain', user_id: 6, areaSize: 31000, conquestCount: 2, defendCount: 3, totalRunners: 10, status: 'secure', claimedAt: ago(18), lat: 48.53, lng: -113.98 },
+    { id: 10, name: 'Meadow Empire', user_id: 1, areaSize: 48000, conquestCount: 5, defendCount: 6, totalRunners: 20, status: 'secure', claimedAt: ago(12), lat: 46.79, lng: -121.74 },
+  ]
+
+  const seedConquests: Conquest[] = [
+    { id: 1, territory_id: 3, territoryName: 'Desert Crown', attacker_id: 3, attackerName: 'Marcus Johnson', defender_id: 7, defenderName: 'Ryan O\'Brien', status: 'conquered', areaCaptured: 18000, runDistance: 6.1, description: 'Carved through the eastern ridge with a 6-mile tempo run.', created_at: ago(7) },
+    { id: 2, territory_id: 5, territoryName: 'Thunder Mesa', attacker_id: 5, attackerName: 'Jake Thompson', defender_id: 3, defenderName: 'Marcus Johnson', status: 'conquered', areaCaptured: 22000, runDistance: 7.9, description: 'Full loop around Thunder Mountain claimed the mesa.', created_at: ago(3) },
+    { id: 3, territory_id: 1, territoryName: 'Cascade Ridge Zone', attacker_id: 2, attackerName: 'Sarah Chen', defender_id: 1, defenderName: 'You', status: 'defended', areaCaptured: 0, runDistance: 4.2, description: 'Sarah attempted a conquest but your defense held.', created_at: ago(2) },
+    { id: 4, territory_id: 8, territoryName: 'Summit Kingdom', attacker_id: 5, attackerName: 'Jake Thompson', defender_id: 4, defenderName: 'Emily Rodriguez', status: 'conquered', areaCaptured: 35000, runDistance: 12.4, description: 'Epic highpoint run claimed the summit territory.', created_at: ago(5) },
+    { id: 5, territory_id: 4, territoryName: 'Redwood Sanctuary', attacker_id: 6, attackerName: 'Aisha Patel', defender_id: 1, defenderName: 'You', status: 'defended', areaCaptured: 0, runDistance: 2.8, description: 'Aisha\'s attempt foiled by your strong defense runs.', created_at: ago(8) },
+    { id: 6, territory_id: 6, territoryName: 'Bluff Runner\'s Edge', attacker_id: 3, attackerName: 'Marcus Johnson', defender_id: 7, defenderName: 'Ryan O\'Brien', status: 'conquered', areaCaptured: 15000, runDistance: 9.6, description: 'Dominant tempo run carved through the coastal bluffs.', created_at: ago(10) },
+    { id: 7, territory_id: 10, territoryName: 'Meadow Empire', attacker_id: 4, attackerName: 'Emily Rodriguez', defender_id: 1, defenderName: 'You', status: 'defended', areaCaptured: 0, runDistance: 5.8, description: 'Your meadow territory remains secure.', created_at: ago(6) },
+    { id: 8, territory_id: 3, territoryName: 'Desert Crown', attacker_id: 1, attackerName: 'You', defender_id: 3, defenderName: 'Marcus Johnson', status: 'active', areaCaptured: 0, runDistance: 0, description: 'You are planning a conquest run through Desert Crown.', created_at: ago(0, 5) },
+    { id: 9, territory_id: 5, territoryName: 'Thunder Mesa', attacker_id: 7, attackerName: 'Ryan O\'Brien', defender_id: 5, defenderName: 'Jake Thompson', status: 'active', areaCaptured: 0, runDistance: 0, description: 'Ryan is eyeing Thunder Mesa for revenge.', created_at: ago(0, 2) },
+    { id: 10, territory_id: 1, territoryName: 'Cascade Ridge Zone', attacker_id: 3, attackerName: 'Marcus Johnson', defender_id: 1, defenderName: 'You', status: 'active', areaCaptured: 0, runDistance: 0, description: 'Marcus is targeting your Cascade Ridge territory.', created_at: ago(0, 1) },
+    { id: 11, territory_id: 8, territoryName: 'Summit Kingdom', attacker_id: 1, attackerName: 'You', defender_id: 5, defenderName: 'Jake Thompson', status: 'conquered', areaCaptured: 12000, runDistance: 8.2, description: 'You carved through the northern face during a long run.', created_at: ago(1) },
+    { id: 12, territory_id: 2, territoryName: 'Riverside Flats', attacker_id: 4, attackerName: 'Emily Rodriguez', defender_id: 2, defenderName: 'Sarah Chen', status: 'conquered', areaCaptured: 8500, runDistance: 3.2, description: 'Quick loop run snagged a piece of the flats.', created_at: ago(4) },
+  ]
+
+  const seedChallenges: Challenge[] = [
+    { id: 1, challenger_id: 1, challengerName: 'You', challenged_id: 3, challengedName: 'Marcus Johnson', territory_id: 3, territoryName: 'Desert Crown', status: 'active', areaAtStake: 72000, deadline: new Date(now + 3 * 86400000).toISOString(), created_at: ago(1) },
+    { id: 2, challenger_id: 5, challengerName: 'Jake Thompson', challenged_id: 1, challengedName: 'You', territory_id: 1, territoryName: 'Cascade Ridge Zone', status: 'pending', areaAtStake: 45000, deadline: new Date(now + 5 * 86400000).toISOString(), created_at: ago(0, 6) },
+    { id: 3, challenger_id: 3, challengerName: 'Marcus Johnson', challenged_id: 5, challengedName: 'Jake Thompson', territory_id: 5, territoryName: 'Thunder Mesa', status: 'active', areaAtStake: 58000, deadline: new Date(now + 2 * 86400000).toISOString(), created_at: ago(2) },
+    { id: 4, challenger_id: 1, challengerName: 'You', challenged_id: 6, challengedName: 'Aisha Patel', territory_id: 9, territoryName: 'Lakeshore Domain', status: 'completed', winner_id: 1, areaAtStake: 31000, deadline: ago(2), created_at: ago(8) },
+    { id: 5, challenger_id: 2, challengerName: 'Sarah Chen', challenged_id: 1, challengedName: 'You', territory_id: 4, territoryName: 'Redwood Sanctuary', status: 'completed', winner_id: 1, areaAtStake: 35000, deadline: ago(5), created_at: ago(12) },
+    { id: 6, challenger_id: 7, challengerName: 'Ryan O\'Brien', challenged_id: 3, challengedName: 'Marcus Johnson', territory_id: 6, territoryName: 'Bluff Runner\'s Edge', status: 'completed', winner_id: 3, areaAtStake: 41000, deadline: ago(8), created_at: ago(15) },
+  ]
+
+  const seedReviews: Review[] = [
+    { id: 1, trail_id: 3, user_id: 1, userName: 'You', rating: 5, text: 'Absolutely stunning! The waterfall was roaring.', conditions: 'Wet but manageable', created_at: ago(0, 3) },
+    { id: 2, trail_id: 3, user_id: 2, userName: 'Sarah Chen', rating: 5, text: 'Magical place. Go early to beat the crowds.', conditions: 'Perfect', created_at: ago(5) },
+    { id: 3, trail_id: 3, user_id: 5, userName: 'Jake Thompson', rating: 4, text: 'Great trail but very crowded on weekends.', conditions: 'Good', created_at: ago(12) },
+    { id: 4, trail_id: 1, user_id: 2, userName: 'Sarah Chen', rating: 5, text: 'The summit views are unreal. Bring layers.', conditions: 'Windy at summit', created_at: ago(0, 8) },
+    { id: 5, trail_id: 1, user_id: 3, userName: 'Marcus Johnson', rating: 4, text: 'Tough but rewarding. The scramble section requires good footwork.', conditions: 'Some snow patches', created_at: ago(15) },
+    { id: 6, trail_id: 6, user_id: 3, userName: 'Marcus Johnson', rating: 5, text: 'Sedona never disappoints. Technical terrain and red rock beauty.', conditions: 'Hot and dry', created_at: ago(1, 6) },
+    { id: 7, trail_id: 6, user_id: 1, userName: 'You', rating: 4, text: 'Amazing views but bring grippy shoes.', conditions: 'Dry, loose gravel', created_at: ago(5, 2) },
+    { id: 8, trail_id: 9, user_id: 1, userName: 'You', rating: 5, text: 'Ocean views from these cliffs are incredible. Very windy though.', conditions: 'Windy', created_at: ago(2, 4) },
+    { id: 9, trail_id: 9, user_id: 6, userName: 'Aisha Patel', rating: 5, text: 'We spotted gray whales migrating!', conditions: 'Clear skies', created_at: ago(20) },
+    { id: 10, trail_id: 5, user_id: 8, userName: 'Lisa Park', rating: 5, text: 'Walking through ancient redwoods is a spiritual experience.', conditions: 'Slightly damp', created_at: ago(8) },
+    { id: 11, trail_id: 2, user_id: 4, userName: 'Emily Rodriguez', rating: 4, text: 'Perfect for a relaxing evening walk.', conditions: 'Great', created_at: ago(1, 10) },
+    { id: 12, trail_id: 12, user_id: 6, userName: 'Aisha Patel', rating: 5, text: 'Peak wildflower season is absolutely unreal.', conditions: 'Perfect', created_at: ago(3, 5) },
+  ]
+
+  const seedClubs: Club[] = [
+    { id: 1, name: 'Trail Crushers', description: 'Competitive trail runners pushing limits on technical terrain.', memberCount: 48, location: 'Bay Area, CA', type: 'Running', isPrivate: false, weeklyDistance: 342, activitiesThisWeek: 67, members: [1, 2, 3, 5, 7], created_at: ago(180) },
+    { id: 2, name: 'Weekend Warriors', description: 'Casual hikers and trail runners who love weekend adventures.', memberCount: 156, location: 'Denver, CO', type: 'Mixed', isPrivate: false, weeklyDistance: 580, activitiesThisWeek: 124, members: [1, 4, 6, 8], created_at: ago(365) },
+    { id: 3, name: 'Summit Seekers', description: 'Dedicated peak baggers working through state highpoints and 14ers.', memberCount: 32, location: 'National', type: 'Hiking', isPrivate: false, weeklyDistance: 215, activitiesThisWeek: 28, members: [5, 7, 3], created_at: ago(90) },
+    { id: 4, name: 'Conqueror\'s Guild', description: 'Territory game enthusiasts focused on conquest strategy.', memberCount: 24, location: 'National', type: 'Territory Game', isPrivate: true, weeklyDistance: 189, activitiesThisWeek: 42, members: [1, 3, 5], created_at: ago(45) },
+  ]
+
+  const seedAchievements: Achievement[] = [
+    { id: 1, name: 'First Steps', description: 'Complete your first activity', icon: '👟', progress: 1, total: 1, unlockedAt: ago(90) },
+    { id: 2, name: 'Trail Blazer', description: 'Complete 10 different trails', icon: '🔥', progress: 8, total: 10, unlockedAt: null },
+    { id: 3, name: 'Century Club', description: 'Log 100 total miles', icon: '💯', progress: 78.4, total: 100, unlockedAt: null },
+    { id: 4, name: 'King of the Hill', description: 'Gain 50,000 ft of elevation', icon: '⛰️', progress: 32450, total: 50000, unlockedAt: null },
+    { id: 5, name: 'Conqueror', description: 'Conquer 5 territories', icon: '⚔️', progress: 3, total: 5, unlockedAt: null },
+    { id: 6, name: 'Defender', description: 'Successfully defend 10 times', icon: '🛡️', progress: 6, total: 10, unlockedAt: null },
+    { id: 7, name: 'Streak Master', description: 'Maintain a 30-day activity streak', icon: '🔥', progress: 12, total: 30, unlockedAt: null },
+    { id: 8, name: 'Social Butterfly', description: 'Give 50 kudos', icon: '🦋', progress: 50, total: 50, unlockedAt: ago(14) },
+    { id: 9, name: 'Speed Demon', description: 'Run a sub-7:00 mile on trails', icon: '⚡', progress: 0, total: 1, unlockedAt: null },
+    { id: 10, name: 'Empire Builder', description: 'Own 5 territories at once', icon: '🏰', progress: 3, total: 5, unlockedAt: null },
+  ]
+
+  const seedNotifications: Notification[] = [
+    { id: 1, type: 'conquest_attack', title: 'Territory Under Attack!', message: 'Marcus Johnson is targeting your Cascade Ridge Zone', link: '/territory/1', read: false, created_at: ago(0, 1) },
+    { id: 2, type: 'kudos', title: 'New Kudos', message: 'Sarah Chen gave kudos to your Morning Falls Run', link: '/activity/1', read: false, created_at: ago(0, 2) },
+    { id: 3, type: 'comment', title: 'New Comment', message: 'Jake Thompson commented on your Morning Falls Run', link: '/activity/1', read: false, created_at: ago(0, 3) },
+    { id: 4, type: 'challenge', title: 'New Challenge!', message: 'Jake Thompson challenged you for Cascade Ridge Zone', link: '/challenges', read: false, created_at: ago(0, 6) },
+    { id: 5, type: 'conquest_defend', title: 'Territory Defended!', message: 'You successfully defended Cascade Ridge Zone', link: '/territory/1', read: true, created_at: ago(2) },
+    { id: 6, type: 'conquest_win', title: 'Conquest Victory!', message: 'You conquered part of Summit Kingdom', link: '/territory/8', read: true, created_at: ago(1) },
+    { id: 7, type: 'achievement', title: 'Achievement Unlocked!', message: 'You earned Social Butterfly', link: '/profile', read: true, created_at: ago(14) },
+    { id: 8, type: 'club', title: 'Club Activity', message: 'Trail Crushers completed 67 activities this week!', link: '/clubs', read: true, created_at: ago(1) },
+    { id: 9, type: 'kudos', title: 'New Kudos', message: 'Emily Rodriguez and 4 others gave kudos to your Windy Cliff Run', link: '/activity/6', read: true, created_at: ago(2, 1) },
+    { id: 10, type: 'conquest_attack', title: 'Territory Defended!', message: 'Aisha Patel failed to conquer your Redwood Sanctuary', link: '/territory/4', read: true, created_at: ago(8) },
+    { id: 11, type: 'challenge', title: 'Challenge Won!', message: 'You beat Aisha Patel in the Lakeshore Domain challenge', link: '/challenges', read: true, created_at: ago(2) },
+    { id: 12, type: 'achievement', title: 'Achievement Unlocked!', message: 'You earned First Steps', link: '/profile', read: true, created_at: ago(90) },
+  ]
+
+  const seedSegments: Segment[] = [
+    { id: 1, name: 'Cascade Switchbacks', trail_id: 3, distance: 1.2, elevation: 480, leaderTime: '8:15', leaderName: 'Marcus Johnson', yourTime: '8:52', yourRank: 3, totalAttempts: 45 },
+    { id: 2, name: 'Thunder Ridge Sprint', trail_id: 6, distance: 0.8, elevation: 320, leaderTime: '5:42', leaderName: 'Jake Thompson', yourTime: '6:18', yourRank: 5, totalAttempts: 38 },
+    { id: 3, name: 'Redwood Creek Flat', trail_id: 5, distance: 1.0, elevation: 40, leaderTime: '6:15', leaderName: 'You', yourTime: '6:15', yourRank: 1, totalAttempts: 62 },
+    { id: 4, name: 'Bluff Climb', trail_id: 9, distance: 0.6, elevation: 280, leaderTime: '4:30', leaderName: 'Marcus Johnson', yourTime: '4:55', yourRank: 4, totalAttempts: 29 },
+    { id: 5, name: 'Desert Descent', trail_id: 4, distance: 1.5, elevation: -380, leaderTime: '9:20', leaderName: 'Ryan O\'Brien', yourTime: null, yourRank: null, totalAttempts: 22 },
+    { id: 6, name: 'Pine Valley Roller', trail_id: 10, distance: 2.0, elevation: 280, leaderTime: '14:45', leaderName: 'You', yourTime: '14:45', yourRank: 1, totalAttempts: 18 },
+  ]
+
+  const seedUserStats: UserStats = {
+    user_id: 1,
+    totalDistance: 78.4,
+    totalElevation: 32450,
+    trailsCompleted: 8,
+    totalActivities: 42,
+    currentStreak: 12,
+    longestStreak: 18,
+    totalTime: '58h 32m',
+    avgPace: '8:38/mi',
+    totalCalories: 18420,
+    weeklyDistance: 16.8,
+    weeklyElevation: 4530,
+    weeklyActivities: 4,
+    monthlyDistance: 62.3,
+    monthlyElevation: 18200,
+    personalRecords: { fastestMile: '6:42', longestRun: 12.4, biggestClimb: 4200, longestStreak: 18 },
+    weeklyHistory: [
+      { week: 'Mar 3', distance: 14.2, elevation: 3800 },
+      { week: 'Mar 10', distance: 18.5, elevation: 5200 },
+      { week: 'Mar 17', distance: 12.8, elevation: 3200 },
+      { week: 'Mar 24', distance: 22.1, elevation: 6100 },
+      { week: 'Mar 31', distance: 16.4, elevation: 4500 },
+      { week: 'Apr 7', distance: 19.8, elevation: 5600 },
+      { week: 'Apr 14', distance: 16.8, elevation: 4530 },
+    ],
+  }
+
+  const seedConquestStats: ConquestStats = {
+    user_id: 1,
+    totalConquests: 3,
+    territoriesLost: 0,
+    successfulDefenses: 6,
+    winRate: 75,
+    powerRating: 1847,
+    longestConquestStreak: 3,
+    totalAreaConquered: 128000,
+    uniqueRivalsBeaten: 4,
+  }
+
+  // GPS route polylines and territory polygons for Leaflet
+  const trailRoutes: Record<number, [number, number][]> = {
+    1: [[40.3428,-105.6836],[40.3445,-105.6810],[40.3462,-105.6785],[40.3480,-105.6762],[40.3498,-105.6740],[40.3515,-105.6718],[40.3530,-105.6700],[40.3548,-105.6682],[40.3560,-105.6660],[40.3575,-105.6642],[40.3590,-105.6625],[40.3605,-105.6610]],
+    2: [[35.6532,-83.5070],[35.6545,-83.5050],[35.6558,-83.5035],[35.6570,-83.5018],[35.6578,-83.4998],[35.6568,-83.4980],[35.6555,-83.4968],[35.6540,-83.4958],[35.6525,-83.4965],[35.6515,-83.4985],[35.6510,-83.5010],[35.6518,-83.5035],[35.6532,-83.5070]],
+    3: [[37.7346,-119.5632],[37.7360,-119.5610],[37.7375,-119.5588],[37.7388,-119.5565],[37.7400,-119.5542],[37.7415,-119.5520],[37.7428,-119.5498],[37.7440,-119.5478],[37.7455,-119.5460],[37.7468,-119.5442],[37.7480,-119.5425]],
+    4: [[33.8734,-115.9010],[33.8750,-115.8990],[33.8768,-115.8972],[33.8785,-115.8955],[33.8800,-115.8935],[33.8815,-115.8918],[33.8830,-115.8900],[33.8845,-115.8885],[33.8858,-115.8865],[33.8870,-115.8848]],
+    5: [[37.8970,-122.5811],[37.8980,-122.5795],[37.8992,-122.5780],[37.9002,-122.5765],[37.9010,-122.5748],[37.9018,-122.5732],[37.9008,-122.5718],[37.8995,-122.5728],[37.8982,-122.5745],[37.8970,-122.5760],[37.8965,-122.5780],[37.8968,-122.5800]],
+    6: [[34.8697,-111.7610],[34.8712,-111.7590],[34.8728,-111.7572],[34.8745,-111.7555],[34.8760,-111.7538],[34.8775,-111.7520],[34.8788,-111.7502],[34.8798,-111.7485],[34.8780,-111.7470],[34.8762,-111.7458],[34.8745,-111.7472],[34.8730,-111.7490],[34.8715,-111.7510],[34.8700,-111.7530],[34.8690,-111.7555],[34.8692,-111.7580],[34.8697,-111.7610]],
+    7: [[48.5285,-113.9750],[48.5298,-113.9730],[48.5312,-113.9712],[48.5325,-113.9695],[48.5340,-113.9680],[48.5355,-113.9665],[48.5368,-113.9648],[48.5380,-113.9632],[48.5395,-113.9618]],
+    8: [[38.2928,-78.6796],[38.2942,-78.6778],[38.2958,-78.6760],[38.2972,-78.6742],[38.2988,-78.6725],[38.3002,-78.6708],[38.3015,-78.6690],[38.3028,-78.6672],[38.3040,-78.6655]],
+    9: [[36.2704,-121.8081],[36.2718,-121.8060],[36.2732,-121.8042],[36.2748,-121.8025],[36.2762,-121.8008],[36.2775,-121.7990],[36.2788,-121.7972],[36.2800,-121.7955],[36.2812,-121.7938]],
+    10: [[32.9355,-116.5600],[32.9368,-116.5582],[32.9380,-116.5565],[32.9392,-116.5548],[32.9400,-116.5530],[32.9390,-116.5512],[32.9378,-116.5498],[32.9365,-116.5510],[32.9352,-116.5528],[32.9342,-116.5548],[32.9345,-116.5570],[32.9355,-116.5600]],
+    11: [[45.1633,-109.8075],[45.1648,-109.8055],[45.1665,-109.8035],[45.1680,-109.8015],[45.1698,-109.7995],[45.1715,-109.7975],[45.1730,-109.7958],[45.1748,-109.7940],[45.1765,-109.7920],[45.1780,-109.7900],[45.1795,-109.7882],[45.1810,-109.7865]],
+    12: [[46.7856,-121.7353],[46.7870,-121.7335],[46.7885,-121.7318],[46.7898,-121.7300],[46.7912,-121.7282],[46.7925,-121.7265],[46.7938,-121.7248],[46.7950,-121.7232],[46.7960,-121.7215]],
+  }
+
+  const territoryPolygons: Record<number, [number, number][]> = {
+    1: [[37.735,-119.570],[37.740,-119.558],[37.745,-119.555],[37.748,-119.562],[37.746,-119.572],[37.742,-119.578],[37.738,-119.576],[37.735,-119.570]],
+    2: [[35.645,-83.515],[35.650,-83.505],[35.655,-83.500],[35.660,-83.505],[35.658,-83.515],[35.652,-83.520],[35.645,-83.515]],
+    3: [[33.868,-115.910],[33.875,-115.900],[33.882,-115.895],[33.885,-115.902],[33.882,-115.912],[33.876,-115.916],[33.870,-115.914],[33.868,-115.910]],
+    4: [[37.892,-122.588],[37.898,-122.578],[37.903,-122.575],[37.905,-122.582],[37.902,-122.590],[37.897,-122.592],[37.892,-122.588]],
+    5: [[34.864,-111.768],[34.870,-111.758],[34.878,-111.754],[34.882,-111.760],[34.880,-111.770],[34.874,-111.775],[34.868,-111.772],[34.864,-111.768]],
+    6: [[36.265,-121.815],[36.272,-121.805],[36.278,-121.800],[36.282,-121.808],[36.280,-121.816],[36.274,-121.820],[36.268,-121.818],[36.265,-121.815]],
+    7: [[32.930,-116.565],[32.935,-116.558],[32.940,-116.555],[32.942,-116.562],[32.940,-116.570],[32.935,-116.572],[32.930,-116.565]],
+    8: [[40.338,-105.692],[40.345,-105.682],[40.352,-105.678],[40.355,-105.685],[40.352,-105.695],[40.346,-105.698],[40.340,-105.696],[40.338,-105.692]],
+    9: [[48.524,-113.982],[48.530,-113.972],[48.536,-113.968],[48.538,-113.975],[48.536,-113.984],[48.530,-113.988],[48.524,-113.982]],
+    10: [[46.780,-121.742],[46.788,-121.732],[46.794,-121.728],[46.796,-121.735],[46.794,-121.744],[46.788,-121.748],[46.782,-121.746],[46.780,-121.742]],
+  }
+
+  // ===== Store =====
+  // Guard against double-define on client-side navigation
+  const existingStore = getStore<any>('tb')
+  const tbStore = existingStore || defineStore('tb', {
+    state: () => ({
+      currentUserId: 1,
+      users: seedUsers,
+      trails: seedTrails,
+      activities: seedActivities,
+      territories: seedTerritories,
+      conquests: seedConquests,
+      challenges: seedChallenges,
+      reviews: seedReviews,
+      clubs: seedClubs,
+      achievements: seedAchievements,
+      notifications: seedNotifications,
+      segments: seedSegments,
+      userStats: seedUserStats,
+      conquestStats: seedConquestStats,
+      trailRoutes,
+      territoryPolygons,
+    }),
+
+    getters: {
+      currentUser: (state) => state.users.find(u => u.id === state.currentUserId) ?? null,
+      unreadCount: (state) => state.notifications.filter(n => !n.read).length,
+    },
+
+    actions: {
+      findTrail(id: number): Trail | undefined {
+        return this.trails.find((t: Trail) => t.id === id)
+      },
+      findTerritory(id: number): Territory | undefined {
+        return this.territories.find((t: Territory) => t.id === id)
+      },
+      findActivity(id: number): Activity | undefined {
+        return this.activities.find((a: Activity) => a.id === id)
+      },
+      findUser(id: number): User | undefined {
+        return this.users.find((u: User) => u.id === id)
+      },
+      trailReviews(trailId: number): Review[] {
+        return this.reviews.filter((r: Review) => r.trail_id === trailId)
+      },
+      trailSegments(trailId: number): Segment[] {
+        return this.segments.filter((s: Segment) => s.trail_id === trailId)
+      },
+      territoryConquests(territoryId: number): Conquest[] {
+        return this.conquests.filter((c: Conquest) => c.territory_id === territoryId)
+      },
+      addActivity(activity: Omit<Activity, 'id' | 'created_at'>) {
+        const id = Math.max(0, ...this.activities.map((a: Activity) => a.id)) + 1
+        this.activities.unshift({
+          ...activity,
+          id,
+          created_at: new Date().toISOString(),
+        } as Activity)
+      },
+      toggleKudos(activityId: number, delta: number) {
+        const a = this.activities.find((x: Activity) => x.id === activityId)
+        if (a) a.kudos_count = Math.max(0, a.kudos_count + delta)
+      },
+      addComment(activityId: number, text: string) {
+        const a = this.activities.find((x: Activity) => x.id === activityId)
+        const user = this.users.find((u: User) => u.id === this.currentUserId)
+        if (!a || !user) return
+        a.comments = [...a.comments, {
+          user_id: user.id,
+          userName: user.name,
+          text,
+          created_at: new Date().toISOString(),
+        }]
+      },
+      markNotificationRead(id: number) {
+        const n = this.notifications.find((x: Notification) => x.id === id)
+        if (n) n.read = true
+      },
+      markAllNotificationsRead() {
+        this.notifications = this.notifications.map((n: Notification) => ({ ...n, read: true }))
+      },
+      timeAgo(dateStr: string): string {
+        if (!dateStr) return ''
+        const diff = Date.now() - new Date(dateStr).getTime()
+        const mins = Math.floor(diff / 60000)
+        if (mins < 1) return 'just now'
+        if (mins < 60) return `${mins}m ago`
+        const hours = Math.floor(mins / 60)
+        if (hours < 24) return `${hours}h ago`
+        const days = Math.floor(hours / 24)
+        if (days < 7) return `${days}d ago`
+        return `${Math.floor(days / 7)}w ago`
+      },
+    },
+
+    persist: true,
+  })
+
+  if (!existingStore) registerStores({ tbStore })
+</script>

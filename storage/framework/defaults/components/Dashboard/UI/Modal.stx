@@ -57,7 +57,7 @@ const sizeClasses = {
     </div>
   </div>
   @endif
-<script client>
+<script client lang="ts">
 var _root = useRef('pageRoot')
 onMount(function() {
   var el = _root.current;

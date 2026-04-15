@@ -1,4 +1,10 @@
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <style>
+  /* Leaflet map overrides */
+  .leaflet-container { z-index: 1; font-family: inherit; }
+  .leaflet-control-attribution { font-size: 9px !important; }
   body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-size: 14px;

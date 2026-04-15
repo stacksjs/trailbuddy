@@ -3,122 +3,115 @@
 @section('title', 'Profile — TrailBuddy')
 
 @section('content')
-<script client>
+<script client lang="ts">
   useHead({ title: 'Profile — TrailBuddy' })
 
-  const loading = state(true)
-  const user = state(null)
-  const stats = state(null)
-  const recentActivities = state([])
-  const achievements = state([])
-  const activeTab = state('activities')
-
-  onMount(() => {
-    const currentUser = window.tb.currentUser()
-    user.set(currentUser)
-    stats.set(window.tb.getWrappedObj('user_stats'))
-    recentActivities.set(window.tb.getWrapped('activities').filter(a => a.get('user_id') === 1))
-    achievements.set(window.tb.getWrapped('achievements'))
-    loading.set(false)
-  })
+  const tb = getStore<any>('tb')
+  const activeTab = state<'activities' | 'achievements' | 'saved'>('activities')
 </script>
 
   <div class="mx-auto px-4 py-6 sm:px-6 lg:px-8 max-w-4xl">
-    <!-- Loading -->
-    <div @show="loading()" class="flex items-center justify-center py-20">
-      <div class="h-8 w-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+    <!-- Profile header -->
+    <div class="mb-6 card">
+      <div class="flex flex-col gap-6 items-center sm:flex-row">
+        <div class="flex items-center justify-center h-24 w-24 font-bold text-3xl text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 rounded-full" :text="(tb.currentUser?.name || 'U').charAt(0)"></div>
+        <div class="flex-1 text-center sm:text-left">
+          <h1 class="font-bold text-2xl dark:text-white" :text="tb.currentUser?.name || 'Athlete'"></h1>
+          <p class="mt-1 text-gray-500 text-sm dark:text-slate-400" :text="tb.currentUser?.email || ''"></p>
+          <div class="flex flex-wrap gap-4 justify-center sm:justify-start mt-3">
+            <div class="text-center">
+              <p class="text-lg font-bold text-emerald-600" :text="tb.userStats?.totalDistance.toFixed(1) || '0'"></p>
+              <p class="metric-label">Miles</p>
+            </div>
+            <div class="text-center">
+              <p class="text-lg font-bold text-emerald-600" :text="tb.userStats?.trailsCompleted || 0"></p>
+              <p class="metric-label">Trails</p>
+            </div>
+            <div class="text-center">
+              <p class="text-lg font-bold text-emerald-600" :text="(tb.userStats?.totalElevation || 0).toLocaleString()"></p>
+              <p class="metric-label">Elev (ft)</p>
+            </div>
+            <div class="text-center">
+              <p class="text-lg font-bold text-emerald-600" :text="tb.userStats?.currentStreak || 0"></p>
+              <p class="metric-label">Streak</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div @show="!loading()">
-      <!-- Profile header -->
-      <div class="mb-6 card">
-        <div class="flex flex-col gap-6 items-center sm:flex-row">
-          <div class="flex items-center justify-center h-24 w-24 font-bold text-3xl text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 rounded-full" :text="(user()?.name || 'U').charAt(0)"></div>
-          <div class="flex-1 text-center sm:text-left">
-            <h1 class="font-bold text-2xl dark:text-white" :text="user()?.name || 'Athlete'"></h1>
-            <p class="mt-1 text-gray-500 text-sm dark:text-slate-400" :text="user()?.email || ''"></p>
-            <div class="flex flex-wrap gap-4 justify-center sm:justify-start mt-3">
-              <div class="text-center">
-                <p class="font-bold text-emerald-600 text-lg" :text="stats()?.get('totalDistance')?.toFixed(1) || '0'"></p>
-                <p class="metric-label">Miles</p>
-              </div>
-              <div class="text-center">
-                <p class="font-bold text-emerald-600 text-lg" :text="stats()?.get('trailsCompleted') || '0'"></p>
-                <p class="metric-label">Trails</p>
-              </div>
-              <div class="text-center">
-                <p class="font-bold text-emerald-600 text-lg" :text="(stats()?.get('totalElevation') || 0).toLocaleString()"></p>
-                <p class="metric-label">Elev (ft)</p>
-              </div>
-              <div class="text-center">
-                <p class="font-bold text-emerald-600 text-lg" :text="stats()?.get('currentStreak') || '0'"></p>
-                <p class="metric-label">Streak</p>
-              </div>
+    <!-- Tabs -->
+    <div class="flex gap-1 mb-6 border-b border-gray-200 dark:border-slate-700">
+      <button @click="activeTab.set('activities')" :class="activeTab === 'activities' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-4 py-3 font-medium text-sm border-b-2 transition">Activities</button>
+      <button @click="activeTab.set('achievements')" :class="activeTab === 'achievements' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-4 py-3 font-medium text-sm border-b-2 transition">Achievements</button>
+      <button @click="activeTab.set('saved')" :class="activeTab === 'saved' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-4 py-3 font-medium text-sm border-b-2 transition">Saved Trails</button>
+    </div>
+
+    <!-- Activities -->
+    <div :if="activeTab === 'activities'" class="space-y-4">
+      <template :for="activity in tb.activities.filter((a) => a.user_id === tb.currentUserId)">
+        <StxLink :to="'/activity/' + activity.id" class="card flex gap-4 items-center hover:shadow-md transition block">
+          <div class="flex items-center justify-center shrink-0 h-12 w-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
+            <svg class="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-sm truncate dark:text-white" :text="activity.title"></p>
+            <p class="text-gray-500 text-xs dark:text-slate-400" :text="activity.activityType + ' · ' + tb.timeAgo(activity.created_at)"></p>
+          </div>
+          <div class="flex gap-4 shrink-0 text-right">
+            <div>
+              <p class="font-bold text-sm dark:text-white" :text="activity.distance.toFixed(1) + ' mi'"></p>
+              <p class="metric-label">Distance</p>
+            </div>
+            <div>
+              <p class="font-bold text-sm dark:text-white" :text="activity.duration"></p>
+              <p class="metric-label">Time</p>
             </div>
           </div>
-          <StxLink to="/settings" class="px-4 py-2 font-medium text-gray-600 text-sm dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 border border-gray-200 rounded-lg dark:border-slate-600 transition">Edit Profile</StxLink>
+        </StxLink>
+      </template>
+
+      <div :if="tb.activities.filter((a) => a.user_id === tb.currentUserId).length === 0" class="py-16 text-center">
+        <div class="w-16 h-16 mx-auto mb-4 bg-emerald-100 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center">
+          <svg class="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
         </div>
+        <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">No activities yet</h3>
+        <p class="text-sm text-gray-500 dark:text-slate-400 mb-4">Record your first run, hike, or walk.</p>
+        <StxLink to="/record" class="px-5 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Record Activity</StxLink>
       </div>
+    </div>
 
-      <!-- Tabs -->
-      <div class="flex gap-1 mb-6 border-b border-gray-200 dark:border-slate-700">
-        <button @click="activeTab.set('activities')" :class="text-emerald-600' text-gray-500 dark:text-slate-400' : ? 'activities' 'border-emerald-600 'border-transparent === activeTab()" class="px-4 py-3 font-medium text-sm border-b-2 transition">Activities</button>
-        <button @click="activeTab.set('achievements')" :class="text-emerald-600' text-gray-500 dark:text-slate-400' : ? 'achievements' 'border-emerald-600 'border-transparent === activeTab()" class="px-4 py-3 font-medium text-sm border-b-2 transition">Achievements</button>
-        <button @click="activeTab.set('saved')" :class="text-emerald-600' text-gray-500 dark:text-slate-400' : ? 'border-emerald-600 'border-transparent 'saved' === activeTab()" class="px-4 py-3 font-medium text-sm border-b-2 transition">Saved Trails</button>
-      </div>
-
-      <!-- Activities tab -->
-      <div @show="activeTab() === 'activities'" class="space-y-4">
-        <template @for="activity in recentActivities()">
-          <StxLink :to="'/activity/' + activity.get('id')" class="block flex gap-4 items-center hover:shadow-md transition card">
-            <div class="flex items-center justify-center shrink-0 h-12 w-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
-              <svg class="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+    <!-- Achievements -->
+    <div :if="activeTab === 'achievements'" class="grid gap-4 grid-cols-1 sm:grid-cols-2">
+      <template :for="achievement in tb.achievements">
+        <div class="flex gap-4 items-center card">
+          <span class="text-3xl" :text="achievement.icon"></span>
+          <div class="flex-1">
+            <p class="font-semibold text-sm dark:text-white" :text="achievement.name"></p>
+            <p class="text-gray-500 text-xs dark:text-slate-400" :text="achievement.description"></p>
+            <div class="overflow-hidden mt-2 h-1.5 bg-gray-200 dark:bg-slate-600 rounded-full">
+              <div class="h-full bg-emerald-500 rounded-full" :style="'width: ' + (achievement.progress / achievement.total * 100) + '%'"></div>
             </div>
-            <div class="flex-1 min-w-0">
-              <p class="font-semibold text-sm truncate dark:text-white" :text="activity.get('title') || activity.get('trail_name') || 'Activity'"></p>
-              <p class="text-gray-500 text-xs dark:text-slate-400" :text="(activity.get('activityType') || 'Activity') + ' · ' + (activity.get('created_at') || '')"></p>
-            </div>
-            <div class="flex gap-4 shrink-0 text-right">
-              <div>
-                <p class="font-bold text-sm dark:text-white" :text="(activity.get('distance') || 0).toFixed(1) + ' mi'"></p>
-                <p class="metric-label">Distance</p>
-              </div>
-              <div>
-                <p class="font-bold text-sm dark:text-white" :text="activity.get('duration') || '0:00'"></p>
-                <p class="metric-label">Time</p>
-              </div>
-            </div>
-          </StxLink>
-        </template>
-
-        <div @show="recentActivities().length === 0" class="py-12 text-center text-gray-500 dark:text-slate-400">
-          <p>No activities yet. Time to hit the trails!</p>
-        </div>
-      </div>
-
-      <!-- Achievements tab -->
-      <div @show="activeTab() === 'achievements'" class="grid gap-4 grid-cols-1 sm:grid-cols-2">
-        <template @for="achievement in achievements()">
-          <div class="flex gap-4 items-center card">
-            <span class="text-3xl" :text="achievement.get('icon') || '🏆'"></span>
-            <div class="flex-1">
-              <p class="font-semibold text-sm dark:text-white" :text="achievement.get('name') || 'Achievement'"></p>
-              <p class="text-gray-500 text-xs dark:text-slate-400" :text="achievement.get('description') || ''"></p>
-              <div class="overflow-hidden mt-2 h-1.5 bg-gray-200 dark:bg-slate-600 rounded-full">
-                <div class="h-full bg-emerald-500 rounded-full" :style="'width: ' + ((achievement.get('progress') || 0) / (achievement.get('total') || 100) * 100) + '%'"></div>
-              </div>
-            </div>
-            <p class="shrink-0 text-gray-400 text-xs dark:text-slate-500" :text="(achievement.get('progress') || 0) + '/' + (achievement.get('total') || 100)"></p>
           </div>
-        </template>
-      </div>
+          <p class="shrink-0 text-gray-400 text-xs dark:text-slate-500" :text="achievement.progress + '/' + achievement.total"></p>
+        </div>
+      </template>
+    </div>
 
-      <!-- Saved trails tab -->
-      <div @show="activeTab() === 'saved'" class="py-12 text-center text-gray-500 dark:text-slate-400">
-        <p>Your saved trails will appear here</p>
+    <!-- Saved -->
+    <div :if="activeTab === 'saved'" class="py-16 text-center">
+      <div class="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900/20 rounded-2xl flex items-center justify-center">
+        <svg class="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
       </div>
+      <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">No saved trails</h3>
+      <p class="text-sm text-gray-500 dark:text-slate-400 mb-4">Tap the heart on any trail to save it.</p>
+      <StxLink to="/trails" class="px-5 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Explore Trails</StxLink>
     </div>
   </div>
 @endsection

@@ -3,30 +3,20 @@
 @section('title', 'Challenges — TrailBuddy')
 
 @section('content')
-<script client>
+<script client lang="ts">
   useHead({ title: 'Challenges — TrailBuddy' })
 
-  const loading = state(true)
-  const user = state(null)
-  const challenges = state([])
-  const tab = state('active')
+  const tb = getStore<any>('tb')
+  const tab = state<'active' | 'sent' | 'received' | 'completed'>('active')
 
-  const filteredChallenges = () => {
-    const all = challenges()
+  const filtered = derived(() => {
+    if (!tb) return []
     const t = tab()
-    const u = user()
-    if (t === 'active') return all.filter(c => c.get('status') === 'active' || c.get('status') === 'pending')
-    if (t === 'sent') return all.filter(c => c.get('challenger_id') === u?.id)
-    if (t === 'received') return all.filter(c => c.get('challenged_id') === u?.id)
-    if (t === 'completed') return all.filter(c => c.get('status') === 'completed')
-    return all
-  }
-
-  onMount(() => {
-    const currentUser = window.tb.currentUser()
-    user.set(currentUser)
-    challenges.set(window.tb.getWrapped('challenges'))
-    loading.set(false)
+    const uid = tb.currentUserId
+    if (t === 'active') return tb.challenges.filter((c: any) => c.status === 'active' || c.status === 'pending')
+    if (t === 'sent') return tb.challenges.filter((c: any) => c.challenger_id === uid)
+    if (t === 'received') return tb.challenges.filter((c: any) => c.challenged_id === uid)
+    return tb.challenges.filter((c: any) => c.status === 'completed')
   })
 </script>
 
@@ -36,126 +26,61 @@
         <h1 class="font-bold text-2xl dark:text-white">Challenges</h1>
         <p class="mt-1 text-gray-500 text-sm dark:text-slate-400">Challenge rivals to conquer their territories</p>
       </div>
-      <button class="flex items-center px-4 py-2 font-semibold text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition">
-        <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        New Challenge
-      </button>
+      <button class="flex items-center px-4 py-2 font-semibold text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition">+ New Challenge</button>
     </div>
 
-    <!-- Tabs -->
     <div class="flex gap-1 mb-6 border-b border-gray-200 dark:border-slate-700">
-      <button @click="tab.set('active')" :class="text-gray-500 text-orange-600' dark:text-slate-400' : ? 'active' 'border-orange-600 'border-transparent === tab()" class="px-4 py-3 font-medium text-sm border-b-2 transition">Active</button>
-      <button @click="tab.set('sent')" :class="text-gray-500 text-orange-600' dark:text-slate-400' : ? 'border-orange-600 'border-transparent 'sent' === tab()" class="px-4 py-3 font-medium text-sm border-b-2 transition">Sent</button>
-      <button @click="tab.set('received')" :class="text-gray-500 text-orange-600' dark:text-slate-400' : ? 'border-orange-600 'border-transparent 'received' === tab()" class="px-4 py-3 font-medium text-sm border-b-2 transition">Received</button>
-      <button @click="tab.set('completed')" :class="text-gray-500 text-orange-600' dark:text-slate-400' : ? 'border-orange-600 'border-transparent 'completed' === tab()" class="px-4 py-3 font-medium text-sm border-b-2 transition">Completed</button>
+      <button @click="tab.set('active')" :class="tab === 'active' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-4 py-3 font-medium text-sm border-b-2 transition">Active</button>
+      <button @click="tab.set('sent')" :class="tab === 'sent' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-4 py-3 font-medium text-sm border-b-2 transition">Sent</button>
+      <button @click="tab.set('received')" :class="tab === 'received' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-4 py-3 font-medium text-sm border-b-2 transition">Received</button>
+      <button @click="tab.set('completed')" :class="tab === 'completed' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-4 py-3 font-medium text-sm border-b-2 transition">Completed</button>
     </div>
 
-    <!-- Loading -->
-    <div @show="loading()" class="flex items-center justify-center py-20">
-      <div class="h-8 w-8 border-3 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-    </div>
-
-    <!-- Challenge cards -->
-    <div @show="!loading()" class="space-y-4">
-      <template @for="challenge in filteredChallenges()">
+    <div class="space-y-4">
+      <template :for="challenge in filtered">
         <div class="card">
-          <!-- Header -->
           <div class="flex items-center justify-between mb-4">
-            <div class="flex gap-3 items-center">
-              <span
-                class="px-2 py-0.5 font-semibold text-xs rounded-full"
-                :class="text-emerald-700 text-orange-700 text-red-700 text-yellow-700 dark:text-emerald-400' dark:text-orange-400' dark:text-red-400' dark:text-yellow-400' dark:bg-emerald-900/30 dark:bg-orange-900/30 dark:bg-red-900/30 dark:bg-yellow-900/30 : : : ? ? ? 'active' 'bg-emerald-100 'bg-orange-100 'bg-red-100 'bg-yellow-100 'completed' 'pending' && === === === === challenge.get('status') challenge.get('status') challenge.get('status') challenge.get('winner_id') user()?.id"
-                :text="challenge.get('status') === 'active'
-                  ? 'IN PROGRESS'
-                  : challenge.get('status') === 'pending'
-                    ? 'PENDING'
-                    : challenge.get('winner_id') === user()?.id
-                      ? 'WON'
-                      : 'LOST'"
-              ></span>
-              <span class="text-gray-500 text-xs dark:text-slate-400" :text="challenge.get('created_at') || ''"></span>
-            </div>
-            <span @show="challenge.get('status') === 'active'" class="flex gap-1 items-center font-medium text-orange-600 text-xs">
-              <span class="h-1.5 w-1.5 bg-orange-500 rounded-full animate-pulse"></span>
-              Live
-            </span>
+            <span class="px-2 py-0.5 font-semibold text-xs rounded-full" :class="challenge.status === 'active' ? 'bg-orange-100 text-orange-700' : challenge.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : challenge.winner_id === tb.currentUserId ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'" :text="challenge.status === 'active' ? 'IN PROGRESS' : challenge.status === 'pending' ? 'PENDING' : challenge.winner_id === tb.currentUserId ? 'WON' : 'LOST'"></span>
+            <span class="text-gray-500 text-xs dark:text-slate-400" :text="tb.timeAgo(challenge.created_at)"></span>
           </div>
 
-          <!-- VS display -->
-          <div class="flex gap-4 items-center justify-between">
-            <!-- Challenger -->
-            <div class="flex flex-1 gap-3 items-center">
-              <div class="flex items-center justify-center h-12 w-12 font-bold text-orange-600 bg-orange-100 dark:bg-orange-900/20 rounded-full" :text="(challenge.get('challengerName') || 'C').charAt(0)"></div>
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3 flex-1">
+              <div class="flex items-center justify-center h-12 w-12 font-bold text-orange-600 bg-orange-100 dark:bg-orange-900/20 rounded-full" :text="challenge.challengerName.charAt(0)"></div>
               <div>
-                <p class="font-semibold text-gray-900 text-sm dark:text-white" :text="challenge.get('challenger_id') === user()?.id ? 'You' : (challenge.get('challengerName') || 'Challenger')"></p>
-                <p class="text-gray-500 text-xs dark:text-slate-400">Challenger</p>
+                <p class="font-semibold text-sm text-gray-900 dark:text-white" :text="challenge.challenger_id === tb.currentUserId ? 'You' : challenge.challengerName"></p>
+                <p class="text-xs text-gray-500 dark:text-slate-400">Challenger</p>
               </div>
             </div>
-
-            <!-- VS -->
-            <div class="shrink-0">
-              <div class="flex items-center justify-center h-10 w-10 bg-gray-100 dark:bg-slate-700 rounded-full">
-                <span class="font-bold text-gray-500 text-xs dark:text-slate-400">VS</span>
-              </div>
-            </div>
-
-            <!-- Defender -->
-            <div class="flex flex-1 gap-3 items-center justify-end text-right">
+            <div class="shrink-0 w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-gray-500 dark:text-slate-400">VS</div>
+            <div class="flex items-center gap-3 flex-1 justify-end text-right">
               <div>
-                <p class="font-semibold text-gray-900 text-sm dark:text-white" :text="challenge.get('challenged_id') === user()?.id ? 'You' : (challenge.get('challengedName') || 'Defender')"></p>
-                <p class="text-gray-500 text-xs dark:text-slate-400">Defender</p>
+                <p class="font-semibold text-sm text-gray-900 dark:text-white" :text="challenge.challenged_id === tb.currentUserId ? 'You' : challenge.challengedName"></p>
+                <p class="text-xs text-gray-500 dark:text-slate-400">Defender</p>
               </div>
-              <div class="flex items-center justify-center h-12 w-12 font-bold text-blue-600 bg-blue-100 dark:bg-blue-900/20 rounded-full" :text="(challenge.get('challengedName') || 'D').charAt(0)"></div>
+              <div class="flex items-center justify-center h-12 w-12 font-bold text-blue-600 bg-blue-100 dark:bg-blue-900/20 rounded-full" :text="challenge.challengedName.charAt(0)"></div>
             </div>
           </div>
 
-          <!-- Territory at stake -->
-          <div class="flex items-center justify-between mt-4 p-3 bg-gray-50 dark:bg-slate-700/50 rounded-xl">
-            <div class="flex gap-2 items-center">
-              <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span class="text-gray-600 text-sm dark:text-slate-300">Territory: </span>
-              <StxLink :to="'/territory/' + challenge.get('territory_id')" class="font-medium text-emerald-600 text-sm hover:underline" :text="challenge.get('territoryName') || 'Unknown Territory'"></StxLink>
+          <div class="mt-4 p-3 bg-gray-50 dark:bg-slate-700/50 rounded-xl flex items-center justify-between">
+            <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300">
+              Territory:
+              <StxLink :to="'/territory/' + challenge.territory_id" class="font-medium text-emerald-600 hover:underline" :text="challenge.territoryName"></StxLink>
             </div>
-            <span class="text-gray-500 text-xs dark:text-slate-400" :text="((challenge.get('areaAtStake') || 0) / 1000).toFixed(1) + ' km²'"></span>
-          </div>
-
-          <!-- Deadline & actions -->
-          <div class="flex items-center justify-between mt-4 pt-4 border-gray-100 border-t dark:border-slate-700">
-            <div @show="challenge.get('deadline')" class="flex gap-1 items-center text-gray-500 text-xs dark:text-slate-400">
-              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>Ends <span :text="challenge.get('deadline') || ''"></span></span>
-            </div>
-            <div class="flex gap-2">
-              <StxLink
-                @show="challenge.get('status') === 'pending' && challenge.get('challenged_id') === user()?.id"
-                :to="'/record'"
-                class="px-3 py-1.5 font-semibold text-white text-xs bg-orange-600 hover:bg-orange-700 rounded-lg transition"
-              >Accept & Run</StxLink>
-              <StxLink
-                @show="challenge.get('status') === 'active'"
-                :to="'/territory/' + challenge.get('territory_id')"
-                class="px-3 py-1.5 font-semibold text-gray-600 text-xs dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700 border border-gray-200 rounded-lg dark:border-slate-600 transition"
-              >View Territory</StxLink>
-            </div>
+            <span class="text-xs text-gray-500 dark:text-slate-400" :text="(challenge.areaAtStake / 1000).toFixed(1) + ' km²'"></span>
           </div>
         </div>
       </template>
 
-      <!-- Empty state -->
-      <div @show="!loading() && filteredChallenges().length === 0" class="py-16 text-center">
-        <svg class="mb-4 mx-auto h-16 w-16 text-gray-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
-        </svg>
-        <p class="font-medium text-gray-500 dark:text-slate-400">No challenges yet</p>
-        <p class="mt-1 text-gray-400 text-sm dark:text-slate-500">Find a territory on the map and challenge the owner!</p>
-        <StxLink to="/territories" class="inline-block mt-4 px-6 py-2 font-semibold text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition">Find Rivals</StxLink>
+      <div :if="filtered.length === 0" class="py-20 text-center">
+        <div class="w-20 h-20 mx-auto mb-6 bg-purple-100 dark:bg-purple-900/20 rounded-2xl flex items-center justify-center">
+          <svg class="w-10 h-10 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No challenges yet</h3>
+        <p class="text-gray-500 dark:text-slate-400 max-w-sm mx-auto mb-6">Pick a rival's territory and throw down the gauntlet.</p>
+        <StxLink to="/territories" class="px-6 py-2.5 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition">Find Rivals</StxLink>
       </div>
     </div>
   </div>

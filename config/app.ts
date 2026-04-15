@@ -11,10 +11,10 @@ const envVars = typeof Bun !== 'undefined' ? Bun.env : process.env
  * you have any questions, feel free to reach out via Discord or GitHub Discussions.
  */
 export default {
-  name: envVars.APP_NAME ?? 'Stacks',
-  description: 'Stacks is a full-stack framework for building modern web applications.',
+  name: envVars.APP_NAME ?? 'TrailBuddy',
+  description: 'Discover trails, track adventures, conquer territories.',
   env: envVars.APP_ENV ?? 'local',
-  url: envVars.APP_URL ?? 'stacks.localhost',
+  url: envVars.APP_URL ?? 'trailbuddy.localhost',
   redirectUrls: ['stacksjs.com'],
   debug: envVars.DEBUG ? envVars.DEBUG === 'true' : false,
   key: envVars.APP_KEY,

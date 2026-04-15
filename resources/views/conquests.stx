@@ -3,240 +3,146 @@
 @section('title', 'Conquests — TrailBuddy')
 
 @section('content')
-<script client>
+<script client lang="ts">
   useHead({ title: 'Conquests — TrailBuddy' })
 
-  const loading = state(true)
-  const user = state(null)
-  const conquests = state([])
-  const filter = state('all')
-  const conquestStats = state(null)
+  const tb = getStore<any>('tb')
+  const filter = state<'all' | 'attacks' | 'defenses' | 'lost'>('all')
 
-  const filteredConquests = () => {
-    const all = conquests()
+  const filtered = derived(() => {
+    if (!tb) return []
     const f = filter()
-    const u = user()
-    if (f === 'all') return all
-    if (f === 'attacks') return all.filter(c => c.get('attacker_id') === u?.id)
-    if (f === 'defenses') return all.filter(c => c.get('defender_id') === u?.id)
-    if (f === 'lost') return all.filter(c => c.get('defender_id') === u?.id && c.get('status') === 'conquered')
-    return all
-  }
-
-  onMount(async () => {
-    const currentUser = window.tb.currentUser()
-    user.set(currentUser)
-    conquests.set(window.tb.getWrapped('conquests'))
-    conquestStats.set(window.tb.getWrappedObj('conquest_stats'))
-    loading.set(false)
+    const uid = tb.currentUserId
+    if (f === 'all') return tb.conquests
+    if (f === 'attacks') return tb.conquests.filter((c: any) => c.attacker_id === uid)
+    if (f === 'defenses') return tb.conquests.filter((c: any) => c.defender_id === uid)
+    return tb.conquests.filter((c: any) => c.defender_id === uid && c.status === 'conquered')
   })
+
+  const underAttack = derived(() =>
+    tb ? tb.conquests.filter((c: any) => c.defender_id === tb.currentUserId && c.status === 'active').slice(0, 5) : []
+  )
 </script>
 
   <!-- Hero -->
-  <section class="overflow-hidden relative pb-16 pt-24 bg-gradient-to-br from-orange-600 to-orange-700 via-red-600">
-    <div class="absolute inset-0 overflow-hidden">
-      <div class="absolute h-80 w-80 bg-white/10 rounded-full blur-3xl -right-40 -top-40"></div>
-      <div class="absolute h-80 w-80 bg-red-400/20 rounded-full blur-3xl -bottom-40 -left-40"></div>
-    </div>
+  <section class="relative overflow-hidden pb-16 pt-24 bg-gradient-to-br from-orange-600 via-red-600 to-orange-700">
     <div class="relative mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl text-center">
       <h1 class="mb-6 font-bold font-display text-4xl text-white md:text-5xl lg:text-6xl">Your Conquests</h1>
-      <p class="mb-8 mx-auto max-w-2xl text-white/80 text-xl">Track every territory you've taken and every attack on your empire. The trail is a battlefield.</p>
+      <p class="mb-8 mx-auto max-w-2xl text-white/80 text-xl">Track every territory you've taken and every attack on your empire.</p>
       <div class="flex flex-col gap-4 items-center justify-center sm:flex-row">
-        <StxLink to="/territories" class="flex items-center justify-center px-8 py-4 w-full sm:w-auto font-semibold text-lg text-orange-700 bg-white hover:bg-gray-100 rounded-full shadow-xl transition">
-          <svg class="mr-2 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-          </svg>
-          View Map
-        </StxLink>
-        <StxLink to="/record" class="flex items-center justify-center px-8 py-4 w-full sm:w-auto font-semibold text-lg text-white hover:bg-white/10 border-2 border-white/30 rounded-full transition">
-          Start a Conquest Run
-        </StxLink>
+        <StxLink to="/territories" class="px-8 py-4 w-full sm:w-auto font-semibold text-lg text-orange-700 bg-white hover:bg-gray-100 rounded-full shadow-xl transition">View Map</StxLink>
+        <StxLink to="/record" class="px-8 py-4 w-full sm:w-auto font-semibold text-lg text-white hover:bg-white/10 border-2 border-white/30 rounded-full transition">Start a Conquest Run</StxLink>
       </div>
     </div>
   </section>
 
   <div class="mx-auto px-4 py-8 sm:px-6 lg:px-8 max-w-7xl">
     <div class="grid gap-8 lg:grid-cols-3">
-      <!-- Main Content -->
       <div class="lg:col-span-2">
-        <!-- Stats overview cards -->
-        <div @show="!loading() && conquestStats()" class="grid gap-4 grid-cols-2 sm:grid-cols-4 mb-8">
+        <!-- Stats -->
+        <div :if="tb.conquestStats" class="grid gap-4 grid-cols-2 sm:grid-cols-4 mb-8">
           <div class="text-center card">
-            <p class="font-bold text-2xl text-orange-600" :text="conquestStats()?.get('totalConquests') ?? 0"></p>
+            <p class="font-bold text-2xl text-orange-600" :text="tb.conquestStats.totalConquests"></p>
             <p class="metric-label">Conquered</p>
           </div>
           <div class="text-center card">
-            <p class="font-bold text-2xl text-red-600" :text="conquestStats()?.get('territoriesLost') ?? 0"></p>
+            <p class="font-bold text-2xl text-red-600" :text="tb.conquestStats.territoriesLost"></p>
             <p class="metric-label">Lost</p>
           </div>
           <div class="text-center card">
-            <p class="font-bold text-2xl text-emerald-600" :text="conquestStats()?.get('successfulDefenses') ?? 0"></p>
+            <p class="font-bold text-2xl text-emerald-600" :text="tb.conquestStats.successfulDefenses"></p>
             <p class="metric-label">Defended</p>
           </div>
           <div class="text-center card">
-            <p class="font-bold text-2xl text-blue-600" :text="(conquestStats()?.get('winRate') ?? 0) + '%'"></p>
+            <p class="font-bold text-2xl text-blue-600" :text="tb.conquestStats.winRate + '%'"></p>
             <p class="metric-label">Win Rate</p>
           </div>
         </div>
 
-        <!-- Filter tabs -->
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="font-bold font-display text-2xl text-gray-900 dark:text-white">Battle Log</h2>
-        </div>
-        <div class="flex overflow-x-auto gap-2 mb-6 pb-2">
-          <button @click="filter.set('all')" :class="text-gray-600 text-white' dark:text-slate-400' dark:bg-slate-800 : ? 'all' 'bg-gray-100 'bg-orange-600 === filter()" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">All</button>
-          <button @click="filter.set('attacks')" :class="text-gray-600 text-white' dark:text-slate-400' dark:bg-slate-800 : ? 'attacks' 'bg-gray-100 'bg-orange-600 === filter()" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">My Attacks</button>
-          <button @click="filter.set('defenses')" :class="text-gray-600 text-white' dark:text-slate-400' dark:bg-slate-800 : ? 'bg-gray-100 'bg-orange-600 'defenses' === filter()" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Defenses</button>
-          <button @click="filter.set('lost')" :class="text-gray-600 text-white' dark:text-slate-400' dark:bg-slate-800 : ? 'bg-gray-100 'bg-orange-600 'lost' === filter()" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Lost</button>
+        <h2 class="font-bold font-display text-2xl text-gray-900 dark:text-white mb-6">Battle Log</h2>
+
+        <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+          <button @click="filter.set('all')" :class="filter === 'all' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">All</button>
+          <button @click="filter.set('attacks')" :class="filter === 'attacks' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">My Attacks</button>
+          <button @click="filter.set('defenses')" :class="filter === 'defenses' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Defenses</button>
+          <button @click="filter.set('lost')" :class="filter === 'lost' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Lost</button>
         </div>
 
-        <!-- Loading -->
-        <div @show="loading()" class="flex items-center justify-center py-20">
-          <div class="h-8 w-8 border-3 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-
-        <!-- Conquest cards -->
-        <div @show="!loading()" class="space-y-4">
-          <template @for="conquest in filteredConquests()">
+        <div class="space-y-4">
+          <template :for="conquest in filtered">
             <div class="card">
               <div class="flex gap-4 items-start">
-                <!-- Battle icon -->
-                <div
-                  class="flex items-center justify-center shrink-0 h-12 w-12 rounded-xl"
-                  :class="dark:bg-orange-900/20' dark:bg-red-900/20' : ? 'bg-orange-100 'bg-red-100 === conquest.get('attacker_id') user()?.id"
-                >
-                  <svg
-                    class="h-6 w-6"
-                    :class=": ? 'text-orange-600' 'text-red-600' === conquest.get('attacker_id') user()?.id"
-                    fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                  >
-                    <path @show="conquest.get('attacker_id') === user()?.id" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                    <path @show="conquest.get('attacker_id') !== user()?.id" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
+                <div class="flex items-center justify-center shrink-0 h-12 w-12 rounded-xl" :class="conquest.attacker_id === tb.currentUserId ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600' : 'bg-red-100 dark:bg-red-900/20 text-red-600'">
+                  <span class="font-bold" :text="conquest.attacker_id === tb.currentUserId ? '⚔' : '🛡'"></span>
                 </div>
-
                 <div class="flex-1 min-w-0">
-                  <!-- Conquest headline -->
                   <div class="flex gap-2 items-center mb-1">
-                    <span
-                      class="px-2 py-0.5 font-semibold text-xs rounded-full"
-                      :class="text-emerald-700 text-orange-700 text-red-700 dark:text-emerald-400' dark:text-orange-400' dark:text-red-400' dark:bg-emerald-900/30 dark:bg-orange-900/30 dark:bg-red-900/30 : : ? ? 'bg-emerald-100 'bg-orange-100 'bg-red-100 'defended' === === conquest.get('attacker_id') conquest.get('status') user()?.id"
-                      :text="conquest.get('attacker_id') === user()?.id
-                        ? 'ATTACK'
-                        : conquest.get('status') === 'defended'
-                          ? 'DEFENDED'
-                          : 'CONQUERED'"
-                    ></span>
-                    <span class="text-gray-500 text-xs dark:text-slate-400" :text="conquest.get('created_at') || ''"></span>
+                    <span class="px-2 py-0.5 font-semibold text-xs rounded-full" :class="conquest.attacker_id === tb.currentUserId ? 'bg-orange-100 text-orange-700' : conquest.status === 'defended' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'" :text="conquest.attacker_id === tb.currentUserId ? 'ATTACK' : conquest.status === 'defended' ? 'DEFENDED' : 'CONQUERED'"></span>
+                    <span class="text-xs text-gray-500 dark:text-slate-400" :text="tb.timeAgo(conquest.created_at)"></span>
                   </div>
-
                   <p class="font-semibold text-gray-900 dark:text-white">
-                    <span :text="conquest.get('attacker_id') === user()?.id ? 'You conquered' : (conquest.get('attackerName') || 'Someone') + ' attacked'"></span>
-                    <StxLink :to="'/territory/' + conquest.get('territory_id')" class="text-emerald-600 hover:underline" :text="' ' + (conquest.get('territoryName') || 'a territory')"></StxLink>
+                    <span :text="conquest.attacker_id === tb.currentUserId ? 'You conquered' : conquest.attackerName + ' attacked'"></span>
+                    <StxLink :to="'/territory/' + conquest.territory_id" class="text-emerald-600 hover:underline" :text="' ' + conquest.territoryName"></StxLink>
                   </p>
-                  <p class="mt-1 text-gray-500 text-sm dark:text-slate-400" :text="conquest.get('description') || ''"></p>
-
-                  <!-- Conquest stats -->
-                  <div class="flex gap-6 items-center mt-3 text-sm">
-                    <div class="flex gap-1 items-center text-gray-500 dark:text-slate-400">
-                      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                      </svg>
-                      <span :text="(conquest.get('areaCaptured') || 0).toLocaleString() + ' m²'"></span>
-                    </div>
-                    <div class="flex gap-1 items-center text-gray-500 dark:text-slate-400">
-                      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                      </svg>
-                      <span :text="(conquest.get('runDistance') || 0).toFixed(1) + ' mi run'"></span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Map preview -->
-                <div class="flex hidden sm:block overflow-hidden items-center justify-center shrink-0 h-24 w-24 bg-gradient-to-br from-orange-50 to-red-50 dark:from-slate-700 dark:to-slate-800 rounded-xl">
-                  <svg class="h-8 w-8 text-orange-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                  </svg>
+                  <p class="text-sm text-gray-500 dark:text-slate-400 mt-1" :text="conquest.description"></p>
                 </div>
               </div>
             </div>
           </template>
 
-          <!-- Empty state -->
-          <div @show="!loading() && filteredConquests().length === 0" class="py-16 text-center">
-            <svg class="mb-4 mx-auto h-16 w-16 text-gray-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-            </svg>
-            <p class="font-medium text-gray-500 dark:text-slate-400">No conquests yet</p>
-            <p class="mt-1 text-gray-400 text-sm dark:text-slate-500">Run through someone's territory to start conquering!</p>
-            <StxLink to="/territories" class="inline-block mt-4 px-6 py-2 font-semibold text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition">Find Territories</StxLink>
+          <div :if="filtered.length === 0" class="py-20 text-center">
+            <div class="w-20 h-20 mx-auto mb-6 bg-orange-100 dark:bg-orange-900/20 rounded-2xl flex items-center justify-center">
+              <svg class="w-10 h-10 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No conquests yet</h3>
+            <p class="text-gray-500 dark:text-slate-400 max-w-sm mx-auto mb-6">Find a territory on the map and run through it.</p>
+            <StxLink to="/territories" class="px-6 py-2.5 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition">Find Territories</StxLink>
           </div>
         </div>
       </div>
 
       <!-- Sidebar -->
       <div class="space-y-6">
-        <!-- Empire Status -->
-        <div class="p-6 bg-white dark:bg-slate-800 border border-gray-100 rounded-2xl dark:border-slate-700 shadow-sm">
-          <h3 class="flex items-center mb-4 font-bold text-gray-900 text-lg dark:text-white">
-            <svg class="mr-2 h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
-            </svg>
-            Empire Status
-          </h3>
-          <div @show="!loading()" class="space-y-4">
+        <div class="card">
+          <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-4">Empire Status</h3>
+          <div :if="tb.conquestStats" class="space-y-3">
             <div class="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/10 rounded-xl">
-              <span class="text-gray-600 text-sm dark:text-slate-400">Power Rating</span>
-              <span class="font-bold text-orange-600" :text="conquestStats()?.get('powerRating') ?? '—'"></span>
+              <span class="text-sm text-gray-600 dark:text-slate-400">Power Rating</span>
+              <span class="font-bold text-orange-600" :text="tb.conquestStats.powerRating"></span>
             </div>
             <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700/50 rounded-xl">
-              <span class="text-gray-600 text-sm dark:text-slate-400">Longest Streak</span>
-              <span class="font-bold text-gray-900 dark:text-white" :text="(conquestStats()?.get('longestConquestStreak') ?? 0) + ' wins'"></span>
+              <span class="text-sm text-gray-600 dark:text-slate-400">Longest Streak</span>
+              <span class="font-bold dark:text-white" :text="tb.conquestStats.longestConquestStreak + ' wins'"></span>
             </div>
             <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700/50 rounded-xl">
-              <span class="text-gray-600 text-sm dark:text-slate-400">Total Area Conquered</span>
-              <span class="font-bold text-gray-900 dark:text-white" :text="((conquestStats()?.get('totalAreaConquered') ?? 0) / 1000).toFixed(1) + ' km²'"></span>
-            </div>
-            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700/50 rounded-xl">
-              <span class="text-gray-600 text-sm dark:text-slate-400">Rivals Beaten</span>
-              <span class="font-bold text-gray-900 dark:text-white" :text="conquestStats()?.get('uniqueRivalsBeaten') ?? 0"></span>
+              <span class="text-sm text-gray-600 dark:text-slate-400">Rivals Beaten</span>
+              <span class="font-bold dark:text-white" :text="tb.conquestStats.uniqueRivalsBeaten"></span>
             </div>
           </div>
         </div>
 
-        <!-- Under Attack -->
-        <div class="p-6 bg-white dark:bg-slate-800 border border-gray-100 rounded-2xl dark:border-slate-700 shadow-sm">
-          <h3 class="flex items-center mb-4 font-bold text-gray-900 text-lg dark:text-white">
-            <span class="mr-2 h-2 w-2 bg-red-500 rounded-full animate-pulse"></span>
+        <div class="card">
+          <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-4 flex items-center">
+            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse mr-2"></span>
             Under Attack
           </h3>
-          <div @show="!loading()" class="space-y-3">
-            <template @for="conquest in conquests().filter(c => c.get('defender_id') === user()?.id && c.get('status') === 'active').slice(0, 5)">
-              <div class="flex gap-3 items-center p-3 bg-red-50 dark:bg-red-900/10 rounded-xl">
-                <div class="flex items-center justify-center h-8 w-8 font-bold text-red-600 text-xs bg-red-100 dark:bg-red-900/30 rounded-full" :text="(conquest.get('attackerName') || 'U').charAt(0)"></div>
+          <div class="space-y-3">
+            <template :for="conquest in underAttack">
+              <div class="flex items-center gap-3 p-3 bg-red-50 dark:bg-red-900/10 rounded-xl">
+                <div class="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 text-xs font-bold" :text="conquest.attackerName.charAt(0)"></div>
                 <div class="flex-1 min-w-0">
-                  <p class="font-semibold text-gray-900 text-sm truncate dark:text-white" :text="conquest.get('attackerName') || 'Unknown'"></p>
-                  <p class="text-red-600 text-xs" :text="'Targeting ' + (conquest.get('territoryName') || 'your territory')"></p>
+                  <p class="text-sm font-semibold text-gray-900 dark:text-white truncate" :text="conquest.attackerName"></p>
+                  <p class="text-xs text-red-600" :text="'Targeting ' + conquest.territoryName"></p>
                 </div>
-                <StxLink :to="'/territory/' + conquest.get('territory_id')" class="px-2 py-1 font-medium text-white text-xs bg-red-600 hover:bg-red-700 rounded-lg transition">Defend</StxLink>
+                <StxLink :to="'/territory/' + conquest.territory_id" class="text-xs px-2 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">Defend</StxLink>
               </div>
             </template>
-            <div @show="conquests().filter(c => c.get('defender_id') === user()?.id && c.get('status') === 'active').length === 0" class="py-6 text-center text-gray-400 text-sm dark:text-slate-500">
-              <p>No active threats. Your empire is safe... for now.</p>
+            <div :if="underAttack.length === 0" class="text-center py-6 text-gray-400 dark:text-slate-500 text-sm">
+              <p>No active threats.</p>
             </div>
           </div>
-        </div>
-
-        <!-- Top Rivals -->
-        <div class="p-6 bg-white dark:bg-slate-800 border border-gray-100 rounded-2xl dark:border-slate-700 shadow-sm">
-          <h3 class="flex items-center mb-4 font-bold text-gray-900 text-lg dark:text-white">
-            <svg class="mr-2 h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            Top Rivals
-          </h3>
-          <p class="py-6 text-center text-gray-400 text-sm dark:text-slate-500">Rivals will appear as you battle for territories.</p>
         </div>
       </div>
     </div>

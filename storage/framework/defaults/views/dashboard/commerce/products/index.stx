@@ -531,7 +531,7 @@ async function addProduct(): Promise<void> {
     </div>
   @endif
 </div>
-<script client>
+<script client lang="ts">
 import { onMount } from 'stx'
 
 onMount(async () => {

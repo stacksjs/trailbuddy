@@ -28,7 +28,7 @@ const alignClass = align === 'right' ? 'right-0' : 'left-0'
       <slot />
     </div>
   </div>
-<script client>
+<script client lang="ts">
 var _root = useRef('pageRoot')
 onMount(function() {
   var el = _root.current;

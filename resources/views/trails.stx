@@ -3,91 +3,69 @@
 @section('title', 'Explore Trails — TrailBuddy')
 
 @section('content')
-<script client>
+<script client lang="ts">
   useHead({ title: 'Explore Trails — TrailBuddy' })
 
-  const loading = state(true)
-  const trails = state([])
+  const tb = getStore<any>('tb')
   const search = state('')
-  const difficulty = state('all')
-  const sort = state('rating')
+  const difficulty = state<'all' | 'easy' | 'moderate' | 'hard'>('all')
 
-  const filteredTrails = () => {
-    let result = trails()
+  const filtered = derived(() => {
+    if (!tb) return []
     const q = search().toLowerCase()
     const d = difficulty()
-
-    if (q) result = result.filter(t => (t.get('name') || '').toLowerCase().includes(q) || (t.get('location') || '').toLowerCase().includes(q))
-    if (d !== 'all') result = result.filter(t => t.get('difficulty') === d)
-
-    return result
-  }
-
-  onMount(() => {
-    trails.set(window.tb.getWrapped('trails'))
-    loading.set(false)
+    return tb.trails.filter((t: any) =>
+      (q === '' || t.name.toLowerCase().includes(q) || t.location.toLowerCase().includes(q))
+      && (d === 'all' || t.difficulty === d)
+    )
   })
 </script>
 
   <div class="mx-auto px-4 py-6 sm:px-6 lg:px-8 max-w-7xl">
     <div class="flex flex-col gap-4 items-start justify-between sm:flex-row sm:items-center mb-6">
       <h1 class="font-bold text-2xl dark:text-white">Explore Trails</h1>
-      <div class="flex gap-2 w-full sm:w-auto">
-        <input
-          type="search"
-          :value="search"
-          @input="e => search.set(e.target.value)"
-          placeholder="Search trails..."
-          class="flex-1 px-4 py-2 sm:w-64 text-gray-900 text-sm dark:text-white bg-white dark:bg-slate-700 border border-gray-200 rounded-lg dark:border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500 transition"
-        />
-      </div>
+      <input
+        type="search"
+        :value="search"
+        @input="e => search.set(e.target.value)"
+        placeholder="Search trails..."
+        class="flex-1 px-4 py-2 sm:w-64 text-gray-900 text-sm dark:text-white bg-white dark:bg-slate-700 border border-gray-200 rounded-lg dark:border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500 transition"
+      />
     </div>
 
     <!-- Filters -->
     <div class="flex overflow-x-auto gap-2 mb-6 pb-2">
-      <button @click="difficulty.set('all')" :class="text-gray-600 text-white' dark:text-slate-400' dark:bg-slate-800 : ? 'all' 'bg-emerald-600 'bg-gray-100 === difficulty()" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">All Levels</button>
-      <button @click="difficulty.set('easy')" :class="text-gray-600 text-white' dark:text-slate-400' dark:bg-slate-800 : ? 'bg-emerald-600 'bg-gray-100 'easy' === difficulty()" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Easy</button>
-      <button @click="difficulty.set('moderate')" :class="text-gray-600 text-white' dark:text-slate-400' dark:bg-slate-800 : ? 'bg-emerald-600 'bg-gray-100 'moderate' === difficulty()" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Moderate</button>
-      <button @click="difficulty.set('hard')" :class="text-gray-600 text-white' dark:text-slate-400' dark:bg-slate-800 : ? 'bg-emerald-600 'bg-gray-100 'hard' === difficulty()" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Hard</button>
-    </div>
-
-    <!-- Loading -->
-    <div @show="loading()" class="flex items-center justify-center py-20">
-      <div class="h-8 w-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+      <button @click="difficulty.set('all')" :class="difficulty === 'all' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">All Levels</button>
+      <button @click="difficulty.set('easy')" :class="difficulty === 'easy' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Easy</button>
+      <button @click="difficulty.set('moderate')" :class="difficulty === 'moderate' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Moderate</button>
+      <button @click="difficulty.set('hard')" :class="difficulty === 'hard' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Hard</button>
     </div>
 
     <!-- Trail grid -->
-    <div @show="!loading()" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      <template @for="trail in filteredTrails()">
-        <StxLink :to="'/trail/' + trail.get('id')" class="block overflow-hidden p-0 hover:shadow-lg transition card group">
-          <!-- Trail image -->
+    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <template :for="trail in filtered">
+        <StxLink :to="'/trail/' + trail.id" class="block overflow-hidden p-0 hover:shadow-lg transition card group">
           <div class="overflow-hidden relative h-48">
-            <img :src="trail.get('image') || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&h=600&fit=crop'" :alt="trail.get('name')" class="object-cover h-full w-full duration-300 transition-transform group-hover:scale-105" />
+            <img :src="trail.image || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&h=600&fit=crop'" :alt="trail.name" class="object-cover h-full w-full duration-300 transition-transform group-hover:scale-105" />
             <div class="absolute left-3 top-3">
-              <span :class="py-1 capitalize font-semibold text-xs rounded-full 'moderate') 'px-2 (trail.get('difficulty') + || difficulty-'" :text="trail.get('difficulty') || 'moderate'"></span>
+              <span :class="'px-2 py-1 capitalize font-semibold text-xs rounded-full difficulty-' + trail.difficulty" :text="trail.difficulty"></span>
             </div>
-            <button class="absolute right-3 top-3 p-2 bg-white/90 hover:bg-white rounded-full shadow-sm backdrop-blur-sm transition">
-              <svg class="h-4 w-4 text-gray-600 hover:text-red-500 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
-            </button>
           </div>
-          <!-- Trail info -->
           <div class="p-4">
             <div class="flex items-start justify-between mb-1">
-              <h3 class="font-bold text-gray-900 dark:text-white group-hover:text-emerald-600 transition" :text="trail.get('name') || 'Unknown Trail'"></h3>
+              <h3 class="font-bold text-gray-900 dark:text-white group-hover:text-emerald-600 transition" :text="trail.name"></h3>
               <div class="flex gap-1 items-center shrink-0 text-sm">
                 <svg class="h-4 w-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
-                <span class="font-semibold" :text="trail.get('rating') || '0'"></span>
+                <span class="font-semibold" :text="trail.rating"></span>
               </div>
             </div>
-            <p class="mb-3 text-gray-500 text-sm dark:text-slate-400" :text="trail.get('location') || ''"></p>
+            <p class="mb-3 text-gray-500 text-sm dark:text-slate-400" :text="trail.location"></p>
             <div class="flex gap-4 items-center pt-3 text-gray-500 text-xs dark:text-slate-400 border-gray-100 border-t dark:border-slate-700">
-              <span :text="(trail.get('distance') || 0) + ' mi'"></span>
-              <span :text="(trail.get('elevation') || 0).toLocaleString() + ' ft elev'"></span>
-              <span :text="'~' + (trail.get('estimatedTime') || trail.get('time') || '0m')"></span>
+              <span :text="trail.distance + ' mi'"></span>
+              <span :text="trail.elevation.toLocaleString() + ' ft elev'"></span>
+              <span :text="'~' + trail.estimatedTime"></span>
             </div>
           </div>
         </StxLink>
@@ -95,9 +73,15 @@
     </div>
 
     <!-- Empty state -->
-    <div @show="!loading() && filteredTrails().length === 0" class="py-16 text-center">
-      <p class="font-medium text-gray-500 dark:text-slate-400">No trails match your search</p>
-      <p class="mt-1 text-gray-400 text-sm dark:text-slate-500">Try adjusting your filters</p>
+    <div :if="filtered.length === 0" class="py-20 text-center">
+      <div class="w-20 h-20 mx-auto mb-6 bg-emerald-100 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center">
+        <svg class="w-10 h-10 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No trails found</h3>
+      <p class="text-gray-500 dark:text-slate-400 max-w-sm mx-auto mb-6">We couldn't find any trails matching your criteria.</p>
+      <button @click="search.set(''); difficulty.set('all')" class="px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Clear Filters</button>
     </div>
   </div>
 @endsection

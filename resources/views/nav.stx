@@ -1,5 +1,5 @@
-<script client>
-  const navLinks = state([
+<script client lang="ts">
+  if (typeof navLinks === 'undefined') var navLinks = state([
     { to: '/feed', label: 'Feed' },
     { to: '/trails', label: 'Trails' },
     { to: '/territories', label: 'Territories' },

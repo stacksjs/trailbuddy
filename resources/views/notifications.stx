@@ -3,138 +3,89 @@
 @section('title', 'Notifications — TrailBuddy')
 
 @section('content')
-<script client>
+<script client lang="ts">
   useHead({ title: 'Notifications — TrailBuddy' })
 
-  const loading = state(true)
-  const notifications = state([])
-  const filter = state('all')
+  const tb = getStore<any>('tb')
+  const filter = state<'all' | 'unread' | 'conquest' | 'kudos' | 'challenge'>('all')
 
-  const filteredNotifications = () => {
-    const all = notifications()
+  const filtered = derived(() => {
+    if (!tb) return []
     const f = filter()
-    if (f === 'all') return all
-    if (f === 'unread') return all.filter(n => !n.read)
-    return all.filter(n => n.type === f || (f === 'conquest' && n.type.startsWith('conquest')))
-  }
-
-  const unreadCount = () => notifications().filter(n => !n.read).length
-
-  function markAllRead() {
-    const updated = notifications().map(n => ({ ...n, read: true }))
-    notifications.set(updated)
-    window.tb.set('notifications', updated)
-  }
-
-  function markRead(id) {
-    const updated = notifications().map(n => n.id === id ? { ...n, read: true } : n)
-    notifications.set(updated)
-    window.tb.set('notifications', updated)
-  }
-
-  const iconForType = (type) => {
-    if (type === 'kudos') return { bg: 'bg-red-100 dark:bg-red-900/20', color: 'text-red-500' }
-    if (type === 'comment') return { bg: 'bg-blue-100 dark:bg-blue-900/20', color: 'text-blue-500' }
-    if (type === 'conquest_attack') return { bg: 'bg-orange-100 dark:bg-orange-900/20', color: 'text-orange-500' }
-    if (type === 'conquest_defend') return { bg: 'bg-emerald-100 dark:bg-emerald-900/20', color: 'text-emerald-500' }
-    if (type === 'conquest_win') return { bg: 'bg-yellow-100 dark:bg-yellow-900/20', color: 'text-yellow-500' }
-    if (type === 'challenge') return { bg: 'bg-purple-100 dark:bg-purple-900/20', color: 'text-purple-500' }
-    if (type === 'achievement') return { bg: 'bg-yellow-100 dark:bg-yellow-900/20', color: 'text-yellow-500' }
-    if (type === 'club') return { bg: 'bg-indigo-100 dark:bg-indigo-900/20', color: 'text-indigo-500' }
-    return { bg: 'bg-gray-100 dark:bg-slate-700', color: 'text-gray-500' }
-  }
-
-  onMount(() => {
-    notifications.set(window.tb.getList('notifications'))
-    loading.set(false)
+    if (f === 'all') return tb.notifications
+    if (f === 'unread') return tb.notifications.filter((n: any) => !n.read)
+    return tb.notifications.filter((n: any) =>
+      n.type === f || (f === 'conquest' && n.type.startsWith('conquest'))
+    )
   })
+
+  const iconBg = (type: string): string => {
+    if (type === 'kudos') return 'bg-red-100 dark:bg-red-900/20'
+    if (type === 'comment') return 'bg-blue-100 dark:bg-blue-900/20'
+    if (type === 'conquest_attack') return 'bg-orange-100 dark:bg-orange-900/20'
+    if (type === 'conquest_defend') return 'bg-emerald-100 dark:bg-emerald-900/20'
+    if (type === 'conquest_win') return 'bg-yellow-100 dark:bg-yellow-900/20'
+    if (type === 'challenge') return 'bg-purple-100 dark:bg-purple-900/20'
+    if (type === 'achievement') return 'bg-yellow-100 dark:bg-yellow-900/20'
+    if (type === 'club') return 'bg-indigo-100 dark:bg-indigo-900/20'
+    return 'bg-gray-100 dark:bg-slate-700'
+  }
+
+  const iconColor = (type: string): string => {
+    if (type === 'kudos') return 'text-red-500'
+    if (type === 'comment') return 'text-blue-500'
+    if (type === 'conquest_attack') return 'text-orange-500'
+    if (type === 'conquest_defend') return 'text-emerald-500'
+    if (type === 'conquest_win' || type === 'achievement') return 'text-yellow-500'
+    if (type === 'challenge') return 'text-purple-500'
+    if (type === 'club') return 'text-indigo-500'
+    return 'text-gray-500'
+  }
 </script>
 
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
         <h1 class="text-2xl font-bold dark:text-white">Notifications</h1>
-        <span @show="unreadCount() > 0" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-500 text-white" :text="unreadCount()"></span>
+        <span :if="tb.unreadCount > 0" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-500 text-white" :text="tb.unreadCount"></span>
       </div>
-      <button @show="unreadCount() > 0" @click="markAllRead()" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition">Mark all read</button>
+      <button :if="tb.unreadCount > 0" @click="tb.markAllNotificationsRead()" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition">Mark all read</button>
     </div>
 
     <!-- Filter tabs -->
     <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
-      <button @click="filter.set('all')" :class="filter() === 'all' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">All</button>
-      <button @click="filter.set('unread')" :class="filter() === 'unread' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Unread</button>
-      <button @click="filter.set('conquest')" :class="filter() === 'conquest' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Conquests</button>
-      <button @click="filter.set('kudos')" :class="filter() === 'kudos' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Kudos</button>
-      <button @click="filter.set('challenge')" :class="filter() === 'challenge' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Challenges</button>
-    </div>
-
-    <!-- Loading -->
-    <div @show="loading()" class="flex items-center justify-center py-20">
-      <div class="animate-spin w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full"></div>
+      <button @click="filter.set('all')" :class="filter === 'all' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">All</button>
+      <button @click="filter.set('unread')" :class="filter === 'unread' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Unread</button>
+      <button @click="filter.set('conquest')" :class="filter === 'conquest' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Conquests</button>
+      <button @click="filter.set('kudos')" :class="filter === 'kudos' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Kudos</button>
+      <button @click="filter.set('challenge')" :class="filter === 'challenge' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Challenges</button>
     </div>
 
     <!-- Notification list -->
-    <div @show="!loading()" class="space-y-2">
-      <template @for="notif in filteredNotifications()">
-        <StxLink :to="notif.link || '#'" @click="markRead(notif.id)" class="card flex items-start gap-4 transition block" :class="!notif.read ? 'bg-emerald-50/50 dark:bg-emerald-900/5 border-emerald-200 dark:border-emerald-800/30' : ''">
-          <!-- Icon -->
-          <div
-            class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-            :class="iconForType(notif.type).bg"
-          >
-            <!-- Kudos -->
-            <svg @show="notif.type === 'kudos'" :class="iconForType(notif.type).color" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-            <!-- Comment -->
-            <svg @show="notif.type === 'comment'" :class="iconForType(notif.type).color" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            <!-- Conquest attack -->
-            <svg @show="notif.type === 'conquest_attack'" :class="iconForType(notif.type).color" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-            </svg>
-            <!-- Conquest defend -->
-            <svg @show="notif.type === 'conquest_defend'" :class="iconForType(notif.type).color" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            <!-- Conquest win -->
-            <svg @show="notif.type === 'conquest_win'" :class="iconForType(notif.type).color" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-            </svg>
-            <!-- Challenge -->
-            <svg @show="notif.type === 'challenge'" :class="iconForType(notif.type).color" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
-            </svg>
-            <!-- Achievement -->
-            <svg @show="notif.type === 'achievement'" :class="iconForType(notif.type).color" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-            </svg>
-            <!-- Club -->
-            <svg @show="notif.type === 'club'" :class="iconForType(notif.type).color" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+    <div class="space-y-2">
+      <template :for="notif in filtered">
+        <StxLink :to="notif.link || '#'" @click="tb.markNotificationRead(notif.id)" class="card flex items-start gap-4 transition block" :class="!notif.read ? 'bg-emerald-50/50 dark:bg-emerald-900/5 border-emerald-200 dark:border-emerald-800/30' : ''">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" :class="iconBg(notif.type)">
+            <span :class="iconColor(notif.type)" class="font-bold">●</span>
           </div>
-
-          <!-- Content -->
           <div class="flex-1 min-w-0">
             <p class="text-sm font-semibold text-gray-900 dark:text-white" :text="notif.title"></p>
             <p class="text-sm text-gray-600 dark:text-slate-400 mt-0.5" :text="notif.message"></p>
-            <p class="text-xs text-gray-400 dark:text-slate-500 mt-1" :text="window.tb.timeAgo(notif.created_at)"></p>
+            <p class="text-xs text-gray-400 dark:text-slate-500 mt-1" :text="tb.timeAgo(notif.created_at)"></p>
           </div>
-
-          <!-- Unread dot -->
-          <div @show="!notif.read" class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0 mt-2"></div>
+          <div :if="!notif.read" class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0 mt-2"></div>
         </StxLink>
       </template>
 
       <!-- Empty state -->
-      <div @show="filteredNotifications().length === 0" class="text-center py-16">
-        <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-slate-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-        </svg>
-        <p class="text-gray-500 dark:text-slate-400 font-medium">No notifications</p>
-        <p class="text-sm text-gray-400 dark:text-slate-500 mt-1">You're all caught up!</p>
+      <div :if="filtered.length === 0" class="py-20 text-center">
+        <div class="w-20 h-20 mx-auto mb-6 bg-emerald-100 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center">
+          <svg class="w-10 h-10 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">You're all caught up!</h3>
+        <p class="text-gray-500 dark:text-slate-400 max-w-sm mx-auto">No new notifications.</p>
       </div>
     </div>
   </div>

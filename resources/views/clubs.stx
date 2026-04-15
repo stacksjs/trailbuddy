@@ -3,24 +3,18 @@
 @section('title', 'Clubs — TrailBuddy')
 
 @section('content')
-<script client>
+<script client lang="ts">
   useHead({ title: 'Clubs — TrailBuddy' })
 
-  const loading = state(true)
-  const clubs = state([])
-  const filter = state('all')
+  const tb = getStore<any>('tb')
+  const filter = state<'all' | 'mine' | 'Running' | 'Hiking' | 'Territory Game'>('all')
 
-  const filteredClubs = () => {
-    const all = clubs()
+  const filtered = derived(() => {
+    if (!tb) return []
     const f = filter()
-    if (f === 'all') return all
-    if (f === 'mine') return all.filter(c => c.members && c.members.includes(1))
-    return all.filter(c => c.type === f)
-  }
-
-  onMount(() => {
-    clubs.set(window.tb.getList('clubs'))
-    loading.set(false)
+    if (f === 'all') return tb.clubs
+    if (f === 'mine') return tb.clubs.filter((c: any) => c.members?.includes(tb.currentUserId))
+    return tb.clubs.filter((c: any) => c.type === f)
   })
 </script>
 
@@ -30,81 +24,42 @@
         <h1 class="text-2xl font-bold dark:text-white">Clubs</h1>
         <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">Join a community of trail enthusiasts</p>
       </div>
-      <button class="px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition flex items-center">
-        <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        Create Club
-      </button>
+      <button class="px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">+ Create Club</button>
     </div>
 
-    <!-- Filter tabs -->
     <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
-      <button @click="filter.set('all')" :class="filter() === 'all' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">All Clubs</button>
-      <button @click="filter.set('mine')" :class="filter() === 'mine' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">My Clubs</button>
-      <button @click="filter.set('Running')" :class="filter() === 'Running' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Running</button>
-      <button @click="filter.set('Hiking')" :class="filter() === 'Hiking' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Hiking</button>
-      <button @click="filter.set('Territory Game')" :class="filter() === 'Territory Game' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Territory Game</button>
+      <button @click="filter.set('all')" :class="filter === 'all' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">All Clubs</button>
+      <button @click="filter.set('mine')" :class="filter === 'mine' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">My Clubs</button>
+      <button @click="filter.set('Running')" :class="filter === 'Running' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Running</button>
+      <button @click="filter.set('Hiking')" :class="filter === 'Hiking' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Hiking</button>
+      <button @click="filter.set('Territory Game')" :class="filter === 'Territory Game' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Territory Game</button>
     </div>
 
-    <!-- Loading -->
-    <div @show="loading()" class="flex items-center justify-center py-20">
-      <div class="animate-spin w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full"></div>
-    </div>
-
-    <!-- Club cards -->
-    <div @show="!loading()" class="space-y-6">
-      <template @for="club in filteredClubs()">
+    <div class="space-y-6">
+      <template :for="club in filtered">
         <div class="card">
           <div class="flex flex-col sm:flex-row gap-6">
-            <!-- Club icon -->
-            <div class="shrink-0">
-              <div
-                class="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold"
-                :class="club.type === 'Running' ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600' : club.type === 'Hiking' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600' : club.type === 'Territory Game' ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600' : 'bg-purple-100 dark:bg-purple-900/20 text-purple-600'"
-                :text="club.name.charAt(0)"
-              ></div>
-            </div>
-
-            <!-- Club info -->
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold shrink-0" :class="club.type === 'Running' ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600' : club.type === 'Hiking' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600' : club.type === 'Territory Game' ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600' : 'bg-purple-100 dark:bg-purple-900/20 text-purple-600'" :text="club.name.charAt(0)"></div>
             <div class="flex-1 min-w-0">
               <div class="flex items-start justify-between gap-4 mb-2">
                 <div>
                   <h3 class="font-bold text-lg text-gray-900 dark:text-white" :text="club.name"></h3>
                   <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-slate-400 mt-1">
-                    <span class="flex items-center gap-1">
-                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      </svg>
-                      <span :text="club.location"></span>
-                    </span>
+                    <span :text="club.location"></span>
                     <span :text="club.memberCount + ' members'"></span>
                     <span class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-700 font-medium" :text="club.type"></span>
-                    <span @show="club.isPrivate" class="px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-medium">Private</span>
+                    <span :if="club.isPrivate" class="px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-medium">Private</span>
                   </div>
                 </div>
-                <button
-                  class="shrink-0 px-4 py-2 text-sm font-semibold rounded-lg transition"
-                  :class="club.members && club.members.includes(1) ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-200' : 'bg-emerald-600 text-white hover:bg-emerald-700'"
-                  :text="club.members && club.members.includes(1) ? 'Joined' : 'Join'"
-                ></button>
+                <button class="shrink-0 px-4 py-2 text-sm font-semibold rounded-lg transition" :class="club.members?.includes(tb.currentUserId) ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'" :text="club.members?.includes(tb.currentUserId) ? 'Joined' : 'Join'"></button>
               </div>
-
               <p class="text-sm text-gray-600 dark:text-slate-400 mb-4" :text="club.description"></p>
-
-              <!-- Club stats -->
-              <div class="flex items-center gap-6 pt-3 border-t border-gray-100 dark:border-slate-700">
-                <div class="flex items-center gap-1.5 text-sm">
-                  <svg class="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                  </svg>
+              <div class="flex items-center gap-6 pt-3 border-t border-gray-100 dark:border-slate-700 text-sm">
+                <div class="flex items-center gap-1.5">
                   <span class="font-semibold dark:text-white" :text="club.weeklyDistance + ' mi'"></span>
                   <span class="text-gray-500 dark:text-slate-400">this week</span>
                 </div>
-                <div class="flex items-center gap-1.5 text-sm">
-                  <svg class="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
+                <div class="flex items-center gap-1.5">
                   <span class="font-semibold dark:text-white" :text="club.activitiesThisWeek"></span>
                   <span class="text-gray-500 dark:text-slate-400">activities</span>
                 </div>
@@ -114,13 +69,15 @@
         </div>
       </template>
 
-      <!-- Empty state -->
-      <div @show="filteredClubs().length === 0" class="text-center py-16">
-        <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-slate-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-        <p class="text-gray-500 dark:text-slate-400 font-medium">No clubs found</p>
-        <p class="text-sm text-gray-400 dark:text-slate-500 mt-1">Create one and start building your community!</p>
+      <div :if="filtered.length === 0" class="py-20 text-center">
+        <div class="w-20 h-20 mx-auto mb-6 bg-indigo-100 dark:bg-indigo-900/20 rounded-2xl flex items-center justify-center">
+          <svg class="w-10 h-10 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No clubs found</h3>
+        <p class="text-gray-500 dark:text-slate-400 max-w-sm mx-auto mb-6">Join a running club to train with others and share routes.</p>
+        <button class="px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Create a Club</button>
       </div>
     </div>
   </div>

@@ -3,102 +3,72 @@
 @section('title', 'Live Battles — TrailBuddy')
 
 @section('content')
-<script client>
+<script client lang="ts">
   useHead({ title: 'Live Battles — TrailBuddy' })
 
-  const loading = state(true)
-  const battles = state([])
-  const liveBattles = state([])
-  const period = state('today')
+  const tb = getStore<any>('tb')
+  const period = state<'today' | 'week' | 'all'>('today')
 
-  const filteredBattles = () => {
-    const all = battles()
+  const liveBattles = derived(() => tb ? tb.conquests.filter((c: any) => c.status === 'active') : [])
+
+  const filteredBattles = derived(() => {
+    if (!tb) return []
     const p = period()
-    const now = new Date()
-
+    const now = Date.now()
     if (p === 'today') {
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      return all.filter(b => new Date(b.get('created_at')) >= todayStart)
+      const start = new Date().setHours(0, 0, 0, 0)
+      return tb.conquests.filter((b: any) => new Date(b.created_at).getTime() >= start)
     }
     if (p === 'week') {
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-      return all.filter(b => new Date(b.get('created_at')) >= weekAgo)
+      const weekAgo = now - 7 * 86400000
+      return tb.conquests.filter((b: any) => new Date(b.created_at).getTime() >= weekAgo)
     }
-    return all
-  }
-
-  onMount(() => {
-    const all = window.tb.getWrapped('conquests')
-    battles.set(all)
-    liveBattles.set(all.filter(b => b.get('status') === 'active'))
-    loading.set(false)
+    return tb.conquests
   })
 </script>
 
   <div class="mx-auto px-4 py-6 sm:px-6 lg:px-8 max-w-7xl">
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h1 class="flex gap-2 items-center font-bold text-2xl dark:text-white">
-          Live Battles
-          <span class="flex gap-1 items-center px-2 py-1 font-medium text-red-600 text-xs bg-red-50 dark:bg-red-900/20 rounded-full">
-            <span class="h-1.5 w-1.5 bg-red-500 rounded-full animate-pulse"></span>
-            Live
-          </span>
-        </h1>
-        <p class="mt-1 text-gray-500 text-sm dark:text-slate-400">Watch territory battles unfold in real time</p>
-      </div>
+    <div class="mb-6">
+      <h1 class="flex gap-2 items-center font-bold text-2xl dark:text-white">
+        Live Battles
+        <span class="flex gap-1 items-center px-2 py-1 font-medium text-red-600 text-xs bg-red-50 dark:bg-red-900/20 rounded-full">
+          <span class="h-1.5 w-1.5 bg-red-500 rounded-full animate-pulse"></span>
+          Live
+        </span>
+      </h1>
+      <p class="mt-1 text-gray-500 text-sm dark:text-slate-400">Watch territory battles unfold in real time</p>
     </div>
 
     <div class="grid gap-8 lg:grid-cols-3">
-      <!-- Main feed -->
       <div class="lg:col-span-2">
-        <!-- Live battles section -->
-        <div @show="!loading() && liveBattles().length > 0" class="mb-8">
+        <!-- Live battles -->
+        <div :if="liveBattles.length > 0" class="mb-8">
           <h2 class="flex gap-2 items-center mb-4 font-bold text-gray-900 text-lg dark:text-white">
             <span class="h-2 w-2 bg-red-500 rounded-full animate-pulse"></span>
             Happening Now
           </h2>
           <div class="space-y-4">
-            <template @for="battle in liveBattles()">
+            <template :for="battle in liveBattles">
               <div class="bg-orange-50/50 dark:bg-orange-900/5 border-2 border-orange-200 dark:border-orange-800/50 card">
                 <div class="flex gap-4 items-center">
-                  <!-- Attacker -->
                   <div class="flex flex-1 gap-2 items-center">
-                    <div class="flex items-center justify-center h-10 w-10 font-bold text-orange-600 text-sm bg-orange-100 dark:bg-orange-900/30 rounded-full" :text="(battle.get('attackerName') || 'A').charAt(0)"></div>
+                    <div class="flex items-center justify-center h-10 w-10 font-bold text-orange-600 text-sm bg-orange-100 dark:bg-orange-900/30 rounded-full" :text="battle.attackerName.charAt(0)"></div>
                     <div>
-                      <p class="font-semibold text-sm dark:text-white" :text="battle.get('attackerName') || 'Runner'"></p>
+                      <p class="font-semibold text-sm dark:text-white" :text="battle.attackerName"></p>
                       <p class="text-orange-600 text-xs">Attacking</p>
                     </div>
                   </div>
-
-                  <!-- VS indicator with pulse -->
-                  <div class="shrink-0">
-                    <div class="flex items-center justify-center h-8 w-8 bg-orange-500 rounded-full animate-pulse">
-                      <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  <!-- Defender -->
+                  <div class="shrink-0 w-8 h-8 bg-orange-500 rounded-full animate-pulse flex items-center justify-center text-white">⚡</div>
                   <div class="flex flex-1 gap-2 items-center justify-end text-right">
                     <div>
-                      <p class="font-semibold text-sm dark:text-white" :text="battle.get('defenderName') || 'Defender'"></p>
+                      <p class="font-semibold text-sm dark:text-white" :text="battle.defenderName"></p>
                       <p class="text-blue-600 text-xs">Defending</p>
                     </div>
-                    <div class="flex items-center justify-center h-10 w-10 font-bold text-blue-600 text-sm bg-blue-100 dark:bg-blue-900/30 rounded-full" :text="(battle.get('defenderName') || 'D').charAt(0)"></div>
+                    <div class="flex items-center justify-center h-10 w-10 font-bold text-blue-600 text-sm bg-blue-100 dark:bg-blue-900/30 rounded-full" :text="battle.defenderName.charAt(0)"></div>
                   </div>
                 </div>
-
-                <div class="flex items-center justify-between mt-3 text-gray-500 text-xs dark:text-slate-400">
-                  <StxLink :to="'/territory/' + battle.get('territory_id')" class="font-medium text-emerald-600 hover:underline" :text="battle.get('territoryName') || 'Territory'"></StxLink>
-                  <span class="flex gap-1 items-center">
-                    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    <span :text="(battle.get('spectatorCount') || 0) + ' watching'"></span>
-                  </span>
+                <div class="mt-3 text-xs text-center">
+                  <StxLink :to="'/territory/' + battle.territory_id" class="text-emerald-600 hover:underline font-medium" :text="battle.territoryName"></StxLink>
                 </div>
               </div>
             </template>
@@ -109,121 +79,61 @@
         <div class="flex items-center justify-between mb-4">
           <h2 class="font-bold text-gray-900 text-lg dark:text-white">Recent Battles</h2>
           <div class="flex gap-2">
-            <button @click="period.set('today')" :class="text-gray-600 text-white dark:text-slate-400' dark:text-slate-900' dark:bg-slate-800 dark:bg-white : ? 'bg-gray-100 'bg-gray-900 'today' === period()" class="px-3 py-1.5 font-medium text-xs rounded-lg transition">Today</button>
-            <button @click="period.set('week')" :class="text-gray-600 text-white dark:text-slate-400' dark:text-slate-900' dark:bg-slate-800 dark:bg-white : ? 'bg-gray-100 'bg-gray-900 'week' === period()" class="px-3 py-1.5 font-medium text-xs rounded-lg transition">This Week</button>
-            <button @click="period.set('all')" :class="text-gray-600 text-white dark:text-slate-400' dark:text-slate-900' dark:bg-slate-800 dark:bg-white : ? 'all' 'bg-gray-100 'bg-gray-900 === period()" class="px-3 py-1.5 font-medium text-xs rounded-lg transition">All Time</button>
+            <button @click="period.set('today')" :class="period === 'today' ? 'bg-gray-900 text-white dark:bg-white dark:text-slate-900' : 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-400'" class="px-3 py-1.5 font-medium text-xs rounded-lg transition">Today</button>
+            <button @click="period.set('week')" :class="period === 'week' ? 'bg-gray-900 text-white dark:bg-white dark:text-slate-900' : 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-400'" class="px-3 py-1.5 font-medium text-xs rounded-lg transition">This Week</button>
+            <button @click="period.set('all')" :class="period === 'all' ? 'bg-gray-900 text-white dark:bg-white dark:text-slate-900' : 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-400'" class="px-3 py-1.5 font-medium text-xs rounded-lg transition">All Time</button>
           </div>
         </div>
 
-        <!-- Loading -->
-        <div @show="loading()" class="flex items-center justify-center py-20">
-          <div class="h-8 w-8 border-3 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-
-        <!-- Battle timeline -->
-        <div @show="!loading()" class="space-y-3">
-          <template @for="battle in filteredBattles()">
+        <div class="space-y-3">
+          <template :for="battle in filteredBattles">
             <div class="flex gap-4 items-center card">
-              <!-- Status icon -->
-              <div
-                class="flex items-center justify-center shrink-0 h-10 w-10 rounded-full"
-                :class="dark:bg-emerald-900/20' dark:bg-orange-900/20' : ? 'bg-emerald-100 'bg-orange-100 'conquered' === battle.get('status')"
-              >
-                <svg
-                  class="h-5 w-5"
-                  :class=": ? 'conquered' 'text-emerald-600' 'text-orange-600' === battle.get('status')"
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                >
-                  <path @show="battle.get('status') === 'conquered'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                  <path @show="battle.get('status') !== 'conquered'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
+              <div class="flex items-center justify-center shrink-0 h-10 w-10 rounded-full" :class="battle.status === 'conquered' ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600' : 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600'">
+                <span class="text-sm font-bold" :text="battle.status === 'conquered' ? '⚔' : '🛡'"></span>
               </div>
-
-              <!-- Battle info -->
               <div class="flex-1 min-w-0">
-                <p class="text-gray-900 text-sm dark:text-white">
-                  <span class="font-semibold" :text="battle.get('attackerName') || 'Runner'"></span>
-                  <span :text="battle.get('status') === 'conquered' ? ' conquered ' : ' failed to conquer '"></span>
-                  <StxLink :to="'/territory/' + battle.get('territory_id')" class="font-semibold text-emerald-600 hover:underline" :text="battle.get('territoryName') || 'territory'"></StxLink>
+                <p class="text-sm text-gray-900 dark:text-white">
+                  <span class="font-semibold" :text="battle.attackerName"></span>
+                  <span :text="battle.status === 'conquered' ? ' conquered ' : ' failed to conquer '"></span>
+                  <StxLink :to="'/territory/' + battle.territory_id" class="font-semibold text-emerald-600 hover:underline" :text="battle.territoryName"></StxLink>
                   <span> from </span>
-                  <span class="font-semibold" :text="battle.get('defenderName') || 'owner'"></span>
+                  <span class="font-semibold" :text="battle.defenderName"></span>
                 </p>
-                <div class="flex gap-3 items-center mt-1 text-gray-500 text-xs dark:text-slate-400">
-                  <span :text="battle.get('created_at') || ''"></span>
-                  <span :text="(battle.get('areaCaptured') || 0).toLocaleString() + ' m²'"></span>
+                <div class="flex gap-3 mt-1 text-xs text-gray-500 dark:text-slate-400">
+                  <span :text="tb.timeAgo(battle.created_at)"></span>
+                  <span :text="battle.areaCaptured.toLocaleString() + ' m²'"></span>
                 </div>
               </div>
-
-              <!-- Result badge -->
-              <span
-                class="shrink-0 px-2 py-1 font-medium text-xs rounded-full"
-                :class="text-emerald-700 text-orange-700 dark:text-emerald-400' dark:text-orange-400' dark:bg-emerald-900/30 dark:bg-orange-900/30 : ? 'bg-emerald-100 'bg-orange-100 'conquered' === battle.get('status')"
-                :text="battle.get('status') === 'conquered' ? 'Conquered' : 'Defended'"
-              ></span>
+              <span class="shrink-0 text-xs px-2 py-1 rounded-full font-medium" :class="battle.status === 'conquered' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'" :text="battle.status === 'conquered' ? 'Conquered' : 'Defended'"></span>
             </div>
           </template>
 
-          <!-- Empty state -->
-          <div @show="filteredBattles().length === 0" class="py-16 text-center">
-            <svg class="mb-4 mx-auto h-16 w-16 text-gray-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            <p class="font-medium text-gray-500 dark:text-slate-400">No battles in this period</p>
-            <p class="mt-1 text-gray-400 text-sm dark:text-slate-500">Check back soon — runners are always on the move.</p>
+          <div :if="filteredBattles.length === 0" class="py-20 text-center">
+            <div class="w-20 h-20 mx-auto mb-6 bg-red-100 dark:bg-red-900/20 rounded-2xl flex items-center justify-center">
+              <svg class="w-10 h-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No battles in this period</h3>
+            <p class="text-gray-500 dark:text-slate-400 max-w-sm mx-auto">The battlefield is quiet... for now.</p>
           </div>
         </div>
       </div>
 
-      <!-- Sidebar -->
+      <!-- Sidebar stats -->
       <div class="space-y-6">
-        <!-- Battle Stats -->
-        <div class="p-6 bg-white dark:bg-slate-800 border border-gray-100 rounded-2xl dark:border-slate-700 shadow-sm">
-          <h3 class="flex items-center mb-4 font-bold text-gray-900 text-lg dark:text-white">
-            <svg class="mr-2 h-5 w-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Today's Stats
-          </h3>
-          <div class="grid gap-3 grid-cols-2">
-            <div class="p-3 text-center bg-orange-50 dark:bg-orange-900/10 rounded-xl">
-              <p class="font-bold text-orange-600 text-xl" :text="battles().filter(b => b.get('status') === 'conquered').length"></p>
-              <p class="text-gray-500 text-xs dark:text-slate-400">Conquests</p>
+        <div class="card">
+          <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-4">Today's Stats</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="text-center p-3 bg-orange-50 dark:bg-orange-900/10 rounded-xl">
+              <p class="text-xl font-bold text-orange-600" :text="tb.conquests.filter((b) => b.status === 'conquered').length"></p>
+              <p class="text-xs text-gray-500 dark:text-slate-400">Conquests</p>
             </div>
-            <div class="p-3 text-center bg-emerald-50 dark:bg-emerald-900/10 rounded-xl">
-              <p class="font-bold text-emerald-600 text-xl" :text="battles().filter(b => b.get('status') === 'defended').length"></p>
-              <p class="text-gray-500 text-xs dark:text-slate-400">Defenses</p>
-            </div>
-            <div class="p-3 text-center bg-blue-50 dark:bg-blue-900/10 rounded-xl">
-              <p class="font-bold text-blue-600 text-xl" :text="new Set(battles().map(b => b.get('attacker_id'))).size"></p>
-              <p class="text-gray-500 text-xs dark:text-slate-400">Active Runners</p>
-            </div>
-            <div class="p-3 text-center bg-purple-50 dark:bg-purple-900/10 rounded-xl">
-              <p class="font-bold text-purple-600 text-xl" :text="new Set(battles().map(b => b.get('territory_id'))).size"></p>
-              <p class="text-gray-500 text-xs dark:text-slate-400">Territories</p>
+            <div class="text-center p-3 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl">
+              <p class="text-xl font-bold text-emerald-600" :text="tb.conquests.filter((b) => b.status === 'defended').length"></p>
+              <p class="text-xs text-gray-500 dark:text-slate-400">Defenses</p>
             </div>
           </div>
-        </div>
-
-        <!-- Top Conquerors -->
-        <div class="p-6 bg-white dark:bg-slate-800 border border-gray-100 rounded-2xl dark:border-slate-700 shadow-sm">
-          <h3 class="flex items-center mb-4 font-bold text-gray-900 text-lg dark:text-white">
-            <svg class="mr-2 h-5 w-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-            </svg>
-            Top Conquerors Today
-          </h3>
-          <p class="py-6 text-center text-gray-400 text-sm dark:text-slate-500">Rankings update as battles happen.</p>
-        </div>
-
-        <!-- Most Contested -->
-        <div class="p-6 bg-white dark:bg-slate-800 border border-gray-100 rounded-2xl dark:border-slate-700 shadow-sm">
-          <h3 class="flex items-center mb-4 font-bold text-gray-900 text-lg dark:text-white">
-            <svg class="mr-2 h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-            </svg>
-            Most Contested
-          </h3>
-          <p class="py-6 text-center text-gray-400 text-sm dark:text-slate-500">Hot territories will appear here.</p>
         </div>
       </div>
     </div>

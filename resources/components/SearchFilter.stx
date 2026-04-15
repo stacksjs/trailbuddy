@@ -18,7 +18,7 @@ const filters = [
 ]
 </script>
 
-<script>
+<script client lang="ts">
 import { state } from 'stx'
 
 // Local state for current filter
@@ -62,7 +62,7 @@ function selectFilter(filterId) {
         @foreach(filters as filter)
           <button
             @click="selectFilter('{{ filter.id }}')"
-            :class="text-white hover:text-emerald-600' border-emerald-600' border-gray-200 hover:border-emerald-500 : ? '{{ 'bg-emerald-600 'text-gray-600 }}' === currentFilter() filter.id"
+            :class="currentFilter() === filter.id ? 'bg-emerald-600 text-white border-emerald-600' : 'text-gray-600 border-gray-200 hover:border-emerald-500 hover:text-emerald-600'"
             class="px-4 py-2 font-medium text-sm border rounded-full transition"
           >
             {{ filter.label }}

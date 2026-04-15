@@ -3,110 +3,91 @@
 @section('title', 'Activity Feed — TrailBuddy')
 
 @section('content')
-<script client>
+<script client lang="ts">
   useHead({ title: 'Activity Feed — TrailBuddy' })
 
-  const loading = state(true)
-  const activities = state([])
-  const filter = state('all')
+  const tb = getStore<any>('tb')
+  const filter = state<'all' | 'Trail Run' | 'Hike' | 'Walk' | 'Bike'>('all')
 
-  const filteredActivities = () => {
-    const all = activities()
+  const filtered = derived(() => {
+    if (!tb) return []
     const f = filter()
-    if (f === 'all') return all
-    return all.filter(a => a.get('activityType') === f)
-  }
-
-  onMount(() => {
-    activities.set(window.tb.getWrapped('activities'))
-    loading.set(false)
+    return f === 'all' ? tb.activities : tb.activities.filter((a: any) => a.activityType === f)
   })
 </script>
 
   <div class="mx-auto px-4 py-6 sm:px-6 lg:px-8 max-w-3xl">
     <div class="flex items-center justify-between mb-6">
       <h1 class="font-bold text-2xl dark:text-white">Activity Feed</h1>
-      <StxLink to="/record" class="px-4 py-2 font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition">
-        + Record Activity
-      </StxLink>
+      <StxLink to="/record" class="px-4 py-2 font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition">+ Record Activity</StxLink>
     </div>
 
     <!-- Filter tabs -->
     <div class="flex overflow-x-auto gap-2 mb-6 pb-2">
-      <button @click="filter.set('all')" :class="text-gray-600 text-white' dark:text-slate-400' dark:bg-slate-800 : ? 'all' 'bg-emerald-600 'bg-gray-100 === filter()" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">All</button>
-      <button @click="filter.set('Trail Run')" :class="text-gray-600 text-white' dark:text-slate-400' dark:bg-slate-800 : ? 'bg-emerald-600 'bg-gray-100 'Trail === filter() Run'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Runs</button>
-      <button @click="filter.set('Hike')" :class="text-gray-600 text-white' dark:text-slate-400' dark:bg-slate-800 : ? 'bg-emerald-600 'bg-gray-100 'Hike' === filter()" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Hikes</button>
-      <button @click="filter.set('Walk')" :class="text-gray-600 text-white' dark:text-slate-400' dark:bg-slate-800 : ? 'bg-emerald-600 'bg-gray-100 'Walk' === filter()" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Walks</button>
-      <button @click="filter.set('Bike')" :class="text-gray-600 text-white' dark:text-slate-400' dark:bg-slate-800 : ? 'bg-emerald-600 'bg-gray-100 'Bike' === filter()" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Rides</button>
-    </div>
-
-    <!-- Loading -->
-    <div @show="loading()" class="flex items-center justify-center py-20">
-      <div class="h-8 w-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+      <button @click="filter.set('all')" :class="filter === 'all' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">All</button>
+      <button @click="filter.set('Trail Run')" :class="filter === 'Trail Run' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Runs</button>
+      <button @click="filter.set('Hike')" :class="filter === 'Hike' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Hikes</button>
+      <button @click="filter.set('Walk')" :class="filter === 'Walk' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Walks</button>
+      <button @click="filter.set('Bike')" :class="filter === 'Bike' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Rides</button>
     </div>
 
     <!-- Activity cards -->
-    <div @show="!loading()" class="space-y-6">
-      <template @for="activity in filteredActivities()">
+    <div class="space-y-6">
+      <template :for="activity in filtered">
         <div class="card">
-          <!-- User header -->
           <div class="flex items-center justify-between mb-4">
             <div class="flex gap-3 items-center">
-              <div class="flex items-center justify-center h-10 w-10 font-bold text-emerald-600 text-sm bg-emerald-100 dark:bg-emerald-900/30 rounded-full" :text="(activity.get('userName') || 'U').charAt(0)"></div>
+              <div class="flex items-center justify-center h-10 w-10 font-bold text-emerald-600 text-sm bg-emerald-100 dark:bg-emerald-900/30 rounded-full" :text="activity.userName.charAt(0)"></div>
               <div>
-                <p class="font-semibold text-sm dark:text-white" :text="activity.get('userName') || 'Anonymous'"></p>
+                <p class="font-semibold text-sm dark:text-white" :text="activity.userName"></p>
                 <p class="text-gray-500 text-xs dark:text-slate-400">
-                  <span :text="activity.get('activityType') || 'Activity'"></span>
+                  <span :text="activity.activityType"></span>
                   <span class="mx-1">·</span>
-                  <span :text="activity.get('created_at') || ''"></span>
+                  <span :text="tb.timeAgo(activity.created_at)"></span>
                 </p>
               </div>
             </div>
-            <span class="px-2 py-1 text-gray-600 text-xs dark:text-slate-400 bg-gray-100 dark:bg-slate-700 rounded-full" :text="activity.get('activityType') || 'Activity'"></span>
+            <span class="text-gray-600 text-xs dark:text-slate-400 px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded-full" :text="activity.activityType"></span>
           </div>
 
-          <!-- Activity name -->
-          <StxLink :to="'/activity/' + activity.get('id')" class="font-bold text-gray-900 text-lg dark:text-white hover:text-emerald-600 transition" :text="activity.get('title') || activity.get('trail_name') || 'Untitled Activity'"></StxLink>
+          <StxLink :to="'/activity/' + activity.id" class="font-bold text-gray-900 text-lg dark:text-white hover:text-emerald-600 transition" :text="activity.title"></StxLink>
 
-          <!-- Map placeholder -->
-          <div class="flex items-center justify-center mt-3 h-40 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-slate-700 dark:to-slate-800 rounded-xl">
+          <div class="mt-3 rounded-xl overflow-hidden h-40 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center">
             <div class="text-center text-gray-400 dark:text-slate-500">
-              <svg class="mb-1 mx-auto h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg class="mx-auto h-8 w-8 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
               <p class="text-xs">Route Map</p>
             </div>
           </div>
 
-          <!-- Stats row -->
           <div class="grid gap-3 grid-cols-4 mt-4">
             <div class="text-center">
-              <p class="font-bold text-lg dark:text-white" :text="(activity.get('distance') || 0).toFixed(1)"></p>
+              <p class="font-bold text-lg dark:text-white" :text="activity.distance.toFixed(1)"></p>
               <p class="metric-label">Miles</p>
             </div>
             <div class="text-center">
-              <p class="font-bold text-lg dark:text-white" :text="activity.get('duration') || activity.get('moving_time') || '0:00'"></p>
+              <p class="font-bold text-lg dark:text-white" :text="activity.duration"></p>
               <p class="metric-label">Time</p>
             </div>
             <div class="text-center">
-              <p class="font-bold text-lg dark:text-white" :text="activity.get('pace') || '--'"></p>
+              <p class="font-bold text-lg dark:text-white" :text="activity.pace"></p>
               <p class="metric-label">Pace</p>
             </div>
             <div class="text-center">
-              <p class="font-bold text-lg dark:text-white" :text="(activity.get('elevation_gain') || 0).toLocaleString()"></p>
+              <p class="font-bold text-lg dark:text-white" :text="activity.elevation_gain.toLocaleString()"></p>
               <p class="metric-label">Elev (ft)</p>
             </div>
           </div>
 
-          <!-- Actions -->
           <div class="flex gap-6 items-center mt-4 pt-4 border-gray-100 border-t dark:border-slate-700">
-            <button class="flex gap-1 items-center text-gray-500 text-sm dark:text-slate-400 hover:text-red-500 transition">
+            <button class="flex items-center gap-1 text-gray-500 dark:text-slate-400 hover:text-red-500 transition text-sm">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
-              <span :text="(activity.get('kudos_count') || 0) + ' Kudos'"></span>
+              <span :text="activity.kudos_count + ' Kudos'"></span>
             </button>
-            <button class="flex gap-1 items-center text-gray-500 text-sm dark:text-slate-400 hover:text-emerald-500 transition">
+            <button class="flex items-center gap-1 text-gray-500 dark:text-slate-400 hover:text-emerald-500 transition text-sm">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
@@ -117,13 +98,15 @@
       </template>
 
       <!-- Empty state -->
-      <div @show="!loading() && filteredActivities().length === 0" class="py-16 text-center">
-        <svg class="mb-4 mx-auto h-16 w-16 text-gray-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-        <p class="font-medium text-gray-500 dark:text-slate-400">No activities yet</p>
-        <p class="mt-1 text-gray-400 text-sm dark:text-slate-500">Get out there and record your first adventure!</p>
-        <StxLink to="/record" class="inline-block mt-4 px-6 py-2 font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition">Record Activity</StxLink>
+      <div :if="filtered.length === 0" class="py-20 text-center">
+        <div class="w-20 h-20 mx-auto mb-6 bg-emerald-100 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center">
+          <svg class="w-10 h-10 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No activities yet</h3>
+        <p class="text-gray-500 dark:text-slate-400 max-w-sm mx-auto mb-6">Your feed is empty. Head outside and record your first trail run!</p>
+        <StxLink to="/record" class="px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Record Activity</StxLink>
       </div>
     </div>
   </div>

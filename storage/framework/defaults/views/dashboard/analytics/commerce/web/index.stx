@@ -615,7 +615,7 @@ let trafficChart: Chart | null = null
     </div>
   </div>
 </main>
-<script client>
+<script client lang="ts">
 import { onMount } from 'stx'
 
 onMount(async () => {

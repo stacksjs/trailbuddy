@@ -1,0 +1,180 @@
+@extends('layouts/default')
+
+@section('title', 'Trail Details — TrailBuddy')
+
+@section('content')
+<script client lang="ts">
+  useHead({ title: 'Trail Details — TrailBuddy' })
+
+  const tb = getStore<any>('tb')
+  const saved = state(false)
+  const reviewTab = state<'reviews' | 'conditions'>('reviews')
+
+  const trailId = Number(
+    (typeof window !== 'undefined' && (window as any).__routeParams?.id)
+    ?? 1
+  )
+
+  const trail = derived(() => tb ? tb.findTrail(trailId) : null)
+  const reviews = derived(() => tb ? tb.trailReviews(trailId) : [])
+  const segments = derived(() => tb ? tb.trailSegments(trailId) : [])
+
+  onMount(() => {
+    setTimeout(() => {
+      if (typeof L === 'undefined' || !tb) return
+      const route = tb.trailRoutes[trailId]
+      if (!route) return
+      const el = document.getElementById('trail-map')
+      if (!el) return
+      const map = L.map('trail-map', { scrollWheelZoom: false })
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap', maxZoom: 18 }).addTo(map)
+      const polyline = L.polyline(route, { color: '#059669', weight: 4, opacity: 0.9 }).addTo(map)
+      map.fitBounds(polyline.getBounds(), { padding: [30, 30] })
+    }, 100)
+  })
+</script>
+
+  <div :if="trail">
+    <!-- Hero -->
+    <section class="relative h-72 sm:h-96 bg-gradient-to-br from-emerald-700 to-teal-800 overflow-hidden">
+      <div class="absolute inset-0 bg-black/30"></div>
+      <div class="relative h-full flex items-end px-4 mx-auto max-w-7xl sm:px-6 lg:px-8 pb-8">
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="px-2.5 py-1 rounded-full text-xs font-semibold capitalize" :class="'difficulty-' + trail.difficulty" :text="trail.difficulty"></span>
+            <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/20 text-white" :text="trail.distance + ' mi'"></span>
+          </div>
+          <h1 class="font-display text-3xl md:text-4xl font-bold text-white mb-2" :text="trail.name"></h1>
+          <p class="text-white/70" :text="trail.location"></p>
+        </div>
+        <div class="flex gap-2">
+          <button @click="saved.set(!saved())" class="p-3 rounded-xl backdrop-blur-sm transition" :class="saved ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'">♥</button>
+          <StxLink to="/record" class="px-5 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition">Start</StxLink>
+        </div>
+      </div>
+    </section>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="grid lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 space-y-8">
+          <!-- Stats -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="card text-center">
+              <p class="text-2xl font-bold text-emerald-600" :text="trail.distance"></p>
+              <p class="metric-label">Miles</p>
+            </div>
+            <div class="card text-center">
+              <p class="text-2xl font-bold text-blue-600" :text="trail.elevation.toLocaleString()"></p>
+              <p class="metric-label">Elev (ft)</p>
+            </div>
+            <div class="card text-center">
+              <p class="text-2xl font-bold text-orange-600" :text="trail.estimatedTime"></p>
+              <p class="metric-label">Est. Time</p>
+            </div>
+            <div class="card text-center">
+              <p class="text-2xl font-bold" :text="trail.rating"></p>
+              <p class="metric-label" :text="trail.reviewCount + ' reviews'"></p>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="card">
+            <h2 class="font-bold text-lg dark:text-white mb-3">About This Trail</h2>
+            <p class="text-gray-600 dark:text-slate-400 leading-relaxed" :text="trail.description"></p>
+            <div class="flex flex-wrap gap-2 mt-4">
+              <template :for="tag in trail.tags">
+                <span class="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-xs font-medium rounded-full" :text="tag"></span>
+              </template>
+            </div>
+          </div>
+
+          <!-- Map -->
+          <div class="card p-0 overflow-hidden">
+            <div id="trail-map" class="h-64"></div>
+          </div>
+
+          <!-- Segments -->
+          <div :if="segments.length > 0">
+            <h2 class="font-bold text-lg dark:text-white mb-4">Segments</h2>
+            <div class="space-y-3">
+              <template :for="seg in segments">
+                <div class="card flex items-center gap-4">
+                  <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-sm dark:text-white" :text="seg.name"></p>
+                    <p class="text-xs text-gray-500 dark:text-slate-400" :text="seg.distance + ' mi · ' + Math.abs(seg.elevation) + ' ft'"></p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-sm font-bold dark:text-white" :text="seg.yourTime || '—'"></p>
+                    <p class="text-xs text-gray-500" :text="seg.yourRank ? '#' + seg.yourRank : 'Not attempted'"></p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-xs text-yellow-600 font-medium">CR</p>
+                    <p class="text-xs text-gray-500" :text="seg.leaderTime + ' · ' + seg.leaderName"></p>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Reviews -->
+          <div>
+            <div class="flex gap-1 mb-4 border-b border-gray-200 dark:border-slate-700">
+              <button @click="reviewTab.set('reviews')" :class="reviewTab === 'reviews' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500'" class="px-4 py-3 text-sm font-medium border-b-2 transition" :text="'Reviews (' + reviews.length + ')'"></button>
+              <button @click="reviewTab.set('conditions')" :class="reviewTab === 'conditions' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500'" class="px-4 py-3 text-sm font-medium border-b-2 transition">Conditions</button>
+            </div>
+
+            <div :if="reviewTab === 'reviews'" class="space-y-4">
+              <template :for="review in reviews">
+                <div class="card">
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-3">
+                      <div class="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600 text-sm font-bold" :text="review.userName.charAt(0)"></div>
+                      <div>
+                        <p class="font-semibold text-sm dark:text-white" :text="review.userName"></p>
+                        <p class="text-xs text-gray-500" :text="tb.timeAgo(review.created_at)"></p>
+                      </div>
+                    </div>
+                    <span class="text-yellow-400" :text="'★'.repeat(review.rating)"></span>
+                  </div>
+                  <p class="text-sm text-gray-600 dark:text-slate-400" :text="review.text"></p>
+                </div>
+              </template>
+            </div>
+
+            <div :if="reviewTab === 'conditions'" class="card">
+              <h3 class="font-semibold text-sm dark:text-white mb-2">Current Conditions</h3>
+              <p class="text-sm text-gray-600 dark:text-slate-400" :text="trail.conditions"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+          <div class="card">
+            <h3 class="font-bold text-lg dark:text-white mb-4">Trail Info</h3>
+            <div class="space-y-3">
+              <div class="flex justify-between"><span class="text-sm text-gray-500">Difficulty</span><span class="text-sm font-medium capitalize" :class="'difficulty-' + trail.difficulty" :text="trail.difficulty"></span></div>
+              <div class="flex justify-between"><span class="text-sm text-gray-500">Distance</span><span class="text-sm font-medium dark:text-white" :text="trail.distance + ' mi'"></span></div>
+              <div class="flex justify-between"><span class="text-sm text-gray-500">Elevation</span><span class="text-sm font-medium dark:text-white" :text="trail.elevation.toLocaleString() + ' ft'"></span></div>
+              <div class="flex justify-between"><span class="text-sm text-gray-500">Time</span><span class="text-sm font-medium dark:text-white" :text="trail.estimatedTime"></span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="font-bold text-lg dark:text-white mb-4">Weather</h3>
+            <div class="text-center py-4">
+              <p class="text-4xl mb-2">☀️</p>
+              <p class="text-2xl font-bold dark:text-white">72°F</p>
+              <p class="text-sm text-gray-500">Clear skies</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div :if="!trail" class="text-center py-32">
+    <p class="text-gray-500 font-medium">Trail not found</p>
+    <StxLink to="/trails" class="inline-block mt-4 px-6 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Browse Trails</StxLink>
+  </div>
+@endsection

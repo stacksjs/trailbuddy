@@ -243,7 +243,7 @@ try {
 </div>
 </div>
 
-<script client>
+<script client lang="ts">
 var _root = useRef('pageRoot')
 const API_BASE = 'http://localhost:3000/cms'
 let deleteCommentId = null

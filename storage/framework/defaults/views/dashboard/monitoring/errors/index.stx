@@ -464,7 +464,7 @@ Delete
       </div>
 </Modal>
 </DashboardLayout>
-<script client>
+<script client lang="ts">
 import { onMount } from 'stx'
 
 onMount(async () => {
