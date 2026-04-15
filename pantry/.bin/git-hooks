@@ -1,3 +1,0 @@
-#!/bin/sh
-basedir=$(dirname "$(echo "$0" | sed -e 's,\\,/,g')")
-exec bun "/Users/glennmichaeltorregosa/Documents/Projects/trailbuddy/pantry/bun-git-hooks/./dist/bin/cli.js" "$@"
