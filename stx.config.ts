@@ -1,8 +1,10 @@
 export default {
-  partialsDir: 'resources/components',
-  componentsDir: 'resources/components',
-  pagesDir: 'resources/views',
-  layoutsDir: 'resources/layouts',
+  // Paths relative to root ('resources', auto-detected). Don't include
+  // the 'resources/' prefix — it's already the root.
+  partialsDir: 'components',
+  componentsDir: 'components',
+  pagesDir: 'views',
+  layoutsDir: 'layouts',
 
   css: './crosswind.config.ts',
 

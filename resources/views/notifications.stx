@@ -9,7 +9,7 @@
   const tb = useStore('tb')
   const filter = state<'all' | 'unread' | 'conquest' | 'kudos' | 'challenge'>('all')
 
-  const unreadCount = derived(() => tb ? unreadCount() : 0)
+  const unreadCount = derived(() => tb ? tb.unreadCount() : 0)
 
   const filtered = derived(() => {
     if (!tb) return []
