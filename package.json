@@ -30,6 +30,7 @@
     "development": "bun ./storage/framework/core/buddy/src/cli.ts dev",
     "build": "bun build.ts",
     "build:stacks": "./buddy build",
+    "preview": "bun preview.ts",
     "prod": "./buddy build",
     "deploy": "./buddy deploy",
     "lint": "./buddy lint",
