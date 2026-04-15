@@ -6,12 +6,12 @@
 <script client>
   useHead({ title: 'Home — TrailBuddy' })
 
-  const tb = getStore<any>('tb')
+  const tb = useStore('tb')
   const activeFilter = state<'all' | 'easy' | 'moderate' | 'hard'>('all')
 
-  const popular = derived(() => tb ? tb.trails.slice(0, 6) : [])
-  const recent = derived(() => tb ? tb.activities.slice(0, 3) : [])
-  const featured = derived(() => tb ? (tb.trails.find((t: any) => t.difficulty === 'hard') || tb.trails[0]) : null)
+  const popular = derived(() => tb ? tb.trails().slice(0, 6) : [])
+  const recent = derived(() => tb ? tb.activities().slice(0, 3) : [])
+  const featured = derived(() => tb ? (tb.trails().find((t: any) => t.difficulty === 'hard') || tb.trails()[0]) : null)
 
   const filteredPopular = derived(() => {
     const list = popular()

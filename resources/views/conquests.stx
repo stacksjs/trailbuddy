@@ -6,21 +6,24 @@
 <script client>
   useHead({ title: 'Conquests — TrailBuddy' })
 
-  const tb = getStore<any>('tb')
+  const tb = useStore('tb')
   const filter = state<'all' | 'attacks' | 'defenses' | 'lost'>('all')
+
+  const conquestStats = derived(() => tb?.conquestStats())
+  const currentUserId = derived(() => tb?.currentUserId())
 
   const filtered = derived(() => {
     if (!tb) return []
     const f = filter()
-    const uid = tb.currentUserId
-    if (f === 'all') return tb.conquests
-    if (f === 'attacks') return tb.conquests.filter((c: any) => c.attacker_id === uid)
-    if (f === 'defenses') return tb.conquests.filter((c: any) => c.defender_id === uid)
-    return tb.conquests.filter((c: any) => c.defender_id === uid && c.status === 'conquered')
+    const uid = tb.currentUserId()
+    if (f === 'all') return tb.conquests()
+    if (f === 'attacks') return tb.conquests().filter((c: any) => c.attacker_id === uid)
+    if (f === 'defenses') return tb.conquests().filter((c: any) => c.defender_id === uid)
+    return tb.conquests().filter((c: any) => c.defender_id === uid && c.status === 'conquered')
   })
 
   const underAttack = derived(() =>
-    tb ? tb.conquests.filter((c: any) => c.defender_id === tb.currentUserId && c.status === 'active').slice(0, 5) : []
+    tb ? tb.conquests().filter((c: any) => c.defender_id === tb.currentUserId() && c.status === 'active').slice(0, 5) : []
   )
 </script>
 
@@ -40,21 +43,21 @@
     <div class="grid gap-8 lg:grid-cols-3">
       <div class="lg:col-span-2">
         <!-- Stats -->
-        <div :if="tb.conquestStats" class="grid gap-4 grid-cols-2 sm:grid-cols-4 mb-8">
+        <div :if="conquestStats" class="grid gap-4 grid-cols-2 sm:grid-cols-4 mb-8">
           <div class="text-center card">
-            <p class="font-bold text-2xl text-orange-600" :text="tb.conquestStats.totalConquests"></p>
+            <p class="font-bold text-2xl text-orange-600" :text="conquestStats.totalConquests"></p>
             <p class="metric-label">Conquered</p>
           </div>
           <div class="text-center card">
-            <p class="font-bold text-2xl text-red-600" :text="tb.conquestStats.territoriesLost"></p>
+            <p class="font-bold text-2xl text-red-600" :text="conquestStats.territoriesLost"></p>
             <p class="metric-label">Lost</p>
           </div>
           <div class="text-center card">
-            <p class="font-bold text-2xl text-emerald-600" :text="tb.conquestStats.successfulDefenses"></p>
+            <p class="font-bold text-2xl text-emerald-600" :text="conquestStats.successfulDefenses"></p>
             <p class="metric-label">Defended</p>
           </div>
           <div class="text-center card">
-            <p class="font-bold text-2xl text-blue-600" :text="tb.conquestStats.winRate + '%'"></p>
+            <p class="font-bold text-2xl text-blue-600" :text="conquestStats.winRate + '%'"></p>
             <p class="metric-label">Win Rate</p>
           </div>
         </div>
@@ -72,16 +75,16 @@
           <template :for="conquest in filtered">
             <div class="card">
               <div class="flex gap-4 items-start">
-                <div class="flex items-center justify-center shrink-0 h-12 w-12 rounded-xl" :class="conquest.attacker_id === tb.currentUserId ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600' : 'bg-red-100 dark:bg-red-900/20 text-red-600'">
-                  <span class="font-bold" :text="conquest.attacker_id === tb.currentUserId ? '⚔' : '🛡'"></span>
+                <div class="flex items-center justify-center shrink-0 h-12 w-12 rounded-xl" :class="conquest.attacker_id === currentUserId ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600' : 'bg-red-100 dark:bg-red-900/20 text-red-600'">
+                  <span class="font-bold" :text="conquest.attacker_id === currentUserId ? '⚔' : '🛡'"></span>
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="flex gap-2 items-center mb-1">
-                    <span class="px-2 py-0.5 font-semibold text-xs rounded-full" :class="conquest.attacker_id === tb.currentUserId ? 'bg-orange-100 text-orange-700' : conquest.status === 'defended' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'" :text="conquest.attacker_id === tb.currentUserId ? 'ATTACK' : conquest.status === 'defended' ? 'DEFENDED' : 'CONQUERED'"></span>
+                    <span class="px-2 py-0.5 font-semibold text-xs rounded-full" :class="conquest.attacker_id === currentUserId ? 'bg-orange-100 text-orange-700' : conquest.status === 'defended' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'" :text="conquest.attacker_id === currentUserId ? 'ATTACK' : conquest.status === 'defended' ? 'DEFENDED' : 'CONQUERED'"></span>
                     <span class="text-xs text-gray-500 dark:text-slate-400" :text="tb.timeAgo(conquest.created_at)"></span>
                   </div>
                   <p class="font-semibold text-gray-900 dark:text-white">
-                    <span :text="conquest.attacker_id === tb.currentUserId ? 'You conquered' : conquest.attackerName + ' attacked'"></span>
+                    <span :text="conquest.attacker_id === currentUserId ? 'You conquered' : conquest.attackerName + ' attacked'"></span>
                     <StxLink :to="'/territory/' + conquest.territory_id" class="text-emerald-600 hover:underline" :text="' ' + conquest.territoryName"></StxLink>
                   </p>
                   <p class="text-sm text-gray-500 dark:text-slate-400 mt-1" :text="conquest.description"></p>
@@ -107,18 +110,18 @@
       <div class="space-y-6">
         <div class="card">
           <h3 class="font-bold text-lg text-gray-900 dark:text-white mb-4">Empire Status</h3>
-          <div :if="tb.conquestStats" class="space-y-3">
+          <div :if="conquestStats" class="space-y-3">
             <div class="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/10 rounded-xl">
               <span class="text-sm text-gray-600 dark:text-slate-400">Power Rating</span>
-              <span class="font-bold text-orange-600" :text="tb.conquestStats.powerRating"></span>
+              <span class="font-bold text-orange-600" :text="conquestStats.powerRating"></span>
             </div>
             <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700/50 rounded-xl">
               <span class="text-sm text-gray-600 dark:text-slate-400">Longest Streak</span>
-              <span class="font-bold dark:text-white" :text="tb.conquestStats.longestConquestStreak + ' wins'"></span>
+              <span class="font-bold dark:text-white" :text="conquestStats.longestConquestStreak + ' wins'"></span>
             </div>
             <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700/50 rounded-xl">
               <span class="text-sm text-gray-600 dark:text-slate-400">Rivals Beaten</span>
-              <span class="font-bold dark:text-white" :text="tb.conquestStats.uniqueRivalsBeaten"></span>
+              <span class="font-bold dark:text-white" :text="conquestStats.uniqueRivalsBeaten"></span>
             </div>
           </div>
         </div>

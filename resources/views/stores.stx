@@ -417,9 +417,8 @@
   }
 
   // ===== Store =====
-  // Guard against double-define on client-side navigation
-  const existingStore = getStore<any>('tb')
-  const tbStore = existingStore || defineStore('tb', {
+  // defineStore is idempotent — returns existing store on re-navigation
+  const tbStore = defineStore('tb', {
     state: () => ({
       currentUserId: 1,
       users: seedUsers,
@@ -512,6 +511,4 @@
 
     persist: true,
   })
-
-  if (!existingStore) registerStores({ tbStore })
 </script>

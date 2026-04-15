@@ -6,7 +6,7 @@
 <script client>
   useHead({ title: 'Record Activity — TrailBuddy' })
 
-  const tb = getStore<any>('tb')
+  const tb = useStore('tb')
   const recording = state(false)
   const paused = state(false)
   const activityType = state<'Trail Run' | 'Hike' | 'Walk' | 'Bike'>('Trail Run')
@@ -43,7 +43,7 @@
       if (w?.timer) clearInterval(w.timer)
       if (!tb) return
       tb.addActivity({
-        user_id: tb.currentUserId,
+        user_id: tb.currentUserId(),
         userName: 'You',
         trail_id: null,
         trail_name: `${activityType()} Activity`,

@@ -6,15 +6,17 @@
 <script client>
   useHead({ title: 'Clubs — TrailBuddy' })
 
-  const tb = getStore<any>('tb')
+  const tb = useStore('tb')
   const filter = state<'all' | 'mine' | 'Running' | 'Hiking' | 'Territory Game'>('all')
+
+  const currentUserId = derived(() => tb?.currentUserId())
 
   const filtered = derived(() => {
     if (!tb) return []
     const f = filter()
-    if (f === 'all') return tb.clubs
-    if (f === 'mine') return tb.clubs.filter((c: any) => c.members?.includes(tb.currentUserId))
-    return tb.clubs.filter((c: any) => c.type === f)
+    if (f === 'all') return tb.clubs()
+    if (f === 'mine') return tb.clubs().filter((c: any) => c.members?.includes(tb.currentUserId()))
+    return tb.clubs().filter((c: any) => c.type === f)
   })
 </script>
 
@@ -51,7 +53,7 @@
                     <span :if="club.isPrivate" class="px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-medium">Private</span>
                   </div>
                 </div>
-                <button class="shrink-0 px-4 py-2 text-sm font-semibold rounded-lg transition" :class="club.members?.includes(tb.currentUserId) ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'" :text="club.members?.includes(tb.currentUserId) ? 'Joined' : 'Join'"></button>
+                <button class="shrink-0 px-4 py-2 text-sm font-semibold rounded-lg transition" :class="club.members?.includes(currentUserId) ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'" :text="club.members?.includes(currentUserId) ? 'Joined' : 'Join'"></button>
               </div>
               <p class="text-sm text-gray-600 dark:text-slate-400 mb-4" :text="club.description"></p>
               <div class="flex items-center gap-6 pt-3 border-t border-gray-100 dark:border-slate-700 text-sm">

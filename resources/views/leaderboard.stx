@@ -13,14 +13,14 @@
     trailsCompleted: number
   }
 
-  const tb = getStore<any>('tb')
+  const tb = useStore('tb')
   const period = state<'weekly' | 'monthly' | 'alltime'>('weekly')
   const metric = state<'distance' | 'elevation' | 'activities'>('distance')
 
   const leaders = derived<LeaderEntry[]>(() => {
     if (!tb) return []
-    return tb.users.map((u: any) => {
-      const userActs = tb.activities.filter((a: any) => a.user_id === u.id)
+    return tb.users().map((u: any) => {
+      const userActs = tb.activities().filter((a: any) => a.user_id === u.id)
       return {
         userName: u.name,
         totalDistance: userActs.reduce((sum: number, a: any) => sum + (a.distance || 0), 0),

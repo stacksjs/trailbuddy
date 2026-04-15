@@ -6,21 +6,23 @@
 <script client>
   useHead({ title: 'Territory Game — TrailBuddy' })
 
-  const tb = getStore<any>('tb')
+  const tb = useStore('tb')
   const filter = state<'all' | 'mine' | 'contested'>('all')
+
+  const currentUserId = derived(() => tb?.currentUserId())
 
   const filtered = derived(() => {
     if (!tb) return []
     const f = filter()
-    if (f === 'all') return tb.territories
-    if (f === 'mine') return tb.territories.filter((t: any) => t.user_id === tb.currentUserId)
-    return tb.territories.filter((t: any) => t.status === 'contested')
+    if (f === 'all') return tb.territories()
+    if (f === 'mine') return tb.territories().filter((t: any) => t.user_id === currentUserId())
+    return tb.territories().filter((t: any) => t.status === 'contested')
   })
 
   const leaderboard = derived(() => {
     if (!tb) return []
-    return tb.users.map((u: any) => {
-      const owned = tb.territories.filter((t: any) => t.user_id === u.id)
+    return tb.users().map((u: any) => {
+      const owned = tb.territories().filter((t: any) => t.user_id === u.id)
       return {
         user_id: u.id,
         userName: u.name,
@@ -43,10 +45,10 @@
         maxZoom: 18,
       }).addTo(map)
       const bounds: [number, number][] = []
-      tb.territories.forEach((t: any) => {
-        const poly = tb.territoryPolygons[t.id]
+      tb.territories().forEach((t: any) => {
+        const poly = tb.territoryPolygons()[t.id]
         if (!poly) return
-        const isYours = t.user_id === tb.currentUserId
+        const isYours = t.user_id === currentUserId()
         const color = isYours ? '#059669' : '#f59e0b'
         L.polygon(poly, {
           color, fillColor: color, fillOpacity: isYours ? 0.4 : 0.2,
@@ -92,7 +94,7 @@
             <StxLink :to="'/territory/' + territory.id" class="card block hover:shadow-md transition">
               <div class="flex items-center justify-between mb-3">
                 <h3 class="font-bold dark:text-white" :text="territory.name"></h3>
-                <span class="px-2 py-0.5 text-xs rounded-full font-medium" :class="territory.user_id === tb.currentUserId ? 'bg-emerald-100 text-emerald-700' : territory.status === 'contested' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'" :text="territory.user_id === tb.currentUserId ? 'Yours' : territory.status === 'contested' ? 'Contested' : 'Enemy'"></span>
+                <span class="px-2 py-0.5 text-xs rounded-full font-medium" :class="territory.user_id === currentUserId ? 'bg-emerald-100 text-emerald-700' : territory.status === 'contested' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'" :text="territory.user_id === currentUserId ? 'Yours' : territory.status === 'contested' ? 'Contested' : 'Enemy'"></span>
               </div>
               <div class="grid grid-cols-3 gap-2 text-center pt-3 border-t border-gray-100 dark:border-slate-700">
                 <div>
@@ -130,10 +132,10 @@
           <h3 class="font-bold text-lg dark:text-white mb-4">🏆 Territory Leaders</h3>
           <div class="space-y-2">
             <template :for="(entry, index) in leaderboard">
-              <div class="flex items-center gap-3 p-2 rounded-lg" :class="entry.user_id === tb.currentUserId ? 'bg-emerald-50 dark:bg-emerald-900/10' : ''">
+              <div class="flex items-center gap-3 p-2 rounded-lg" :class="entry.user_id === currentUserId ? 'bg-emerald-50 dark:bg-emerald-900/10' : ''">
                 <span class="w-6 text-center font-bold" :class="index < 3 ? 'text-yellow-500' : 'text-gray-400'" :text="index + 1"></span>
                 <div class="flex-1 min-w-0">
-                  <p class="font-medium text-sm dark:text-white truncate" :text="entry.user_id === tb.currentUserId ? 'You' : entry.userName"></p>
+                  <p class="font-medium text-sm dark:text-white truncate" :text="entry.user_id === currentUserId ? 'You' : entry.userName"></p>
                   <p class="text-xs text-gray-500" :text="formatArea(entry.totalAreaOwned)"></p>
                 </div>
                 <span class="text-xs font-semibold text-gray-600 dark:text-slate-400" :text="entry.totalTerritoriesOwned + ' owned'"></span>

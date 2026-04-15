@@ -6,15 +6,17 @@
 <script client>
   useHead({ title: 'Notifications — TrailBuddy' })
 
-  const tb = getStore<any>('tb')
+  const tb = useStore('tb')
   const filter = state<'all' | 'unread' | 'conquest' | 'kudos' | 'challenge'>('all')
+
+  const unreadCount = derived(() => tb ? unreadCount() : 0)
 
   const filtered = derived(() => {
     if (!tb) return []
     const f = filter()
-    if (f === 'all') return tb.notifications
-    if (f === 'unread') return tb.notifications.filter((n: any) => !n.read)
-    return tb.notifications.filter((n: any) =>
+    if (f === 'all') return tb.notifications()
+    if (f === 'unread') return tb.notifications().filter((n: any) => !n.read)
+    return tb.notifications().filter((n: any) =>
       n.type === f || (f === 'conquest' && n.type.startsWith('conquest'))
     )
   })
@@ -47,9 +49,9 @@
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
         <h1 class="text-2xl font-bold dark:text-white">Notifications</h1>
-        <span :if="tb.unreadCount > 0" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-500 text-white" :text="tb.unreadCount"></span>
+        <span :if="unreadCount > 0" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-500 text-white" :text="unreadCount"></span>
       </div>
-      <button :if="tb.unreadCount > 0" @click="tb.markAllNotificationsRead()" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition">Mark all read</button>
+      <button :if="unreadCount > 0" @click="tb.markAllNotificationsRead()" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition">Mark all read</button>
     </div>
 
     <!-- Filter tabs -->

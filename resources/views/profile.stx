@@ -6,33 +6,39 @@
 <script client>
   useHead({ title: 'Profile — TrailBuddy' })
 
-  const tb = getStore<any>('tb')
+  const tb = useStore('tb')
   const activeTab = state<'activities' | 'achievements' | 'saved'>('activities')
+
+  const currentUser = derived(() => tb?.currentUser())
+  const userStats = derived(() => tb?.userStats())
+  const currentUserId = derived(() => tb?.currentUserId())
+  const myActivities = derived(() => tb ? tb.activities().filter((a: any) => a.user_id === tb.currentUserId()) : [])
+  const achievements = derived(() => tb ? tb.achievements() : [])
 </script>
 
   <div class="mx-auto px-4 py-6 sm:px-6 lg:px-8 max-w-4xl">
     <!-- Profile header -->
     <div class="mb-6 card">
       <div class="flex flex-col gap-6 items-center sm:flex-row">
-        <div class="flex items-center justify-center h-24 w-24 font-bold text-3xl text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 rounded-full" :text="(tb.currentUser?.name || 'U').charAt(0)"></div>
+        <div class="flex items-center justify-center h-24 w-24 font-bold text-3xl text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 rounded-full" :text="(currentUser?.name || 'U').charAt(0)"></div>
         <div class="flex-1 text-center sm:text-left">
-          <h1 class="font-bold text-2xl dark:text-white" :text="tb.currentUser?.name || 'Athlete'"></h1>
-          <p class="mt-1 text-gray-500 text-sm dark:text-slate-400" :text="tb.currentUser?.email || ''"></p>
+          <h1 class="font-bold text-2xl dark:text-white" :text="currentUser?.name || 'Athlete'"></h1>
+          <p class="mt-1 text-gray-500 text-sm dark:text-slate-400" :text="currentUser?.email || ''"></p>
           <div class="flex flex-wrap gap-4 justify-center sm:justify-start mt-3">
             <div class="text-center">
-              <p class="text-lg font-bold text-emerald-600" :text="tb.userStats?.totalDistance.toFixed(1) || '0'"></p>
+              <p class="text-lg font-bold text-emerald-600" :text="userStats?.totalDistance.toFixed(1) || '0'"></p>
               <p class="metric-label">Miles</p>
             </div>
             <div class="text-center">
-              <p class="text-lg font-bold text-emerald-600" :text="tb.userStats?.trailsCompleted || 0"></p>
+              <p class="text-lg font-bold text-emerald-600" :text="userStats?.trailsCompleted || 0"></p>
               <p class="metric-label">Trails</p>
             </div>
             <div class="text-center">
-              <p class="text-lg font-bold text-emerald-600" :text="(tb.userStats?.totalElevation || 0).toLocaleString()"></p>
+              <p class="text-lg font-bold text-emerald-600" :text="(userStats?.totalElevation || 0).toLocaleString()"></p>
               <p class="metric-label">Elev (ft)</p>
             </div>
             <div class="text-center">
-              <p class="text-lg font-bold text-emerald-600" :text="tb.userStats?.currentStreak || 0"></p>
+              <p class="text-lg font-bold text-emerald-600" :text="userStats?.currentStreak || 0"></p>
               <p class="metric-label">Streak</p>
             </div>
           </div>
@@ -49,7 +55,7 @@
 
     <!-- Activities -->
     <div :if="activeTab === 'activities'" class="space-y-4">
-      <template :for="activity in tb.activities.filter((a) => a.user_id === tb.currentUserId)">
+      <template :for="activity in myActivities">
         <StxLink :to="'/activity/' + activity.id" class="card flex gap-4 items-center hover:shadow-md transition block">
           <div class="flex items-center justify-center shrink-0 h-12 w-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
             <svg class="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -73,7 +79,7 @@
         </StxLink>
       </template>
 
-      <div :if="tb.activities.filter((a) => a.user_id === tb.currentUserId).length === 0" class="py-16 text-center">
+      <div :if="myActivities.length === 0" class="py-16 text-center">
         <div class="w-16 h-16 mx-auto mb-4 bg-emerald-100 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center">
           <svg class="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -87,7 +93,7 @@
 
     <!-- Achievements -->
     <div :if="activeTab === 'achievements'" class="grid gap-4 grid-cols-1 sm:grid-cols-2">
-      <template :for="achievement in tb.achievements">
+      <template :for="achievement in achievements">
         <div class="flex gap-4 items-center card">
           <span class="text-3xl" :text="achievement.icon"></span>
           <div class="flex-1">

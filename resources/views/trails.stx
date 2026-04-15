@@ -6,7 +6,7 @@
 <script client>
   useHead({ title: 'Explore Trails — TrailBuddy' })
 
-  const tb = getStore<any>('tb')
+  const tb = useStore('tb')
   const search = state('')
   const difficulty = state<'all' | 'easy' | 'moderate' | 'hard'>('all')
 
@@ -14,7 +14,7 @@
     if (!tb) return []
     const q = search().toLowerCase()
     const d = difficulty()
-    return tb.trails.filter((t: any) =>
+    return tb.trails().filter((t: any) =>
       (q === '' || t.name.toLowerCase().includes(q) || t.location.toLowerCase().includes(q))
       && (d === 'all' || t.difficulty === d)
     )

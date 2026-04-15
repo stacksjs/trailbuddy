@@ -6,7 +6,7 @@
 <script client>
   useHead({ title: 'Activity Details — TrailBuddy' })
 
-  const tb = getStore<any>('tb')
+  const tb = useStore('tb')
   const hasKudos = state(false)
   const newComment = state('')
 
@@ -37,7 +37,7 @@
       if (typeof L === 'undefined' || !tb) return
       const a = tb.findActivity(activityId)
       if (!a || !a.trail_id) return
-      const route = tb.trailRoutes[a.trail_id]
+      const route = tb.trailRoutes()[a.trail_id]
       if (!route) return
       const el = document.getElementById('activity-map')
       if (!el) return

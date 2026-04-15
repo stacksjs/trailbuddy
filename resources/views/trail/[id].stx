@@ -6,7 +6,7 @@
 <script client>
   useHead({ title: 'Trail Details — TrailBuddy' })
 
-  const tb = getStore<any>('tb')
+  const tb = useStore('tb')
   const saved = state(false)
   const reviewTab = state<'reviews' | 'conditions'>('reviews')
 
@@ -22,7 +22,7 @@
   onMount(() => {
     setTimeout(() => {
       if (typeof L === 'undefined' || !tb) return
-      const route = tb.trailRoutes[trailId]
+      const route = tb.trailRoutes()[trailId]
       if (!route) return
       const el = document.getElementById('trail-map')
       if (!el) return

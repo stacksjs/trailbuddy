@@ -6,13 +6,13 @@
 <script client>
   useHead({ title: 'Activity Feed — TrailBuddy' })
 
-  const tb = getStore<any>('tb')
+  const tb = useStore('tb')
   const filter = state<'all' | 'Trail Run' | 'Hike' | 'Walk' | 'Bike'>('all')
 
   const filtered = derived(() => {
     if (!tb) return []
     const f = filter()
-    return f === 'all' ? tb.activities : tb.activities.filter((a: any) => a.activityType === f)
+    return f === 'all' ? tb.activities() : tb.activities().filter((a: any) => a.activityType === f)
   })
 </script>
 

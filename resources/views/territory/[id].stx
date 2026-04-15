@@ -6,21 +6,27 @@
 <script client>
   useHead({ title: 'Territory Details — TrailBuddy' })
 
-  const tb = getStore<any>('tb')
+  const tb = useStore('tb')
   const territoryId = Number(
     (typeof window !== 'undefined' && (window as any).__routeParams?.id)
     ?? 1
   )
 
   const territory = derived(() => tb ? tb.findTerritory(territoryId) : null)
-  const owner = derived(() => tb && territory ? tb.findUser(territory.user_id) : null)
+  const owner = derived(() => {
+    const t = territory()
+    return tb && t ? tb.findUser(t.user_id) : null
+  })
   const history = derived(() => tb ? tb.territoryConquests(territoryId) : [])
-  const isMine = derived(() => tb && territory ? territory.user_id === tb.currentUserId : false)
+  const isMine = derived(() => {
+    const t = territory()
+    return tb && t ? t.user_id === tb.currentUserId() : false
+  })
 
   onMount(() => {
     setTimeout(() => {
       if (typeof L === 'undefined' || !tb) return
-      const poly = tb.territoryPolygons[territoryId]
+      const poly = tb.territoryPolygons()[territoryId]
       if (!poly) return
       const el = document.getElementById('territory-detail-map')
       if (!el) return
