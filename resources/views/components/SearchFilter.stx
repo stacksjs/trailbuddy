@@ -18,7 +18,7 @@ const filters = [
 ]
 </script>
 
-<script client lang="ts">
+<script client>
 import { state } from 'stx'
 
 // Local state for current filter

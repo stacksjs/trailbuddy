@@ -3,7 +3,7 @@
 @section('title', 'Activity Feed — TrailBuddy')
 
 @section('content')
-<script client lang="ts">
+<script client>
   useHead({ title: 'Activity Feed — TrailBuddy' })
 
   const tb = getStore<any>('tb')

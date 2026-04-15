@@ -387,7 +387,7 @@ const getStatusVariant = (status) => {
     </div>
   </Card>
 </div>
-<script client lang="ts">
+<script client>
 import { onMount } from 'stx'
 
 onMount(async () => {

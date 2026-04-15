@@ -1582,7 +1582,7 @@ const renderSourceChart = () => {
     </div>
   </div>
 
-<script client lang="ts">
+<script client>
 import { onMount } from 'stx'
 
 onMount(() => {

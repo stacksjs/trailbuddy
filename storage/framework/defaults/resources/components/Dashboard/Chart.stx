@@ -28,13 +28,13 @@ const props = defineProps({
       To use with Chart.js:
       <canvas ref="chartCanvas"></canvas>
 
-      <script client lang="ts">
+      <script client>
       import Chart from 'chart.js/auto'
 
             </script>
     -->
   </div>
-<script client lang="ts">
+<script client>
 import { onMount } from 'stx'
 
 onMount(() => {

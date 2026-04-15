@@ -14,7 +14,7 @@ const count = props.count || 0
       Counter: <span data-count>{{ count }}</span>
     </button>
   </div>
-<script client lang="ts">
+<script client>
 document.querySelector('[data-counter]')?.addEventListener('click', function() {
   const countEl = document.querySelector('[data-count]')
   if (countEl) {

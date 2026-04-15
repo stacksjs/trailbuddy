@@ -560,7 +560,7 @@ async function confirmDelete(): Promise<void> {
     </div>
   @endif
 </main>
-<script client lang="ts">
+<script client>
 import { onMount } from 'stx'
 
 onMount(async () => {

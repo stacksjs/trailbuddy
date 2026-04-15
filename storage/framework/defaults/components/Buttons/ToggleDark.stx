@@ -4,7 +4,7 @@
   >
     <div class="i-hugeicons-outline-sun dark:i-hugeicons-outline-moon"></div>
   </button>
-<script client lang="ts">
+<script client>
 document.querySelector('[data-toggle-dark]')?.addEventListener('click', function() {
   document.documentElement.classList.toggle('dark')
 }

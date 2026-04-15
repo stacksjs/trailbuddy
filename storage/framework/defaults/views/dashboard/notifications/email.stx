@@ -398,7 +398,7 @@ const closeErrorModal = () => {
     @close="closeErrorModal"
   />
 </div>
-<script client lang="ts">
+<script client>
 import { onMount } from 'stx'
 
 onMount(async () => {

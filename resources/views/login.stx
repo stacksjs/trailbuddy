@@ -3,7 +3,7 @@
 @section('title', 'Log In — TrailBuddy')
 
 @section('content')
-<script client lang="ts">
+<script client>
   useHead({ title: 'Log In — TrailBuddy' })
 
   const email = state('')

@@ -436,7 +436,7 @@ let deviceTrendChart: Chart | null = null
     </div>
   </div>
 </main>
-<script client lang="ts">
+<script client>
 import { onMount } from 'stx'
 
 onMount(async () => {

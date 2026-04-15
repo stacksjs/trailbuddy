@@ -390,7 +390,7 @@ const openFile = (file, line) => {
     @endif
   </div>
 </div>
-<script client lang="ts">
+<script client>
 import { onMount } from 'stx'
 
 onMount(async () => {

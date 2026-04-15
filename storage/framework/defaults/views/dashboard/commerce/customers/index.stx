@@ -407,7 +407,7 @@ async function addCustomer(): Promise<void> {
     </div>
   @endif
 </div>
-<script client lang="ts">
+<script client>
 import { onMount } from 'stx'
 
 onMount(async () => {

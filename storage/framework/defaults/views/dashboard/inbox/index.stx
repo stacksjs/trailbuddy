@@ -783,7 +783,7 @@ function inboxUnreadCount() {
     </div>
   </div>
 </div>
-<script client lang="ts">
+<script client>
 import { onMount } from 'stx'
 
 onMount(async () => {

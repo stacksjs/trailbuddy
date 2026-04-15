@@ -1,4 +1,4 @@
-<script client lang="ts">
+<script client>
   // ===== Types =====
   interface User {
     id: number

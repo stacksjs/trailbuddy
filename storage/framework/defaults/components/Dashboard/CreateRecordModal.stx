@@ -197,7 +197,7 @@ function isSelectField(col) {
   </form>
 </dialog>
 </div>
-<script client lang="ts">
+<script client>
 var _root = useRef('pageRoot')
 onMount(function() {
   var el = _root.current;
