@@ -19,8 +19,10 @@ declare global {
 }
 
 export function useGitHubOAuth(): GitHubOAuthReturn {
-  const clientId = 'YOUR_GITHUB_CLIENT_ID'
-  const redirectUri = 'http://localhost:5173/auth/github/callback' // adjust as needed
+  const stacksConfig = (window as any).__STACKS_CONFIG__ || {}
+  const clientId = stacksConfig.GITHUB_CLIENT_ID || ''
+  const baseUrl = stacksConfig.APP_URL || window.location.origin
+  const redirectUri = `${baseUrl}/auth/github/callback`
 
   const accessToken = ref<string | null>(null)
   const error = ref<string | null>(null)
@@ -38,7 +40,8 @@ export function useGitHubOAuth(): GitHubOAuthReturn {
     error.value = null
 
     try {
-      const res = await fetch('http://localhost:3000/api/github/token', {
+      const apiUrl = stacksConfig.APP_URL || window.location.origin
+      const res = await fetch(`${apiUrl}/api/github/token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code }),

@@ -1,3 +1,6 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 definePageMeta({
   middleware: ['auth']
@@ -169,12 +172,12 @@ const tabs = [
       :tabs="tabs"
     />
 
-    <div class="overflow-hidden mt-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-      <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+    <div class="overflow-hidden mt-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+      <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-neutral-700">
         <div class="flex items-center justify-between">
           <h2 class="font-medium text-gray-900 text-lg dark:text-white">Shipping Rates</h2>
           <button
-            @click="handleAddRate"
+            onclick="handleAddRate"
             type="button"
             class="inline-flex items-center px-3 py-2 font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
           >
@@ -197,7 +200,7 @@ const tabs = [
         @delete="handleDeleteRate"
       />
 
-      <div class="px-4 py-3 bg-gray-50 dark:bg-gray-900 border-gray-200 border-t dark:border-gray-700">
+      <div class="px-4 py-3 bg-gray-50 dark:bg-neutral-900 border-gray-200 border-t dark:border-neutral-700">
         <Pagination
           :current-page="currentPage"
           :total-items="filteredShippingRates.length"
@@ -214,25 +217,25 @@ const tabs = [
   @if(showAddModal)
     <div class="fixed inset-0 overflow-y-auto z-10">
       <div class="flex items-end justify-center sm:items-center p-4 sm:p-0 min-h-full text-center">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeAddModal"></div>
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeAddModal"></div>
 
-        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-blue-gray-800 rounded-lg shadow-xl transition-all transform">
+        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-neutral-800 rounded-lg shadow-xl transition-all transform">
           <div>
             <div class="mt-3 sm:mt-5 text-center">
               <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white">Add New Shipping Rate</h3>
               <div class="mt-4">
                 <div class="space-y-4">
                   <div>
-                    <label for="rate-method" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Method</label>
+                    <label for="rate-method" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Method</label>
                     <div class="mt-2">
                       <select
                         id="rate-method"
-                        v-model="newShippingRate.shipping_method_id"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ newShippingRate.shipping_method_id }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                       >
                         <option value="">Select a shipping method</option>
                         @foreach(shippingMethods as method)
-                          <option :key="method.id" :value="method.id">
+                          <option value="{{ method.id }}">
                             {{ method.name }}
                           </option>
                         @endforeach
@@ -241,16 +244,16 @@ const tabs = [
                   </div>
 
                   <div>
-                    <label for="rate-zone" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Zone</label>
+                    <label for="rate-zone" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Zone</label>
                     <div class="mt-2">
                       <select
                         id="rate-zone"
-                        v-model="newShippingRate.shipping_zone_id"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ newShippingRate.shipping_zone_id }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                       >
                         <option value="">Select a shipping zone</option>
                         @foreach(shippingZones as zone)
-                          <option :key="zone.id" :value="zone.id">
+                          <option value="{{ zone.id }}">
                             {{ zone.name }}
                           </option>
                         @endforeach
@@ -260,26 +263,26 @@ const tabs = [
 
                   <div class="grid gap-4 grid-cols-2">
                     <div>
-                      <label for="rate-weight-from" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Weight From</label>
+                      <label for="rate-weight-from" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Weight From</label>
                       <div class="mt-2">
                         <input
                           type="number"
                           id="rate-weight-from"
-                          v-model="newShippingRate.weight_from"
-                          class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                          value="{{ newShippingRate.weight_from }}"
+                          class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                           placeholder="0"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label for="rate-weight-to" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Weight To</label>
+                      <label for="rate-weight-to" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Weight To</label>
                       <div class="mt-2">
                         <input
                           type="number"
                           id="rate-weight-to"
-                          v-model="newShippingRate.weight_to"
-                          class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                          value="{{ newShippingRate.weight_to }}"
+                          class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                           placeholder="10"
                         />
                       </div>
@@ -287,13 +290,13 @@ const tabs = [
                   </div>
 
                   <div>
-                    <label for="rate-rate" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Rate (in cents)</label>
+                    <label for="rate-rate" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Rate (in cents)</label>
                     <div class="mt-2">
                       <input
                         type="number"
                         id="rate-rate"
-                        v-model="newShippingRate.rate"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ newShippingRate.rate }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                         placeholder="599"
                       />
                     </div>
@@ -305,15 +308,15 @@ const tabs = [
           <div class="sm:grid sm:gap-3 sm:grid-cols-2 sm:grid-flow-row-dense mt-5 sm:mt-6">
             <button
               type="button"
-              @click="addShippingRate"
+              onclick="addShippingRate"
               class="inline-flex justify-center sm:col-start-2 px-3 py-2 w-full font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
             >
               Add Rate
             </button>
             <button
               type="button"
-              @click="closeAddModal"
-              class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+              onclick="closeAddModal"
+              class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
             >
               Cancel
             </button>
@@ -327,25 +330,25 @@ const tabs = [
   @if(showEditModal)
     <div class="fixed inset-0 overflow-y-auto z-10">
       <div class="flex items-end justify-center sm:items-center p-4 sm:p-0 min-h-full text-center">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeEditModal"></div>
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeEditModal"></div>
 
-        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-blue-gray-800 rounded-lg shadow-xl transition-all transform">
+        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-neutral-800 rounded-lg shadow-xl transition-all transform">
           <div>
             <div class="mt-3 sm:mt-5 text-center">
               <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white">Edit Shipping Rate</h3>
               <div class="mt-4">
                 <div class="space-y-4">
                   <div>
-                    <label for="edit-rate-method" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Method</label>
+                    <label for="edit-rate-method" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Method</label>
                     <div class="mt-2">
                       <select
                         id="edit-rate-method"
-                        v-model="newShippingRate.method"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ newShippingRate.method }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                       >
                         <option value="">Select a shipping method</option>
                         @foreach(shippingMethods as method)
-                          <option :key="method.id" :value="method.name">
+                          <option value="{{ method.name }}">
                             {{ method.name }}
                           </option>
                         @endforeach
@@ -354,16 +357,16 @@ const tabs = [
                   </div>
 
                   <div>
-                    <label for="edit-rate-zone" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Zone</label>
+                    <label for="edit-rate-zone" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Zone</label>
                     <div class="mt-2">
                       <select
                         id="edit-rate-zone"
-                        v-model="newShippingRate.zone"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ newShippingRate.zone }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                       >
                         <option value="">Select a shipping zone</option>
                         @foreach(shippingZones as zone)
-                          <option :key="zone.id" :value="zone.name">
+                          <option value="{{ zone.name }}">
                             {{ zone.name }}
                           </option>
                         @endforeach
@@ -373,26 +376,26 @@ const tabs = [
 
                   <div class="grid gap-4 grid-cols-2">
                     <div>
-                      <label for="edit-rate-weight-from" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Weight From</label>
+                      <label for="edit-rate-weight-from" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Weight From</label>
                       <div class="mt-2">
                         <input
                           type="number"
                           id="edit-rate-weight-from"
-                          v-model="newShippingRate.weight_from"
-                          class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                          value="{{ newShippingRate.weight_from }}"
+                          class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                           placeholder="0"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label for="edit-rate-weight-to" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Weight To</label>
+                      <label for="edit-rate-weight-to" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Weight To</label>
                       <div class="mt-2">
                         <input
                           type="number"
                           id="edit-rate-weight-to"
-                          v-model="newShippingRate.weight_to"
-                          class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                          value="{{ newShippingRate.weight_to }}"
+                          class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                           placeholder="10"
                         />
                       </div>
@@ -400,13 +403,13 @@ const tabs = [
                   </div>
 
                   <div>
-                    <label for="edit-rate-rate" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Rate (in cents)</label>
+                    <label for="edit-rate-rate" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Rate (in cents)</label>
                     <div class="mt-2">
                       <input
                         type="number"
                         id="edit-rate-rate"
-                        v-model="newShippingRate.rate"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ newShippingRate.rate }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                         placeholder="599"
                       />
                     </div>
@@ -418,15 +421,15 @@ const tabs = [
           <div class="sm:grid sm:gap-3 sm:grid-cols-2 sm:grid-flow-row-dense mt-5 sm:mt-6">
             <button
               type="button"
-              @click="saveShippingRate"
+              onclick="saveShippingRate"
               class="inline-flex justify-center sm:col-start-2 px-3 py-2 w-full font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
             >
               Save Changes
             </button>
             <button
               type="button"
-              @click="closeEditModal"
-              class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+              onclick="closeEditModal"
+              class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
             >
               Cancel
             </button>
@@ -447,3 +450,5 @@ onMount(async () => {
   ])
 })
 </script>
+
+@endsection

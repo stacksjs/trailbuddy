@@ -1,32 +1,10 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 definePageMeta({
   middleware: ['auth']
 })
-
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js'
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-)
 
 // Chart options
 const chartOptions = {
@@ -292,7 +270,7 @@ function toggleSort(column: string): void {
 }
 
 // Get status badge class
-function getStatusClass(status: string): string {
+const getStatusClass = (status: string): string => {
   switch (status) {
     case 'Completed':
       return 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/30 dark:text-green-400'
@@ -303,7 +281,7 @@ function getStatusClass(status: string): string {
     case 'Refunded':
       return 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20 dark:bg-blue-900/30 dark:text-blue-400'
     default:
-      return 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20 dark:bg-gray-900/30 dark:text-gray-400'
+      return 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20 dark:bg-neutral-900/30 dark:text-neutral-400'
   }
 }
 
@@ -357,7 +335,7 @@ function totalAmount() {
       <div class="sm:flex sm:items-center sm:justify-between">
         <div>
           <h1 class="font-semibold text-2xl text-gray-900 dark:text-white">Payments</h1>
-          <p class="mt-2 text-gray-700 text-sm dark:text-gray-300">
+          <p class="mt-2 text-gray-700 text-sm dark:text-neutral-300">
             Manage payment transactions for your store
           </p>
         </div>
@@ -374,13 +352,13 @@ function totalAmount() {
 
       <!-- Time range selector -->
       <div class="flex items-center justify-between mt-4">
-        <p class="text-gray-500 text-sm dark:text-gray-400">
+        <p class="text-gray-500 text-sm dark:text-neutral-400">
           Overview of your payment transactions
         </p>
         <div class="relative">
-          <select v-model="timeRange" class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600">
+          <select value="{{ timeRange }}" class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600">
             @foreach(timeRanges as range)
-              <option :value="range">{{ range }}</option>
+              <option value="{{ range }}">{{ range }}</option>
             @endforeach
           </select>
         </div>
@@ -388,8 +366,8 @@ function totalAmount() {
 
       <!-- Stats -->
       <dl class="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mt-5">
-        <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-          <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-300">Total Transactions</dt>
+        <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+          <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-300">Total Transactions</dt>
           <dd class="mt-1 font-semibold text-3xl text-gray-900 tracking-tight dark:text-white">{{ paymentStats.totalTransactions }}</dd>
           <dd class="flex items-center mt-2 text-green-600 text-sm dark:text-green-400">
             <div class="mr-1 h-4 w-4 i-hugeicons-analytics-up"></div>
@@ -397,8 +375,8 @@ function totalAmount() {
           </dd>
         </div>
 
-        <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-          <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-300">Success Rate</dt>
+        <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+          <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-300">Success Rate</dt>
           <dd class="mt-1 font-semibold text-3xl text-gray-900 tracking-tight dark:text-white">{{ paymentStats.successRate }}%</dd>
           <dd class="flex items-center mt-2 text-green-600 text-sm dark:text-green-400">
             <div class="mr-1 h-4 w-4 i-hugeicons-analytics-up"></div>
@@ -406,8 +384,8 @@ function totalAmount() {
           </dd>
         </div>
 
-        <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-          <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-300">Total Revenue</dt>
+        <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+          <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-300">Total Revenue</dt>
           <dd class="mt-1 font-semibold text-3xl text-gray-900 tracking-tight dark:text-white">${{ parseFloat(paymentStats.totalAmount).toLocaleString() }}</dd>
           <dd class="flex items-center mt-2 text-green-600 text-sm dark:text-green-400">
             <div class="mr-1 h-4 w-4 i-hugeicons-analytics-up"></div>
@@ -415,8 +393,8 @@ function totalAmount() {
           </dd>
         </div>
 
-        <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-          <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-300">Avg. Transaction</dt>
+        <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+          <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-300">Avg. Transaction</dt>
           <dd class="mt-1 font-semibold text-3xl text-gray-900 tracking-tight dark:text-white">${{ paymentStats.avgTransactionValue }}</dd>
           <dd class="flex items-center mt-2 text-green-600 text-sm dark:text-green-400">
             <div class="mr-1 h-4 w-4 i-hugeicons-analytics-up"></div>
@@ -427,20 +405,20 @@ function totalAmount() {
 
       <!-- Charts -->
       <div class="grid gap-5 grid-cols-1 lg:grid-cols-2 mt-8">
-        <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+        <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
           <div class="p-6">
             <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white">Transaction Count</h3>
             <div class="mt-2 h-80">
-              <Line :data="monthlyChartData.transactionCountChartData" :options="chartOptions" />
+              <canvas id="chart_1"></canvas>
             </div>
           </div>
         </div>
 
-        <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+        <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
           <div class="p-6">
             <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white">Revenue</h3>
             <div class="mt-2 h-80">
-              <Bar :data="monthlyChartData.revenueChartData" :options="chartOptions" />
+              <canvas id="chart_2"></canvas>
             </div>
           </div>
         </div>
@@ -453,33 +431,33 @@ function totalAmount() {
             <div class="h-5 w-5 text-gray-400 i-hugeicons-search-01"></div>
           </div>
           <input
-            v-model="searchQuery"
+            value="{{ searchQuery }}"
             type="text"
-            class="block pl-10 pr-3 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+            class="block pl-10 pr-3 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             placeholder="Search transactions..."
           />
         </div>
 
         <div class="flex flex-col gap-4 sm:flex-row">
           <select
-            v-model="statusFilter"
-            class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+            value="{{ statusFilter }}"
+            class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
           >
             <option value="all">All Statuses</option>
             @foreach(statuses.slice(1) as status)
-              <option :value="status">
+              <option value="{{ status }}">
                 {{ status }}
               </option>
             @endforeach
           </select>
 
           <select
-            v-model="methodFilter"
-            class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+            value="{{ methodFilter }}"
+            class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
           >
             <option value="all">All Payment Methods</option>
             @foreach(methods.slice(1) as method)
-              <option :value="method">
+              <option value="{{ method }}">
                 {{ method }}
               </option>
             @endforeach
@@ -491,72 +469,72 @@ function totalAmount() {
       <div class="flow-root mt-6">
         <div class="sm:flex sm:items-center sm:justify-between mb-4">
           <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white">All Transactions</h3>
-          <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">
+          <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">
             A list of all payment transactions including order ID, customer, amount, and status.
           </p>
         </div>
         <div class="overflow-x-auto -mx-4 -my-2 sm:-mx-6 lg:-mx-8">
           <div class="inline-block py-2 sm:px-6 lg:px-8 min-w-full align-middle">
             <div class="overflow-hidden ring-1 ring-black ring-opacity-5 sm:rounded-lg shadow">
-              <table class="min-w-full divide-gray-300 divide-y dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-blue-gray-700">
+              <table class="min-w-full divide-gray-300 divide-y dark:divide-neutral-700">
+                <thead class="bg-gray-50 dark:bg-neutral-700">
                   <tr>
-                    <th scope="col" class="pl-4 pr-3 py-3.5 sm:pl-6 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">
-                      <button @click="toggleSort('orderId')" class="inline-flex items-center group">
+                    <th scope="col" class="pl-4 pr-3 py-3.5 sm:pl-6 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">
+                      <button onclick="toggleSort('orderId')" class="inline-flex items-center group">
                         Order ID
                         <span class="group-focus:visible group-hover:visible flex-none ml-2 text-gray-400 rounded">
                           @if(sortBy === 'orderId')
-                            <div :class="[
+                            <div class="[
                               sortOrder === 'asc' ? 'i-hugeicons-arrow-up-02' : 'i-hugeicons-arrow-down-02',
                               'h-4 w-4'
-                            ]"></div>
+                            ] {{ }}"></div>
                           @else
                             <div class="h-4 w-4 i-hugeicons-arrows-up-down"></div>
                           @endif
                         </span>
                       </button>
                     </th>
-                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">
-                      <button @click="toggleSort('customer')" class="inline-flex items-center group">
+                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">
+                      <button onclick="toggleSort('customer')" class="inline-flex items-center group">
                         Customer
                         <span class="group-focus:visible group-hover:visible flex-none ml-2 text-gray-400 rounded">
                           @if(sortBy === 'customer')
-                            <div :class="[
+                            <div class="[
                               sortOrder === 'asc' ? 'i-hugeicons-arrow-up-02' : 'i-hugeicons-arrow-down-02',
                               'h-4 w-4'
-                            ]"></div>
+                            ] {{ }}"></div>
                           @else
                             <div class="h-4 w-4 i-hugeicons-arrows-up-down"></div>
                           @endif
                         </span>
                       </button>
                     </th>
-                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">
-                      <button @click="toggleSort('amount')" class="inline-flex items-center group">
+                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">
+                      <button onclick="toggleSort('amount')" class="inline-flex items-center group">
                         Amount
                         <span class="group-focus:visible group-hover:visible flex-none ml-2 text-gray-400 rounded">
                           @if(sortBy === 'amount')
-                            <div :class="[
+                            <div class="[
                               sortOrder === 'asc' ? 'i-hugeicons-arrow-up-02' : 'i-hugeicons-arrow-down-02',
                               'h-4 w-4'
-                            ]"></div>
+                            ] {{ }}"></div>
                           @else
                             <div class="h-4 w-4 i-hugeicons-arrows-up-down"></div>
                           @endif
                         </span>
                       </button>
                     </th>
-                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">Method</th>
-                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">Status</th>
-                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">
-                      <button @click="toggleSort('date')" class="inline-flex items-center group">
+                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">Method</th>
+                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">Status</th>
+                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">
+                      <button onclick="toggleSort('date')" class="inline-flex items-center group">
                         Date
                         <span class="group-focus:visible group-hover:visible flex-none ml-2 text-gray-400 rounded">
                           @if(sortBy === 'date')
-                            <div :class="[
+                            <div class="[
                               sortOrder === 'asc' ? 'i-hugeicons-arrow-up-02' : 'i-hugeicons-arrow-down-02',
                               'h-4 w-4'
-                            ]"></div>
+                            ] {{ }}"></div>
                           @else
                             <div class="h-4 w-4 i-hugeicons-arrows-up-down"></div>
                           @endif
@@ -568,22 +546,22 @@ function totalAmount() {
                     </th>
                   </tr>
                 </thead>
-                <tbody class="bg-white dark:bg-blue-gray-800 divide-gray-200 divide-y dark:divide-gray-700">
+                <tbody class="bg-white dark:bg-neutral-800 divide-gray-200 divide-y dark:divide-neutral-700">
                   @foreach(paginatedTransactions as transaction)
                     <tr>
                       <td class="pl-4 pr-3 py-4 sm:pl-6 font-medium text-gray-900 text-sm whitespace-nowrap dark:text-white">
                         {{ transaction.orderId }}
                       </td>
-                      <td class="px-3 py-4 text-gray-500 text-sm dark:text-gray-300">
+                      <td class="px-3 py-4 text-gray-500 text-sm dark:text-neutral-300">
                         <div>{{ transaction.customer }}</div>
                         <div class="text-gray-400 text-xs">{{ transaction.email }}</div>
                       </td>
                       <td class="px-3 py-4 font-medium text-gray-900 text-sm whitespace-nowrap dark:text-white">
                         ${{ transaction.amount.toFixed(2) }}
                       </td>
-                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-300">
+                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-300">
                         <div class="flex items-center">
-                          <div :class="[getPaymentMethodIcon(transaction.method), 'h-5 w-5 mr-1.5 text-gray-500 dark:text-gray-400']"></div>
+                          <div :class="[getPaymentMethodIcon(transaction.method), 'h-5 w-5 mr-1.5 text-gray-500 dark:text-neutral-400']"></div>
                           <span>{{ transaction.method }}</span>
                           @if(transaction.last4)
                             <span class="ml-1 text-gray-400 text-xs">
@@ -597,7 +575,7 @@ function totalAmount() {
                           {{ transaction.status }}
                         </span>
                       </td>
-                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-300">
+                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-300">
                         {{ transaction.date }}
                       </td>
                       <td class="relative pl-3 pr-4 py-4 sm:pr-6 font-medium text-right text-sm whitespace-nowrap">
@@ -614,7 +592,7 @@ function totalAmount() {
                   @endforeach
                   @if(paginatedTransactions.length === 0)
                     <tr>
-                      <td colspan="7" class="px-6 py-4 text-center text-gray-500 text-sm dark:text-gray-400">
+                      <td colspan="7" class="px-6 py-4 text-center text-gray-500 text-sm dark:text-neutral-400">
                         No transactions found matching your criteria
                       </td>
                     </tr>
@@ -631,39 +609,39 @@ function totalAmount() {
         <div class="flex items-center justify-between mt-6">
           <div class="flex sm:hidden flex-1 justify-between">
             <button
-              @click="changePage(Math.max(1, currentPage - 1))"
-              :disabled="currentPage === 1"
-              :class="[
+              onclick="changePage(Math.max(1, currentPage - 1))"
+              disabled="{{ currentPage === 1 }}"
+              class="[
                 currentPage === 1 ? 'cursor-not-allowed opacity-50' : '',
-                'relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-blue-gray-800 dark:text-gray-200 dark:hover:bg-blue-gray-700'
-              ]"
+                'relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700'
+              ] {{ }}"
             >
               Previous
             </button>
             <button
-              @click="changePage(Math.min(totalPages, currentPage + 1))"
-              :disabled="currentPage === totalPages"
-              :class="[
+              onclick="changePage(Math.min(totalPages, currentPage + 1))"
+              disabled="{{ currentPage === totalPages }}"
+              class="[
                 currentPage === totalPages ? 'cursor-not-allowed opacity-50' : '',
-                'relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-blue-gray-800 dark:text-gray-200 dark:hover:bg-blue-gray-700'
-              ]"
+                'relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700'
+              ] {{ }}"
             >
               Next
             </button>
           </div>
           <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
             <div>
-              <p class="text-gray-700 text-sm dark:text-gray-300">
+              <p class="text-gray-700 text-sm dark:text-neutral-300">
                 Showing <span class="font-medium">{{ ((currentPage - 1) * itemsPerPage) + 1 }}</span> to <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, filteredTransactions.length) }}</span> of <span class="font-medium">{{ filteredTransactions.length }}</span> results
               </p>
             </div>
             <div>
               <nav class="inline-flex -space-x-px rounded-md shadow-sm isolate" aria-label="Pagination">
                 <button
-                  @click="changePage(Math.max(1, currentPage - 1))"
-                  :disabled="currentPage === 1"
-                  class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 hover:bg-gray-50 dark:hover:bg-blue-gray-700 ring-1 ring-gray-300 ring-inset rounded-l-md dark:ring-gray-600 focus:outline-offset-0"
-                  :class="'cursor-not-allowed { } === 1 currentPage opacity-50':"
+                  onclick="changePage(Math.max(1, currentPage - 1))"
+                  disabled="{{ currentPage === 1 }}"
+                  class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-700 ring-1 ring-gray-300 ring-inset rounded-l-md dark:ring-neutral-600 focus:outline-offset-0"
+                  class="'cursor-not-allowed { {{ } }} === 1 currentPage opacity-50':"
                 >
                   <span class="sr-only">Previous</span>
                   <div class="h-5 w-5 i-hugeicons-arrow-left-01"></div>
@@ -672,18 +650,18 @@ function totalAmount() {
                 @foreach(Array.from({ length: totalPages }, (_, i) => i + 1) as page)
                   @if(page === currentPage || page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1))
                     <button
-                      @click="changePage(page)"
-                      :class="[
+                      onclick="changePage(page)"
+                      class="[
                         page === currentPage
                           ? 'relative z-10 inline-flex items-center bg-blue-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
-                          : 'relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 dark:text-gray-200 dark:ring-gray-600 dark:hover:bg-blue-gray-700',
-                      ]"
+                          : 'relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 dark:text-neutral-200 dark:ring-neutral-600 dark:hover:bg-neutral-700',
+                      ] {{ }}"
                     >
                       {{ page }}
                     </button>
                   @elseif((page === currentPage - 2 && currentPage > 3) || (page === currentPage + 2 && currentPage < totalPages - 2))
                     <span
-                      class="inline-flex relative items-center px-4 py-2 font-semibold text-gray-700 text-sm dark:text-gray-400 ring-1 ring-gray-300 ring-inset dark:ring-gray-600 focus:outline-offset-0"
+                      class="inline-flex relative items-center px-4 py-2 font-semibold text-gray-700 text-sm dark:text-neutral-400 ring-1 ring-gray-300 ring-inset dark:ring-neutral-600 focus:outline-offset-0"
                     >
                       ...
                     </span>
@@ -691,10 +669,10 @@ function totalAmount() {
                 @endforeach
 
                 <button
-                  @click="changePage(Math.min(totalPages, currentPage + 1))"
-                  :disabled="currentPage === totalPages"
-                  class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 hover:bg-gray-50 dark:hover:bg-blue-gray-700 ring-1 ring-gray-300 ring-inset rounded-r-md dark:ring-gray-600 focus:outline-offset-0"
-                  :class="'cursor-not-allowed { } === currentPage opacity-50': totalPages"
+                  onclick="changePage(Math.min(totalPages, currentPage + 1))"
+                  disabled="{{ currentPage === totalPages }}"
+                  class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-700 ring-1 ring-gray-300 ring-inset rounded-r-md dark:ring-neutral-600 focus:outline-offset-0"
+                  class="'cursor-not-allowed { {{ } }} === currentPage opacity-50': totalPages"
                 >
                   <span class="sr-only">Next</span>
                   <div class="h-5 w-5 i-hugeicons-arrow-right-01"></div>
@@ -707,3 +685,29 @@ function totalAmount() {
     </div>
   </div>
 </main>
+
+<script client>
+const { Chart, registerables } = await import('chart.js/auto')
+Chart.register(...registerables)
+
+const chart_1_ctx = document.getElementById('chart_1')
+if (chart_1_ctx) {
+  new Chart(chart_1_ctx, {
+    type: 'line',
+    data: monthlyChartData.transactionCountChartData,
+    options: chartOptions,
+  })
+}
+
+const chart_2_ctx = document.getElementById('chart_2')
+if (chart_2_ctx) {
+  new Chart(chart_2_ctx, {
+    type: 'bar',
+    data: monthlyChartData.revenueChartData,
+    options: chartOptions,
+  })
+}
+
+</script>
+
+@endsection

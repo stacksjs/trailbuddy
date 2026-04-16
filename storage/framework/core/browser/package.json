@@ -49,12 +49,9 @@
   "dependencies": {
     "@stacksjs/composables": "workspace:*",
     "@stacksjs/stx": "^0.2.7",
-    "@stripe/stripe-js": "^8.11.0",
+    "@stripe/stripe-js": "^9.0.0",
     "bun-query-builder": "^0.1.13",
-    "magic-regexp": "^0.11.0",
-    "ofetch": "^1.4.1",
-    "perfect-debounce": "^2.1.0",
-    "pretty-bytes": "^6.1.1"
+    "magic-regexp": "^0.11.0"
   },
   "devDependencies": {
     "better-dx": "^0.2.5",

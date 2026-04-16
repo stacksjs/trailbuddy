@@ -1,36 +1,17 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 definePageMeta({
   middleware: ['auth'],
   layout: 'default'
 })
 
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js'
 import Card from '../../../components/Dashboard/UI/Card.stx'
 import Badge from '../../../components/Dashboard/UI/Badge.stx'
 import Button from '../../../components/Dashboard/UI/Button.stx'
 import StatsCard from '../../../components/Dashboard/UI/StatsCard.stx'
 import Select from '../../../components/Dashboard/UI/Select.stx'
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-)
 
 interface Job {
   id: string
@@ -268,7 +249,7 @@ const getStatusVariant = (status) => {
           <p class="mt-0.5 text-[12px] text-neutral-500 dark:text-neutral-400">Processed vs failed jobs over time</p>
         </div>
         <Select
-          v-model="timeRange"
+          value="{{ timeRange }}"
           :options="timeRangeOptions"
           size="sm"
           class="w-36"
@@ -280,7 +261,7 @@ const getStatusVariant = (status) => {
             <div class="h-6 w-6 border-b-2 border-blue-500 rounded-full animate-spin" />
           </div>
         @endif
-        <Line :data="throughputData" :options="chartOptions" />
+        <canvas id="chart_1"></canvas>
       </div>
     </Card>
 
@@ -298,7 +279,7 @@ const getStatusVariant = (status) => {
             <div class="h-6 w-6 border-b-2 border-blue-500 rounded-full animate-spin" />
           </div>
         @endif
-        <Line :data="waitTimeData" :options="chartOptions" />
+        <canvas id="chart_2"></canvas>
       </div>
     </Card>
   </div>
@@ -334,7 +315,7 @@ const getStatusVariant = (status) => {
         </thead>
         <tbody class="divide-black/5 divide-y dark:divide-white/5">
           @foreach(recentJobs as job)
-            <tr class="dark:bg-gray-800/[0.02] hover:bg-black/[0.02] dark:hover:bg-white transition-colors">
+            <tr class="dark:bg-neutral-800/[0.02] hover:bg-black/[0.02] dark:hover:bg-white transition-colors">
               <td class="pl-5 pr-3 py-3.5 whitespace-nowrap">
                 <div class="font-medium text-[13px] text-neutral-900 dark:text-white">{{ job.name }}</div>
                 <div class="flex gap-1 items-center mt-1">
@@ -372,8 +353,8 @@ const getStatusVariant = (status) => {
               </td>
               <td class="relative pl-3 pr-5 py-3.5 text-right whitespace-nowrap">
                 <Button
-                  as="router-link"
-                  :to="`/jobs/${job.id}`"
+                  
+                  :href="`/jobs/${job.id}`"
                   variant="ghost"
                   size="sm"
                 >
@@ -388,6 +369,27 @@ const getStatusVariant = (status) => {
   </Card>
 </div>
 <script client>
+const { Chart, registerables } = await import('chart.js/auto')
+Chart.register(...registerables)
+
+const chart_1_ctx = document.getElementById('chart_1')
+if (chart_1_ctx) {
+  new Chart(chart_1_ctx, {
+    type: 'line',
+    data: throughputData,
+    options: chartOptions,
+  })
+}
+
+const chart_2_ctx = document.getElementById('chart_2')
+if (chart_2_ctx) {
+  new Chart(chart_2_ctx, {
+    type: 'line',
+    data: waitTimeData,
+    options: chartOptions,
+  })
+}
+
 import { onMount } from 'stx'
 
 onMount(async () => {
@@ -397,3 +399,5 @@ onMount(async () => {
 })
 </script>
 
+
+@endsection

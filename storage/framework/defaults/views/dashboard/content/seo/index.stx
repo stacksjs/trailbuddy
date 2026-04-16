@@ -1,3 +1,6 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 // Define types
 interface SeoSettings {
@@ -361,14 +364,14 @@ function togglePostSelection(postId: number): void {
 }
 
 // Get score color class
-function getScoreColorClass(score: number): string {
+const getScoreColorClass = (score: number): string => {
   if (score >= 90) return 'text-green-600 dark:text-green-400'
   if (score >= 70) return 'text-yellow-600 dark:text-yellow-400'
   return 'text-red-600 dark:text-red-400'
 }
 
 // Get score background class
-function getScoreBgClass(score: number): string {
+const getScoreBgClass = (score: number): string => {
   if (score >= 90) return 'bg-green-100 dark:bg-green-900/30'
   if (score >= 70) return 'bg-yellow-100 dark:bg-yellow-900/30'
   return 'bg-red-100 dark:bg-red-900/30'
@@ -395,22 +398,22 @@ function getPostTitleById(id: number): string {
         <div class="sm:flex sm:items-center sm:justify-between">
           <div>
             <h1 class="font-semibold text-2xl text-gray-900 dark:text-white">SEO</h1>
-            <p class="mt-2 text-gray-700 text-sm dark:text-gray-300">
+            <p class="mt-2 text-gray-700 text-sm dark:text-neutral-300">
               Optimize your blog posts for search engines
             </p>
           </div>
           <div class="flex mt-4 space-x-3 sm:mt-0">
             <button
               type="button"
-              @click="openGlobalSettingsModal"
-              class="inline-flex items-center px-3 py-2 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+              onclick="openGlobalSettingsModal"
+              class="inline-flex items-center px-3 py-2 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
             >
               <div class="mr-1 h-5 w-5 i-hugeicons-settings-02"></div>
               Global Settings
             </button>
             <button
               type="button"
-              @click="openBulkOptimizationModal"
+              onclick="openBulkOptimizationModal"
               class="inline-flex items-center px-3 py-2 font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
             >
               <div class="mr-1 h-5 w-5 i-hugeicons-magic-wand-05"></div>
@@ -422,7 +425,7 @@ function getPostTitleById(id: number): string {
         <!-- SEO Overview Cards -->
         <div class="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mt-6">
           <!-- Average SEO Score -->
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -430,7 +433,7 @@ function getPostTitleById(id: number): string {
                 </div>
                 <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">Average SEO Score</dt>
+                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">Average SEO Score</dt>
                     <dd>
                       <div class="font-medium text-gray-900 text-lg dark:text-white">
                         {{ Math.round(seoData.reduce((acc, item) => acc + item.score, 0) / seoData.length) }}%
@@ -440,7 +443,7 @@ function getPostTitleById(id: number): string {
                 </div>
               </div>
             </div>
-            <div class="px-5 py-3 bg-gray-50 dark:bg-blue-gray-700">
+            <div class="px-5 py-3 bg-gray-50 dark:bg-neutral-700">
               <div class="text-sm">
                 <a href="#" class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">View details</a>
               </div>
@@ -448,7 +451,7 @@ function getPostTitleById(id: number): string {
           </div>
 
           <!-- Posts with Good SEO -->
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -456,7 +459,7 @@ function getPostTitleById(id: number): string {
                 </div>
                 <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">Posts with Good SEO</dt>
+                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">Posts with Good SEO</dt>
                     <dd>
                       <div class="font-medium text-gray-900 text-lg dark:text-white">
                         {{ seoData.filter(item => item.score >= 80).length }} / {{ seoData.length }}
@@ -466,7 +469,7 @@ function getPostTitleById(id: number): string {
                 </div>
               </div>
             </div>
-            <div class="px-5 py-3 bg-gray-50 dark:bg-blue-gray-700">
+            <div class="px-5 py-3 bg-gray-50 dark:bg-neutral-700">
               <div class="text-sm">
                 <a href="#" class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">View details</a>
               </div>
@@ -474,7 +477,7 @@ function getPostTitleById(id: number): string {
           </div>
 
           <!-- Posts Needing Improvement -->
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -482,7 +485,7 @@ function getPostTitleById(id: number): string {
                 </div>
                 <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">Needs Improvement</dt>
+                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">Needs Improvement</dt>
                     <dd>
                       <div class="font-medium text-gray-900 text-lg dark:text-white">
                         {{ seoData.filter(item => item.score < 80 && item.score >= 60).length }} / {{ seoData.length }}
@@ -492,7 +495,7 @@ function getPostTitleById(id: number): string {
                 </div>
               </div>
             </div>
-            <div class="px-5 py-3 bg-gray-50 dark:bg-blue-gray-700">
+            <div class="px-5 py-3 bg-gray-50 dark:bg-neutral-700">
               <div class="text-sm">
                 <a href="#" class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">View details</a>
               </div>
@@ -500,7 +503,7 @@ function getPostTitleById(id: number): string {
           </div>
 
           <!-- Posts with Poor SEO -->
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -508,7 +511,7 @@ function getPostTitleById(id: number): string {
                 </div>
                 <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">Poor SEO</dt>
+                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">Poor SEO</dt>
                     <dd>
                       <div class="font-medium text-gray-900 text-lg dark:text-white">
                         {{ seoData.filter(item => item.score < 60).length }} / {{ seoData.length }}
@@ -518,7 +521,7 @@ function getPostTitleById(id: number): string {
                 </div>
               </div>
             </div>
-            <div class="px-5 py-3 bg-gray-50 dark:bg-blue-gray-700">
+            <div class="px-5 py-3 bg-gray-50 dark:bg-neutral-700">
               <div class="text-sm">
                 <a href="#" class="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300">View details</a>
               </div>
@@ -533,17 +536,17 @@ function getPostTitleById(id: number): string {
               <div class="h-5 w-5 text-gray-400 i-hugeicons-search-01"></div>
             </div>
             <input
-              v-model="searchQuery"
+              value="{{ searchQuery }}"
               type="text"
-              class="block pl-10 pr-3 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              class="block pl-10 pr-3 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
               placeholder="Search by title, keyword, or slug..."
             />
           </div>
 
           <div class="flex flex-col gap-4 sm:flex-row">
             <select
-              v-model="sortBy"
-              class="block pl-3 pr-10 py-1.5 min-w-[180px] w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              value="{{ sortBy }}"
+              class="block pl-3 pr-10 py-1.5 min-w-[180px] w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             >
               <option value="score">Sort by SEO Score</option>
               <option value="title">Sort by Title</option>
@@ -551,27 +554,28 @@ function getPostTitleById(id: number): string {
             </select>
 
             <select
-              v-model="sortOrder"
-              class="block pl-3 pr-10 py-1.5 min-w-[140px] w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              value="{{ sortOrder }}"
+              class="block pl-3 pr-10 py-1.5 min-w-[140px] w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             >
               <option value="asc">Ascending</option>
               <option value="desc">Descending</option>
             </select>
 
             <select
-              v-model="itemsPerPage"
-              class="block pl-3 pr-10 py-1.5 min-w-[140px] w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              value="{{ itemsPerPage }}"
+              class="block pl-3 pr-10 py-1.5 min-w-[140px] w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             >
-              <option :value="5">5 per page</option>
-              <option :value="10">10 per page</option>
-              <option :value="25">25 per page</option>
-              <option :value="50">50 per page</option>
+              <option value="{{ 5 }}">5 per page</option>
+              <option value="{{ 10 }}">10 per page</option>
+              <option value="{{ 25 }}">25 per page</option>
+              <option value="{{ 50 }}">50 per page</option>
             </select>
           </div>
         </div>
 
         <!-- Bulk actions -->
-        <div v-if="hasSelectedPosts" class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg shadow-sm">
+        @if(hasSelectedPosts)
+<div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg shadow-sm">
           <div class="flex items-center justify-between">
             <div class="flex items-center">
               <div class="mr-2 h-5 w-5 text-blue-400 i-hugeicons-checkmark-circle-02"></div>
@@ -579,8 +583,8 @@ function getPostTitleById(id: number): string {
             </div>
             <div class="flex space-x-2">
               <button
-                @click="openBulkOptimizationModal"
-                class="inline-flex items-center px-2.5 py-1.5 font-semibold text-blue-600 text-sm dark:text-blue-400 bg-white dark:bg-blue-gray-800 hover:bg-blue-50 dark:hover:bg-blue-500/10 ring-1 ring-blue-300 ring-inset rounded-md dark:ring-blue-500/30 shadow-sm"
+                onclick="openBulkOptimizationModal"
+                class="inline-flex items-center px-2.5 py-1.5 font-semibold text-blue-600 text-sm dark:text-blue-400 bg-white dark:bg-neutral-800 hover:bg-blue-50 dark:hover:bg-blue-500/10 ring-1 ring-blue-300 ring-inset rounded-md dark:ring-blue-500/30 shadow-sm"
               >
                 <div class="mr-1 h-4 w-4 i-hugeicons-magic-wand-05"></div>
                 Optimize Selected
@@ -591,17 +595,17 @@ function getPostTitleById(id: number): string {
 
         <!-- SEO Table -->
         <div class="flow-root mt-6">
-          <div class="overflow-x-auto border border-gray-200 rounded-lg dark:border-gray-700 shadow">
+          <div class="overflow-x-auto border border-gray-200 rounded-lg dark:border-neutral-700 shadow">
             <div class="overflow-hidden">
-              <table class="min-w-full divide-gray-200 divide-y dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-blue-gray-700/50">
+              <table class="min-w-full divide-gray-200 divide-y dark:divide-neutral-700">
+                <thead class="bg-gray-50 dark:bg-neutral-700/50">
                   <tr>
                     <th scope="col" class="relative px-4 py-3.5 sm:px-6">
                       <input
                         type="checkbox"
-                        :checked="selectAll"
-                        @change="toggleSelectAll"
-                        class="h-4 w-4 text-blue-600 dark:bg-blue-gray-700 dark:checked:bg-blue-600 border-gray-300 rounded dark:border-gray-600 focus:ring-blue-600 dark:focus:ring-offset-blue-gray-800"
+                        checked="{{ selectAll }}"
+                        onchange="toggleSelectAll"
+                        class="h-4 w-4 text-blue-600 dark:bg-neutral-700 dark:checked:bg-blue-600 border-gray-300 rounded dark:border-neutral-600 focus:ring-blue-600 dark:focus:ring-offset-neutral-800"
                       />
                     </th>
                     <th scope="col" class="px-4 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-white">
@@ -621,15 +625,16 @@ function getPostTitleById(id: number): string {
                     </th>
                   </tr>
                 </thead>
-                <tbody class="bg-white dark:bg-blue-gray-800 divide-gray-200 divide-y dark:divide-gray-700">
-                  <tr v-for="item in paginatedSeoData" :key="item.id" class="hover:bg-gray-50 dark:hover:bg-blue-gray-700">
+                <tbody class="bg-white dark:bg-neutral-800 divide-gray-200 divide-y dark:divide-neutral-700">
+                  @foreach(paginatedSeoData as item)
+<tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
                     <td class="relative px-4 py-4 sm:px-6 whitespace-nowrap">
                       <div class="flex items-center">
                         <input
                           type="checkbox"
-                          :checked="selectedPostIds.includes(item.id)"
-                          @change="togglePostSelection(item.id)"
-                          class="h-4 w-4 text-blue-600 dark:bg-blue-gray-700 dark:checked:bg-blue-600 border-gray-300 rounded dark:border-gray-600 focus:ring-blue-600 dark:focus:ring-offset-blue-gray-800"
+                          checked="{{ selectedPostIds.includes(item.id) }}"
+                          onchange="togglePostSelection(item.id)"
+                          class="h-4 w-4 text-blue-600 dark:bg-neutral-700 dark:checked:bg-blue-600 border-gray-300 rounded dark:border-neutral-600 focus:ring-blue-600 dark:focus:ring-offset-neutral-800"
                         />
                       </div>
                     </td>
@@ -638,7 +643,7 @@ function getPostTitleById(id: number): string {
                         <div class="font-medium text-gray-900 text-sm dark:text-white">
                           {{ item.title }}
                         </div>
-                        <div class="mt-1 text-gray-500 text-xs dark:text-gray-400">
+                        <div class="mt-1 text-gray-500 text-xs dark:text-neutral-400">
                           Slug: {{ item.slug }}
                         </div>
                       </div>
@@ -651,37 +656,37 @@ function getPostTitleById(id: number): string {
                     </td>
                     <td class="px-4 py-4 whitespace-nowrap">
                       <div class="flex items-center">
-                        <div :class="[
+                        <div class="[
                           'text-sm font-medium',
                           getScoreColorClass(item.score)
-                        ]">
+                        ] {{ }}">
                           {{ item.score }}%
                         </div>
-                        <div class="ml-2 h-2 w-16 bg-gray-200 dark:bg-gray-700 rounded-full">
+                        <div class="ml-2 h-2 w-16 bg-gray-200 dark:bg-neutral-700 rounded-full">
                           <div
-                            :class="[
+                            class="[
                               'h-2 rounded-full',
                               getScoreBgClass(item.score)
-                            ]"
-                            :style="{ width: `${item.score}%` }"
+                            ] {{ }}"
+                            style="{{ { width: `${item.score}%` } }}"
                           ></div>
                         </div>
                       </div>
                     </td>
-                    <td class="px-4 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-300">
+                    <td class="px-4 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-300">
                       {{ item.lastUpdated }}
                     </td>
                     <td class="px-4 py-4 font-medium text-right text-sm whitespace-nowrap">
                       <div class="flex justify-end space-x-2">
                         <button
-                          @click="openAnalysisModal(item.id)"
+                          onclick="openAnalysisModal(item.id)"
                           class="text-gray-400 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 duration-150 transition-colors"
                         >
                           <div class="h-5 w-5 i-hugeicons-analysis-text-link"></div>
                           <span class="sr-only">Analyze</span>
                         </button>
                         <button
-                          @click="openEditModal(item)"
+                          onclick="openEditModal(item)"
                           class="text-gray-400 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 duration-150 transition-colors"
                         >
                           <div class="h-5 w-5 i-hugeicons-edit-01"></div>
@@ -690,8 +695,9 @@ function getPostTitleById(id: number): string {
                       </div>
                     </td>
                   </tr>
-                  <tr v-if="paginatedSeoData.length === 0">
-                    <td colspan="6" class="px-4 py-8 text-center text-gray-500 text-sm dark:text-gray-400">
+                  @if(paginatedSeoData.length === 0)
+<tr>
+                    <td colspan="6" class="px-4 py-8 text-center text-gray-500 text-sm dark:text-neutral-400">
                       No SEO data found. Try adjusting your search.
                     </td>
                   </tr>
@@ -702,55 +708,55 @@ function getPostTitleById(id: number): string {
         </div>
 
         <!-- Pagination -->
-        <div v-if="totalPages > 1" class="flex items-center justify-between mt-6">
+        @if(totalPages > 1)
+<div class="flex items-center justify-between mt-6">
           <div class="flex sm:hidden flex-1 justify-between">
             <button
-              @click="currentPage = Math.max(1, currentPage - 1)"
-              :disabled="currentPage === 1"
-              class="inline-flex relative items-center px-4 py-2 font-medium text-gray-700 text-sm dark:text-gray-200 bg-white dark:bg-blue-gray-800 hover:bg-gray-50 dark:hover:bg-blue-gray-700 border border-gray-300 rounded-md dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              onclick="currentPage = Math.max(1, currentPage - 1)"
+              disabled="{{ currentPage === 1 }}"
+              class="inline-flex relative items-center px-4 py-2 font-medium text-gray-700 text-sm dark:text-neutral-200 bg-white dark:bg-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-700 border border-gray-300 rounded-md dark:border-neutral-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
             <button
-              @click="currentPage = Math.min(totalPages, currentPage + 1)"
-              :disabled="currentPage === totalPages"
-              class="inline-flex relative items-center ml-3 px-4 py-2 font-medium text-gray-700 text-sm dark:text-gray-200 bg-white dark:bg-blue-gray-800 hover:bg-gray-50 dark:hover:bg-blue-gray-700 border border-gray-300 rounded-md dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              onclick="currentPage = Math.min(totalPages, currentPage + 1)"
+              disabled="{{ currentPage === totalPages }}"
+              class="inline-flex relative items-center ml-3 px-4 py-2 font-medium text-gray-700 text-sm dark:text-neutral-200 bg-white dark:bg-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-700 border border-gray-300 rounded-md dark:border-neutral-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
           </div>
           <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
             <div>
-              <p class="text-gray-700 text-sm dark:text-gray-300">
+              <p class="text-gray-700 text-sm dark:text-neutral-300">
                 Showing <span class="font-medium">{{ ((currentPage - 1) * itemsPerPage) + 1 }}</span> to <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, filteredSeoData.length) }}</span> of <span class="font-medium">{{ filteredSeoData.length }}</span> results
               </p>
             </div>
             <div>
               <nav class="inline-flex -space-x-px rounded-md shadow-sm isolate" aria-label="Pagination">
                 <button
-                  @click="currentPage = Math.max(1, currentPage - 1)"
-                  :disabled="currentPage === 1"
-                  class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-blue-gray-700 ring-1 ring-gray-300 ring-inset rounded-l-md dark:ring-gray-600 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onclick="currentPage = Math.max(1, currentPage - 1)"
+                  disabled="{{ currentPage === 1 }}"
+                  class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 dark:text-neutral-500 hover:bg-gray-50 dark:hover:bg-neutral-700 ring-1 ring-gray-300 ring-inset rounded-l-md dark:ring-neutral-600 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span class="sr-only">Previous</span>
                   <div class="h-5 w-5 i-hugeicons-arrow-left-01"></div>
                 </button>
-                <button
-                  v-for="page in paginationRange"
-                  :key="page"
-                  @click="currentPage = page"
-                  :class="[
+                @foreach(paginationRange as page)
+<button
+                  onclick="currentPage = page"
+                  class="[
                     page === currentPage
                       ? 'relative z-10 inline-flex items-center bg-blue-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:bg-blue-700'
-                      : 'relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 dark:text-gray-200 dark:ring-gray-600 dark:hover:bg-blue-gray-700'
-                  ]"
+                      : 'relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 dark:text-neutral-200 dark:ring-neutral-600 dark:hover:bg-neutral-700'
+                  ] {{ }}"
                 >
                   {{ page }}
                 </button>
                 <button
-                  @click="currentPage = Math.min(totalPages, currentPage + 1)"
-                  :disabled="currentPage === totalPages"
-                  class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-blue-gray-700 ring-1 ring-gray-300 ring-inset rounded-r-md dark:ring-gray-600 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onclick="currentPage = Math.min(totalPages, currentPage + 1)"
+                  disabled="{{ currentPage === totalPages }}"
+                  class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 dark:text-neutral-500 hover:bg-gray-50 dark:hover:bg-neutral-700 ring-1 ring-gray-300 ring-inset rounded-r-md dark:ring-neutral-600 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span class="sr-only">Next</span>
                   <div class="h-5 w-5 i-hugeicons-arrow-right-01"></div>
@@ -764,17 +770,18 @@ function getPostTitleById(id: number): string {
 </main>
 
 <!-- Edit SEO Modal -->
-  <div v-if="showEditModal" class="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 transition-opacity"></div>
+  @if(showEditModal)
+<div class="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-neutral-900 dark:bg-opacity-75 transition-opacity"></div>
 
     <div class="fixed inset-0 overflow-y-auto z-10">
       <div class="flex items-end justify-center sm:items-center p-4 sm:p-0 min-h-full text-center">
-        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-3xl sm:w-full text-left bg-white dark:bg-blue-gray-800 rounded-lg shadow-xl transition-all transform">
+        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-3xl sm:w-full text-left bg-white dark:bg-neutral-800 rounded-lg shadow-xl transition-all transform">
           <div class="hidden sm:block absolute right-0 top-0 pr-4 pt-4">
             <button
               type="button"
-              @click="closeEditModal"
-              class="text-gray-400 dark:text-gray-300 hover:text-gray-500 dark:hover:text-gray-200 bg-white dark:bg-blue-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              onclick="closeEditModal"
+              class="text-gray-400 dark:text-neutral-300 hover:text-gray-500 dark:hover:text-gray-200 bg-white dark:bg-neutral-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               <span class="sr-only">Close</span>
               <div class="h-6 w-6 i-hugeicons-cancel-circle"></div>
@@ -787,24 +794,25 @@ function getPostTitleById(id: number): string {
             <div class="mt-3 sm:ml-4 sm:mt-0 text-center sm:text-left">
               <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white" id="modal-title">Edit SEO Settings</h3>
               <div class="mt-2">
-                <p class="text-gray-500 text-sm dark:text-gray-400">
+                <p class="text-gray-500 text-sm dark:text-neutral-400">
                   Optimize your post's SEO settings to improve search engine visibility.
                 </p>
               </div>
             </div>
           </div>
-          <div v-if="currentSeo" class="mt-5 sm:mt-4">
+          @if(currentSeo)
+<div class="mt-5 sm:mt-4">
             <div class="space-y-4">
               <!-- Tabs -->
-              <div class="border-b border-gray-200 dark:border-gray-700">
+              <div class="border-b border-gray-200 dark:border-neutral-700">
                 <nav class="flex -mb-px space-x-8" aria-label="Tabs">
                   <a href="#" class="px-1 py-4 font-medium text-blue-600 text-sm whitespace-nowrap dark:text-blue-400 border-b-2 border-blue-500">
                     Basic SEO
                   </a>
-                  <a href="#" class="px-1 py-4 font-medium text-gray-500 text-sm whitespace-nowrap dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600">
+                  <a href="#" class="px-1 py-4 font-medium text-gray-500 text-sm whitespace-nowrap dark:text-neutral-400 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600">
                     Social Media
                   </a>
-                  <a href="#" class="px-1 py-4 font-medium text-gray-500 text-sm whitespace-nowrap dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600">
+                  <a href="#" class="px-1 py-4 font-medium text-gray-500 text-sm whitespace-nowrap dark:text-neutral-400 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600">
                     Advanced
                   </a>
                 </nav>
@@ -819,13 +827,14 @@ function getPostTitleById(id: number): string {
                       <input
                         type="text"
                         id="seo-title"
-                        v-model="currentSeo.title"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ currentSeo.title }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                       />
                     </div>
-                    <p class="mt-1 text-gray-500 text-xs dark:text-gray-400">
+                    <p class="mt-1 text-gray-500 text-xs dark:text-neutral-400">
                       {{ currentSeo.title.length }}/60 characters
-                      <span v-if="currentSeo.title.length > 60" class="text-red-500 dark:text-red-400">
+                      @if(currentSeo.title.length > 60)
+<span class="text-red-500 dark:text-red-400">
                         (Too long)
                       </span>
                     </p>
@@ -837,8 +846,8 @@ function getPostTitleById(id: number): string {
                       <input
                         type="text"
                         id="seo-slug"
-                        v-model="currentSeo.slug"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ currentSeo.slug }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                       />
                     </div>
                   </div>
@@ -849,11 +858,11 @@ function getPostTitleById(id: number): string {
                       <input
                         type="text"
                         id="seo-focus-keyword"
-                        v-model="currentSeo.focusKeyword"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ currentSeo.focusKeyword }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                       />
                     </div>
-                    <p class="mt-1 text-gray-500 text-xs dark:text-gray-400">
+                    <p class="mt-1 text-gray-500 text-xs dark:text-neutral-400">
                       The main keyword you want this post to rank for
                     </p>
                   </div>
@@ -863,14 +872,15 @@ function getPostTitleById(id: number): string {
                     <div class="mt-2">
                       <textarea
                         id="seo-meta-description"
-                        v-model="currentSeo.metaDescription"
+                        value="{{ currentSeo.metaDescription }}"
                         rows="3"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                       ></textarea>
                     </div>
-                    <p class="mt-1 text-gray-500 text-xs dark:text-gray-400">
+                    <p class="mt-1 text-gray-500 text-xs dark:text-neutral-400">
                       {{ currentSeo.metaDescription.length }}/160 characters
-                      <span v-if="currentSeo.metaDescription.length > 160" class="text-red-500 dark:text-red-400">
+                      @if(currentSeo.metaDescription.length > 160)
+<span class="text-red-500 dark:text-red-400">
                         (Too long)
                       </span>
                     </p>
@@ -882,11 +892,11 @@ function getPostTitleById(id: number): string {
                       <input
                         type="text"
                         id="seo-canonical-url"
-                        v-model="currentSeo.canonicalUrl"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ currentSeo.canonicalUrl }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                       />
                     </div>
-                    <p class="mt-1 text-gray-500 text-xs dark:text-gray-400">
+                    <p class="mt-1 text-gray-500 text-xs dark:text-neutral-400">
                       Leave empty to use the default URL
                     </p>
                   </div>
@@ -896,8 +906,8 @@ function getPostTitleById(id: number): string {
                     <div class="mt-2">
                       <select
                         id="seo-robots"
-                        v-model="currentSeo.robots"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ currentSeo.robots }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                       >
                         <option value="index, follow">index, follow</option>
                         <option value="noindex, follow">noindex, follow</option>
@@ -912,8 +922,8 @@ function getPostTitleById(id: number): string {
                     <div class="mt-2">
                       <select
                         id="seo-schema"
-                        v-model="currentSeo.schema"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ currentSeo.schema }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                       >
                         <option value="Article">Article</option>
                         <option value="BlogPosting">Blog Post</option>
@@ -929,12 +939,12 @@ function getPostTitleById(id: number): string {
               </div>
 
               <!-- SEO Preview -->
-              <div class="mt-6 p-4 border border-gray-200 rounded-md dark:border-gray-700">
+              <div class="mt-6 p-4 border border-gray-200 rounded-md dark:border-neutral-700">
                 <h4 class="font-medium text-gray-900 text-sm dark:text-white">Google Search Preview</h4>
                 <div class="mt-2 space-y-1">
                   <div class="text-blue-600 text-lg dark:text-blue-400 hover:underline">{{ currentSeo.title }}</div>
                   <div class="text-green-600 text-sm dark:text-green-400">{{ currentSeo.canonicalUrl }}</div>
-                  <div class="text-gray-600 text-sm dark:text-gray-300">{{ currentSeo.metaDescription.substring(0, 160) }}{{ currentSeo.metaDescription.length > 160 ? '...' : '' }}</div>
+                  <div class="text-gray-600 text-sm dark:text-neutral-300">{{ currentSeo.metaDescription.substring(0, 160) }}{{ currentSeo.metaDescription.length > 160 ? '...' : '' }}</div>
                 </div>
               </div>
             </div>
@@ -942,15 +952,15 @@ function getPostTitleById(id: number): string {
           <div class="sm:grid sm:gap-3 sm:grid-cols-2 sm:grid-flow-row-dense mt-5 sm:mt-6">
             <button
               type="button"
-              @click="saveSeoSettings"
+              onclick="saveSeoSettings"
               class="inline-flex justify-center sm:col-start-2 px-3 py-2 w-full font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
             >
               Save Changes
             </button>
             <button
               type="button"
-              @click="closeEditModal"
-              class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+              onclick="closeEditModal"
+              class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
             >
               Cancel
             </button>
@@ -961,17 +971,18 @@ function getPostTitleById(id: number): string {
   </div>
 
   <!-- Global Settings Modal -->
-  <div v-if="showGlobalSettingsModal" class="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 transition-opacity"></div>
+  @if(showGlobalSettingsModal)
+<div class="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-neutral-900 dark:bg-opacity-75 transition-opacity"></div>
 
     <div class="fixed inset-0 overflow-y-auto z-10">
       <div class="flex items-end justify-center sm:items-center p-4 sm:p-0 min-h-full text-center">
-        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-3xl sm:w-full text-left bg-white dark:bg-blue-gray-800 rounded-lg shadow-xl transition-all transform">
+        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-3xl sm:w-full text-left bg-white dark:bg-neutral-800 rounded-lg shadow-xl transition-all transform">
           <div class="hidden sm:block absolute right-0 top-0 pr-4 pt-4">
             <button
               type="button"
-              @click="closeGlobalSettingsModal"
-              class="text-gray-400 dark:text-gray-300 hover:text-gray-500 dark:hover:text-gray-200 bg-white dark:bg-blue-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              onclick="closeGlobalSettingsModal"
+              class="text-gray-400 dark:text-neutral-300 hover:text-gray-500 dark:hover:text-gray-200 bg-white dark:bg-neutral-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               <span class="sr-only">Close</span>
               <div class="h-6 w-6 i-hugeicons-cancel-circle"></div>
@@ -984,7 +995,7 @@ function getPostTitleById(id: number): string {
             <div class="mt-3 sm:ml-4 sm:mt-0 text-center sm:text-left">
               <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white" id="modal-title">Global SEO Settings</h3>
               <div class="mt-2">
-                <p class="text-gray-500 text-sm dark:text-gray-400">
+                <p class="text-gray-500 text-sm dark:text-neutral-400">
                   Configure global SEO settings for your entire blog.
                 </p>
               </div>
@@ -993,18 +1004,18 @@ function getPostTitleById(id: number): string {
           <div class="mt-5 sm:mt-4">
             <div class="space-y-4">
               <!-- Tabs -->
-              <div class="border-b border-gray-200 dark:border-gray-700">
+              <div class="border-b border-gray-200 dark:border-neutral-700">
                 <nav class="flex -mb-px space-x-8" aria-label="Tabs">
                   <a href="#" class="px-1 py-4 font-medium text-blue-600 text-sm whitespace-nowrap dark:text-blue-400 border-b-2 border-blue-500">
                     General
                   </a>
-                  <a href="#" class="px-1 py-4 font-medium text-gray-500 text-sm whitespace-nowrap dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600">
+                  <a href="#" class="px-1 py-4 font-medium text-gray-500 text-sm whitespace-nowrap dark:text-neutral-400 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600">
                     Social Media
                   </a>
-                  <a href="#" class="px-1 py-4 font-medium text-gray-500 text-sm whitespace-nowrap dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600">
+                  <a href="#" class="px-1 py-4 font-medium text-gray-500 text-sm whitespace-nowrap dark:text-neutral-400 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600">
                     Webmaster Tools
                   </a>
-                  <a href="#" class="px-1 py-4 font-medium text-gray-500 text-sm whitespace-nowrap dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600">
+                  <a href="#" class="px-1 py-4 font-medium text-gray-500 text-sm whitespace-nowrap dark:text-neutral-400 hover:text-gray-700 dark:hover:text-gray-300 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600">
                     Sitemap
                   </a>
                 </nav>
@@ -1019,8 +1030,8 @@ function getPostTitleById(id: number): string {
                       <input
                         type="text"
                         id="site-name"
-                        v-model="globalSeoSettings.siteName"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ globalSeoSettings.siteName }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                       />
                     </div>
                   </div>
@@ -1030,8 +1041,8 @@ function getPostTitleById(id: number): string {
                     <div class="mt-2">
                       <select
                         id="title-separator"
-                        v-model="globalSeoSettings.separator"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ globalSeoSettings.separator }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                       >
                         <option value=" | ">|</option>
                         <option value=" - ">-</option>
@@ -1043,7 +1054,7 @@ function getPostTitleById(id: number): string {
                         <option value=" : ">:</option>
                       </select>
                     </div>
-                    <p class="mt-1 text-gray-500 text-xs dark:text-gray-400">
+                    <p class="mt-1 text-gray-500 text-xs dark:text-neutral-400">
                       Example: Post Title {{ globalSeoSettings.separator }} {{ globalSeoSettings.siteName }}
                     </p>
                   </div>
@@ -1053,8 +1064,8 @@ function getPostTitleById(id: number): string {
                     <div class="mt-2">
                       <select
                         id="title-format"
-                        v-model="globalSeoSettings.titleFormat"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ globalSeoSettings.titleFormat }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                       >
                         <option value="%post_title% %separator% %site_name%">Post Title - Site Name</option>
                         <option value="%site_name% %separator% %post_title%">Site Name - Post Title</option>
@@ -1068,12 +1079,12 @@ function getPostTitleById(id: number): string {
                     <div class="mt-2">
                       <textarea
                         id="meta-description"
-                        v-model="globalSeoSettings.metaDescription"
+                        value="{{ globalSeoSettings.metaDescription }}"
                         rows="3"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                       ></textarea>
                     </div>
-                    <p class="mt-1 text-gray-500 text-xs dark:text-gray-400">
+                    <p class="mt-1 text-gray-500 text-xs dark:text-neutral-400">
                       Used when individual posts don't have a meta description
                     </p>
                   </div>
@@ -1083,8 +1094,8 @@ function getPostTitleById(id: number): string {
                     <div class="mt-2">
                       <select
                         id="default-schema"
-                        v-model="globalSeoSettings.defaultSchema"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ globalSeoSettings.defaultSchema }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                       >
                         <option value="Article">Article</option>
                         <option value="BlogPosting">Blog Post</option>
@@ -1097,13 +1108,13 @@ function getPostTitleById(id: number): string {
               </div>
 
               <!-- Robots.txt Editor -->
-              <div class="mt-6 p-4 border border-gray-200 rounded-md dark:border-gray-700">
+              <div class="mt-6 p-4 border border-gray-200 rounded-md dark:border-neutral-700">
                 <h4 class="font-medium text-gray-900 text-sm dark:text-white">robots.txt</h4>
                 <div class="mt-2">
                   <textarea
-                    v-model="globalSeoSettings.robotsTxt"
+                    value="{{ globalSeoSettings.robotsTxt }}"
                     rows="6"
-                    class="block py-1.5 w-full font-mono text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                    class="block py-1.5 w-full font-mono text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                   ></textarea>
                 </div>
               </div>
@@ -1112,15 +1123,15 @@ function getPostTitleById(id: number): string {
           <div class="sm:grid sm:gap-3 sm:grid-cols-2 sm:grid-flow-row-dense mt-5 sm:mt-6">
             <button
               type="button"
-              @click="saveGlobalSettings"
+              onclick="saveGlobalSettings"
               class="inline-flex justify-center sm:col-start-2 px-3 py-2 w-full font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
             >
               Save Settings
             </button>
             <button
               type="button"
-              @click="closeGlobalSettingsModal"
-              class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+              onclick="closeGlobalSettingsModal"
+              class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
             >
               Cancel
             </button>
@@ -1131,17 +1142,18 @@ function getPostTitleById(id: number): string {
   </div>
 
   <!-- Bulk Optimization Modal -->
-  <div v-if="showBulkOptimizationModal" class="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 transition-opacity"></div>
+  @if(showBulkOptimizationModal)
+<div class="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-neutral-900 dark:bg-opacity-75 transition-opacity"></div>
 
     <div class="fixed inset-0 overflow-y-auto z-10">
       <div class="flex items-end justify-center sm:items-center p-4 sm:p-0 min-h-full text-center">
-        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-blue-gray-800 rounded-lg shadow-xl transition-all transform">
+        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-neutral-800 rounded-lg shadow-xl transition-all transform">
           <div class="hidden sm:block absolute right-0 top-0 pr-4 pt-4">
             <button
               type="button"
-              @click="closeBulkOptimizationModal"
-              class="text-gray-400 dark:text-gray-300 hover:text-gray-500 dark:hover:text-gray-200 bg-white dark:bg-blue-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              onclick="closeBulkOptimizationModal"
+              class="text-gray-400 dark:text-neutral-300 hover:text-gray-500 dark:hover:text-gray-200 bg-white dark:bg-neutral-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               <span class="sr-only">Close</span>
               <div class="h-6 w-6 i-hugeicons-cancel-circle"></div>
@@ -1154,7 +1166,7 @@ function getPostTitleById(id: number): string {
             <div class="mt-3 sm:ml-4 sm:mt-0 text-center sm:text-left">
               <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white" id="modal-title">Bulk SEO Optimization</h3>
               <div class="mt-2">
-                <p class="text-gray-500 text-sm dark:text-gray-400">
+                <p class="text-gray-500 text-sm dark:text-neutral-400">
                   Automatically optimize SEO settings for the selected posts.
                 </p>
               </div>
@@ -1184,12 +1196,12 @@ function getPostTitleById(id: number): string {
                         id="optimize-titles"
                         type="checkbox"
                         checked
-                        class="h-4 w-4 text-blue-600 dark:bg-blue-gray-700 dark:checked:bg-blue-600 border-gray-300 rounded dark:border-gray-600 focus:ring-blue-600 dark:focus:ring-offset-blue-gray-800"
+                        class="h-4 w-4 text-blue-600 dark:bg-neutral-700 dark:checked:bg-blue-600 border-gray-300 rounded dark:border-neutral-600 focus:ring-blue-600 dark:focus:ring-offset-neutral-800"
                       />
                     </div>
                     <div class="ml-3 leading-6 text-sm">
                       <label for="optimize-titles" class="font-medium text-gray-900 dark:text-white">Optimize Titles</label>
-                      <p class="text-gray-500 dark:text-gray-400">Generate SEO-friendly titles based on content</p>
+                      <p class="text-gray-500 dark:text-neutral-400">Generate SEO-friendly titles based on content</p>
                     </div>
                   </div>
 
@@ -1199,12 +1211,12 @@ function getPostTitleById(id: number): string {
                         id="optimize-descriptions"
                         type="checkbox"
                         checked
-                        class="h-4 w-4 text-blue-600 dark:bg-blue-gray-700 dark:checked:bg-blue-600 border-gray-300 rounded dark:border-gray-600 focus:ring-blue-600 dark:focus:ring-offset-blue-gray-800"
+                        class="h-4 w-4 text-blue-600 dark:bg-neutral-700 dark:checked:bg-blue-600 border-gray-300 rounded dark:border-neutral-600 focus:ring-blue-600 dark:focus:ring-offset-neutral-800"
                       />
                     </div>
                     <div class="ml-3 leading-6 text-sm">
                       <label for="optimize-descriptions" class="font-medium text-gray-900 dark:text-white">Generate Meta Descriptions</label>
-                      <p class="text-gray-500 dark:text-gray-400">Create compelling meta descriptions</p>
+                      <p class="text-gray-500 dark:text-neutral-400">Create compelling meta descriptions</p>
                     </div>
                   </div>
 
@@ -1214,12 +1226,12 @@ function getPostTitleById(id: number): string {
                         id="extract-keywords"
                         type="checkbox"
                         checked
-                        class="h-4 w-4 text-blue-600 dark:bg-blue-gray-700 dark:checked:bg-blue-600 border-gray-300 rounded dark:border-gray-600 focus:ring-blue-600 dark:focus:ring-offset-blue-gray-800"
+                        class="h-4 w-4 text-blue-600 dark:bg-neutral-700 dark:checked:bg-blue-600 border-gray-300 rounded dark:border-neutral-600 focus:ring-blue-600 dark:focus:ring-offset-neutral-800"
                       />
                     </div>
                     <div class="ml-3 leading-6 text-sm">
                       <label for="extract-keywords" class="font-medium text-gray-900 dark:text-white">Extract Focus Keywords</label>
-                      <p class="text-gray-500 dark:text-gray-400">Identify the best focus keywords from content</p>
+                      <p class="text-gray-500 dark:text-neutral-400">Identify the best focus keywords from content</p>
                     </div>
                   </div>
 
@@ -1229,12 +1241,12 @@ function getPostTitleById(id: number): string {
                         id="optimize-social"
                         type="checkbox"
                         checked
-                        class="h-4 w-4 text-blue-600 dark:bg-blue-gray-700 dark:checked:bg-blue-600 border-gray-300 rounded dark:border-gray-600 focus:ring-blue-600 dark:focus:ring-offset-blue-gray-800"
+                        class="h-4 w-4 text-blue-600 dark:bg-neutral-700 dark:checked:bg-blue-600 border-gray-300 rounded dark:border-neutral-600 focus:ring-blue-600 dark:focus:ring-offset-neutral-800"
                       />
                     </div>
                     <div class="ml-3 leading-6 text-sm">
                       <label for="optimize-social" class="font-medium text-gray-900 dark:text-white">Optimize Social Media</label>
-                      <p class="text-gray-500 dark:text-gray-400">Generate social media titles and descriptions</p>
+                      <p class="text-gray-500 dark:text-neutral-400">Generate social media titles and descriptions</p>
                     </div>
                   </div>
                 </div>
@@ -1244,15 +1256,15 @@ function getPostTitleById(id: number): string {
           <div class="sm:grid sm:gap-3 sm:grid-cols-2 sm:grid-flow-row-dense mt-5 sm:mt-6">
             <button
               type="button"
-              @click="runBulkOptimization"
+              onclick="runBulkOptimization"
               class="inline-flex justify-center sm:col-start-2 px-3 py-2 w-full font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
             >
               Run Optimization
             </button>
             <button
               type="button"
-              @click="closeBulkOptimizationModal"
-              class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+              onclick="closeBulkOptimizationModal"
+              class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
             >
               Cancel
             </button>
@@ -1263,17 +1275,18 @@ function getPostTitleById(id: number): string {
   </div>
 
   <!-- SEO Analysis Modal -->
-  <div v-if="showAnalysisModal" class="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 transition-opacity"></div>
+  @if(showAnalysisModal)
+<div class="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-neutral-900 dark:bg-opacity-75 transition-opacity"></div>
 
     <div class="fixed inset-0 overflow-y-auto z-10">
       <div class="flex items-end justify-center sm:items-center p-4 sm:p-0 min-h-full text-center">
-        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-3xl sm:w-full text-left bg-white dark:bg-blue-gray-800 rounded-lg shadow-xl transition-all transform">
+        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-3xl sm:w-full text-left bg-white dark:bg-neutral-800 rounded-lg shadow-xl transition-all transform">
           <div class="hidden sm:block absolute right-0 top-0 pr-4 pt-4">
             <button
               type="button"
-              @click="closeAnalysisModal"
-              class="text-gray-400 dark:text-gray-300 hover:text-gray-500 dark:hover:text-gray-200 bg-white dark:bg-blue-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              onclick="closeAnalysisModal"
+              class="text-gray-400 dark:text-neutral-300 hover:text-gray-500 dark:hover:text-gray-200 bg-white dark:bg-neutral-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               <span class="sr-only">Close</span>
               <div class="h-6 w-6 i-hugeicons-cancel-circle"></div>
@@ -1286,19 +1299,20 @@ function getPostTitleById(id: number): string {
             <div class="mt-3 sm:ml-4 sm:mt-0 text-center sm:text-left">
               <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white" id="modal-title">SEO Analysis</h3>
               <div class="mt-2">
-                <p class="text-gray-500 text-sm dark:text-gray-400">
+                <p class="text-gray-500 text-sm dark:text-neutral-400">
                   Detailed SEO analysis for "{{ analysisPostId ? getPostTitleById(analysisPostId) : '' }}"
                 </p>
               </div>
             </div>
           </div>
-          <div v-if="analysisPostId" class="mt-5 sm:mt-4">
+          @if(analysisPostId)
+<div class="mt-5 sm:mt-4">
             <div class="space-y-6">
               <!-- Overall Score -->
               <div class="flex items-center justify-between">
                 <div>
                   <h4 class="font-medium text-gray-900 text-lg dark:text-white">Overall SEO Score</h4>
-                  <p class="text-gray-500 text-sm dark:text-gray-400">Based on multiple factors</p>
+                  <p class="text-gray-500 text-sm dark:text-neutral-400">Based on multiple factors</p>
                 </div>
                 <div class="flex items-center">
                   <div
@@ -1315,18 +1329,18 @@ function getPostTitleById(id: number): string {
               <!-- Analysis Sections -->
               <div class="space-y-4">
                 <!-- Content Analysis -->
-                <div class="overflow-hidden border border-gray-200 rounded-md dark:border-gray-700">
-                  <div class="px-4 py-3 bg-gray-50 dark:bg-blue-gray-700">
+                <div class="overflow-hidden border border-gray-200 rounded-md dark:border-neutral-700">
+                  <div class="px-4 py-3 bg-gray-50 dark:bg-neutral-700">
                     <h5 class="font-medium text-gray-900 text-sm dark:text-white">Content Analysis</h5>
                   </div>
-                  <div class="px-4 py-3 divide-gray-200 divide-y dark:divide-gray-700">
+                  <div class="px-4 py-3 divide-gray-200 divide-y dark:divide-neutral-700">
                     <div class="flex items-start py-3">
                       <div class="flex-shrink-0">
                         <div class="h-5 w-5 text-green-500 dark:text-green-400 i-hugeicons-checkmark-circle-02"></div>
                       </div>
                       <div class="ml-3">
                         <p class="font-medium text-gray-900 text-sm dark:text-white">Focus keyword appears in the title</p>
-                        <p class="text-gray-500 text-xs dark:text-gray-400">Your focus keyword is used in the SEO title</p>
+                        <p class="text-gray-500 text-xs dark:text-neutral-400">Your focus keyword is used in the SEO title</p>
                       </div>
                     </div>
                     <div class="flex items-start py-3">
@@ -1335,7 +1349,7 @@ function getPostTitleById(id: number): string {
                       </div>
                       <div class="ml-3">
                         <p class="font-medium text-gray-900 text-sm dark:text-white">Focus keyword appears in the meta description</p>
-                        <p class="text-gray-500 text-xs dark:text-gray-400">Your focus keyword is used in the meta description</p>
+                        <p class="text-gray-500 text-xs dark:text-neutral-400">Your focus keyword is used in the meta description</p>
                       </div>
                     </div>
                     <div class="flex items-start py-3">
@@ -1344,25 +1358,25 @@ function getPostTitleById(id: number): string {
                       </div>
                       <div class="ml-3">
                         <p class="font-medium text-gray-900 text-sm dark:text-white">Content length could be improved</p>
-                        <p class="text-gray-500 text-xs dark:text-gray-400">Your content is 850 words. Consider expanding to at least 1000 words for better ranking.</p>
+                        <p class="text-gray-500 text-xs dark:text-neutral-400">Your content is 850 words. Consider expanding to at least 1000 words for better ranking.</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <!-- Technical Analysis -->
-                <div class="overflow-hidden border border-gray-200 rounded-md dark:border-gray-700">
-                  <div class="px-4 py-3 bg-gray-50 dark:bg-blue-gray-700">
+                <div class="overflow-hidden border border-gray-200 rounded-md dark:border-neutral-700">
+                  <div class="px-4 py-3 bg-gray-50 dark:bg-neutral-700">
                     <h5 class="font-medium text-gray-900 text-sm dark:text-white">Technical Analysis</h5>
                   </div>
-                  <div class="px-4 py-3 divide-gray-200 divide-y dark:divide-gray-700">
+                  <div class="px-4 py-3 divide-gray-200 divide-y dark:divide-neutral-700">
                     <div class="flex items-start py-3">
                       <div class="flex-shrink-0">
                         <div class="h-5 w-5 text-green-500 dark:text-green-400 i-hugeicons-checkmark-circle-02"></div>
                       </div>
                       <div class="ml-3">
                         <p class="font-medium text-gray-900 text-sm dark:text-white">URL is SEO friendly</p>
-                        <p class="text-gray-500 text-xs dark:text-gray-400">Your URL is concise and contains your focus keyword</p>
+                        <p class="text-gray-500 text-xs dark:text-neutral-400">Your URL is concise and contains your focus keyword</p>
                       </div>
                     </div>
                     <div class="flex items-start py-3">
@@ -1371,7 +1385,7 @@ function getPostTitleById(id: number): string {
                       </div>
                       <div class="ml-3">
                         <p class="font-medium text-gray-900 text-sm dark:text-white">Schema markup is implemented</p>
-                        <p class="text-gray-500 text-xs dark:text-gray-400">Your page includes proper schema markup</p>
+                        <p class="text-gray-500 text-xs dark:text-neutral-400">Your page includes proper schema markup</p>
                       </div>
                     </div>
                     <div class="flex items-start py-3">
@@ -1380,25 +1394,25 @@ function getPostTitleById(id: number): string {
                       </div>
                       <div class="ml-3">
                         <p class="font-medium text-gray-900 text-sm dark:text-white">Missing image alt tags</p>
-                        <p class="text-gray-500 text-xs dark:text-gray-400">3 images on your page are missing alt tags</p>
+                        <p class="text-gray-500 text-xs dark:text-neutral-400">3 images on your page are missing alt tags</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <!-- Readability Analysis -->
-                <div class="overflow-hidden border border-gray-200 rounded-md dark:border-gray-700">
-                  <div class="px-4 py-3 bg-gray-50 dark:bg-blue-gray-700">
+                <div class="overflow-hidden border border-gray-200 rounded-md dark:border-neutral-700">
+                  <div class="px-4 py-3 bg-gray-50 dark:bg-neutral-700">
                     <h5 class="font-medium text-gray-900 text-sm dark:text-white">Readability Analysis</h5>
                   </div>
-                  <div class="px-4 py-3 divide-gray-200 divide-y dark:divide-gray-700">
+                  <div class="px-4 py-3 divide-gray-200 divide-y dark:divide-neutral-700">
                     <div class="flex items-start py-3">
                       <div class="flex-shrink-0">
                         <div class="h-5 w-5 text-green-500 dark:text-green-400 i-hugeicons-checkmark-circle-02"></div>
                       </div>
                       <div class="ml-3">
                         <p class="font-medium text-gray-900 text-sm dark:text-white">Good use of headings</p>
-                        <p class="text-gray-500 text-xs dark:text-gray-400">Your content uses proper heading structure</p>
+                        <p class="text-gray-500 text-xs dark:text-neutral-400">Your content uses proper heading structure</p>
                       </div>
                     </div>
                     <div class="flex items-start py-3">
@@ -1407,7 +1421,7 @@ function getPostTitleById(id: number): string {
                       </div>
                       <div class="ml-3">
                         <p class="font-medium text-gray-900 text-sm dark:text-white">Paragraph length</p>
-                        <p class="text-gray-500 text-xs dark:text-gray-400">Some paragraphs are too long. Consider breaking them up for better readability.</p>
+                        <p class="text-gray-500 text-xs dark:text-neutral-400">Some paragraphs are too long. Consider breaking them up for better readability.</p>
                       </div>
                     </div>
                     <div class="flex items-start py-3">
@@ -1416,7 +1430,7 @@ function getPostTitleById(id: number): string {
                       </div>
                       <div class="ml-3">
                         <p class="font-medium text-gray-900 text-sm dark:text-white">Reading ease score is good</p>
-                        <p class="text-gray-500 text-xs dark:text-gray-400">Your content has a Flesch reading ease score of 68, which is considered good</p>
+                        <p class="text-gray-500 text-xs dark:text-neutral-400">Your content has a Flesch reading ease score of 68, which is considered good</p>
                       </div>
                     </div>
                   </div>
@@ -1447,15 +1461,15 @@ function getPostTitleById(id: number): string {
           <div class="sm:grid sm:gap-3 sm:grid-cols-2 sm:grid-flow-row-dense mt-5 sm:mt-6">
             <button
               type="button"
-              @click="openEditModal(seoData.find(item => item.id === analysisPostId) as SeoSettings)"
+              onclick="openEditModal(seoData.find(item => item.id === analysisPostId) as SeoSettings)"
               class="inline-flex justify-center sm:col-start-2 px-3 py-2 w-full font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
             >
               Edit SEO Settings
             </button>
             <button
               type="button"
-              @click="closeAnalysisModal"
-              class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+              onclick="closeAnalysisModal"
+              class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
             >
               Close
             </button>
@@ -1464,3 +1478,5 @@ function getPostTitleById(id: number): string {
       </div>
     </div>
 </div>
+
+@endsection

@@ -1,3 +1,6 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 definePageMeta({
   middleware: ['auth']
@@ -343,7 +346,7 @@ function toggleSort(column) {
 }
 
 // Get status badge class
-function getStatusClass(status) {
+const getStatusClass = (status) => {
   switch (status) {
     case 'Published':
       return 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/30 dark:text-green-400'
@@ -352,9 +355,9 @@ function getStatusClass(status) {
     case 'Rejected':
       return 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20 dark:bg-red-900/30 dark:text-red-400'
     case 'Spam':
-      return 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20 dark:bg-gray-900/30 dark:text-gray-400'
+      return 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20 dark:bg-neutral-900/30 dark:text-neutral-400'
     default:
-      return 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20 dark:bg-gray-900/30 dark:text-gray-400'
+      return 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20 dark:bg-neutral-900/30 dark:text-neutral-400'
   }
 }
 
@@ -436,7 +439,7 @@ function deleteReview(reviewId) {
         <div class="sm:flex sm:items-center sm:justify-between">
           <div>
             <h1 class="font-semibold text-2xl text-gray-900 dark:text-white">Reviews</h1>
-            <p class="mt-2 text-gray-700 text-sm dark:text-gray-300">
+            <p class="mt-2 text-gray-700 text-sm dark:text-neutral-300">
               Manage customer reviews for your products
             </p>
           </div>
@@ -445,7 +448,7 @@ function deleteReview(reviewId) {
         <!-- Summary cards -->
         <div class="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mt-6">
           <!-- Total reviews card -->
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -455,7 +458,7 @@ function deleteReview(reviewId) {
                 </div>
                 <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">Total Reviews</dt>
+                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">Total Reviews</dt>
                     <dd>
                       <div class="font-medium text-gray-900 text-lg dark:text-white">{{ totalReviews }}</div>
                     </dd>
@@ -466,7 +469,7 @@ function deleteReview(reviewId) {
           </div>
 
           <!-- Published reviews card -->
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -476,7 +479,7 @@ function deleteReview(reviewId) {
                 </div>
                 <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">Published Reviews</dt>
+                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">Published Reviews</dt>
                     <dd>
                       <div class="font-medium text-gray-900 text-lg dark:text-white">{{ publishedReviews }}</div>
                     </dd>
@@ -487,7 +490,7 @@ function deleteReview(reviewId) {
           </div>
 
           <!-- Average rating card -->
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -497,7 +500,7 @@ function deleteReview(reviewId) {
                 </div>
                 <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">Average Rating</dt>
+                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">Average Rating</dt>
                     <dd>
                       <div class="font-medium text-gray-900 text-lg dark:text-white">{{ averageRating }} / 5</div>
                     </dd>
@@ -508,7 +511,7 @@ function deleteReview(reviewId) {
           </div>
 
           <!-- Pending reviews card -->
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -518,7 +521,7 @@ function deleteReview(reviewId) {
                 </div>
                 <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">Pending Reviews</dt>
+                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">Pending Reviews</dt>
                     <dd>
                       <div class="font-medium text-gray-900 text-lg dark:text-white">{{ pendingReviews }}</div>
                     </dd>
@@ -536,9 +539,9 @@ function deleteReview(reviewId) {
               <div class="h-5 w-5 text-gray-400 i-hugeicons-search-01"></div>
             </div>
             <input
-              v-model="searchQuery"
+              value="{{ searchQuery }}"
               type="text"
-              class="block pl-10 pr-3 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              class="block pl-10 pr-3 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
               placeholder="Search reviews..."
             />
           </div>
@@ -546,12 +549,12 @@ function deleteReview(reviewId) {
           <div class="flex flex-col gap-4 sm:flex-row">
             <!-- Product filter -->
             <select
-              v-model="productFilter"
-              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              value="{{ productFilter }}"
+              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             >
               <option value="all">All Products</option>
               @foreach(products as product)
-                <option :value="product.id.toString()">
+                <option value="{{ product.id.toString() }}">
                   {{ product.name }}
                 </option>
               @endforeach
@@ -559,12 +562,12 @@ function deleteReview(reviewId) {
 
             <!-- Rating filter -->
             <select
-              v-model="ratingFilter"
-              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              value="{{ ratingFilter }}"
+              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             >
               <option value="all">All Ratings</option>
               @foreach(ratings.slice(1) as rating)
-                <option :value="rating">
+                <option value="{{ rating }}">
                   {{ rating }} Stars
                 </option>
               @endforeach
@@ -572,12 +575,12 @@ function deleteReview(reviewId) {
 
             <!-- Status filter -->
             <select
-              v-model="statusFilter"
-              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              value="{{ statusFilter }}"
+              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             >
               <option value="all">All Statuses</option>
               @foreach(statuses.slice(1) as status)
-                <option :value="status">
+                <option value="{{ status }}">
                   {{ status }}
                 </option>
               @endforeach
@@ -587,25 +590,25 @@ function deleteReview(reviewId) {
             <div class="flex rounded-md shadow-sm">
               <button
                 type="button"
-                @click="viewMode = 'detailed'"
-                :class="[
+                onclick="viewMode = 'detailed'"
+                class="[
                   'relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold ring-1 ring-inset focus:z-10',
                   viewMode === 'detailed'
                     ? 'bg-blue-600 text-white ring-blue-600'
-                    : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50 dark:bg-blue-gray-800 dark:text-white dark:ring-gray-700 dark:hover:bg-blue-gray-700'
-                ]"
+                    : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50 dark:bg-neutral-800 dark:text-white dark:ring-neutral-700 dark:hover:bg-neutral-700'
+                ] {{ }}"
               >
                 <div class="h-5 w-5 i-hugeicons-grid"></div>
               </button>
               <button
                 type="button"
-                @click="viewMode = 'compact'"
-                :class="[
+                onclick="viewMode = 'compact'"
+                class="[
                   'relative -ml-px inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold ring-1 ring-inset focus:z-10',
                   viewMode === 'compact'
                     ? 'bg-blue-600 text-white ring-blue-600'
-                    : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50 dark:bg-blue-gray-800 dark:text-white dark:ring-gray-700 dark:hover:bg-blue-gray-700'
-                ]"
+                    : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50 dark:bg-neutral-800 dark:text-white dark:ring-neutral-700 dark:hover:bg-neutral-700'
+                ] {{ }}"
               >
                 <div class="h-5 w-5 i-hugeicons-list-view"></div>
               </button>
@@ -614,12 +617,12 @@ function deleteReview(reviewId) {
         </div>
 
         <!-- Sort options -->
-        <div class="flex items-center mt-4 text-gray-500 text-sm dark:text-gray-400">
+        <div class="flex items-center mt-4 text-gray-500 text-sm dark:text-neutral-400">
           <span class="mr-2">Sort by:</span>
           <button
-            @click="toggleSort('dateAdded')"
+            onclick="toggleSort('dateAdded')"
             class="flex items-center mr-3 hover:text-gray-700 dark:hover:text-gray-300"
-            :class="text-blue-600 'dateAdded' 'font-semibold { } === sortBy dark:text-blue-400':"
+            class="text-blue-600 'dateAdded' 'font-semibold { {{ } }} === sortBy dark:text-blue-400':"
           >
             Date
             @if(sortBy === 'dateAdded')
@@ -633,9 +636,9 @@ function deleteReview(reviewId) {
             @endif
           </button>
           <button
-            @click="toggleSort('rating')"
+            onclick="toggleSort('rating')"
             class="flex items-center mr-3 hover:text-gray-700 dark:hover:text-gray-300"
-            :class="text-blue-600 'font-semibold 'rating' { } === sortBy dark:text-blue-400':"
+            class="text-blue-600 'font-semibold 'rating' { {{ } }} === sortBy dark:text-blue-400':"
           >
             Rating
             @if(sortBy === 'rating')
@@ -649,9 +652,9 @@ function deleteReview(reviewId) {
             @endif
           </button>
           <button
-            @click="toggleSort('helpful')"
+            onclick="toggleSort('helpful')"
             class="flex items-center mr-3 hover:text-gray-700 dark:hover:text-gray-300"
-            :class="text-blue-600 'font-semibold 'helpful' { } === sortBy dark:text-blue-400':"
+            class="text-blue-600 'font-semibold 'helpful' { {{ } }} === sortBy dark:text-blue-400':"
           >
             Helpful
             @if(sortBy === 'helpful')
@@ -665,9 +668,9 @@ function deleteReview(reviewId) {
             @endif
           </button>
           <button
-            @click="toggleSort('customerName')"
+            onclick="toggleSort('customerName')"
             class="flex items-center hover:text-gray-700 dark:hover:text-gray-300"
-            :class="text-blue-600 'customerName' 'font-semibold { } === sortBy dark:text-blue-400':"
+            class="text-blue-600 'customerName' 'font-semibold { {{ } }} === sortBy dark:text-blue-400':"
           >
             Customer
             @if(sortBy === 'customerName')
@@ -689,14 +692,14 @@ function deleteReview(reviewId) {
               <div class="py-12 text-center">
                 <div class="mx-auto h-12 w-12 text-gray-400 i-hugeicons-bubble-chat"></div>
                 <h3 class="mt-2 font-semibold text-gray-900 text-sm dark:text-white">No reviews found</h3>
-                <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">Try adjusting your search or filter to find what you're looking for.</p>
+                <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">Try adjusting your search or filter to find what you're looking for.</p>
               </div>
             @else
               <div class="space-y-6">
                 <!-- Review card -->
                 @foreach(paginatedReviews as review)
                   <div
-                    class="overflow-hidden bg-white dark:bg-blue-gray-800 border border-gray-200 rounded-lg dark:border-gray-700 shadow-sm"
+                    class="overflow-hidden bg-white dark:bg-neutral-800 border border-gray-200 rounded-lg dark:border-neutral-700 shadow-sm"
                   >
                     <div class="p-6">
                       <div class="flex items-start justify-between">
@@ -709,10 +712,10 @@ function deleteReview(reviewId) {
                           />
                           <div>
                             <h3 class="font-medium text-base text-gray-900 dark:text-white">{{ review.customerName }}</h3>
-                            <p class="text-gray-500 text-sm dark:text-gray-400">{{ review.customerEmail }}</p>
+                            <p class="text-gray-500 text-sm dark:text-neutral-400">{{ review.customerEmail }}</p>
                             <div class="flex items-center mt-1">
                               <span class="text-lg text-yellow-400">{{ getRatingStars(review.rating) }}</span>
-                              <span class="ml-2 text-gray-500 text-sm dark:text-gray-400">{{ review.dateAdded }}</span>
+                              <span class="ml-2 text-gray-500 text-sm dark:text-neutral-400">{{ review.dateAdded }}</span>
                             </div>
                           </div>
                         </div>
@@ -749,11 +752,11 @@ function deleteReview(reviewId) {
                       <!-- Review content -->
                       <div class="mt-4">
                         <h4 class="font-medium text-base text-gray-900 dark:text-white">{{ review.title }}</h4>
-                        <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">{{ review.comment }}</p>
+                        <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">{{ review.comment }}</p>
                       </div>
 
                       <!-- Helpful metrics -->
-                      <div class="flex items-center mt-4 text-gray-500 text-sm dark:text-gray-400">
+                      <div class="flex items-center mt-4 text-gray-500 text-sm dark:text-neutral-400">
                         <div class="flex items-center">
                           <div class="mr-1 h-4 w-4 i-hugeicons-thumbs-up"></div>
                           <span>{{ review.helpful }} helpful</span>
@@ -767,8 +770,8 @@ function deleteReview(reviewId) {
                       <!-- Actions -->
                       <div class="flex justify-end mt-4 space-x-3">
                         <button
-                          @click="toggleFeature(review)"
-                          class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+                          onclick="toggleFeature(review)"
+                          class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
                         >
                           @if(review.featured)
                             <div class="mr-1 h-4 w-4 i-hugeicons-star-off"></div>
@@ -779,7 +782,7 @@ function deleteReview(reviewId) {
                         </button>
                         @if(review.status !== 'Published')
                           <button
-                            @click="updateReviewStatus(review, 'Published')"
+                            onclick="updateReviewStatus(review, 'Published')"
                             class="inline-flex items-center px-2.5 py-1.5 font-semibold text-green-700 text-sm dark:text-green-400 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 ring-1 ring-green-600/20 ring-inset rounded-md shadow-sm"
                           >
                             <div class="mr-1 h-4 w-4 i-hugeicons-checkmark-circle-02"></div>
@@ -788,7 +791,7 @@ function deleteReview(reviewId) {
                         @endif
                         @if(review.status !== 'Rejected')
                           <button
-                            @click="updateReviewStatus(review, 'Rejected')"
+                            onclick="updateReviewStatus(review, 'Rejected')"
                             class="inline-flex items-center px-2.5 py-1.5 font-semibold text-red-700 text-sm dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 ring-1 ring-inset ring-red-600/20 rounded-md shadow-sm"
                           >
                             <div class="mr-1 h-4 w-4 i-hugeicons-cancel-circle"></div>
@@ -796,15 +799,15 @@ function deleteReview(reviewId) {
                           </button>
                         @endif
                         <button
-                          @click="openEditReviewModal(review)"
-                          class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+                          onclick="openEditReviewModal(review)"
+                          class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
                         >
                           <div class="mr-1 h-4 w-4 i-hugeicons-edit-01"></div>
                           Edit
                         </button>
                         <button
-                          @click="deleteReview(review.id)"
-                          class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+                          onclick="deleteReview(review.id)"
+                          class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
                         >
                           <div class="mr-1 h-4 w-4 i-hugeicons-waste"></div>
                           Delete
@@ -821,8 +824,8 @@ function deleteReview(reviewId) {
         <!-- Compact view -->
         @if(viewMode === 'compact')
           <div class="overflow-hidden mt-6 ring-1 ring-black ring-opacity-5 sm:rounded-lg shadow">
-            <table class="min-w-full divide-gray-300 divide-y dark:divide-gray-700">
-              <thead class="bg-gray-50 dark:bg-blue-gray-700">
+            <table class="min-w-full divide-gray-300 divide-y dark:divide-neutral-700">
+              <thead class="bg-gray-50 dark:bg-neutral-700">
                 <tr>
                   <th scope="col" class="pl-4 pr-3 py-3.5 sm:pl-6 font-semibold text-gray-900 text-left text-sm dark:text-white">Customer</th>
                   <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-white">Product</th>
@@ -835,16 +838,16 @@ function deleteReview(reviewId) {
                   </th>
                 </tr>
               </thead>
-              <tbody class="bg-white dark:bg-blue-gray-800 divide-gray-200 divide-y dark:divide-gray-700">
+              <tbody class="bg-white dark:bg-neutral-800 divide-gray-200 divide-y dark:divide-neutral-700">
                 @if(paginatedReviews.length === 0)
                   <tr>
-                    <td colspan="7" class="py-4 text-center text-gray-500 text-sm dark:text-gray-400">
+                    <td colspan="7" class="py-4 text-center text-gray-500 text-sm dark:text-neutral-400">
                       No reviews found. Try adjusting your search or filter.
                     </td>
                   </tr>
                 @endif
                 @foreach(paginatedReviews as review)
-                  <tr class="hover:bg-gray-50 dark:hover:bg-blue-gray-700">
+                  <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
                     <td class="pl-4 pr-3 py-4 sm:pl-6 text-sm whitespace-nowrap">
                       <div class="flex items-center">
                         <div class="flex-shrink-0 h-8 w-8">
@@ -852,7 +855,7 @@ function deleteReview(reviewId) {
                         </div>
                         <div class="ml-4">
                           <div class="font-medium text-gray-900 dark:text-white">{{ review.customerName }}</div>
-                          <div class="text-gray-500 text-xs dark:text-gray-400">{{ review.customerEmail }}</div>
+                          <div class="text-gray-500 text-xs dark:text-neutral-400">{{ review.customerEmail }}</div>
                         </div>
                       </div>
                     </td>
@@ -867,7 +870,7 @@ function deleteReview(reviewId) {
                     <td class="px-3 py-4 text-sm whitespace-nowrap">
                       <span class="text-yellow-400">{{ getRatingStars(review.rating) }}</span>
                     </td>
-                    <td class="px-3 py-4 max-w-xs text-gray-500 text-sm dark:text-gray-400">
+                    <td class="px-3 py-4 max-w-xs text-gray-500 text-sm dark:text-neutral-400">
                       <div class="font-medium text-gray-900 dark:text-white">{{ review.title }}</div>
                       <div class="truncate">{{ review.comment }}</div>
                     </td>
@@ -883,11 +886,11 @@ function deleteReview(reviewId) {
                         </span>
                       @endif
                     </td>
-                    <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-400">{{ review.dateAdded }}</td>
+                    <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-400">{{ review.dateAdded }}</td>
                     <td class="relative pl-3 pr-4 py-4 sm:pr-6 font-medium text-right text-sm whitespace-nowrap">
                       <div class="flex justify-end space-x-2">
                         <button
-                          @click="openEditReviewModal(review)"
+                          onclick="openEditReviewModal(review)"
                           type="button"
                           class="text-gray-400 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 duration-150 transition-colors"
                         >
@@ -895,7 +898,7 @@ function deleteReview(reviewId) {
                           <span class="sr-only">Edit, {{ review.customerName }}'s review</span>
                         </button>
                         <button
-                          @click="deleteReview(review.id)"
+                          onclick="deleteReview(review.id)"
                           type="button"
                           class="text-gray-400 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 duration-150 transition-colors"
                         >
@@ -913,32 +916,32 @@ function deleteReview(reviewId) {
 
         <!-- Pagination -->
         @if(totalPages > 1)
-          <div class="flex items-center justify-between mt-6 px-4 py-3 sm:px-6 border-gray-200 border-t dark:border-gray-700">
+          <div class="flex items-center justify-between mt-6 px-4 py-3 sm:px-6 border-gray-200 border-t dark:border-neutral-700">
             <div class="flex sm:hidden flex-1 justify-between">
               <button
-                @click="previousPage"
-                :disabled="currentPage === 1"
-                :class="[
-                  'relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-600 dark:bg-blue-gray-800 dark:text-white',
-                  currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-blue-gray-700'
-                ]"
+                onclick="previousPage"
+                disabled="{{ currentPage === 1 }}"
+                class="[
+                  'relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 dark:border-neutral-600 dark:bg-neutral-800 dark:text-white',
+                  currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-neutral-700'
+                ] {{ }}"
               >
                 Previous
               </button>
               <button
-                @click="nextPage"
-                :disabled="currentPage === totalPages"
-                :class="[
-                  'relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-600 dark:bg-blue-gray-800 dark:text-white',
-                  currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-blue-gray-700'
-                ]"
+                onclick="nextPage"
+                disabled="{{ currentPage === totalPages }}"
+                class="[
+                  'relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 dark:border-neutral-600 dark:bg-neutral-800 dark:text-white',
+                  currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-neutral-700'
+                ] {{ }}"
               >
                 Next
               </button>
             </div>
             <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
               <div>
-                <p class="text-gray-700 text-sm dark:text-gray-300">
+                <p class="text-gray-700 text-sm dark:text-neutral-300">
                   Showing <span class="font-medium">{{ (currentPage - 1) * itemsPerPage + 1 }}</span> to
                   <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, filteredReviews.length) }}</span> of
                   <span class="font-medium">{{ filteredReviews.length }}</span> results
@@ -947,32 +950,32 @@ function deleteReview(reviewId) {
               <div>
                 <nav class="inline-flex -space-x-px rounded-md shadow-sm isolate" aria-label="Pagination">
                   <button
-                    @click="previousPage"
-                    :disabled="currentPage === 1"
-                    class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-blue-gray-700 ring-1 ring-gray-300 ring-inset rounded-l-md dark:ring-gray-600 focus:outline-offset-0"
-                    :class="'opacity-50 { } === 1 currentPage cursor-not-allowed':"
+                    onclick="previousPage"
+                    disabled="{{ currentPage === 1 }}"
+                    class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 dark:text-neutral-500 hover:bg-gray-50 dark:hover:bg-neutral-700 ring-1 ring-gray-300 ring-inset rounded-l-md dark:ring-neutral-600 focus:outline-offset-0"
+                    class="'opacity-50 { {{ } }} === 1 currentPage cursor-not-allowed':"
                   >
                     <span class="sr-only">Previous</span>
                     <div class="h-5 w-5 i-hugeicons-arrow-left-01"></div>
                   </button>
                   @foreach(totalPages as page)
                     <button
-                      @click="changePage(page)"
-                      :class="[
-                        'relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-20 focus:outline-offset-0 dark:ring-gray-600',
+                      onclick="changePage(page)"
+                      class="[
+                        'relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-20 focus:outline-offset-0 dark:ring-neutral-600',
                         page === currentPage
                           ? 'bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:bg-blue-700'
-                          : 'text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-blue-gray-700'
-                      ]"
+                          : 'text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-neutral-700'
+                      ] {{ }}"
                     >
                       {{ page }}
                     </button>
                   @endforeach
                   <button
-                    @click="nextPage"
-                    :disabled="currentPage === totalPages"
-                    class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-blue-gray-700 ring-1 ring-gray-300 ring-inset rounded-r-md dark:ring-gray-600 focus:outline-offset-0"
-                    :class="'opacity-50 { } === currentPage cursor-not-allowed': totalPages"
+                    onclick="nextPage"
+                    disabled="{{ currentPage === totalPages }}"
+                    class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 dark:text-neutral-500 hover:bg-gray-50 dark:hover:bg-neutral-700 ring-1 ring-gray-300 ring-inset rounded-r-md dark:ring-neutral-600 focus:outline-offset-0"
+                    class="'opacity-50 { {{ } }} === currentPage cursor-not-allowed': totalPages"
                   >
                     <span class="sr-only">Next</span>
                     <div class="h-5 w-5 i-hugeicons-arrow-right-01"></div>
@@ -989,14 +992,14 @@ function deleteReview(reviewId) {
     @if(showReviewModal)
       <div class="fixed inset-0 overflow-y-auto z-10">
         <div class="flex items-end justify-center sm:items-center p-4 sm:p-0 min-h-full text-center">
-          <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 transition-opacity"></div>
+          <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-neutral-900 dark:bg-opacity-75 transition-opacity"></div>
 
-          <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-blue-gray-800 rounded-lg shadow-xl transition-all transform">
+          <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-neutral-800 rounded-lg shadow-xl transition-all transform">
             <div class="absolute right-0 top-0 pr-4 pt-4">
               <button
                 type="button"
-                @click="closeReviewModal"
-                class="text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 bg-white dark:bg-blue-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                onclick="closeReviewModal"
+                class="text-gray-400 dark:text-neutral-500 hover:text-gray-500 dark:hover:text-gray-400 bg-white dark:bg-neutral-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 <span class="sr-only">Close</span>
                 <div class="h-6 w-6 i-hugeicons-cancel-circle"></div>
@@ -1008,7 +1011,7 @@ function deleteReview(reviewId) {
                   Edit Review
                 </h3>
                 <div class="mt-4">
-                  <form @submit.prevent="saveReview" class="space-y-4">
+                  <form onsubmit="saveReview; return false" class="space-y-4">
                     <!-- Customer and product info (read-only) -->
                     <div class="flex items-center justify-between">
                       <div class="flex items-center">
@@ -1021,7 +1024,7 @@ function deleteReview(reviewId) {
                         @endif
                         <div class="ml-3">
                           <p class="font-medium text-gray-900 text-sm dark:text-white">{{ currentReview?.customerName }}</p>
-                          <p class="text-gray-500 text-xs dark:text-gray-400">{{ currentReview?.customerEmail }}</p>
+                          <p class="text-gray-500 text-xs dark:text-neutral-400">{{ currentReview?.customerEmail }}</p>
                         </div>
                       </div>
                       <div class="flex items-center">
@@ -1040,15 +1043,15 @@ function deleteReview(reviewId) {
 
                     <!-- Rating -->
                     <div>
-                      <label for="review-rating" class="block font-medium text-gray-700 text-sm dark:text-gray-300">Rating</label>
+                      <label for="review-rating" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">Rating</label>
                       @if(currentReview)
                         <select
                           id="review-rating"
-                          v-model="currentReview.rating"
-                          class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                          value="{{ currentReview.rating }}"
+                          class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                         >
                           @foreach([1, 2, 3, 4, 5] as rating)
-                            <option :value="rating">
+                            <option value="{{ rating }}">
                               {{ rating }} {{ rating === 1 ? 'Star' : 'Stars' }}
                             </option>
                           @endforeach
@@ -1058,13 +1061,13 @@ function deleteReview(reviewId) {
 
                     <!-- Review title -->
                     <div>
-                      <label for="review-title" class="block font-medium text-gray-700 text-sm dark:text-gray-300">Title</label>
+                      <label for="review-title" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">Title</label>
                       @if(currentReview)
                         <input
                           type="text"
                           id="review-title"
-                          v-model="currentReview.title"
-                          class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                          value="{{ currentReview.title }}"
+                          class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                           required
                         />
                       @endif
@@ -1072,13 +1075,13 @@ function deleteReview(reviewId) {
 
                     <!-- Review comment -->
                     <div>
-                      <label for="review-comment" class="block font-medium text-gray-700 text-sm dark:text-gray-300">Comment</label>
+                      <label for="review-comment" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">Comment</label>
                       @if(currentReview)
                         <textarea
                           id="review-comment"
-                          v-model="currentReview.comment"
+                          value="{{ currentReview.comment }}"
                           rows="4"
-                          class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                          class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                           required
                         ></textarea>
                       @endif
@@ -1086,15 +1089,15 @@ function deleteReview(reviewId) {
 
                     <!-- Status -->
                     <div>
-                      <label for="review-status" class="block font-medium text-gray-700 text-sm dark:text-gray-300">Status</label>
+                      <label for="review-status" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">Status</label>
                       @if(currentReview)
                         <select
                           id="review-status"
-                          v-model="currentReview.status"
-                          class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                          value="{{ currentReview.status }}"
+                          class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                         >
                           @foreach(statuses.slice(1) as status)
-                            <option :value="status">{{ status }}</option>
+                            <option value="{{ status }}">{{ status }}</option>
                           @endforeach
                         </select>
                       @endif
@@ -1106,11 +1109,11 @@ function deleteReview(reviewId) {
                         <input
                           id="review-featured"
                           type="checkbox"
-                          v-model="currentReview.featured"
-                          class="h-4 w-4 text-blue-600 border-gray-300 rounded dark:border-gray-600 focus:ring-blue-500"
+                          value="{{ currentReview.featured }}"
+                          class="h-4 w-4 text-blue-600 border-gray-300 rounded dark:border-neutral-600 focus:ring-blue-500"
                         />
                       @endif
-                      <label for="review-featured" class="block ml-2 font-medium text-gray-700 text-sm dark:text-gray-300">Featured review</label>
+                      <label for="review-featured" class="block ml-2 font-medium text-gray-700 text-sm dark:text-neutral-300">Featured review</label>
                     </div>
 
                     <div class="sm:flex sm:flex-row-reverse mt-5 sm:mt-4">
@@ -1122,8 +1125,8 @@ function deleteReview(reviewId) {
                       </button>
                       <button
                         type="button"
-                        @click="closeReviewModal"
-                        class="inline-flex justify-center mt-3 px-3 py-2 sm:mt-0 w-full sm:w-auto font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+                        onclick="closeReviewModal"
+                        class="inline-flex justify-center mt-3 px-3 py-2 sm:mt-0 w-full sm:w-auto font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
                       >
                         Cancel
                       </button>
@@ -1137,3 +1140,5 @@ function deleteReview(reviewId) {
       </div>
     @endif
   </main>
+
+@endsection

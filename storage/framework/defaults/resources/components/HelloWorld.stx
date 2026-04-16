@@ -1,14 +1,17 @@
-<script server>
-// Props
-const showButtons = props.showButtons || false
-const greeting = props.greeting || 'Welcome!'
+<script>
+interface HelloWorldProps {
+  showButtons?: boolean
+  greeting?: string
+}
+
+const { showButtons = false, greeting = 'Welcome!' } = defineProps<HelloWorldProps>()
 
 // Lifecycle hook simulation
 console.log('HelloWorld component mounted & the greeting is', greeting)
 </script>
 
 <div class="antialiased font-sans">
-  <div class="flex relative items-top justify-center sm:items-center py-4 sm:pt-0 min-h-screen bg-gray-50 dark:bg-blue-gray-900">
+  <div class="flex relative items-top justify-center sm:items-center py-4 sm:pt-0 min-h-screen bg-gray-50 dark:bg-neutral-900">
     <div class="mx-auto sm:px-6 lg:px-8 max-w-6xl">
       <div class="flex items-center justify-center sm:justify-between pt-8 sm:pt-0">
         <Logo />
@@ -21,7 +24,7 @@ console.log('HelloWorld component mounted & the greeting is', greeting)
         @endif
       </div>
 
-      <div class="overflow-hidden mt-8 bg-white dark:bg-blue-gray-800 sm:rounded-lg shadow">
+      <div class="overflow-hidden mt-8 bg-white dark:bg-neutral-800 sm:rounded-lg shadow">
         <div class="grid grid-cols-1 md:grid-cols-2">
           <div class="p-6">
             <div class="flex items-center">
@@ -41,13 +44,13 @@ console.log('HelloWorld component mounted & the greeting is', greeting)
             </div>
 
             <div class="ml-12">
-              <div class="mt-2 leading-6 text-gray-600 text-sm dark:text-gray-400">
+              <div class="mt-2 leading-6 text-gray-600 text-sm dark:text-neutral-400">
                 Stacks has a wonderful, thorough documentation covering every aspect of the framework. Whether you are new to the framework or have previous experience with Stacks, we recommend reading all of the documentation from beginning to end.
               </div>
             </div>
           </div>
 
-          <div class="p-6 border-gray-200 border-t md:border-l md:border-t-0 dark:border-gray-700">
+          <div class="p-6 border-gray-200 border-t md:border-l md:border-t-0 dark:border-neutral-700">
             <div class="flex items-center">
               <i
                 class="h-8 w-8 text-gray-500 i-hugeicons-outline-puzzle"
@@ -64,14 +67,14 @@ console.log('HelloWorld component mounted & the greeting is', greeting)
             </div>
 
             <div class="ml-12">
-              <div class="mt-2 leading-6 text-gray-600 text-sm dark:text-gray-400">
+              <div class="mt-2 leading-6 text-gray-600 text-sm dark:text-neutral-400">
                 The easiest way to build component libraries and distribute them on npm. Stacks automatically imports all of your components & makes them available to you in your templates.
                 And it automatically builds framework agnostic (e.g. Web & Vue Components) component libraries out of those.
               </div>
             </div>
           </div>
 
-          <div class="p-6 border-gray-200 border-t dark:border-gray-700">
+          <div class="p-6 border-gray-200 border-t dark:border-neutral-700">
             <div class="flex items-center">
               <i
                 class="h-8 w-8 text-gray-500 i-hugeicons-outline-template"
@@ -88,13 +91,13 @@ console.log('HelloWorld component mounted & the greeting is', greeting)
             </div>
 
             <div class="ml-12">
-              <div class="mt-2 leading-6 text-gray-600 text-sm dark:text-gray-400">
+              <div class="mt-2 leading-6 text-gray-600 text-sm dark:text-neutral-400">
                 Stacks provides a toolkit to easily develop functions. These "function libraries" may easily be distributed via npm or be served as API endpoints. Because Stacks loves serverless technology, scalability is built-in. <i>Don't sweat it, it's simple!</i>
               </div>
             </div>
           </div>
 
-          <div class="p-6 border-gray-200 border-t md:border-l dark:border-gray-700">
+          <div class="p-6 border-gray-200 border-t md:border-l dark:border-neutral-700">
             <div class="flex items-center">
               <i
                 class="h-8 w-8 text-gray-500 i-hugeicons-outline-variable"
@@ -111,7 +114,7 @@ console.log('HelloWorld component mounted & the greeting is', greeting)
             </div>
 
             <div class="ml-12">
-              <div class="mt-2 leading-6 text-gray-600 text-sm dark:text-gray-400">
+              <div class="mt-2 leading-6 text-gray-600 text-sm dark:text-neutral-400">
                 A well-designed CI/CD pipeline. Automatic component & function library npm distributions.
                 Linting & formatting enabled by default, without the need of prettier. Semver version
                 control enabled, automatic versioning & changelog generation. Access to a powerful
@@ -120,7 +123,7 @@ console.log('HelloWorld component mounted & the greeting is', greeting)
             </div>
           </div>
 
-          <div class="p-6 border-gray-200 border-t dark:border-gray-700">
+          <div class="p-6 border-gray-200 border-t dark:border-neutral-700">
             <div class="flex items-center">
               <i
                 class="h-8 w-8 text-gray-500 i-hugeicons-outline-terminal"
@@ -137,7 +140,7 @@ console.log('HelloWorld component mounted & the greeting is', greeting)
             </div>
 
             <div class="ml-12">
-              <div class="mt-2 leading-6 text-gray-600 text-sm dark:text-gray-400">
+              <div class="mt-2 leading-6 text-gray-600 text-sm dark:text-neutral-400">
                 Simplistic setup, maintenance & collaboration. Deep IDE integration,
                 auto-formatting, access to powerful APIs, modern git commit conventions, npm
                 package releases, semver powered, pretty changelog generations, PR dependency updates,
@@ -148,7 +151,7 @@ console.log('HelloWorld component mounted & the greeting is', greeting)
             </div>
           </div>
 
-          <div class="p-6 border-gray-200 border-t md:border-l dark:border-gray-700">
+          <div class="p-6 border-gray-200 border-t md:border-l dark:border-neutral-700">
             <div class="flex items-center">
               <i
                 class="h-8 w-8 text-gray-500 i-hugeicons-outline-globe"
@@ -160,7 +163,7 @@ console.log('HelloWorld component mounted & the greeting is', greeting)
             </div>
 
             <div class="ml-12">
-              <div class="mt-2 leading-6 text-gray-600 text-sm dark:text-gray-400">
+              <div class="mt-2 leading-6 text-gray-600 text-sm dark:text-neutral-400">
                 Stacks has a deep ecosystem of integrations & first-party libraries, including headless/unstyled, fully
                 accessible UI component libraries, designed to integrate beautifully with any tech stack of your choice.
                 <a

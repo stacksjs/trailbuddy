@@ -1,13 +1,13 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 definePageMeta({
   middleware: ['auth'],
   layout: 'default'
 })
 
-import { Chart, registerables, ChartTypeRegistry } from 'chart.js'
 
-// Register Chart.js components
-Chart.register(...registerables)
 
 // Types
 interface DateRange {
@@ -94,53 +94,6 @@ let searchTermsData = [
   { term: 'vue typescript boilerplate', visitors: 20, percentage: 3 }
 ]
 
-// Chart.js configuration for referrer types
-const chartConfig = reactive({
-  type: 'pie' as keyof ChartTypeRegistry,
-  data: {
-    labels: referrerTypesData.map(item => item.name),
-    datasets: [
-      {
-        data: referrerTypesData.map(item => item.visitors),
-        backgroundColor: [
-          'rgba(59, 130, 246, 0.8)',
-          'rgba(16, 185, 129, 0.8)',
-          'rgba(245, 158, 11, 0.8)',
-          'rgba(239, 68, 68, 0.8)'
-        ],
-        borderColor: 'rgba(255, 255, 255, 0.8)',
-        borderWidth: 1
-      }
-    ]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'right' as const,
-        labels: {
-          padding: 20,
-          font: {
-            size: 12
-          }
-        }
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            const label = context.label || '';
-            const value = context.raw || 0;
-            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-            const percentage = Math.round((value / total) * 100);
-            return `${label}: ${value} visitors (${percentage}%)`;
-          }
-        }
-      }
-    }
-  }
-}
-
 // Referrer trend data for line chart
 let referrerTrendData = [
   { date: '2023-09', Direct: 800, Social: 400, Search: 300, Referral: 200 },
@@ -156,85 +109,13 @@ let referrerTrendData = [
   { date: '2024-07', Direct: 1400, Social: 799, Search: 658, Referral: 654 }
 ]
 
-// Chart.js configuration for referrer trends
-const trendChartConfig = reactive({
-  type: 'line' as keyof ChartTypeRegistry,
-  data: {
-    labels: referrerTrendData.map(item => item.date),
-    datasets: [
-      {
-        label: 'Direct',
-        data: referrerTrendData.map(item => item.Direct),
-        borderColor: 'rgba(59, 130, 246, 0.8)',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        tension: 0.4,
-        fill: false
-      },
-      {
-        label: 'Social',
-        data: referrerTrendData.map(item => item.Social),
-        borderColor: 'rgba(16, 185, 129, 0.8)',
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-        tension: 0.4,
-        fill: false
-      },
-      {
-        label: 'Search',
-        data: referrerTrendData.map(item => item.Search),
-        borderColor: 'rgba(245, 158, 11, 0.8)',
-        backgroundColor: 'rgba(245, 158, 11, 0.1)',
-        tension: 0.4,
-        fill: false
-      },
-      {
-        label: 'Referral',
-        data: referrerTrendData.map(item => item.Referral),
-        borderColor: 'rgba(239, 68, 68, 0.8)',
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-        tension: 0.4,
-        fill: false
-      }
-    ]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-        grid: {
-          display: false
-        }
-      },
-      y: {
-        beginAtZero: true,
-        grid: {
-          borderDash: [2, 4],
-          color: 'rgba(160, 174, 192, 0.2)'
-        },
-        ticks: {
-          maxTicksLimit: 6
-        }
-      }
-    },
-    plugins: {
-      legend: {
-        position: 'top' as const
-      },
-      tooltip: {
-        mode: 'index' as const,
-        intersect: false
-      }
-    }
-  }
-}
-
 // Format numbers with commas
 function formatNumber(number) {
   return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }
 
 // Get referrer type badge class
-function getReferrerTypeBadgeClass(type) {
+const getReferrerTypeBadgeClass = (type) => {
   switch (type) {
     case 'direct':
       return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
@@ -245,7 +126,7 @@ function getReferrerTypeBadgeClass(type) {
     case 'referral':
       return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
     default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+      return 'bg-gray-100 text-gray-800 dark:bg-neutral-700 dark:text-neutral-300'
   }
 }
 
@@ -259,9 +140,6 @@ function handleDateRangeChange() {
   updateDataForDateRange()
 }
 
-// Initialize charts when component is mounted
-let referrerTypeChart: Chart | null = null
-let referrerTrendChart: Chart | null = null
 
 </script>
 
@@ -272,17 +150,17 @@ let referrerTrendChart: Chart | null = null
       <!-- Header with date range selector -->
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div class="flex items-center space-x-2">
-          <div class="h-5 w-5 text-gray-500 dark:text-gray-400 i-hugeicons-calendar-03"></div>
-          <span class="font-medium text-gray-700 text-sm dark:text-gray-300">{{ dateRangeDisplay }}</span>
+          <div class="h-5 w-5 text-gray-500 dark:text-neutral-400 i-hugeicons-calendar-03"></div>
+          <span class="font-medium text-gray-700 text-sm dark:text-neutral-300">{{ dateRangeDisplay }}</span>
         </div>
 
         <div class="flex flex-wrap gap-2 items-center">
-          <span class="text-gray-500 text-sm dark:text-gray-400">compared to</span>
+          <span class="text-gray-500 text-sm dark:text-neutral-400">compared to</span>
 
           <div class="relative">
             <select
-              v-model="comparisonType"
-              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              value="{{ comparisonType }}"
+              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             >
               <option value="no-comparison">No comparison</option>
               <option value="previous-period">Previous period</option>
@@ -292,7 +170,7 @@ let referrerTrendChart: Chart | null = null
 
           <button
             type="button"
-            class="inline-flex items-center px-3 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+            class="inline-flex items-center px-3 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
           >
             <div class="mr-1 h-4 w-4 i-hugeicons-settings-01"></div>
             Auto
@@ -303,7 +181,7 @@ let referrerTrendChart: Chart | null = null
       <!-- Page Header -->
       <div class="mb-8">
         <h1 class="font-bold text-2xl text-gray-900 dark:text-white">Referrer Analytics</h1>
-        <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">
+        <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">
           Detailed breakdown of traffic sources to your website
         </p>
       </div>
@@ -311,10 +189,10 @@ let referrerTrendChart: Chart | null = null
       <!-- Referrer Charts -->
       <div class="grid gap-8 grid-cols-1 lg:grid-cols-2 mb-8">
         <!-- Referrer Type Chart -->
-        <div class="p-4 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+        <div class="p-4 bg-white dark:bg-neutral-800 rounded-lg shadow">
           <div class="mb-4">
             <h3 class="font-medium leading-6 text-gray-900 text-lg dark:text-white">Referrer Types</h3>
-            <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">
+            <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">
               Distribution of traffic by source type
             </p>
           </div>
@@ -325,10 +203,10 @@ let referrerTrendChart: Chart | null = null
         </div>
 
         <!-- Referrer Trend Chart -->
-        <div class="p-4 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+        <div class="p-4 bg-white dark:bg-neutral-800 rounded-lg shadow">
           <div class="mb-4">
             <h3 class="font-medium leading-6 text-gray-900 text-lg dark:text-white">Referrer Trends</h3>
-            <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">
+            <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">
               Traffic source trends over time
             </p>
           </div>
@@ -345,32 +223,32 @@ let referrerTrendChart: Chart | null = null
           <h3 class="font-medium text-gray-900 text-lg dark:text-white">Referrer Types</h3>
         </div>
 
-        <div class="overflow-hidden border border-gray-200 rounded-lg dark:border-gray-700">
-          <table class="min-w-full divide-gray-200 divide-y dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-blue-gray-700/50">
+        <div class="overflow-hidden border border-gray-200 rounded-lg dark:border-neutral-700">
+          <table class="min-w-full divide-gray-200 divide-y dark:divide-neutral-700">
+            <thead class="bg-gray-50 dark:bg-neutral-700/50">
               <tr>
-                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-300">
+                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-neutral-300">
                   Type
                 </th>
-                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                   Visitors
                 </th>
-                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                   %
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white dark:bg-blue-gray-800 divide-gray-200 divide-y dark:divide-gray-700">
+            <tbody class="bg-white dark:bg-neutral-800 divide-gray-200 divide-y dark:divide-neutral-700">
               @foreach(referrerTypesData as type)
-              <tr class="relative hover:bg-gray-50 dark:hover:bg-blue-gray-700/50">
+              <tr class="relative hover:bg-gray-50 dark:hover:bg-neutral-700/50">
                 <td class="px-4 py-3 text-gray-900 text-sm whitespace-nowrap dark:text-white">
-                  <div class="absolute inset-0 bg-green-100/50 dark:bg-green-900/50" :style="{ width: type.percentage + '%' }"></div>
+                  <div class="absolute inset-0 bg-green-100/50 dark:bg-green-900/50" style="{{ { width: type.percentage + '%' } }}"></div>
                   <span class="relative z-10">{{ type.name }}</span>
                 </td>
-                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                   <span class="relative z-10">{{ type.visitors }}</span>
                 </td>
-                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                   <span class="relative z-10">{{ type.percentage }}%</span>
                 </td>
               </tr>
@@ -386,32 +264,32 @@ let referrerTrendChart: Chart | null = null
           <h3 class="font-medium text-gray-900 text-lg dark:text-white">Top Referrers</h3>
         </div>
 
-        <div class="overflow-hidden border border-gray-200 rounded-lg dark:border-gray-700">
-          <table class="min-w-full divide-gray-200 divide-y dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-blue-gray-700/50">
+        <div class="overflow-hidden border border-gray-200 rounded-lg dark:border-neutral-700">
+          <table class="min-w-full divide-gray-200 divide-y dark:divide-neutral-700">
+            <thead class="bg-gray-50 dark:bg-neutral-700/50">
               <tr>
-                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-300">
+                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-neutral-300">
                   Source
                 </th>
-                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-300">
+                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-neutral-300">
                   Type
                 </th>
-                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                   Visitors
                 </th>
-                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                   Views
                 </th>
-                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                   %
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white dark:bg-blue-gray-800 divide-gray-200 divide-y dark:divide-gray-700">
+            <tbody class="bg-white dark:bg-neutral-800 divide-gray-200 divide-y dark:divide-neutral-700">
               @foreach(referrersData as referrer)
-              <tr class="relative hover:bg-gray-50 dark:hover:bg-blue-gray-700/50">
+              <tr class="relative hover:bg-gray-50 dark:hover:bg-neutral-700/50">
                 <td class="px-4 py-3 text-gray-900 text-sm whitespace-nowrap dark:text-white">
-                  <div class="absolute inset-0 bg-green-100/50 dark:bg-green-900/50" :style="{ width: referrer.percentage + '%' }"></div>
+                  <div class="absolute inset-0 bg-green-100/50 dark:bg-green-900/50" style="{{ { width: referrer.percentage + '%' } }}"></div>
                   <span class="relative z-10">{{ referrer.name }}</span>
                 </td>
                 <td class="relative px-4 py-3 text-sm whitespace-nowrap">
@@ -421,13 +299,13 @@ let referrerTrendChart: Chart | null = null
                   </span>
                   @endif
                 </td>
-                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                   <span class="relative z-10">{{ referrer.visitors }}</span>
                 </td>
-                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                   <span class="relative z-10">{{ referrer.views }}</span>
                 </td>
-                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                   <span class="relative z-10">{{ referrer.percentage }}%</span>
                 </td>
               </tr>
@@ -441,37 +319,37 @@ let referrerTrendChart: Chart | null = null
       <div>
         <div class="mb-4">
           <h3 class="font-medium text-gray-900 text-lg dark:text-white">Top Search Terms</h3>
-          <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">
+          <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">
             Most common search terms bringing visitors to your site
           </p>
         </div>
 
-        <div class="overflow-hidden border border-gray-200 rounded-lg dark:border-gray-700">
-          <table class="min-w-full divide-gray-200 divide-y dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-blue-gray-700/50">
+        <div class="overflow-hidden border border-gray-200 rounded-lg dark:border-neutral-700">
+          <table class="min-w-full divide-gray-200 divide-y dark:divide-neutral-700">
+            <thead class="bg-gray-50 dark:bg-neutral-700/50">
               <tr>
-                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-300">
+                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-neutral-300">
                   Search Term
                 </th>
-                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                   Visitors
                 </th>
-                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                   %
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white dark:bg-blue-gray-800 divide-gray-200 divide-y dark:divide-gray-700">
+            <tbody class="bg-white dark:bg-neutral-800 divide-gray-200 divide-y dark:divide-neutral-700">
               @foreach(searchTermsData as term)
-              <tr class="relative hover:bg-gray-50 dark:hover:bg-blue-gray-700/50">
+              <tr class="relative hover:bg-gray-50 dark:hover:bg-neutral-700/50">
                 <td class="px-4 py-3 text-gray-900 text-sm whitespace-nowrap dark:text-white">
-                  <div class="absolute inset-0 bg-amber-100/50 dark:bg-amber-900/50" :style="{ width: term.percentage + '%' }"></div>
+                  <div class="absolute inset-0 bg-amber-100/50 dark:bg-amber-900/50" style="{{ { width: term.percentage + '%' } }}"></div>
                   <span class="relative z-10">{{ term.term }}</span>
                 </td>
-                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                   <span class="relative z-10">{{ term.visitors }}</span>
                 </td>
-                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                   <span class="relative z-10">{{ term.percentage }}%</span>
                 </td>
               </tr>
@@ -484,20 +362,78 @@ let referrerTrendChart: Chart | null = null
   </div>
 </main>
 <script client>
-import { onMount } from 'stx'
+const { Chart, registerables } = await import('chart.js/auto')
+Chart.register(...registerables)
 
-onMount(async () => {
-  const typeCtx = document.getElementById('referrerTypeChart') as HTMLCanvasElement
-  if (typeCtx) {
-    referrerTypeChart = new Chart(typeCtx, chartConfig)
-  }
+const typeCtx = document.getElementById('referrerTypeChart')
+if (typeCtx) {
+  new Chart(typeCtx, {
+    type: 'pie',
+    data: {
+      labels: referrerTypesData.map(item => item.name),
+      datasets: [{
+        data: referrerTypesData.map(item => item.visitors),
+        backgroundColor: [
+          'rgba(59, 130, 246, 0.8)',
+          'rgba(16, 185, 129, 0.8)',
+          'rgba(245, 158, 11, 0.8)',
+          'rgba(239, 68, 68, 0.8)'
+        ],
+        borderColor: 'rgba(255, 255, 255, 0.8)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { padding: 20, font: { size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || ''
+              const value = context.raw || 0
+              const total = context.dataset.data.reduce((a, b) => a + b, 0)
+              const percentage = Math.round((value / total) * 100)
+              return `${label}: ${value} visitors (${percentage}%)`
+            }
+          }
+        }
+      }
+    }
+  })
+}
 
-  const trendCtx = document.getElementById('referrerTrendChart') as HTMLCanvasElement
-  if (trendCtx) {
-    referrerTrendChart = new Chart(trendCtx, trendChartConfig)
-  }
+const trendCtx = document.getElementById('referrerTrendChart')
+if (trendCtx) {
+  new Chart(trendCtx, {
+    type: 'line',
+    data: {
+      labels: referrerTrendData.map(item => item.date),
+      datasets: [
+        { label: 'Direct', data: referrerTrendData.map(item => item.Direct), borderColor: 'rgba(59, 130, 246, 0.8)', backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.4, fill: false },
+        { label: 'Social', data: referrerTrendData.map(item => item.Social), borderColor: 'rgba(16, 185, 129, 0.8)', backgroundColor: 'rgba(16, 185, 129, 0.1)', tension: 0.4, fill: false },
+        { label: 'Search', data: referrerTrendData.map(item => item.Search), borderColor: 'rgba(245, 158, 11, 0.8)', backgroundColor: 'rgba(245, 158, 11, 0.1)', tension: 0.4, fill: false },
+        { label: 'Referral', data: referrerTrendData.map(item => item.Referral), borderColor: 'rgba(239, 68, 68, 0.8)', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.4, fill: false }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { grid: { display: false } },
+        y: { beginAtZero: true, grid: { borderDash: [2, 4], color: 'rgba(160, 174, 192, 0.2)' }, ticks: { maxTicksLimit: 6 } }
+      },
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: { mode: 'index', intersect: false }
+      }
+    }
+  })
+}
 
-  updateDataForDateRange()
-})
+updateDataForDateRange()
 </script>
 
+
+@endsection

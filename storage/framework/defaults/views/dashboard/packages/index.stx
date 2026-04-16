@@ -1,3 +1,6 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 definePageMeta({
   middleware: ['auth'],
@@ -5,38 +8,11 @@ definePageMeta({
 })
 
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-  Scale,
-  CoreScaleOptions,
-  Tick,
-} from 'chart.js'
-import {
   Listbox,
   ListboxButton,
   ListboxOptions,
   ListboxOption,
 } from '@stacksjs/stx'
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-)
 
 const packages = [
   {
@@ -491,28 +467,28 @@ function starsData() { return ({
 </script>
 
 @title('Dashboard - Packages')
-<div class="py-4 lg:py-8 min-h-screen dark:bg-blue-gray-800">
+<div class="py-4 lg:py-8 min-h-screen dark:bg-neutral-800">
   <!-- Stats Section -->
   <div class="mb-8 px-4 sm:px-6 lg:px-8">
     <div>
       <div class="flex items-center justify-between">
-        <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-gray-100">
+        <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-neutral-100">
           Package Statistics
         </h3>
 
         @if(useCompactMode)
           <div class="flex items-center space-x-2">
             <div class="relative w-64">
-              <Listbox v-model="selectedPackages" multiple>
+              <Listbox value="{{ selectedPackages }}" multiple>
                 <div class="relative">
                   <ListboxButton
-                    class="relative pl-3 pr-10 py-1.5 h-9 w-full text-gray-900 text-left text-sm dark:text-gray-100 bg-gray-50 dark:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-inset duration-200 transition-all cursor-default"
+                    class="relative pl-3 pr-10 py-1.5 h-9 w-full text-gray-900 text-left text-sm dark:text-neutral-100 bg-gray-50 dark:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-inset duration-200 transition-all cursor-default"
                   >
                     <span class="block truncate">
                       {{ selectedPackages.length === 0 ? 'Select packages...' : `${selectedPackages.length} selected` }}
                     </span>
                     <span class="flex absolute inset-y-0 right-0 items-center pr-2 pointer-events-none">
-                      <div class="h-5 w-5 text-gray-400 dark:text-gray-500 i-hugeicons-chevron-up-down" aria-hidden="true" />
+                      <div class="h-5 w-5 text-gray-400 dark:text-neutral-500 i-hugeicons-chevron-up-down" aria-hidden="true" />
                     </span>
                   </ListboxButton>
 
@@ -525,26 +501,25 @@ function starsData() { return ({
                     leave-to-class="opacity-0 scale-95 transform"
                   >
                     <ListboxOptions
-                      class="absolute overflow-auto z-10 mt-1 py-1 max-h-60 w-full text-sm bg-white dark:bg-blue-gray-600 ring-1 ring-black/5 rounded-md dark:ring-white/5 focus:outline-none shadow-lg"
+                      class="absolute overflow-auto z-10 mt-1 py-1 max-h-60 w-full text-sm bg-white dark:bg-neutral-600 ring-1 ring-black/5 rounded-md dark:ring-white/5 focus:outline-none shadow-lg"
                     >
                       @foreach(packages as pkg)
                         <ListboxOption
-                          :key="pkg.name"
-                          :value="pkg.name"
+                          value="{{ pkg.name }}"
                           v-slot="{ active, selected }"
                           as="template"
                         >
                           <li
-                            :class="[
-                              active ? 'bg-blue-50 dark:bg-blue-700/50 text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-gray-100',
+                            class="[
+                              active ? 'bg-blue-50 dark:bg-blue-700/50 text-blue-900 dark:text-blue-100' : 'text-gray-900 dark:text-neutral-100',
                               'relative cursor-default select-none py-2 pl-10 pr-4 transition-colors duration-150',
-                            ]"
+                            ] {{ }}"
                           >
                             <span :class="[selected ? 'font-medium' : 'font-normal', 'block truncate']">
                               {{ pkg.name }}
                             </span>
-                            <span
-                              v-if="selected"
+                            @if(selected)
+<span
                               class="flex absolute inset-y-0 left-0 items-center pl-3 text-blue-600 dark:text-blue-400"
                             >
                               <div class="h-5 w-5 i-hugeicons-check" aria-hidden="true" />
@@ -558,8 +533,8 @@ function starsData() { return ({
               </Listbox>
             </div>
             <button
-              @click="selectedPackages = []"
-              class="px-3 h-9 text-gray-500 text-sm dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-blue-gray-500 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 duration-200 transition-colors"
+              onclick="selectedPackages = []"
+              class="px-3 h-9 text-gray-500 text-sm dark:text-neutral-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-500 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 duration-200 transition-colors"
             >
               Clear
             </button>
@@ -568,49 +543,49 @@ function starsData() { return ({
       </div>
 
       <dl class="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mt-5">
-        <div class="overflow-hidden relative pt-5 px-4 sm:pt-6 sm:px-6 bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+        <div class="overflow-hidden relative pt-5 px-4 sm:pt-6 sm:px-6 bg-white dark:bg-neutral-700 rounded-lg shadow">
           <dt>
             <div class="absolute p-3 bg-blue-500 rounded-md">
               <div class="h-6 w-6 text-white i-hugeicons-cloud-download" />
             </div>
-            <p class="ml-16 font-medium text-gray-500 text-sm truncate dark:text-gray-400">
+            <p class="ml-16 font-medium text-gray-500 text-sm truncate dark:text-neutral-400">
               Total Downloads
             </p>
           </dt>
           <dd class="flex items-baseline ml-16 pb-6 sm:pb-7">
-            <p class="font-semibold text-2xl text-gray-900 dark:text-gray-100">
+            <p class="font-semibold text-2xl text-gray-900 dark:text-neutral-100">
               {{ totalDownloads.toLocaleString() }}
             </p>
           </dd>
         </div>
 
-        <div class="overflow-hidden relative pt-5 px-4 sm:pt-6 sm:px-6 bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+        <div class="overflow-hidden relative pt-5 px-4 sm:pt-6 sm:px-6 bg-white dark:bg-neutral-700 rounded-lg shadow">
           <dt>
             <div class="absolute p-3 bg-blue-500 rounded-md">
               <div class="h-6 w-6 text-white i-hugeicons-user-multiple-02" />
             </div>
-            <p class="ml-16 font-medium text-gray-500 text-sm truncate dark:text-gray-400">
+            <p class="ml-16 font-medium text-gray-500 text-sm truncate dark:text-neutral-400">
               Total Contributors
             </p>
           </dt>
           <dd class="flex items-baseline ml-16 pb-6 sm:pb-7">
-            <p class="font-semibold text-2xl text-gray-900 dark:text-gray-100">
+            <p class="font-semibold text-2xl text-gray-900 dark:text-neutral-100">
               {{ totalContributors.toLocaleString() }}
             </p>
           </dd>
         </div>
 
-        <div class="overflow-hidden relative pt-5 px-4 sm:pt-6 sm:px-6 bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+        <div class="overflow-hidden relative pt-5 px-4 sm:pt-6 sm:px-6 bg-white dark:bg-neutral-700 rounded-lg shadow">
           <dt>
             <div class="absolute p-3 bg-blue-500 rounded-md">
               <div class="h-6 w-6 text-white i-hugeicons-bug-02" />
             </div>
-            <p class="ml-16 font-medium text-gray-500 text-sm truncate dark:text-gray-400">
+            <p class="ml-16 font-medium text-gray-500 text-sm truncate dark:text-neutral-400">
               Total Issues
             </p>
           </dt>
           <dd class="flex items-baseline ml-16 pb-6 sm:pb-7">
-            <p class="font-semibold text-2xl text-gray-900 dark:text-gray-100">
+            <p class="font-semibold text-2xl text-gray-900 dark:text-neutral-100">
               {{ totalIssues.toLocaleString() }}
             </p>
           </dd>
@@ -623,17 +598,17 @@ function starsData() { return ({
   <div class="mb-8 px-4 sm:px-6 lg:px-8">
     <div class="grid gap-8 grid-cols-1 lg:grid-cols-2">
       <!-- Downloads Chart -->
-      <div class="bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+      <div class="bg-white dark:bg-neutral-700 rounded-lg shadow">
         <div class="p-6">
           <div class="flex items-center justify-between mb-6">
             <div>
-              <h3 class="font-medium text-base text-gray-900 dark:text-gray-100">Package Downloads</h3>
-              <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">Downloads over time per package</p>
+              <h3 class="font-medium text-base text-gray-900 dark:text-neutral-100">Package Downloads</h3>
+              <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">Downloads over time per package</p>
             </div>
             <div class="flex items-center space-x-4">
               <select
-                v-model="timeRange"
-                class="pl-3 pr-8 py-1.5 h-9 text-gray-900 text-sm dark:text-gray-100 bg-gray-50 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600"
+                value="{{ timeRange }}"
+                class="pl-3 pr-8 py-1.5 h-9 text-gray-900 text-sm dark:text-neutral-100 bg-gray-50 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600"
               >
                 <option value="7">Last 7 days</option>
                 <option value="30">Last 30 days</option>
@@ -642,24 +617,24 @@ function starsData() { return ({
               </select>
               <div class="flex h-9 rounded-md shadow-sm">
                 <button
-                  @click="displayMode = 'line'"
-                  :class="[
+                  onclick="displayMode = 'line'"
+                  class="[
                     'px-3 py-2 text-sm font-semibold rounded-l-md ring-1 ring-inset transition-colors',
                     displayMode === 'line'
                       ? 'bg-blue-600 text-white ring-blue-600'
-                      : 'bg-white text-gray-600 hover:bg-gray-50 ring-gray-300 dark:bg-blue-gray-600 dark:text-gray-200 dark:ring-gray-600 dark:hover:bg-blue-gray-500'
-                  ]"
+                      : 'bg-white text-gray-600 hover:bg-gray-50 ring-gray-300 dark:bg-neutral-600 dark:text-neutral-200 dark:ring-neutral-600 dark:hover:bg-neutral-500'
+                  ] {{ }}"
                 >
                   Line
                 </button>
                 <button
-                  @click="displayMode = 'bar'"
-                  :class="[
+                  onclick="displayMode = 'bar'"
+                  class="[
                     'px-3 py-2 text-sm font-semibold rounded-r-md ring-1 ring-inset transition-colors -ml-px',
                     displayMode === 'bar'
                       ? 'bg-blue-600 text-white ring-blue-600'
-                      : 'bg-white text-gray-600 hover:bg-gray-50 ring-gray-300 dark:bg-blue-gray-600 dark:text-gray-200 dark:ring-gray-600 dark:hover:bg-blue-gray-500'
-                  ]"
+                      : 'bg-white text-gray-600 hover:bg-gray-50 ring-gray-300 dark:bg-neutral-600 dark:text-neutral-200 dark:ring-neutral-600 dark:hover:bg-neutral-500'
+                  ] {{ }}"
                 >
                   Bar
                 </button>
@@ -668,7 +643,7 @@ function starsData() { return ({
           </div>
           <div class="relative h-[400px]">
             @if(isLoading)
-              <div class="flex absolute inset-0 z-10 items-center justify-center bg-opacity-75 bg-white dark:bg-blue-gray-700 dark:bg-opacity-75">
+              <div class="flex absolute inset-0 z-10 items-center justify-center bg-opacity-75 bg-white dark:bg-neutral-700 dark:bg-opacity-75">
                 <div class="h-8 w-8 border-b-2 border-blue-500 rounded-full animate-spin"></div>
               </div>
             @endif
@@ -682,17 +657,17 @@ function starsData() { return ({
       </div>
 
       <!-- Star Growth Chart -->
-      <div class="bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+      <div class="bg-white dark:bg-neutral-700 rounded-lg shadow">
         <div class="p-6">
           <div class="flex items-center justify-between mb-6">
             <div>
-              <h3 class="font-medium text-base text-gray-900 dark:text-gray-100">Star Growth</h3>
-              <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">GitHub Star growth over time per package</p>
+              <h3 class="font-medium text-base text-gray-900 dark:text-neutral-100">Star Growth</h3>
+              <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">GitHub Star growth over time per package</p>
             </div>
             <div class="flex items-center space-x-4">
               <select
-                v-model="timeRange"
-                class="pl-3 pr-8 py-1.5 h-9 text-gray-900 text-sm dark:text-gray-100 bg-gray-50 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600"
+                value="{{ timeRange }}"
+                class="pl-3 pr-8 py-1.5 h-9 text-gray-900 text-sm dark:text-neutral-100 bg-gray-50 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600"
               >
                 <option value="7">Last 7 days</option>
                 <option value="30">Last 30 days</option>
@@ -701,24 +676,24 @@ function starsData() { return ({
               </select>
               <div class="flex h-9 rounded-md shadow-sm">
                 <button
-                  @click="displayMode = 'line'"
-                  :class="[
+                  onclick="displayMode = 'line'"
+                  class="[
                     'px-3 py-2 text-sm font-semibold rounded-l-md ring-1 ring-inset transition-colors',
                     displayMode === 'line'
                       ? 'bg-blue-600 text-white ring-blue-600'
-                      : 'bg-white text-gray-600 hover:bg-gray-50 ring-gray-300 dark:bg-blue-gray-600 dark:text-gray-200 dark:ring-gray-600 dark:hover:bg-blue-gray-500'
-                  ]"
+                      : 'bg-white text-gray-600 hover:bg-gray-50 ring-gray-300 dark:bg-neutral-600 dark:text-neutral-200 dark:ring-neutral-600 dark:hover:bg-neutral-500'
+                  ] {{ }}"
                 >
                   Line
                 </button>
                 <button
-                  @click="displayMode = 'bar'"
-                  :class="[
+                  onclick="displayMode = 'bar'"
+                  class="[
                     'px-3 py-2 text-sm font-semibold rounded-r-md ring-1 ring-inset transition-colors -ml-px',
                     displayMode === 'bar'
                       ? 'bg-blue-600 text-white ring-blue-600'
-                      : 'bg-white text-gray-600 hover:bg-gray-50 ring-gray-300 dark:bg-blue-gray-600 dark:text-gray-200 dark:ring-gray-600 dark:hover:bg-blue-gray-500'
-                  ]"
+                      : 'bg-white text-gray-600 hover:bg-gray-50 ring-gray-300 dark:bg-neutral-600 dark:text-neutral-200 dark:ring-neutral-600 dark:hover:bg-neutral-500'
+                  ] {{ }}"
                 >
                   Bar
                 </button>
@@ -736,27 +711,27 @@ function starsData() { return ({
       </div>
 
       <!-- Contributors Chart -->
-      <div class="bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+      <div class="bg-white dark:bg-neutral-700 rounded-lg shadow">
         <div class="p-6">
           <div class="mb-6">
-            <h3 class="font-medium text-base text-gray-900 dark:text-gray-100">Package Contributors</h3>
-            <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">Number of contributors per package</p>
+            <h3 class="font-medium text-base text-gray-900 dark:text-neutral-100">Package Contributors</h3>
+            <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">Number of contributors per package</p>
           </div>
           <div class="h-[400px]">
-            <Bar :data="contributorsData" :options="contributorsOptions" />
+            <canvas id="chart_1"></canvas>
           </div>
         </div>
       </div>
 
       <!-- Issues Chart -->
-      <div class="bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+      <div class="bg-white dark:bg-neutral-700 rounded-lg shadow">
         <div class="p-6">
           <div class="mb-6">
-            <h3 class="font-medium text-base text-gray-900 dark:text-gray-100">Open Issues</h3>
-            <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">Number of open issues per package</p>
+            <h3 class="font-medium text-base text-gray-900 dark:text-neutral-100">Open Issues</h3>
+            <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">Number of open issues per package</p>
           </div>
           <div class="h-[400px]">
-            <Bar :data="issuesData" :options="issuesOptions" />
+            <canvas id="chart_2"></canvas>
           </div>
         </div>
       </div>
@@ -787,7 +762,7 @@ function starsData() { return ({
         <div class="inline-block py-2 sm:px-6 lg:px-8 min-w-full align-middle">
           <div class="overflow-hidden ring-1 ring-black ring-opacity-5 sm:rounded-lg shadow">
             <table class="min-w-full divide-gray-300 divide-y">
-              <thead class="bg-gray-50 dark:bg-gray-700/50">
+              <thead class="bg-gray-50 dark:bg-neutral-700/50">
                 <tr>
                   <th scope="col" class="pl-4 pr-3 py-3.5 sm:pl-6 font-semibold text-gray-900 text-left text-sm">
                     Package
@@ -813,7 +788,7 @@ function starsData() { return ({
                 </tr>
               </thead>
 
-              <tbody class="bg-white dark:bg-gray-800 divide-gray-200 divide-y">
+              <tbody class="bg-white dark:bg-neutral-800 divide-gray-200 divide-y">
                 @foreach(packages as pkg)
                   <tr>
                     <td class="pl-4 pr-3 py-4 sm:pl-6 text-sm whitespace-nowrap">
@@ -840,7 +815,7 @@ function starsData() { return ({
                       {{ pkg.createdAt }}
                     </td>
                     <td class="relative pl-3 pr-4 py-4 sm:pr-6 font-medium text-right text-sm whitespace-nowrap">
-                      <a :href="getPackageUrl(pkg.name)" class="text-blue-600 hover:text-blue-900">
+                      <a href="{{ getPackageUrl(pkg.name) }}" class="text-blue-600 hover:text-blue-900">
                         View<span class="sr-only">, {{ pkg.name }} package</span>
                       </a>
                     </td>
@@ -854,3 +829,29 @@ function starsData() { return ({
     </div>
   </div>
 </div>
+
+<script client>
+const { Chart, registerables } = await import('chart.js/auto')
+Chart.register(...registerables)
+
+const chart_1_ctx = document.getElementById('chart_1')
+if (chart_1_ctx) {
+  new Chart(chart_1_ctx, {
+    type: 'bar',
+    data: contributorsData,
+    options: contributorsOptions,
+  })
+}
+
+const chart_2_ctx = document.getElementById('chart_2')
+if (chart_2_ctx) {
+  new Chart(chart_2_ctx, {
+    type: 'bar',
+    data: issuesData,
+    options: issuesOptions,
+  })
+}
+
+</script>
+
+@endsection

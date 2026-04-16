@@ -1,135 +1,116 @@
-<script server>
-const API_URL = 'http://localhost:' + (process.env.PORT_API || '3008')
+@extends('layouts/default')
 
+@section('content')
+<script server>
+// Data available when full dev server runs (buddy dev)
 let stats = []
 let campaigns = []
 let channels = []
 let attribution = []
-
-try {
-  const res = await fetch(API_URL + '/analytics/marketing')
-  if (res.ok) {
-    const json = await res.json()
-    stats = json.stats || []
-    campaigns = json.campaigns || []
-    channels = json.channels || []
-    attribution = json.attribution || []
-  }
-} catch (e) {
-  // API not available
-}
 </script>
-<div class="p-6 min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="flex items-start justify-between mb-8">
-      <div>
-        <h1 class="font-bold text-3xl text-gray-900 dark:text-white">Marketing Analytics</h1>
-        <p class="mt-1 text-gray-500 dark:text-gray-400">Campaign performance and ROI</p>
-      </div>
-      <div class="flex gap-3 items-center">
-        <select class="px-3 py-2 w-40 text-gray-900 text-sm dark:text-white bg-white dark:bg-gray-800 border border-gray-300 rounded-lg dark:border-gray-600 focus:ring-2 focus:ring-blue-500">
-          <option>Last 30 days</option>
-          <option>Last 90 days</option>
-          <option>This year</option>
-        </select>
-        <button class="px-4 py-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg">Export</button>
-      </div>
+<div class="p-6 space-y-6">
+
+  <PageHeader title="Marketing Analytics" description="Campaign performance and ROI">
+    <template #actions>
+      <Select :options="{{ JSON.stringify([
+        { value: '30d', label: 'Last 30 days' },
+        { value: '90d', label: 'Last 90 days' },
+        { value: '1y', label: 'This year' },
+      ]) }}" size="sm" />
+      <Button variant="primary">Export</Button>
+    </template>
+  </PageHeader>
+
+  <!-- Stats -->
+  <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+    @foreach (stats as stat)
+      <StatsCard :title="stat.label" value="{{ stat.value }}" trend="{{ stat.change }}" />
+    @endforeach
+  </div>
+
+  @if (campaigns.length > 0 || channels.length > 0 || attribution.length > 0)
+  <!-- Campaign Performance -->
+  <div class="bg-white dark:bg-neutral-800/90 border border-black/5 rounded-xl dark:border-white/5">
+    <DataTable
+      :columns="{{ JSON.stringify([
+        { key: 'name', label: 'Campaign' },
+        { key: 'spend', label: 'Spend' },
+        { key: 'leads', label: 'Leads' },
+        { key: 'cpl', label: 'CPL' },
+        { key: 'revenue', label: 'Revenue' },
+        { key: 'roi', label: 'ROI' },
+      ]) }}"
+      :data="campaigns"
+      emptyTitle="No campaign data"
+      emptyDescription="Campaign data will appear once campaigns are running"
+      emptyIcon="i-hugeicons-megaphone-01"
+    >
+      @foreach (campaigns as campaign)
+        <tr class="hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors">
+          <td class="px-4 py-3 font-medium text-[13px] text-neutral-900 dark:text-white">{{ campaign.name }}</td>
+          <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ campaign.spend }}</td>
+          <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ campaign.leads }}</td>
+          <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ campaign.cpl }}</td>
+          <td class="px-4 py-3 font-semibold text-[13px] text-neutral-900 dark:text-white">{{ campaign.revenue }}</td>
+          <td class="px-4 py-3 font-semibold text-[13px] text-green-600 dark:text-green-400">{{ campaign.roi }}</td>
+        </tr>
+      @endforeach
+    </DataTable>
+  </div>
+
+  <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
+    <!-- Channel Performance -->
+    <div class="bg-white dark:bg-neutral-800/90 border border-black/5 rounded-xl dark:border-white/5">
+      <DataTable
+        :columns="{{ JSON.stringify([
+          { key: 'channel', label: 'Channel' },
+          { key: 'spend', label: 'Spend' },
+          { key: 'leads', label: 'Leads' },
+          { key: 'conversion', label: 'Conv Rate' },
+        ]) }}"
+        :data="channels"
+        emptyTitle="No channel data"
+        emptyDescription="Channel performance will appear here"
+        emptyIcon="i-hugeicons-chart-line-data-01"
+      >
+        @foreach (channels as ch)
+          <tr class="hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors">
+            <td class="px-4 py-3 font-medium text-[13px] text-neutral-900 dark:text-white">{{ ch.channel }}</td>
+            <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ ch.spend }}</td>
+            <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ ch.leads }}</td>
+            <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ ch.conversion }}</td>
+          </tr>
+        @endforeach
+      </DataTable>
     </div>
 
-    <div class="flex flex-col gap-6">
-      <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-        @foreach (stats as stat)
-          <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700">
-            <div class="font-bold text-2xl text-gray-900 dark:text-white">{{ stat.value }}</div>
-            <div class="mt-1 text-gray-500 text-sm dark:text-gray-400">{{ stat.label }}</div>
-            <div class="font-medium text-sm dark:text-gray-400' dark:text-green-400' dark:text-red-400' : : ? ? 'text-gray-500 'text-green-600 'text-red-600 {{ }} stat.change.startsWith('-') stat.change.startsWith('+')">
-              {{ stat.change }}
+    <!-- Attribution Model -->
+    <Card title="Attribution Model">
+      <div class="divide-neutral-100 divide-y dark:divide-neutral-700/50">
+        @foreach (attribution as attr)
+          <div class="flex gap-3 items-center p-4 hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors">
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-[13px] text-neutral-900 dark:text-white">{{ attr.source }}</div>
+              <div class="overflow-hidden mt-2 h-1.5 w-full bg-neutral-200 dark:bg-neutral-700 rounded-full">
+                <div class="h-full bg-blue-500 rounded-full" style="width: {{ attr.percentage }}%;"></div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="font-semibold text-[13px] text-neutral-900 dark:text-white">{{ attr.leads }}</div>
+              <div class="text-[12px] text-neutral-500 dark:text-neutral-400">{{ attr.percentage }}%</div>
             </div>
           </div>
         @endforeach
       </div>
-
-      <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
-        <div class="flex items-center justify-between mb-4">
-          <span class="font-semibold text-gray-900 dark:text-white">Campaign Performance</span>
-        </div>
-        <div class="overflow-x-auto border border-gray-200 rounded-xl dark:border-gray-700">
-          <table class="w-full text-sm">
-            <thead class="bg-gray-50 dark:bg-gray-700/50">
-              <tr>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Campaign</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Spend</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Leads</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">CPL</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Revenue</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">ROI</th>
-              </tr>
-            </thead>
-            <tbody>
-              @foreach (campaigns as campaign)
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                  <td class="px-4 py-3 font-medium text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ campaign.name }}</td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ campaign.spend }}</td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ campaign.leads }}</td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ campaign.cpl }}</td>
-                  <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ campaign.revenue }}</td>
-                  <td class="px-4 py-3 font-semibold text-green-600 dark:text-green-400 border-gray-100 border-t dark:border-gray-700">{{ campaign.roi }}</td>
-                </tr>
-              @endforeach
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
-          <div class="flex items-center justify-between mb-4">
-            <span class="font-semibold text-gray-900 dark:text-white">Channel Performance</span>
-          </div>
-          <div class="overflow-x-auto border border-gray-200 rounded-xl dark:border-gray-700">
-            <table class="w-full text-sm">
-              <thead class="bg-gray-50 dark:bg-gray-700/50">
-                <tr>
-                  <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Channel</th>
-                  <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Spend</th>
-                  <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Leads</th>
-                  <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Conv Rate</th>
-                </tr>
-              </thead>
-              <tbody>
-                @foreach (channels as ch)
-                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                    <td class="px-4 py-3 font-medium text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ ch.channel }}</td>
-                    <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ ch.spend }}</td>
-                    <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ ch.leads }}</td>
-                    <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ ch.conversion }}</td>
-                  </tr>
-                @endforeach
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
-          <div class="flex items-center justify-between mb-4">
-            <span class="font-semibold text-gray-900 dark:text-white">Attribution Model</span>
-          </div>
-          <div class="divide-gray-100 divide-y dark:divide-gray-700">
-            @foreach (attribution as attr)
-              <div class="flex gap-3 items-center p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                <div class="flex-1 min-w-0">
-                  <div class="font-medium text-gray-900 dark:text-white">{{ attr.source }}</div>
-                  <div class="overflow-hidden mt-2 h-2 w-full bg-gray-200 rounded-full">
-                    <div class="h-full bg-blue-500 rounded-full" style="width: {{ attr.percentage }}%;"></div>
-                  </div>
-                </div>
-                <div class="text-right">
-                  <div class="font-semibold">{{ attr.leads }}</div>
-                  <div class="text-gray-500 text-sm dark:text-gray-400">{{ attr.percentage }}%</div>
-                </div>
-              </div>
-            @endforeach
-          </div>
-        </div>
-      </div>
-    </div>
+    </Card>
   </div>
+  @else
+  <EmptyState
+    icon="i-hugeicons-megaphone-01"
+    title="No marketing analytics yet"
+    description="Campaign performance data will appear here."
+  />
+  @endif
+
+</div>
+@endsection

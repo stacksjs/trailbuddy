@@ -1,79 +1,74 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
-const API_URL = 'http://localhost:' + (process.env.PORT_API || '3008')
-
+// Data available when full dev server runs (buddy dev)
 let activities = []
-let filters = ['All', 'Creates', 'Updates', 'Deletes', 'Schema', 'Exports']
+const filterOptions = [
+  { value: 'All', label: 'All' },
+  { value: 'Creates', label: 'Creates' },
+  { value: 'Updates', label: 'Updates' },
+  { value: 'Deletes', label: 'Deletes' },
+  { value: 'Schema', label: 'Schema' },
+  { value: 'Exports', label: 'Exports' },
+]
 
-try {
-  const res = await fetch(API_URL + '/data/activity')
-  if (res.ok) {
-    const json = await res.json()
-    activities = json.activities || []
-    filters = json.filters || filters
-  }
-} catch (e) {
-  // API not available
-}
-
-function statusClass(s) {
-  if (!s) return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-  s = String(s).toLowerCase()
-  if (['active','success','healthy','connected','running','published','approved','valid','up-to-date'].indexOf(s) >= 0)
-    return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-  if (['pending','scheduled','warning','low-stock','draft','update-available'].indexOf(s) >= 0)
-    return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-  if (['failed','error','inactive','cancelled','spam','rejected','out-of-stock'].indexOf(s) >= 0)
-    return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-  if (['info','completed','processing'].indexOf(s) >= 0)
-    return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-  return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+function typeVariant(s) {
+  s = String(s || '').toLowerCase()
+  if (['success', 'create', 'created'].includes(s)) return 'success'
+  if (['warning', 'update', 'updated'].includes(s)) return 'warning'
+  if (['error', 'delete', 'deleted'].includes(s)) return 'danger'
+  if (['info', 'schema', 'export'].includes(s)) return 'info'
+  return 'default'
 }
 </script>
-<div class="p-6 min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="flex items-start justify-between mb-8">
-      <div>
-        <h1 class="font-bold text-3xl text-gray-900 dark:text-white">Activity Log</h1>
-        <p class="mt-1 text-gray-500 dark:text-gray-400">Track all database changes</p>
-      </div>
-      <div class="flex gap-3 items-center">
-        <button class="px-4 py-2 font-medium text-gray-700 text-sm dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 rounded-lg dark:border-gray-600">Export Log</button>
-      </div>
+<div class="p-6 space-y-6">
+
+  <PageHeader title="Activity Log" description="Track all database changes">
+    <template #actions>
+      <Button variant="secondary">Export Log</Button>
+    </template>
+  </PageHeader>
+
+  <!-- Activity Table -->
+  <div class="bg-white dark:bg-neutral-800/90 border border-black/5 rounded-xl dark:border-white/5">
+    <div class="p-4 border-b border-neutral-200/60 dark:border-white/5">
+      <FilterBar searchPlaceholder="Search activity...">
+        <Select
+          placeholder="All Types"
+          :options="{{ JSON.stringify(filterOptions) }}"
+          size="sm"
+        />
+      </FilterBar>
     </div>
 
-    <div class="flex flex-col gap-6">
-      <div class="flex gap-2 mb-4">
-        @foreach (filters as filter)
-          <button class="px-3 py-1.5 font-medium text-xs dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 bg-blue-600 hover:bg-blue-700' hover:bg-gray-100 dark:hover:bg-gray-700' rounded-lg : ? 'All' 'text-gray-500 'text-white {{ }} === filter">{{ filter }}</button>
-        @endforeach
-      </div>
-
-      <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
-        <div class="overflow-x-auto border border-gray-200 rounded-xl dark:border-gray-700">
-          <table class="w-full text-sm">
-            <thead class="bg-gray-50 dark:bg-gray-700/50">
-              <tr>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Action</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Table</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">User</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Time</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Type</th>
-              </tr>
-            </thead>
-            <tbody>
-              @foreach (activities as activity)
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                  <td class="px-4 py-3 font-medium text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ activity.action }}</td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700"><code class="px-1.5 py-0.5 font-mono text-xs bg-gray-100 dark:bg-gray-700 rounded">{{ activity.table }}</code></td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ activity.user }}</td>
-                  <td class="px-4 py-3 text-gray-500 dark:text-gray-400 border-gray-100 border-t dark:border-gray-700">{{ activity.time }}</td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">
-                    <span class="px-2.5 py-1 font-semibold text-xs rounded-full {{ }} statusClass(activity.type)">{{ activity.type }}</span>
-                  </td>
-                </tr>
-              @endforeach
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    <DataTable
+      :columns="{{ JSON.stringify([
+        { key: 'action', label: 'Action' },
+        { key: 'table', label: 'Table' },
+        { key: 'user', label: 'User' },
+        { key: 'time', label: 'Time' },
+        { key: 'type', label: 'Type' }
+      ]) }}"
+      :data="activities"
+      emptyTitle="No activity recorded"
+      emptyDescription="Database changes will appear here once activity is tracked"
+      emptyIcon="i-hugeicons-clock-02"
+    >
+      @foreach(activities as activity)
+        <tr class="hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors">
+          <td class="px-4 py-3 font-medium text-[13px] text-neutral-900 dark:text-white">{{ activity.action }}</td>
+          <td class="px-4 py-3">
+            <code class="px-1.5 py-0.5 font-mono text-xs bg-neutral-100 dark:bg-neutral-700 rounded">{{ activity.table }}</code>
+          </td>
+          <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ activity.user }}</td>
+          <td class="px-4 py-3 text-[12px] text-neutral-500 dark:text-neutral-400">{{ activity.time }}</td>
+          <td class="px-4 py-3">
+            <Badge variant="{{ typeVariant(activity.type) }}" size="xs" dot>{{ activity.type }}</Badge>
+          </td>
+        </tr>
+      @endforeach
+    </DataTable>
   </div>
+</div>
+@endsection

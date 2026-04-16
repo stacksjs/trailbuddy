@@ -1,3 +1,6 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 definePageMeta({
   middleware: ['auth'],
@@ -99,7 +102,7 @@ let healthMetrics = [
       { label: 'URLs Crawled', value: '20' },
     ],
   },
-])
+]
 
 const getStatusVariant = (status) => {
   const map = {
@@ -192,7 +195,7 @@ const getStatusIconBg = (status) => {
           <div class="mt-4">
             <dl
               class="grid gap-3"
-              :class="'grid-cols-1': 'grid-cols-2': 'grid-cols-3': { } === === === 1 2, 3, metric.metrics.length metric.metrics.length metric.metrics.length"
+              class="'grid-cols-1': 'grid-cols-2': 'grid-cols-3': { {{ } }} === === === 1 2, 3, metric.metrics.length metric.metrics.length metric.metrics.length"
             >
               @foreach(m in metric.metrics)
                 <div
@@ -213,3 +216,5 @@ const getStatusIconBg = (status) => {
     @endforeach
   </div>
 </div>
+
+@endsection

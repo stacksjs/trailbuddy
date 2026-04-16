@@ -1,3 +1,6 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 definePageMeta({
   middleware: ['auth']
@@ -405,7 +408,7 @@ function selectTable(table: number): void {
 }
 
 // Get allergy tag class
-function getAllergyClass(allergy: string): string {
+const getAllergyClass = (allergy: string): string => {
   switch (allergy) {
     case 'dairy':
       return 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20 dark:bg-blue-900/30 dark:text-blue-400'
@@ -418,7 +421,7 @@ function getAllergyClass(allergy: string): string {
     case 'nuts':
       return 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20 dark:bg-red-900/30 dark:text-red-400'
     default:
-      return 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20 dark:bg-gray-900/30 dark:text-gray-400'
+      return 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20 dark:bg-neutral-900/30 dark:text-neutral-400'
   }
 }
 
@@ -439,7 +442,7 @@ function scrollToOrder(): void {
       <div class="sm:flex sm:items-center sm:justify-between">
         <div>
           <h1 class="font-semibold text-2xl text-gray-900 dark:text-white">Self-Service Menu</h1>
-          <p class="mt-2 text-gray-700 text-sm dark:text-gray-300">
+          <p class="mt-2 text-gray-700 text-sm dark:text-neutral-300">
             Device {{ tableNumber }} - Browse and order directly from your device
           </p>
         </div>
@@ -449,12 +452,12 @@ function scrollToOrder(): void {
             <label for="table-select" class="sr-only">Select Device</label>
             <select
               id="table-select"
-              v-model="tableNumber"
-              @change="selectTable(tableNumber)"
-              class="block pl-3 pr-10 py-1.5 text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              value="{{ tableNumber }}"
+              onchange="selectTable(tableNumber)"
+              class="block pl-3 pr-10 py-1.5 text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             >
               @foreach(availableTables as table)
-                <option :value="table">
+                <option value="{{ table }}">
                   Device {{ table }}
                 </option>
               @endforeach
@@ -464,7 +467,7 @@ function scrollToOrder(): void {
           <!-- View cart button -->
           <button
             type="button"
-            @click="scrollToOrder"
+            onclick="scrollToOrder"
             class="inline-flex relative items-center px-3 py-2 font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
           >
             <div class="mr-1 h-5 w-5 i-hugeicons-shopping-cart-02"></div>
@@ -483,7 +486,7 @@ function scrollToOrder(): void {
       <!-- Summary cards -->
       <div class="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mt-6">
         <!-- Total products card -->
-        <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+        <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
           <div class="p-5">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -493,7 +496,7 @@ function scrollToOrder(): void {
               </div>
               <div class="flex-1 ml-5 w-0">
                 <dl>
-                  <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">Total Items</dt>
+                  <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">Total Items</dt>
                   <dd>
                     <div class="font-medium text-gray-900 text-lg dark:text-white">{{ menuItems.length }}</div>
                   </dd>
@@ -504,7 +507,7 @@ function scrollToOrder(): void {
         </div>
 
         <!-- Device selection card -->
-        <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+        <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
           <div class="p-5">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -514,7 +517,7 @@ function scrollToOrder(): void {
               </div>
               <div class="flex-1 ml-5 w-0">
                 <dl>
-                  <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">Device</dt>
+                  <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">Device</dt>
                   <dd>
                     <div class="font-medium text-gray-900 text-lg dark:text-white">{{ tableNumber }}</div>
                   </dd>
@@ -529,17 +532,17 @@ function scrollToOrder(): void {
       <div class="overflow-x-auto mt-6 pb-2">
         <div class="inline-flex space-x-2">
           <button
-            @click="categoryFilter = 'all'"
+            onclick="categoryFilter = 'all'"
             class="px-4 py-2 font-medium text-sm rounded-full transition"
-            :class="text-gray-800 text-white' dark:text-white dark:bg-blue-gray-700 hover:bg-gray-200 dark:hover:bg-blue-gray-600' : ? 'all' 'bg-blue-600 'bg-gray-100 === categoryFilter"
+            class="text-gray-800 text-white' dark:text-white dark:bg-neutral-700 hover:bg-gray-200 dark:hover:bg-neutral-600' : ? 'all' 'bg-blue-600 'bg-gray-100 {{ }} === categoryFilter"
           >
             All
           </button>
           @foreach(categories as category)
             <button
-              @click="categoryFilter = category.name"
+              onclick="categoryFilter = category.name"
               class="px-4 py-2 font-medium text-sm rounded-full transition"
-              :class="text-gray-800 text-white' dark:text-white dark:bg-blue-gray-700 hover:bg-gray-200 dark:hover:bg-blue-gray-600' : ? 'bg-blue-600 'bg-gray-100 === category.name categoryFilter"
+              class="text-gray-800 text-white' dark:text-white dark:bg-neutral-700 hover:bg-gray-200 dark:hover:bg-neutral-600' : ? 'bg-blue-600 'bg-gray-100 {{ }} === category.name categoryFilter"
             >
               {{ category.name }}
             </button>
@@ -554,9 +557,9 @@ function scrollToOrder(): void {
             <div class="h-5 w-5 text-gray-400 i-hugeicons-search-01"></div>
           </div>
           <input
-            v-model="searchQuery"
+            value="{{ searchQuery }}"
             type="text"
-            class="block pl-10 pr-3 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+            class="block pl-10 pr-3 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             placeholder="Search menu..."
           />
         </div>
@@ -565,25 +568,25 @@ function scrollToOrder(): void {
         <div class="flex rounded-md shadow-sm">
           <button
             type="button"
-            @click="viewMode = 'grid'"
-            :class="[
+            onclick="viewMode = 'grid'"
+            class="[
               'relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold ring-1 ring-inset focus:z-10',
               viewMode === 'grid'
                 ? 'bg-blue-600 text-white ring-blue-600'
-                : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50 dark:bg-blue-gray-800 dark:text-white dark:ring-gray-700 dark:hover:bg-blue-gray-700'
-            ]"
+                : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50 dark:bg-neutral-800 dark:text-white dark:ring-neutral-700 dark:hover:bg-neutral-700'
+            ] {{ }}"
           >
             <div class="h-5 w-5 i-hugeicons-grid"></div>
           </button>
           <button
             type="button"
-            @click="viewMode = 'list'"
-            :class="[
+            onclick="viewMode = 'list'"
+            class="[
               'relative -ml-px inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold ring-1 ring-inset focus:z-10',
               viewMode === 'list'
                 ? 'bg-blue-600 text-white ring-blue-600'
-                : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50 dark:bg-blue-gray-800 dark:text-white dark:ring-gray-700 dark:hover:bg-blue-gray-700'
-            ]"
+                : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50 dark:bg-neutral-800 dark:text-white dark:ring-neutral-700 dark:hover:bg-neutral-700'
+            ] {{ }}"
           >
             <div class="h-5 w-5 i-hugeicons-right-to-left-list-number"></div>
           </button>
@@ -597,18 +600,18 @@ function scrollToOrder(): void {
             <div class="py-12 text-center">
               <div class="mx-auto h-12 w-12 text-gray-400 i-hugeicons-box-01"></div>
               <h3 class="mt-2 font-semibold text-gray-900 text-sm dark:text-white">No menu items found</h3>
-              <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">Try adjusting your search or category filter.</p>
+              <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">Try adjusting your search or category filter.</p>
             </div>
           @else
             <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <!-- Menu item card -->
               @foreach(filteredMenuItems as item)
                 <div
-                  class="overflow-hidden relative bg-white dark:bg-blue-gray-800 border border-gray-200 rounded-lg dark:border-gray-700 shadow-sm hover:shadow-md transition group"
-                  :class="!item.available 'opacity-70': { }"
+                  class="overflow-hidden relative bg-white dark:bg-neutral-800 border border-gray-200 rounded-lg dark:border-neutral-700 shadow-sm hover:shadow-md transition group"
+                  class="!item.available 'opacity-70': { {{ } }}"
                 >
                   <!-- Item image with badges -->
-                  <div class="aspect-square overflow-hidden relative bg-gray-200 dark:bg-gray-700">
+                  <div class="aspect-square overflow-hidden relative bg-gray-200 dark:bg-neutral-700">
                     <img
                       :src="item.imageUrl"
                       :alt="item.name"
@@ -636,11 +639,11 @@ function scrollToOrder(): void {
                       <h3 class="font-medium text-gray-900 text-sm dark:text-white">{{ item.name }}</h3>
                       <div class="flex items-center">
                         <div class="h-4 w-4 text-yellow-400 i-hugeicons-star"></div>
-                        <span class="ml-1 text-gray-600 text-sm dark:text-gray-400">{{ item.rating }}</span>
+                        <span class="ml-1 text-gray-600 text-sm dark:text-neutral-400">{{ item.rating }}</span>
                       </div>
                     </div>
 
-                    <p class="mt-1 line-clamp-2 text-gray-500 text-sm dark:text-gray-400">{{ item.description }}</p>
+                    <p class="mt-1 line-clamp-2 text-gray-500 text-sm dark:text-neutral-400">{{ item.description }}</p>
 
                     <div class="flex flex-wrap gap-1 mt-2">
                       @foreach(item.allergies as allergy)
@@ -659,19 +662,19 @@ function scrollToOrder(): void {
                           <span class="font-medium text-gray-900 text-sm dark:text-white">${{ item.salePrice.toFixed(2) }}</span>
                         @endif
                         <span
-                          :class="[item.salePrice !== null ? 'line-through ml-2 text-sm text-gray-500 dark:text-gray-400' : 'text-sm font-medium text-gray-900 dark:text-white']"
+                          :class="[item.salePrice !== null ? 'line-through ml-2 text-sm text-gray-500 dark:text-neutral-400' : 'text-sm font-medium text-gray-900 dark:text-white']"
                         >
                           ${{ item.price.toFixed(2) }}
                         </span>
                       </div>
-                      <span class="text-gray-500 text-xs dark:text-gray-400">
+                      <span class="text-gray-500 text-xs dark:text-neutral-400">
                         {{ item.preparationTime }}
                       </span>
                     </div>
 
                     <button
-                      @click="addToOrder(item)"
-                      :disabled="!item.available"
+                      onclick="addToOrder(item)"
+                      disabled="{{ !item.available }}"
                       class="mt-3 px-3 py-2 w-full font-semibold text-center text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Add to Order
@@ -687,8 +690,8 @@ function scrollToOrder(): void {
       <!-- Menu items list view -->
       @if(viewMode === 'list')
         <div class="overflow-hidden mt-6 ring-1 ring-black ring-opacity-5 sm:rounded-lg shadow">
-          <table class="min-w-full divide-gray-300 divide-y dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-blue-gray-700">
+          <table class="min-w-full divide-gray-300 divide-y dark:divide-neutral-700">
+            <thead class="bg-gray-50 dark:bg-neutral-700">
               <tr>
                 <th scope="col" class="pl-4 pr-3 py-3.5 sm:pl-6 font-semibold text-gray-900 text-left text-sm dark:text-white">Item</th>
                 <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-white">Category</th>
@@ -699,16 +702,16 @@ function scrollToOrder(): void {
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white dark:bg-blue-gray-800 divide-gray-200 divide-y dark:divide-gray-700">
+            <tbody class="bg-white dark:bg-neutral-800 divide-gray-200 divide-y dark:divide-neutral-700">
               @if(filteredMenuItems.length === 0)
                 <tr>
-                  <td colspan="5" class="py-4 text-center text-gray-500 text-sm dark:text-gray-400">
+                  <td colspan="5" class="py-4 text-center text-gray-500 text-sm dark:text-neutral-400">
                     No menu items found. Try adjusting your search or category filter.
                   </td>
                 </tr>
               @endif
               @foreach(filteredMenuItems as item)
-                <tr class="hover:bg-gray-50 dark:hover:bg-blue-gray-700" :class="!item.available 'opacity-70': { }">
+                <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700" class="!item.available 'opacity-70': { {{ } }}">
                   <td class="pl-4 pr-3 py-4 sm:pl-6 text-sm whitespace-nowrap">
                     <div class="flex items-center">
                       <div class="flex-shrink-0 h-10 w-10">
@@ -716,24 +719,24 @@ function scrollToOrder(): void {
                       </div>
                       <div class="ml-4">
                         <div class="font-medium text-gray-900 dark:text-white">{{ item.name }}</div>
-                        <div class="mt-1 max-w-xs line-clamp-1 text-gray-500 text-xs dark:text-gray-400">{{ item.description }}</div>
+                        <div class="mt-1 max-w-xs line-clamp-1 text-gray-500 text-xs dark:text-neutral-400">{{ item.description }}</div>
                       </div>
                     </div>
                   </td>
-                  <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-400">{{ item.category }}</td>
+                  <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-400">{{ item.category }}</td>
                   <td class="px-3 py-4 text-sm whitespace-nowrap">
                     @if(item.salePrice !== null)
                       <div class="font-medium text-gray-900 dark:text-white">${{ item.salePrice.toFixed(2) }}</div>
-                      <div class="line-through text-gray-500 text-xs dark:text-gray-400">${{ item.price.toFixed(2) }}</div>
+                      <div class="line-through text-gray-500 text-xs dark:text-neutral-400">${{ item.price.toFixed(2) }}</div>
                     @else
                       <div class="font-medium text-gray-900 dark:text-white">${{ item.price.toFixed(2) }}</div>
                     @endif
                   </td>
-                  <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-400">{{ item.preparationTime }}</td>
+                  <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-400">{{ item.preparationTime }}</td>
                   <td class="relative pl-3 pr-4 py-4 sm:pr-6 font-medium text-right text-sm whitespace-nowrap">
                     <button
-                      @click="addToOrder(item)"
-                      :disabled="!item.available"
+                      onclick="addToOrder(item)"
+                      disabled="{{ !item.available }}"
                       class="px-2.5 py-1.5 font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Add
@@ -747,23 +750,23 @@ function scrollToOrder(): void {
       @endif
 
       <!-- Current Order section (cart) -->
-      <div id="order-section" class="overflow-hidden mt-8 bg-white dark:bg-blue-gray-800 rounded-lg shadow-sm">
+      <div id="order-section" class="overflow-hidden mt-8 bg-white dark:bg-neutral-800 rounded-lg shadow-sm">
         <div class="p-4 receipt-container">
-          <div class="mx-auto p-4 max-w-sm bg-white dark:bg-blue-gray-800 shadow-md receipt">
+          <div class="mx-auto p-4 max-w-sm bg-white dark:bg-neutral-800 shadow-md receipt">
             <!-- Receipt header -->
             <h1 class="mb-3 font-bold text-center text-xl dark:text-white logo">Self-Service Menu</h1>
-            <div class="mb-2 font-mono text-center text-sm dark:text-gray-300 address">
+            <div class="mb-2 font-mono text-center text-sm dark:text-neutral-300 address">
               Device #{{ tableNumber }} - Local Location
             </div>
-            <div class="flex justify-between mb-2 font-mono text-xs dark:text-gray-400 transactionDetails">
+            <div class="flex justify-between mb-2 font-mono text-xs dark:text-neutral-400 transactionDetails">
               <div class="detail">REG#01</div>
               <div class="detail">TRN#{{ currentOrder.id }}</div>
               <div class="detail">DEV#{{ tableNumber }}</div>
             </div>
-            <div class="mb-2 font-mono text-center text-xs dark:text-gray-400 transactionDetails">
+            <div class="mb-2 font-mono text-center text-xs dark:text-neutral-400 transactionDetails">
               {{ new Date().toLocaleDateString() }} {{ new Date().toLocaleTimeString() }}
             </div>
-            <div class="my-2 break font-mono text-center text-xs dark:text-gray-400">
+            <div class="my-2 break font-mono text-center text-xs dark:text-neutral-400">
               *************************************
             </div>
 
@@ -771,12 +774,12 @@ function scrollToOrder(): void {
               <div class="p-6 text-center">
                 <div class="mx-auto h-12 w-12 text-gray-400 i-hugeicons-receipt"></div>
                 <h3 class="mt-2 font-semibold text-gray-900 text-sm dark:text-white">Your receipt is empty</h3>
-                <p class="mt-1 font-mono text-gray-500 text-sm dark:text-gray-400">Add items from the menu to get started.</p>
+                <p class="mt-1 font-mono text-gray-500 text-sm dark:text-neutral-400">Add items from the menu to get started.</p>
               </div>
             @else
               <!-- Receipt items -->
               @foreach(currentOrder.items as item, index)
-                <div class="flex justify-between my-1 font-mono text-xs dark:text-gray-300 transactionDetails">
+                <div class="flex justify-between my-1 font-mono text-xs dark:text-neutral-300 transactionDetails">
                   <div class="detail">{{ item.quantity }}</div>
                   <div class="flex-grow mx-2 detail">{{ item.name }}</div>
                   <div class="detail">${{ (item.price * item.quantity).toFixed(2) }}</div>
@@ -786,45 +789,45 @@ function scrollToOrder(): void {
               @foreach(currentOrder.items as item, index)
                 <div class="mb-2 mt-0">
                   @if(item.specialInstructions)
-                    <p class="pl-5 font-mono text-gray-500 text-xs dark:text-gray-400">
+                    <p class="pl-5 font-mono text-gray-500 text-xs dark:text-neutral-400">
                       {{ item.specialInstructions }}
                     </p>
                   @endif
                 </div>
               @endforeach
 
-              <div class="mb-2 mt-2 pt-2 border-dashed border-gray-200 border-t dark:border-gray-700 item-actions">
+              <div class="mb-2 mt-2 pt-2 border-dashed border-gray-200 border-t dark:border-neutral-700 item-actions">
                 <div class="flex items-center justify-between mb-1">
-                  <span class="font-mono text-gray-700 text-xs dark:text-gray-300">Edit Items:</span>
+                  <span class="font-mono text-gray-700 text-xs dark:text-neutral-300">Edit Items:</span>
                 </div>
                 @foreach(currentOrder.items as item, index)
-                  <div class="flex items-center justify-between mb-1 px-1 py-1 text-xs bg-gray-50 dark:bg-blue-gray-700 rounded">
+                  <div class="flex items-center justify-between mb-1 px-1 py-1 text-xs bg-gray-50 dark:bg-neutral-700 rounded">
                     <div class="flex items-center">
                       <span class="font-mono">{{ item.name }}</span>
                     </div>
                     <div class="flex items-center">
                       <button
-                        @click="updateItemQuantity(index, item.quantity - 1)"
-                        class="p-1 text-gray-400 dark:text-gray-500 focus:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 rounded-full focus:outline-none"
+                        onclick="updateItemQuantity(index, item.quantity - 1)"
+                        class="p-1 text-gray-400 dark:text-neutral-500 focus:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 rounded-full focus:outline-none"
                       >
                         <div class="h-4 w-4 i-hugeicons-minus"></div>
                       </button>
-                      <span class="mx-1 font-mono text-gray-700 dark:text-gray-300">{{ item.quantity }}</span>
+                      <span class="mx-1 font-mono text-gray-700 dark:text-neutral-300">{{ item.quantity }}</span>
                       <button
-                        @click="updateItemQuantity(index, item.quantity + 1)"
-                        class="p-1 text-gray-400 dark:text-gray-500 focus:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 rounded-full focus:outline-none"
+                        onclick="updateItemQuantity(index, item.quantity + 1)"
+                        class="p-1 text-gray-400 dark:text-neutral-500 focus:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 rounded-full focus:outline-none"
                       >
                         <div class="h-4 w-4 i-hugeicons-plus-sign"></div>
                       </button>
                       <button
-                        @click="openSpecialInstructionsModal(index)"
-                        class="ml-1 p-1 text-gray-400 dark:text-gray-500 focus:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 rounded-full focus:outline-none"
+                        onclick="openSpecialInstructionsModal(index)"
+                        class="ml-1 p-1 text-gray-400 dark:text-neutral-500 focus:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 rounded-full focus:outline-none"
                       >
                         <div class="h-4 w-4 i-hugeicons-edit-01"></div>
                       </button>
                       <button
-                        @click="removeFromOrder(index)"
-                        class="ml-1 p-1 text-gray-400 dark:text-gray-500 focus:text-red-500 hover:text-red-500 dark:hover:text-red-400 rounded-full focus:outline-none"
+                        onclick="removeFromOrder(index)"
+                        class="ml-1 p-1 text-gray-400 dark:text-neutral-500 focus:text-red-500 hover:text-red-500 dark:hover:text-red-400 rounded-full focus:outline-none"
                       >
                         <div class="h-4 w-4 i-hugeicons-waste"></div>
                       </button>
@@ -834,40 +837,40 @@ function scrollToOrder(): void {
               </div>
 
               <!-- Receipt total -->
-              <div class="my-2 break font-mono text-center text-xs dark:text-gray-400">
+              <div class="my-2 break font-mono text-center text-xs dark:text-neutral-400">
                 *************************************
               </div>
 
-              <div class="flex justify-between my-1 font-mono text-xs dark:text-gray-300 paymentDetails">
+              <div class="flex justify-between my-1 font-mono text-xs dark:text-neutral-300 paymentDetails">
                 <div class="font-bold detail">SUBTOTAL</div>
                 <div class="font-bold detail">${{ currentOrder.totalAmount.toFixed(2) }}</div>
               </div>
-              <div class="flex justify-between my-1 font-mono text-xs dark:text-gray-300 paymentDetails">
+              <div class="flex justify-between my-1 font-mono text-xs dark:text-neutral-300 paymentDetails">
                 <div class="detail">TAX</div>
                 <div class="detail">${{ (currentOrder.totalAmount * 0.0825).toFixed(2) }}</div>
               </div>
-              <div class="flex justify-between my-1 pt-1 font-bold font-mono text-xs dark:text-gray-300 border-dashed border-gray-200 border-t dark:border-gray-700 paymentDetails">
+              <div class="flex justify-between my-1 pt-1 font-bold font-mono text-xs dark:text-neutral-300 border-dashed border-gray-200 border-t dark:border-neutral-700 paymentDetails">
                 <div class="detail">TOTAL</div>
                 <div class="detail">${{ (currentOrder.totalAmount * 1.0825).toFixed(2) }}</div>
               </div>
 
               <div class="my-4 text-center receiptBarcode">
-                <div class="font-mono text-3xl dark:text-gray-300 barcode">
+                <div class="font-mono text-3xl dark:text-neutral-300 barcode">
                   |||||||||||||||||||
                 </div>
-                <div class="font-mono text-xs dark:text-gray-400">
+                <div class="font-mono text-xs dark:text-neutral-400">
                   {{ Date.now().toString().substring(0, 12) }}
                 </div>
               </div>
 
-              <div class="mb-3 font-mono text-center text-xs dark:text-gray-400 returnPolicy">
+              <div class="mb-3 font-mono text-center text-xs dark:text-neutral-400 returnPolicy">
                 Thank you for your purchase!
               </div>
 
               <div class="mt-4">
                 <button
-                  @click="placeOrder"
-                  class="flex justify-center px-4 py-3 w-full font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 border border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 shadow-sm"
+                  onclick="placeOrder"
+                  class="flex justify-center px-4 py-3 w-full font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 border border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-neutral-800 shadow-sm"
                 >
                   Complete Purchase
                 </button>
@@ -883,14 +886,14 @@ function scrollToOrder(): void {
   @if(showSpecialInstructionsModal)
     <div class="fixed inset-0 overflow-y-auto z-10">
       <div class="flex items-end justify-center sm:items-center p-4 sm:p-0 min-h-full text-center">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 transition-opacity"></div>
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-neutral-900 dark:bg-opacity-75 transition-opacity"></div>
 
-        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-blue-gray-800 rounded-lg shadow-xl transition-all transform">
+        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-neutral-800 rounded-lg shadow-xl transition-all transform">
           <div class="absolute right-0 top-0 pr-4 pt-4">
             <button
               type="button"
-              @click="showSpecialInstructionsModal = false"
-              class="text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 bg-white dark:bg-blue-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              onclick="showSpecialInstructionsModal = false"
+              class="text-gray-400 dark:text-neutral-500 hover:text-gray-500 dark:hover:text-gray-400 bg-white dark:bg-neutral-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               <span class="sr-only">Close</span>
               <div class="h-6 w-6 i-hugeicons-can"></div>
@@ -903,24 +906,24 @@ function scrollToOrder(): void {
               </h3>
               <div class="mt-4">
                 <textarea
-                  v-model="tempSpecialInstructions"
+                  value="{{ tempSpecialInstructions }}"
                   rows="4"
-                  class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                  class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                   placeholder="Any special requests for this item?"
                 ></textarea>
               </div>
               <div class="sm:flex sm:flex-row-reverse mt-5 sm:mt-4">
                 <button
                   type="button"
-                  @click="saveSpecialInstructions"
+                  onclick="saveSpecialInstructions"
                   class="inline-flex justify-center px-3 py-2 sm:ml-3 w-full sm:w-auto font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md shadow-sm"
                 >
                   Save
                 </button>
                 <button
                   type="button"
-                  @click="showSpecialInstructionsModal = false"
-                  class="inline-flex justify-center mt-3 px-3 py-2 sm:mt-0 w-full sm:w-auto font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+                  onclick="showSpecialInstructionsModal = false"
+                  class="inline-flex justify-center mt-3 px-3 py-2 sm:mt-0 w-full sm:w-auto font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
                 >
                   Cancel
                 </button>
@@ -936,9 +939,9 @@ function scrollToOrder(): void {
   @if(orderPlaced)
     <div class="fixed inset-0 overflow-y-auto z-10">
       <div class="flex items-end justify-center sm:items-center p-4 sm:p-0 min-h-full text-center">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 transition-opacity"></div>
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-neutral-900 dark:bg-opacity-75 transition-opacity"></div>
 
-        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-blue-gray-800 rounded-lg shadow-xl transition-all transform">
+        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-neutral-800 rounded-lg shadow-xl transition-all transform">
           <div>
             <div class="flex items-center justify-center mx-auto h-12 w-12 bg-green-100 dark:bg-green-900 rounded-full">
               <div class="h-6 w-6 text-green-600 dark:text-green-300 i-hugeicons-check"></div>
@@ -948,25 +951,25 @@ function scrollToOrder(): void {
                 Purchase Complete!
               </h3>
               <div class="mt-2">
-                <p class="text-gray-500 text-sm dark:text-gray-400">
+                <p class="text-gray-500 text-sm dark:text-neutral-400">
                   Your purchase on device {{ orderSummary?.tableNumber }} has been confirmed.
                 </p>
               </div>
-              <div class="mt-4 pt-4 border-gray-200 border-t dark:border-gray-700">
+              <div class="mt-4 pt-4 border-gray-200 border-t dark:border-neutral-700">
                 <h4 class="font-medium font-mono text-gray-900 text-sm dark:text-white">Receipt Summary</h4>
 
                 <!-- Receipt style summary -->
                 <div class="mx-auto p-4 max-w-sm font-mono">
-                  <div class="mb-2 text-center text-gray-500 text-xs dark:text-gray-400">
+                  <div class="mb-2 text-center text-gray-500 text-xs dark:text-neutral-400">
                     {{ new Date().toLocaleDateString() }} {{ new Date().toLocaleTimeString() }}
                   </div>
 
-                  <div class="my-2 break text-center text-xs dark:text-gray-400">
+                  <div class="my-2 break text-center text-xs dark:text-neutral-400">
                     *************************************
                   </div>
 
                   @foreach(orderSummary?.items || [] as item, index)
-                    <div class="flex justify-between my-1 text-gray-700 text-sm dark:text-gray-300">
+                    <div class="flex justify-between my-1 text-gray-700 text-sm dark:text-neutral-300">
                       <div class="flex">
                         <span class="mr-2">{{ item.quantity }}</span>
                         <span>{{ item.name }}</span>
@@ -975,7 +978,7 @@ function scrollToOrder(): void {
                     </div>
                   @endforeach
 
-                  <div class="my-2 break text-center text-xs dark:text-gray-400">
+                  <div class="my-2 break text-center text-xs dark:text-neutral-400">
                     *************************************
                   </div>
 
@@ -985,10 +988,10 @@ function scrollToOrder(): void {
                   </div>
 
                   <div class="my-4 text-center receiptBarcode">
-                    <div class="text-2xl dark:text-gray-300 barcode">
+                    <div class="text-2xl dark:text-neutral-300 barcode">
                       |||||||||||||||||||
                     </div>
-                    <div class="text-xs dark:text-gray-400">
+                    <div class="text-xs dark:text-neutral-400">
                       {{ Date.now().toString().substring(0, 12) }}
                     </div>
                   </div>
@@ -999,7 +1002,7 @@ function scrollToOrder(): void {
           <div class="mt-5 sm:mt-6">
             <button
               type="button"
-              @click="orderPlaced = false"
+              onclick="orderPlaced = false"
               class="inline-flex justify-center px-3 py-2 w-full font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
             >
               Continue Browsing
@@ -1043,3 +1046,5 @@ function scrollToOrder(): void {
   }
 }
 </style>
+
+@endsection

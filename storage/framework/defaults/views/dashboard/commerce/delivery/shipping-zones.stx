@@ -1,3 +1,6 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 definePageMeta({
   middleware: ['auth']
@@ -179,12 +182,12 @@ const tabs = [
       :tabs="tabs"
     />
 
-    <div class="overflow-hidden mt-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-      <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+    <div class="overflow-hidden mt-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+      <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-neutral-700">
         <div class="flex items-center justify-between">
           <h2 class="font-medium text-gray-900 text-lg dark:text-white">Shipping Zones</h2>
           <button
-            @click="handleAddZone"
+            onclick="handleAddZone"
             type="button"
             class="inline-flex items-center px-3 py-2 font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
           >
@@ -207,7 +210,7 @@ const tabs = [
         @delete="handleDeleteZone"
       />
 
-      <div class="px-4 py-3 bg-gray-50 dark:bg-gray-900 border-gray-200 border-t dark:border-gray-700">
+      <div class="px-4 py-3 bg-gray-50 dark:bg-neutral-900 border-gray-200 border-t dark:border-neutral-700">
         <Pagination
           :current-page="currentPage"
           :total-items="filteredShippingZones.length"
@@ -224,73 +227,73 @@ const tabs = [
   @if(showAddModal)
     <div class="fixed inset-0 overflow-y-auto z-10">
       <div class="flex items-end justify-center sm:items-center p-4 sm:p-0 min-h-full text-center">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeAddModal"></div>
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeAddModal"></div>
 
-        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-blue-gray-800 rounded-lg shadow-xl transition-all transform">
+        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-neutral-800 rounded-lg shadow-xl transition-all transform">
           <div>
             <div class="mt-3 sm:mt-5 text-center">
               <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white">Add New Shipping Zone</h3>
               <div class="mt-4">
                 <div class="space-y-4">
                   <div>
-                    <label for="zone-name" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Zone Name</label>
+                    <label for="zone-name" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Zone Name</label>
                     <div class="mt-2">
                       <input
                         type="text"
                         id="zone-name"
-                        v-model="newShippingZone.name"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ newShippingZone.name }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                         placeholder="Enter zone name"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label for="zone-countries" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Countries</label>
+                    <label for="zone-countries" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Countries</label>
                     <div class="mt-2">
                       <textarea
                         id="zone-countries"
-                        v-model="newShippingZone.countries"
+                        value="{{ newShippingZone.countries }}"
                         rows="3"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                         placeholder="Enter countries (comma-separated)"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label for="zone-regions" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Regions</label>
+                    <label for="zone-regions" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Regions</label>
                     <div class="mt-2">
                       <textarea
                         id="zone-regions"
-                        v-model="newShippingZone.regions"
+                        value="{{ newShippingZone.regions }}"
                         rows="3"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                         placeholder="Enter regions (comma-separated)"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label for="zone-postal-codes" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Postal Codes</label>
+                    <label for="zone-postal-codes" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Postal Codes</label>
                     <div class="mt-2">
                       <textarea
                         id="zone-postal-codes"
-                        v-model="newShippingZone.postal_codes"
+                        value="{{ newShippingZone.postal_codes }}"
                         rows="3"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                         placeholder="Enter postal codes (comma-separated)"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label for="zone-status" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Status</label>
+                    <label for="zone-status" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Status</label>
                     <div class="mt-2">
                       <select
                         id="zone-status"
-                        v-model="newShippingZone.status"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ newShippingZone.status }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                       >
                         <option value="Active">Active</option>
                         <option value="Inactive">Inactive</option>
@@ -304,15 +307,15 @@ const tabs = [
           <div class="sm:grid sm:gap-3 sm:grid-cols-2 sm:grid-flow-row-dense mt-5 sm:mt-6">
             <button
               type="button"
-              @click="addShippingZone"
+              onclick="addShippingZone"
               class="inline-flex justify-center sm:col-start-2 px-3 py-2 w-full font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
             >
               Add Zone
             </button>
             <button
               type="button"
-              @click="closeAddModal"
-              class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+              onclick="closeAddModal"
+              class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
             >
               Cancel
             </button>
@@ -326,73 +329,73 @@ const tabs = [
   @if(showEditModal)
     <div class="fixed inset-0 overflow-y-auto z-10">
       <div class="flex items-end justify-center sm:items-center p-4 sm:p-0 min-h-full text-center">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeEditModal"></div>
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="closeEditModal"></div>
 
-        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-blue-gray-800 rounded-lg shadow-xl transition-all transform">
+        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-neutral-800 rounded-lg shadow-xl transition-all transform">
           <div>
             <div class="mt-3 sm:mt-5 text-center">
               <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white">Edit Shipping Zone</h3>
               <div class="mt-4">
                 <div class="space-y-4">
                   <div>
-                    <label for="edit-zone-name" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Zone Name</label>
+                    <label for="edit-zone-name" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Zone Name</label>
                     <div class="mt-2">
                       <input
                         type="text"
                         id="edit-zone-name"
-                        v-model="newShippingZone.name"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ newShippingZone.name }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                         placeholder="Enter zone name"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label for="edit-zone-countries" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Countries</label>
+                    <label for="edit-zone-countries" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Countries</label>
                     <div class="mt-2">
                       <textarea
                         id="edit-zone-countries"
-                        v-model="newShippingZone.countries"
+                        value="{{ newShippingZone.countries }}"
                         rows="3"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                         placeholder="Enter countries (comma-separated)"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label for="edit-zone-regions" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Regions</label>
+                    <label for="edit-zone-regions" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Regions</label>
                     <div class="mt-2">
                       <textarea
                         id="edit-zone-regions"
-                        v-model="newShippingZone.regions"
+                        value="{{ newShippingZone.regions }}"
                         rows="3"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                         placeholder="Enter regions (comma-separated)"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label for="edit-zone-postal-codes" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Postal Codes</label>
+                    <label for="edit-zone-postal-codes" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Postal Codes</label>
                     <div class="mt-2">
                       <textarea
                         id="edit-zone-postal-codes"
-                        v-model="newShippingZone.postal_codes"
+                        value="{{ newShippingZone.postal_codes }}"
                         rows="3"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                         placeholder="Enter postal codes (comma-separated)"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label for="edit-zone-status" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-gray-200">Status</label>
+                    <label for="edit-zone-status" class="block font-medium leading-6 text-gray-900 text-left text-sm dark:text-neutral-200">Status</label>
                     <div class="mt-2">
                       <select
                         id="edit-zone-status"
-                        v-model="newShippingZone.status"
-                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                        value="{{ newShippingZone.status }}"
+                        class="block py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                       >
                         <option value="Active">Active</option>
                         <option value="Inactive">Inactive</option>
@@ -406,15 +409,15 @@ const tabs = [
           <div class="sm:grid sm:gap-3 sm:grid-cols-2 sm:grid-flow-row-dense mt-5 sm:mt-6">
             <button
               type="button"
-              @click="saveShippingZone"
+              onclick="saveShippingZone"
               class="inline-flex justify-center sm:col-start-2 px-3 py-2 w-full font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
             >
               Save Changes
             </button>
             <button
               type="button"
-              @click="closeEditModal"
-              class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+              onclick="closeEditModal"
+              class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
             >
               Cancel
             </button>
@@ -431,3 +434,5 @@ onMount(async () => {
   await fetchShippingZones()
 })
 </script>
+
+@endsection

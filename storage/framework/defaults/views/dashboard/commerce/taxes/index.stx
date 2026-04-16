@@ -1,3 +1,6 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 definePageMeta({
   middleware: ['auth']
@@ -251,14 +254,14 @@ function addTax() {
       <div class="sm:flex sm:items-center sm:justify-between">
         <div>
           <h1 class="font-semibold text-2xl text-gray-900 dark:text-white">Tax Rates</h1>
-          <p class="mt-2 text-gray-700 text-sm dark:text-gray-300">
+          <p class="mt-2 text-gray-700 text-sm dark:text-neutral-300">
             Manage tax rates for your products across different countries and regions. Digital services often have specific tax requirements based on customer location.
           </p>
         </div>
         <div class="mt-4 sm:mt-0">
           <button
             type="button"
-            @click="openAddModal"
+            onclick="openAddModal"
             class="inline-flex items-center px-3 py-2 font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
           >
             <div class="mr-1 h-5 w-5 i-hugeicons-plus-sign"></div>
@@ -274,17 +277,17 @@ function addTax() {
             <div class="h-5 w-5 text-gray-400 i-hugeicons-search-01"></div>
           </div>
           <input
-            v-model="searchQuery"
+            value="{{ searchQuery }}"
             type="text"
-            class="block pl-10 pr-3 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+            class="block pl-10 pr-3 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             placeholder="Search taxes..."
           />
         </div>
 
         <div class="flex flex-col gap-4 sm:flex-row">
           <select
-            v-model="activeFilter"
-            class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+            value="{{ activeFilter }}"
+            class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
           >
             <option value="all">All Taxes</option>
             <option value="active">Active Only</option>
@@ -292,22 +295,22 @@ function addTax() {
           </select>
 
           <select
-            v-model="countryFilter"
-            class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+            value="{{ countryFilter }}"
+            class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
           >
             <option value="all">All Countries</option>
             @foreach(countries as country)
-              <option :key="country" :value="country">{{ country }}</option>
+              <option value="{{ country }}">{{ country }}</option>
             @endforeach
           </select>
 
           <select
-            v-model="typeFilter"
-            class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+            value="{{ typeFilter }}"
+            class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
           >
             <option value="all">All Types</option>
             @foreach(taxTypes as type)
-              <option :key="type" :value="type">{{ type }}</option>
+              <option value="{{ type }}">{{ type }}</option>
             @endforeach
           </select>
         </div>
@@ -318,67 +321,67 @@ function addTax() {
         <div class="overflow-x-auto -mx-4 -my-2 sm:-mx-6 lg:-mx-8">
           <div class="inline-block py-2 sm:px-6 lg:px-8 min-w-full align-middle">
             <div class="overflow-hidden ring-1 ring-black ring-opacity-5 sm:rounded-lg shadow">
-              <table class="min-w-full divide-gray-300 divide-y dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-blue-gray-700">
+              <table class="min-w-full divide-gray-300 divide-y dark:divide-neutral-700">
+                <thead class="bg-gray-50 dark:bg-neutral-700">
                   <tr>
-                    <th scope="col" class="pl-4 pr-3 py-3.5 sm:pl-6 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">
-                      <button @click="toggleSort('name')" class="inline-flex items-center group">
+                    <th scope="col" class="pl-4 pr-3 py-3.5 sm:pl-6 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">
+                      <button onclick="toggleSort('name')" class="inline-flex items-center group">
                         Name
                         <span class="group-focus:visible group-hover:visible flex-none ml-2 text-gray-400 rounded">
                           @if(sortBy === 'name')
-                            <div :class="[
+                            <div class="[
                               sortOrder === 'asc' ? 'i-hugeicons-arrow-up-02' : 'i-hugeicons-arrow-down-02',
                               'h-4 w-4'
-                            ]"></div>
+                            ] {{ }}"></div>
                           @else
                             <div class="h-4 w-4 i-hugeicons-arrows-up-down"></div>
                           @endif
                         </span>
                       </button>
                     </th>
-                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">
-                      <button @click="toggleSort('rate')" class="inline-flex items-center group">
+                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">
+                      <button onclick="toggleSort('rate')" class="inline-flex items-center group">
                         Rate (%)
                         <span class="group-focus:visible group-hover:visible flex-none ml-2 text-gray-400 rounded">
                           @if(sortBy === 'rate')
-                            <div :class="[
+                            <div class="[
                               sortOrder === 'asc' ? 'i-hugeicons-arrow-up-02' : 'i-hugeicons-arrow-down-02',
                               'h-4 w-4'
-                            ]"></div>
+                            ] {{ }}"></div>
                           @else
                             <div class="h-4 w-4 i-hugeicons-arrows-up-down"></div>
                           @endif
                         </span>
                       </button>
                     </th>
-                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">Type</th>
-                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">
-                      <button @click="toggleSort('country')" class="inline-flex items-center group">
+                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">Type</th>
+                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">
+                      <button onclick="toggleSort('country')" class="inline-flex items-center group">
                         Country
                         <span class="group-focus:visible group-hover:visible flex-none ml-2 text-gray-400 rounded">
                           @if(sortBy === 'country')
-                            <div :class="[
+                            <div class="[
                               sortOrder === 'asc' ? 'i-hugeicons-arrow-up-02' : 'i-hugeicons-arrow-down-02',
                               'h-4 w-4'
-                            ]"></div>
+                            ] {{ }}"></div>
                           @else
                             <div class="h-4 w-4 i-hugeicons-arrows-up-down"></div>
                           @endif
                         </span>
                       </button>
                     </th>
-                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">Region</th>
-                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">Status</th>
-                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">Default</th>
-                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-right text-sm dark:text-gray-200">
-                      <button @click="toggleSort('createdAt')" class="inline-flex items-center text-right group">
+                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">Region</th>
+                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">Status</th>
+                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">Default</th>
+                    <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-right text-sm dark:text-neutral-200">
+                      <button onclick="toggleSort('createdAt')" class="inline-flex items-center text-right group">
                         Created
                         <span class="group-focus:visible group-hover:visible flex-none ml-2 text-gray-400 rounded">
                           @if(sortBy === 'createdAt')
-                            <div :class="[
+                            <div class="[
                               sortOrder === 'asc' ? 'i-hugeicons-arrow-up-02' : 'i-hugeicons-arrow-down-02',
                               'h-4 w-4'
-                            ]"></div>
+                            ] {{ }}"></div>
                           @else
                             <div class="h-4 w-4 i-hugeicons-arrows-up-down"></div>
                           @endif
@@ -390,25 +393,25 @@ function addTax() {
                     </th>
                   </tr>
                 </thead>
-                <tbody class="bg-white dark:bg-blue-gray-800 divide-gray-200 divide-y dark:divide-gray-700">
+                <tbody class="bg-white dark:bg-neutral-800 divide-gray-200 divide-y dark:divide-neutral-700">
                   @foreach(filteredTaxes as tax)
-                    <tr :key="tax.id">
+                    <tr>
                       <td class="pl-4 pr-3 py-4 sm:pl-6 font-medium text-gray-900 text-sm whitespace-nowrap dark:text-white">
                         {{ tax.name }}
                       </td>
-                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-300">{{ tax.rate }}%</td>
-                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-300">
+                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-300">{{ tax.rate }}%</td>
+                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-300">
                         {{ tax.type }}
                       </td>
-                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-300">
+                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-300">
                         {{ tax.country }}
                       </td>
-                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-300">
+                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-300">
                         {{ tax.region }}
                       </td>
                       <td class="px-3 py-4 text-sm whitespace-nowrap">
                         <span class="inline-flex items-center px-2 py-1 font-medium text-xs rounded-md"
-                              :class="text-green-700 text-red-700 dark:bg-green-900/30 dark:bg-red-900/30 ring-1 ring-1 ring-green-600/20 ring-inset ring-inset ring-red-600/20 !tax.active 'bg-green-50 'bg-red-50 { } tax.active, dark:text-green-400': dark:text-red-400':">
+                              class="text-green-700 text-red-700 dark:bg-green-900/30 dark:bg-red-900/30 ring-1 ring-1 ring-green-600/20 ring-inset ring-inset ring-red-600/20 !tax.active 'bg-green-50 'bg-red-50 { {{ } }} tax.active, dark:text-green-400': dark:text-red-400':">
                           {{ tax.active ? 'Active' : 'Inactive' }}
                         </span>
                       </td>
@@ -419,7 +422,7 @@ function addTax() {
                           </span>
                         @endif
                       </td>
-                      <td class="px-3 py-4 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                      <td class="px-3 py-4 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                         {{ tax.createdAt }}
                       </td>
                       <td class="relative pl-3 pr-4 py-4 sm:pr-6 font-medium text-right text-sm whitespace-nowrap">
@@ -436,7 +439,7 @@ function addTax() {
                   @endforeach
                   @if(filteredTaxes.length === 0)
                     <tr>
-                      <td colspan="8" class="px-6 py-4 text-center text-gray-500 text-sm dark:text-gray-400">
+                      <td colspan="8" class="px-6 py-4 text-center text-gray-500 text-sm dark:text-neutral-400">
                         No taxes found matching your criteria
                       </td>
                     </tr>
@@ -454,12 +457,12 @@ function addTax() {
   @if(showAddModal)
     <div class="fixed inset-0 overflow-y-auto z-10">
       <div class="flex items-end justify-center sm:items-center p-4 sm:p-0 min-h-full text-center">
-        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-blue-gray-800 rounded-lg shadow-xl transition-all transform">
+        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-neutral-800 rounded-lg shadow-xl transition-all transform">
           <div>
             <div class="mt-3 sm:mt-5 text-center">
               <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white">Add New Tax Rate</h3>
               <div class="mt-2">
-                <div class="text-gray-500 text-sm dark:text-gray-400">
+                <div class="text-gray-500 text-sm dark:text-neutral-400">
                   <p>Set up tax rates for different countries and regions where your SaaS products are sold.</p>
                   <p class="mt-2">For digital services, tax is typically based on the customer's location rather than your business location.</p>
                 </div>
@@ -469,38 +472,38 @@ function addTax() {
             <div class="mt-4">
               <div class="space-y-4">
                 <div>
-                  <label for="tax-name" class="block font-medium text-gray-700 text-sm dark:text-gray-200">Name</label>
+                  <label for="tax-name" class="block font-medium text-gray-700 text-sm dark:text-neutral-200">Name</label>
                   <div class="mt-1">
                     <input
                       id="tax-name"
                       type="text"
-                      v-model="newTax.name"
-                      class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                      value="{{ newTax.name }}"
+                      class="block w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label for="tax-rate" class="block font-medium text-gray-700 text-sm dark:text-gray-200">Rate (%)</label>
+                  <label for="tax-rate" class="block font-medium text-gray-700 text-sm dark:text-neutral-200">Rate (%)</label>
                   <div class="mt-1">
                     <input
                       id="tax-rate"
                       type="number"
                       step="0.01"
-                      v-model="newTax.rate"
-                      class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                      value="{{ newTax.rate }}"
+                      class="block w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                     />
                   </div>
-                  <p class="mt-1 text-gray-500 text-xs dark:text-gray-400">Enter the percentage rate (e.g., 20 for 20%)</p>
+                  <p class="mt-1 text-gray-500 text-xs dark:text-neutral-400">Enter the percentage rate (e.g., 20 for 20%)</p>
                 </div>
 
                 <div>
-                  <label for="tax-type" class="block font-medium text-gray-700 text-sm dark:text-gray-200">Type</label>
+                  <label for="tax-type" class="block font-medium text-gray-700 text-sm dark:text-neutral-200">Type</label>
                   <div class="mt-1">
                     <select
                       id="tax-type"
-                      v-model="newTax.type"
-                      class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                      value="{{ newTax.type }}"
+                      class="block w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                     >
                       <option value="VAT">VAT</option>
                       <option value="GST">GST</option>
@@ -512,26 +515,26 @@ function addTax() {
                 </div>
 
                 <div>
-                  <label for="tax-country" class="block font-medium text-gray-700 text-sm dark:text-gray-200">Country</label>
+                  <label for="tax-country" class="block font-medium text-gray-700 text-sm dark:text-neutral-200">Country</label>
                   <div class="mt-1">
                     <input
                       id="tax-country"
                       type="text"
-                      v-model="newTax.country"
-                      class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                      value="{{ newTax.country }}"
+                      class="block w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label for="tax-region" class="block font-medium text-gray-700 text-sm dark:text-gray-200">Region</label>
+                  <label for="tax-region" class="block font-medium text-gray-700 text-sm dark:text-neutral-200">Region</label>
                   <div class="mt-1">
                     <input
                       id="tax-region"
                       type="text"
-                      v-model="newTax.region"
+                      value="{{ newTax.region }}"
                       placeholder="All"
-                      class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                      class="block w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                     />
                   </div>
                 </div>
@@ -539,9 +542,9 @@ function addTax() {
                 <div class="flex items-center">
                   <input
                     id="active"
-                    v-model="newTax.active"
+                    value="{{ newTax.active }}"
                     type="checkbox"
-                    class="h-4 w-4 text-blue-600 dark:bg-blue-gray-700 border-gray-300 rounded dark:border-gray-600 focus:ring-blue-600 dark:focus:ring-offset-blue-gray-800"
+                    class="h-4 w-4 text-blue-600 dark:bg-neutral-700 border-gray-300 rounded dark:border-neutral-600 focus:ring-blue-600 dark:focus:ring-offset-neutral-800"
                   >
                   <label for="active" class="block ml-2 text-gray-900 text-sm dark:text-white">Active</label>
                 </div>
@@ -549,13 +552,13 @@ function addTax() {
                 <div class="flex items-center">
                   <input
                     id="isDefault"
-                    v-model="newTax.isDefault"
+                    value="{{ newTax.isDefault }}"
                     type="checkbox"
-                    class="h-4 w-4 text-blue-600 dark:bg-blue-gray-700 border-gray-300 rounded dark:border-gray-600 focus:ring-blue-600 dark:focus:ring-offset-blue-gray-800"
+                    class="h-4 w-4 text-blue-600 dark:bg-neutral-700 border-gray-300 rounded dark:border-neutral-600 focus:ring-blue-600 dark:focus:ring-offset-neutral-800"
                   >
                   <label for="isDefault" class="block ml-2 text-gray-900 text-sm dark:text-white">Set as default tax rate</label>
                 </div>
-                <p class="text-gray-500 text-sm dark:text-gray-400">This tax rate will be applied to new SaaS subscriptions by default</p>
+                <p class="text-gray-500 text-sm dark:text-neutral-400">This tax rate will be applied to new SaaS subscriptions by default</p>
               </div>
             </div>
           </div>
@@ -564,14 +567,14 @@ function addTax() {
             <button
               type="button"
               class="inline-flex justify-center sm:col-start-2 px-3 py-2 w-full font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
-              @click="addTax"
+              onclick="addTax"
             >
               Add
             </button>
             <button
               type="button"
-              class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
-              @click="closeAddModal"
+              class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
+              onclick="closeAddModal"
             >
               Cancel
             </button>
@@ -581,3 +584,5 @@ function addTax() {
     </div>
   @endif
 </main>
+
+@endsection

@@ -1,79 +1,67 @@
-<script server>
-const API_URL = 'http://localhost:' + (process.env.PORT_API || '3008')
+@extends('layouts/default')
 
+@section('content')
+<script server>
 let lists = []
 let stats = []
-
-try {
-  const res = await fetch(API_URL + '/marketing/lists')
-  if (res.ok) {
-    const json = await res.json()
-    lists = json.lists || []
-    stats = json.stats || []
-  }
-} catch (e) {
-  // API not available
-}
 </script>
-<div class="p-6 min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="flex items-start justify-between mb-8">
-      <div>
-        <h1 class="font-bold text-3xl text-gray-900 dark:text-white">Email Lists</h1>
-        <p class="mt-1 text-gray-500 dark:text-gray-400">Manage subscriber lists</p>
-      </div>
-      <div class="flex gap-3 items-center">
-        <button class="px-4 py-2 font-medium text-gray-700 text-sm dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 rounded-lg dark:border-gray-600">Import</button>
-        <button class="px-4 py-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg">Create List</button>
-      </div>
-    </div>
+<div class="p-6 space-y-6">
 
-    <div class="flex flex-col gap-6">
-      <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-        @foreach (stats as stat)
-          <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700">
-            <div class="font-bold text-2xl text-gray-900 dark:text-white">{{ stat.value }}</div>
-            <div class="mt-1 text-gray-500 text-sm dark:text-gray-400">{{ stat.label }}</div>
-          </div>
-        @endforeach
-      </div>
+  <PageHeader title="Email Lists" description="Manage subscriber lists">
+    <template #actions>
+      <Button variant="secondary">Import</Button>
+      <Button variant="primary">
+        <div class="h-4 w-4 i-hugeicons-plus-sign"></div>
+        Create List
+      </Button>
+    </template>
+  </PageHeader>
 
-      <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
-        <div class="flex items-center justify-between mb-4">
-          <input type="text" class="px-3 py-2 text-gray-900 text-sm dark:text-white bg-white dark:bg-gray-800 border border-gray-300 rounded-lg dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500" placeholder="Search lists..."  />
-        </div>
-        <div class="overflow-x-auto border border-gray-200 rounded-xl dark:border-gray-700">
-          <table class="w-full text-sm">
-            <thead class="bg-gray-50 dark:bg-gray-700/50">
-              <tr>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">List Name</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Members</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Growth (7d)</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Last Sent</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Status</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @foreach (lists as list)
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                  <td class="px-4 py-3 font-medium text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ list.name }}</td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ list.members.toLocaleString() }}</td>
-                  <td class="px-4 py-3 text-green-600 dark:text-green-400 border-gray-100 border-t dark:border-gray-700">{{ list.growth }}</td>
-                  <td class="px-4 py-3 text-gray-500 dark:text-gray-400 border-gray-100 border-t dark:border-gray-700">{{ list.lastSent }}</td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">
-                    <span class="px-2.5 py-1 font-semibold text-green-700 text-xs dark:text-green-400 bg-green-100 dark:bg-green-900/30 rounded-full">{{ list.status }}</span>
-                  </td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">
-                    <div class="flex gap-2">
-                      <button class="px-3 py-1.5 font-medium text-gray-700 text-xs dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 rounded-lg dark:border-gray-600">Send</button>
-                      <button class="px-3 py-1.5 font-medium text-gray-500 text-xs dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Edit</button>
-                    </div>
-                  </td>
-                </tr>
-              @endforeach
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+  <!-- Stats -->
+  <div class="grid gap-4 grid-cols-2 lg:grid-cols-4">
+    @foreach (stats as stat)
+      <StatsCard :title="stat.label" value="{{ stat.value }}" icon="i-hugeicons-user-group" iconBg="primary" />
+    @endforeach
   </div>
+
+  <!-- Lists Table -->
+  <div class="bg-white dark:bg-neutral-800/90 border border-black/5 rounded-xl dark:border-white/5">
+    <div class="p-4 border-b border-neutral-200/60 dark:border-white/5">
+      <FilterBar searchPlaceholder="Search lists..." />
+    </div>
+
+    <DataTable
+      :columns="{{ JSON.stringify([
+        { key: 'name', label: 'List Name' },
+        { key: 'members', label: 'Members' },
+        { key: 'growth', label: 'Growth (7d)' },
+        { key: 'lastSent', label: 'Last Sent' },
+        { key: 'status', label: 'Status' },
+        { key: 'actions', label: '' }
+      ]) }}"
+      :data="lists"
+      emptyTitle="No email lists yet"
+      emptyDescription="Create your first email list to start collecting subscribers"
+      emptyIcon="i-hugeicons-clipboard"
+    >
+      @foreach (lists as list)
+        <tr class="hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors">
+          <td class="px-4 py-3 font-medium text-[13px] text-neutral-900 dark:text-white">{{ list.name }}</td>
+          <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ list.members.toLocaleString() }}</td>
+          <td class="px-4 py-3 font-medium text-[13px] text-green-600 dark:text-green-400">{{ list.growth }}</td>
+          <td class="px-4 py-3 text-[12px] text-neutral-500 dark:text-neutral-400">{{ list.lastSent }}</td>
+          <td class="px-4 py-3">
+            <Badge variant="success" size="xs" dot>{{ list.status }}</Badge>
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex gap-1 items-center">
+              <Button variant="outline" size="xs">Send</Button>
+              <Button variant="ghost" size="xs" iconOnly><div class="h-4 w-4 i-hugeicons-edit-01"></div></Button>
+            </div>
+          </td>
+        </tr>
+      @endforeach
+    </DataTable>
+  </div>
+</div>
+@endsection

@@ -1,27 +1,7 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js'
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-)
-
 interface QueueStats {
   queued: number
   processing: number
@@ -192,7 +172,7 @@ const workerStatusColors: Record<string, string> = {
 }
 
 const getWorkerStatusColor = (status: string): string => {
-  return workerStatusColors[status] || 'text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 ring-gray-600/20'
+  return workerStatusColors[status] || 'text-gray-700 dark:text-neutral-300 bg-gray-50 dark:bg-neutral-900/50 ring-gray-600/20'
 }
 
 // Generate mock throughput data
@@ -305,27 +285,27 @@ workers = workers.map(worker => ({
 }))
 </script>
 
-<div class="py-4 lg:py-8 min-h-screen dark:bg-blue-gray-800">
+<div class="py-4 lg:py-8 min-h-screen dark:bg-neutral-800">
     <div class="px-4 sm:px-6 lg:px-8">
       <!-- Stats Overview -->
     <div class="mb-8">
       <div>
-        <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-gray-100">
+        <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-neutral-100">
           Queue Overview
         </h3>
 
         <dl class="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mt-5">
-          <div class="overflow-hidden relative pt-5 px-4 sm:pt-6 sm:px-6 bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+          <div class="overflow-hidden relative pt-5 px-4 sm:pt-6 sm:px-6 bg-white dark:bg-neutral-700 rounded-lg shadow">
             <dt>
               <div class="absolute p-3 bg-blue-500 rounded-md">
                 <div class="h-6 w-6 text-white i-hugeicons-queue-02" />
               </div>
-              <p class="ml-16 font-medium text-gray-500 text-sm truncate dark:text-gray-300">
+              <p class="ml-16 font-medium text-gray-500 text-sm truncate dark:text-neutral-300">
                 Total Jobs
               </p>
             </dt>
             <dd class="flex items-baseline ml-16 pb-6 sm:pb-7">
-              <p class="font-semibold text-2xl text-gray-900 dark:text-gray-100">
+              <p class="font-semibold text-2xl text-gray-900 dark:text-neutral-100">
                 71,897
               </p>
               <p class="flex items-baseline ml-2 font-semibold text-green-600 text-sm">
@@ -336,17 +316,17 @@ workers = workers.map(worker => ({
             </dd>
           </div>
 
-          <div class="overflow-hidden relative pt-5 px-4 sm:pt-6 sm:px-6 bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+          <div class="overflow-hidden relative pt-5 px-4 sm:pt-6 sm:px-6 bg-white dark:bg-neutral-700 rounded-lg shadow">
             <dt>
               <div class="absolute p-3 bg-blue-500 rounded-md">
                 <div class="h-6 w-6 text-white i-hugeicons-clock-01" />
               </div>
-              <p class="ml-16 font-medium text-gray-500 text-sm truncate dark:text-gray-300">
+              <p class="ml-16 font-medium text-gray-500 text-sm truncate dark:text-neutral-300">
                 Average Processing Time
               </p>
             </dt>
             <dd class="flex items-baseline ml-16 pb-6 sm:pb-7">
-              <p class="font-semibold text-2xl text-gray-900 dark:text-gray-100">
+              <p class="font-semibold text-2xl text-gray-900 dark:text-neutral-100">
                 2.3s
               </p>
               <p class="flex items-baseline ml-2 font-semibold text-green-600 text-sm">
@@ -357,17 +337,17 @@ workers = workers.map(worker => ({
             </dd>
           </div>
 
-          <div class="overflow-hidden relative pt-5 px-4 sm:pt-6 sm:px-6 bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+          <div class="overflow-hidden relative pt-5 px-4 sm:pt-6 sm:px-6 bg-white dark:bg-neutral-700 rounded-lg shadow">
             <dt>
               <div class="absolute p-3 bg-blue-500 rounded-md">
                 <div class="h-6 w-6 text-white i-hugeicons-energy" />
               </div>
-              <p class="ml-16 font-medium text-gray-500 text-sm truncate dark:text-gray-300">
+              <p class="ml-16 font-medium text-gray-500 text-sm truncate dark:text-neutral-300">
                 Jobs Per Minute
               </p>
             </dt>
             <dd class="flex items-baseline ml-16 pb-6 sm:pb-7">
-              <p class="font-semibold text-2xl text-gray-900 dark:text-gray-100">
+              <p class="font-semibold text-2xl text-gray-900 dark:text-neutral-100">
                 42
               </p>
               <p class="flex items-baseline ml-2 font-semibold text-red-600 text-sm">
@@ -385,15 +365,16 @@ workers = workers.map(worker => ({
     <div class="mt-8">
       <div class="sm:flex sm:items-center">
         <div class="sm:flex-auto">
-          <h3 class="font-medium text-base text-gray-900 dark:text-gray-100">Queue Statistics</h3>
-          <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">Detailed breakdown of jobs by queue and status</p>
+          <h3 class="font-medium text-base text-gray-900 dark:text-neutral-100">Queue Statistics</h3>
+          <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">Detailed breakdown of jobs by queue and status</p>
         </div>
       </div>
 
       <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mt-6">
-        <div v-for="(stats, name) in queues" :key="name" class="p-6 bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+        @foreach(queues as name => stats)
+<div class="p-6 bg-white dark:bg-neutral-700 rounded-lg shadow">
           <div class="flex items-center justify-between mb-4">
-            <h4 class="inline-flex items-center px-2.5 py-0.5 font-medium text-gray-800 text-xs dark:text-gray-200 bg-gray-100 dark:bg-blue-gray-600 rounded-full">
+            <h4 class="inline-flex items-center px-2.5 py-0.5 font-medium text-gray-800 text-xs dark:text-neutral-200 bg-gray-100 dark:bg-neutral-600 rounded-full">
               {{ name }}
             </h4>
           </div>
@@ -401,20 +382,21 @@ workers = workers.map(worker => ({
           <div class="space-y-4">
             <!-- Queue Stats -->
             <div class="grid gap-4 grid-cols-3">
-              <div v-for="(value, status) in stats" :key="status" class="text-center">
-                <div class="font-mono font-semibold text-2xl" :class="'failed' 'processed', 'processing', 'queued', 'released', 'text-blue-600 'text-green-600 'text-purple-600 'text-red-600 'text-yellow-600 { } === === === === === status status status status status dark:text-blue-400': dark:text-green-400': dark:text-purple-400': dark:text-red-400': dark:text-yellow-400':">{{ value }}</div>
-                <div class="capitalize text-gray-500 text-xs dark:text-gray-400">{{ status }}</div>
+              @foreach(stats as status => value)
+<div class="text-center">
+                <div class="font-mono font-semibold text-2xl" class="'failed' 'processed', 'processing', 'queued', 'released', 'text-blue-600 'text-green-600 'text-purple-600 'text-red-600 'text-yellow-600 { {{ } }} === === === === === status status status status status dark:text-blue-400': dark:text-green-400': dark:text-purple-400': dark:text-red-400': dark:text-yellow-400':">{{ value }}</div>
+                <div class="capitalize text-gray-500 text-xs dark:text-neutral-400">{{ status }}</div>
               </div>
             </div>
 
             <!-- Queue Progress -->
-            <div class="overflow-hidden h-2 bg-gray-100 dark:bg-blue-gray-600 rounded-full">
+            <div class="overflow-hidden h-2 bg-gray-100 dark:bg-neutral-600 rounded-full">
               <div class="flex h-full">
-                <div class="h-full bg-green-500" :style="{ width: `${(stats.processed / (stats.processed + stats.failed)) * 100}%` }" />
-                <div class="h-full bg-red-500" :style="{ width: `${(stats.failed / (stats.processed + stats.failed)) * 100}%` }" />
+                <div class="h-full bg-green-500" style="{{ { width: `${(stats.processed / (stats.processed + stats.failed)) * 100}%` } }}" />
+                <div class="h-full bg-red-500" style="{{ { width: `${(stats.failed / (stats.processed + stats.failed)) * 100}%` } }}" />
               </div>
             </div>
-            <div class="flex justify-between text-gray-500 text-xs dark:text-gray-400">
+            <div class="flex justify-between text-gray-500 text-xs dark:text-neutral-400">
               <span>Success Rate: {{ ((stats.processed / (stats.processed + stats.failed)) * 100).toFixed(1) }}%</span>
               <span>Failure Rate: {{ ((stats.failed / (stats.processed + stats.failed)) * 100).toFixed(1) }}%</span>
             </div>
@@ -424,24 +406,25 @@ workers = workers.map(worker => ({
     </div>
 
       <!-- Queue Statistics -->
-      <div class="my-8 bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+      <div class="my-8 bg-white dark:bg-neutral-700 rounded-lg shadow">
         <div class="p-6">
           <div class="flex items-center justify-between mb-6">
-            <h4 class="font-medium text-base text-gray-900 dark:text-gray-100">Queue Statistics</h4>
+            <h4 class="font-medium text-base text-gray-900 dark:text-neutral-100">Queue Statistics</h4>
             <div class="flex gap-4 items-center">
               <select
-                v-model="selectedQueue"
-                class="block px-3 py-1.5 h-9 w-32 text-gray-900 text-sm dark:text-gray-100 bg-gray-50 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600"
+                value="{{ selectedQueue }}"
+                class="block px-3 py-1.5 h-9 w-32 text-gray-900 text-sm dark:text-neutral-100 bg-gray-50 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600"
               >
                 <option value="all">All Queues</option>
-                <option v-for="(_, queue) in queues" :key="queue" :value="queue">
+                @foreach(queues as queue => _)
+<option value="{{ queue }}">
                   {{ queue }}
                 </option>
               </select>
 
               <select
-                v-model="timeRange"
-                class="block px-3 py-1.5 h-9 text-gray-900 text-sm dark:text-gray-100 bg-gray-50 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600"
+                value="{{ timeRange }}"
+                class="block px-3 py-1.5 h-9 text-gray-900 text-sm dark:text-neutral-100 bg-gray-50 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600"
               >
                 <option value="hour">Last Hour</option>
                 <option value="day">Last 24 Hours</option>
@@ -453,36 +436,36 @@ workers = workers.map(worker => ({
           <div class="grid gap-6 grid-cols-1 lg:grid-cols-2">
             <!-- Throughput Chart -->
             <div class="h-80">
-              <Line :data="getThroughputData()" :options="chartOptions" />
+              <canvas id="throughputChart"></canvas>
             </div>
 
             <!-- Wait Time Chart -->
             <div class="h-80">
-              <Line :data="getWaitTimeData()" :options="chartOptions" />
+              <canvas id="waitTimeChart"></canvas>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Workers -->
-      <div class="mb-8 bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+      <div class="mb-8 bg-white dark:bg-neutral-700 rounded-lg shadow">
         <div class="p-6">
           <div class="flex items-center justify-between mb-6">
             <div>
-              <h4 class="font-medium text-base text-gray-900 dark:text-gray-100">Workers</h4>
-              <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">Monitor your queue workers and their performance.</p>
+              <h4 class="font-medium text-base text-gray-900 dark:text-neutral-100">Workers</h4>
+              <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">Monitor your queue workers and their performance.</p>
             </div>
             <div class="flex gap-4 items-center">
               <button
-                @click="retryFailedJobs"
+                onclick="retryFailedJobs"
                 class="inline-flex items-center px-3 py-2 font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
               >
                 <div class="mr-1 h-5 w-5 i-hugeicons-arrow-path" />
                 Retry Failed Jobs
               </button>
               <button
-                @click="clearFailedJobs"
-                class="inline-flex items-center px-3 py-2 font-semibold text-gray-900 text-sm dark:text-gray-100 bg-white dark:bg-blue-gray-600 hover:bg-gray-50 dark:hover:bg-blue-gray-500 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+                onclick="clearFailedJobs"
+                class="inline-flex items-center px-3 py-2 font-semibold text-gray-900 text-sm dark:text-neutral-100 bg-white dark:bg-neutral-600 hover:bg-gray-50 dark:hover:bg-neutral-500 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
               >
                 <div class="mr-1 h-5 w-5 i-hugeicons-trash" />
                 Clear Failed Jobs
@@ -491,61 +474,60 @@ workers = workers.map(worker => ({
           </div>
 
           <div class="space-y-6">
-            <div
-              v-for="worker in workers"
-              :key="worker.id"
-              class="relative p-6 border rounded-lg dark:border-gray-600 hover:border-blue-200 dark:hover:border-blue-500 duration-200 transition-all"
+            @foreach(workers as worker)
+<div
+              class="relative p-6 border rounded-lg dark:border-neutral-600 hover:border-blue-200 dark:hover:border-blue-500 duration-200 transition-all"
             >
               <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
-                  <h5 class="font-medium text-gray-900 text-lg dark:text-gray-100">{{ worker.name }}</h5>
-                  <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">Queue: {{ worker.queue }}</p>
+                  <h5 class="font-medium text-gray-900 text-lg dark:text-neutral-100">{{ worker.name }}</h5>
+                  <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">Queue: {{ worker.queue }}</p>
                 </div>
 
                 <div>
                   <div class="flex gap-2 items-center">
                     <div
                       class="h-2 w-2 rounded-full"
-                      :class="'bg-green-500': 'bg-red-500': 'bg-yellow-500': 'paused', 'running', 'stopped', { } === === === worker.status worker.status worker.status"
+                      class="'bg-green-500': 'bg-red-500': 'bg-yellow-500': 'paused', 'running', 'stopped', { {{ } }} === === === worker.status worker.status worker.status"
                     ></div>
-                    <span class="font-medium text-gray-900 text-sm dark:text-gray-100">
+                    <span class="font-medium text-gray-900 text-sm dark:text-neutral-100">
                       {{ worker.status.charAt(0).toUpperCase() + worker.status.slice(1) }}
                     </span>
                   </div>
                   <div class="flex gap-2 items-center mt-2">
-                    <button
-                      v-if="worker.status !== 'running'"
-                      @click="restartWorker(worker.id)"
+                    @if(worker.status !== 'running')
+<button
+                      onclick="restartWorker(worker.id)"
                       class="inline-flex items-center px-2 py-1 font-medium text-green-700 text-xs dark:text-green-300 bg-green-50 dark:bg-green-900/50 hover:bg-green-100 dark:hover:bg-green-900 rounded-md"
                     >
                       <div class="mr-1 h-4 w-4 i-hugeicons-play" />
                       Start
                     </button>
-                    <button
-                      v-if="worker.status === 'running'"
-                      @click="pauseWorker(worker.id)"
+                    @if(worker.status === 'running')
+<button
+                      onclick="pauseWorker(worker.id)"
                       class="inline-flex items-center px-2 py-1 font-medium text-xs text-yellow-700 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-900/50 hover:bg-yellow-100 dark:hover:bg-yellow-900 rounded-md"
                     >
                       <div class="mr-1 h-4 w-4 i-hugeicons-pause" />
                       Pause
                     </button>
-                    <button
-                      v-if="worker.status === 'running'"
-                      @click="stopWorker(worker.id)"
+                    @if(worker.status === 'running')
+<button
+                      onclick="stopWorker(worker.id)"
                       class="inline-flex items-center px-2 py-1 font-medium text-red-700 text-xs dark:text-red-300 bg-red-50 dark:bg-red-900/50 hover:bg-red-100 dark:hover:bg-red-900 rounded-md"
                     >
                       <div class="mr-1 h-4 w-4 i-hugeicons-stop" />
                       Stop
                     </button>
                   </div>
-                  <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">
+                  <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">
                     Last heartbeat: {{ worker.last_heartbeat }}
                   </p>
                 </div>
 
                 <div>
-                  <p class="text-gray-500 text-sm dark:text-gray-400">Jobs Processed</p>
-                  <p class="mt-1 font-medium text-gray-900 text-lg dark:text-gray-100">
+                  <p class="text-gray-500 text-sm dark:text-neutral-400">Jobs Processed</p>
+                  <p class="mt-1 font-medium text-gray-900 text-lg dark:text-neutral-100">
                     {{ worker.jobs_processed.toLocaleString() }}
                   </p>
                   <p class="mt-1 text-red-600 text-sm dark:text-red-400">
@@ -557,24 +539,25 @@ workers = workers.map(worker => ({
                   <div class="space-y-4">
                     <div>
                       <div class="flex items-center justify-between text-sm">
-                        <span class="text-gray-500 dark:text-gray-400">Connection</span>
-                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ worker.connection }}</span>
+                        <span class="text-gray-500 dark:text-neutral-400">Connection</span>
+                        <span class="font-medium text-gray-900 dark:text-neutral-100">{{ worker.connection }}</span>
                       </div>
                       <div class="flex items-center justify-between mt-2 text-sm">
-                        <span class="text-gray-500 dark:text-gray-400">Memory Limit</span>
-                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ worker.memory_limit }}MB</span>
+                        <span class="text-gray-500 dark:text-neutral-400">Memory Limit</span>
+                        <span class="font-medium text-gray-900 dark:text-neutral-100">{{ worker.memory_limit }}MB</span>
                       </div>
                       <div class="flex items-center justify-between mt-2 text-sm">
-                        <span class="text-gray-500 dark:text-gray-400">Timeout</span>
-                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ worker.timeout }}s</span>
+                        <span class="text-gray-500 dark:text-neutral-400">Timeout</span>
+                        <span class="font-medium text-gray-900 dark:text-neutral-100">{{ worker.timeout }}s</span>
                       </div>
                       <div class="flex items-center justify-between mt-2 text-sm">
-                        <span class="text-gray-500 dark:text-gray-400">Supervisor</span>
-                        <span class="font-medium text-gray-900 dark:text-gray-100">{{ worker.supervisor_id }}</span>
+                        <span class="text-gray-500 dark:text-neutral-400">Supervisor</span>
+                        <span class="font-medium text-gray-900 dark:text-neutral-100">{{ worker.supervisor_id }}</span>
                       </div>
                     </div>
 
-                    <div v-if="worker.memory_usage / worker.memory_limit > 0.9" class="p-3 bg-yellow-50 dark:bg-yellow-900/50 rounded-md">
+                    @if(worker.memory_usage / worker.memory_limit > 0.9)
+<div class="p-3 bg-yellow-50 dark:bg-yellow-900/50 rounded-md">
                       <div class="flex">
                         <div class="h-5 w-5 text-yellow-400 i-hugeicons-exclamation-triangle" />
                         <div class="ml-3">
@@ -596,3 +579,28 @@ workers = workers.map(worker => ({
       </div>
     </div>
   </div>
+
+<script client>
+const { Chart, registerables } = await import('chart.js/auto')
+Chart.register(...registerables)
+
+const throughputCtx = document.getElementById('throughputChart')
+if (throughputCtx) {
+  new Chart(throughputCtx, {
+    type: 'line',
+    data: getThroughputData(),
+    options: chartOptions,
+  })
+}
+
+const waitTimeCtx = document.getElementById('waitTimeChart')
+if (waitTimeCtx) {
+  new Chart(waitTimeCtx, {
+    type: 'line',
+    data: getWaitTimeData(),
+    options: chartOptions,
+  })
+}
+</script>
+
+@endsection

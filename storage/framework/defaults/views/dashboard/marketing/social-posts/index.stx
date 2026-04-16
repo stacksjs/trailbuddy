@@ -1,3 +1,6 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 // Define post type
 interface SocialPost {
@@ -310,7 +313,7 @@ function toggleSort(column: string): void {
 }
 
 // Get status badge class
-function getStatusClass(status: string): string {
+const getStatusClass = (status: string): string => {
   switch (status) {
     case 'Published':
       return 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/30 dark:text-green-400'
@@ -321,7 +324,7 @@ function getStatusClass(status: string): string {
     case 'Failed':
       return 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20 dark:bg-red-900/30 dark:text-red-400'
     default:
-      return 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20 dark:bg-gray-900/30 dark:text-gray-400'
+      return 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20 dark:bg-neutral-900/30 dark:text-neutral-400'
   }
 }
 
@@ -494,13 +497,13 @@ function truncateText(text: string, max: number): string {
         <div class="sm:flex sm:items-center sm:justify-between">
           <div>
             <h1 class="font-semibold text-2xl text-gray-900 dark:text-white">Social Media Posts</h1>
-            <p class="mt-2 text-gray-700 text-sm dark:text-gray-300">
+            <p class="mt-2 text-gray-700 text-sm dark:text-neutral-300">
               Create, schedule, and manage your social media posts for Bluesky
             </p>
           </div>
           <div class="mt-4 sm:mt-0">
             <button
-              @click="openNewPostModal"
+              onclick="openNewPostModal"
               class="inline-flex items-center px-3 py-2 font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
             >
               <div class="mr-2 h-5 w-5 i-hugeicons-plus-sign"></div>
@@ -512,7 +515,7 @@ function truncateText(text: string, max: number): string {
         <!-- Summary cards -->
         <div class="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mt-6">
           <!-- Total posts card -->
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -522,7 +525,7 @@ function truncateText(text: string, max: number): string {
                 </div>
                 <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">Total Posts</dt>
+                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">Total Posts</dt>
                     <dd>
                       <div class="font-medium text-gray-900 text-lg dark:text-white">{{ totalPosts }}</div>
                     </dd>
@@ -533,7 +536,7 @@ function truncateText(text: string, max: number): string {
           </div>
 
           <!-- Published posts card -->
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -543,7 +546,7 @@ function truncateText(text: string, max: number): string {
                 </div>
                 <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">Published</dt>
+                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">Published</dt>
                     <dd>
                       <div class="font-medium text-gray-900 text-lg dark:text-white">{{ publishedPosts }}</div>
                     </dd>
@@ -554,7 +557,7 @@ function truncateText(text: string, max: number): string {
           </div>
 
           <!-- Scheduled posts card -->
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -564,7 +567,7 @@ function truncateText(text: string, max: number): string {
                 </div>
                 <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">Scheduled</dt>
+                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">Scheduled</dt>
                     <dd>
                       <div class="font-medium text-gray-900 text-lg dark:text-white">{{ scheduledPosts }}</div>
                     </dd>
@@ -575,7 +578,7 @@ function truncateText(text: string, max: number): string {
           </div>
 
           <!-- Draft posts card -->
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -585,7 +588,7 @@ function truncateText(text: string, max: number): string {
                 </div>
                 <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">Drafts</dt>
+                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">Drafts</dt>
                     <dd>
                       <div class="font-medium text-gray-900 text-lg dark:text-white">{{ draftPosts }}</div>
                     </dd>
@@ -603,9 +606,9 @@ function truncateText(text: string, max: number): string {
               <div class="h-5 w-5 text-gray-400 i-hugeicons-search-01"></div>
             </div>
             <input
-              v-model="searchQuery"
+              value="{{ searchQuery }}"
               type="text"
-              class="block pl-10 pr-3 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              class="block pl-10 pr-3 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
               placeholder="Search posts..."
             />
           </div>
@@ -613,33 +616,36 @@ function truncateText(text: string, max: number): string {
           <div class="flex flex-col gap-4 sm:flex-row">
             <!-- Status filter -->
             <select
-              v-model="statusFilter"
-              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              value="{{ statusFilter }}"
+              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             >
               <option value="all">All Statuses</option>
-              <option v-for="status in statuses.slice(1)" :key="status" :value="status">
+              @foreach(statuses.slice(1) as status)
+<option value="{{ status }}">
                 {{ status }}
               </option>
             </select>
 
             <!-- Platform filter -->
             <select
-              v-model="platformFilter"
-              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              value="{{ platformFilter }}"
+              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             >
               <option value="all">All Platforms</option>
-              <option v-for="platform in platforms.slice(1)" :key="platform" :value="platform">
+              @foreach(platforms.slice(1) as platform)
+<option value="{{ platform }}">
                 {{ platform }}
               </option>
             </select>
 
             <!-- Author filter -->
             <select
-              v-model="authorFilter"
-              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              value="{{ authorFilter }}"
+              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             >
               <option value="all">All Authors</option>
-              <option v-for="author in authors.slice(1)" :key="author" :value="author">
+              @foreach(authors.slice(1) as author)
+<option value="{{ author }}">
                 {{ author }}
               </option>
             </select>
@@ -648,25 +654,25 @@ function truncateText(text: string, max: number): string {
             <div class="flex rounded-md shadow-sm">
               <button
                 type="button"
-                @click="viewMode = 'detailed'"
-                :class="[
+                onclick="viewMode = 'detailed'"
+                class="[
                   'relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold ring-1 ring-inset focus:z-10',
                   viewMode === 'detailed'
                     ? 'bg-blue-600 text-white ring-blue-600'
-                    : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50 dark:bg-blue-gray-800 dark:text-white dark:ring-gray-700 dark:hover:bg-blue-gray-700'
-                ]"
+                    : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50 dark:bg-neutral-800 dark:text-white dark:ring-neutral-700 dark:hover:bg-neutral-700'
+                ] {{ }}"
               >
                 <div class="h-5 w-5 i-hugeicons-grid"></div>
               </button>
               <button
                 type="button"
-                @click="viewMode = 'compact'"
-                :class="[
+                onclick="viewMode = 'compact'"
+                class="[
                   'relative -ml-px inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold ring-1 ring-inset focus:z-10',
                   viewMode === 'compact'
                     ? 'bg-blue-600 text-white ring-blue-600'
-                    : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50 dark:bg-blue-gray-800 dark:text-white dark:ring-gray-700 dark:hover:bg-blue-gray-700'
-                ]"
+                    : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50 dark:bg-neutral-800 dark:text-white dark:ring-neutral-700 dark:hover:bg-neutral-700'
+                ] {{ }}"
               >
                 <div class="h-5 w-5 i-hugeicons-list-view"></div>
               </button>
@@ -675,57 +681,68 @@ function truncateText(text: string, max: number): string {
         </div>
 
         <!-- Sort options -->
-        <div class="flex items-center mt-4 text-gray-500 text-sm dark:text-gray-400">
+        <div class="flex items-center mt-4 text-gray-500 text-sm dark:text-neutral-400">
           <span class="mr-2">Sort by:</span>
           <button
-            @click="toggleSort('scheduledDate')"
+            onclick="toggleSort('scheduledDate')"
             class="flex items-center mr-3 hover:text-gray-700 dark:hover:text-gray-300"
-            :class="text-blue-600 'font-semibold 'scheduledDate' { } === sortBy dark:text-blue-400':"
+            class="text-blue-600 'font-semibold 'scheduledDate' { {{ } }} === sortBy dark:text-blue-400':"
           >
             Date
-            <span v-if="sortBy === 'scheduledDate'" class="ml-1">
-              <div v-if="sortOrder === 'asc'" class="h-4 w-4 i-hugeicons-arrow-up-01"></div>
-              <div v-else class="h-4 w-4 i-hugeicons-arrow-down-02"></div>
+            @if(sortBy === 'scheduledDate')
+<span class="ml-1">
+              @if(sortOrder === 'asc')
+<div class="h-4 w-4 i-hugeicons-arrow-up-01"></div>
+              @else
+<div class="h-4 w-4 i-hugeicons-arrow-down-02"></div>
             </span>
           </button>
           <button
-            @click="toggleSort('engagement')"
+            onclick="toggleSort('engagement')"
             class="flex items-center mr-3 hover:text-gray-700 dark:hover:text-gray-300"
-            :class="text-blue-600 'engagement' 'font-semibold { } === sortBy dark:text-blue-400':"
+            class="text-blue-600 'engagement' 'font-semibold { {{ } }} === sortBy dark:text-blue-400':"
           >
             Engagement
-            <span v-if="sortBy === 'engagement'" class="ml-1">
-              <div v-if="sortOrder === 'asc'" class="h-4 w-4 i-hugeicons-arrow-up-01"></div>
-              <div v-else class="h-4 w-4 i-hugeicons-arrow-down-02"></div>
+            @if(sortBy === 'engagement')
+<span class="ml-1">
+              @if(sortOrder === 'asc')
+<div class="h-4 w-4 i-hugeicons-arrow-up-01"></div>
+              @else
+<div class="h-4 w-4 i-hugeicons-arrow-down-02"></div>
             </span>
           </button>
           <button
-            @click="toggleSort('author')"
+            onclick="toggleSort('author')"
             class="flex items-center hover:text-gray-700 dark:hover:text-gray-300"
-            :class="text-blue-600 'author' 'font-semibold { } === sortBy dark:text-blue-400':"
+            class="text-blue-600 'author' 'font-semibold { {{ } }} === sortBy dark:text-blue-400':"
           >
             Author
-            <span v-if="sortBy === 'author'" class="ml-1">
-              <div v-if="sortOrder === 'asc'" class="h-4 w-4 i-hugeicons-arrow-up-01"></div>
-              <div v-else class="h-4 w-4 i-hugeicons-arrow-down-02"></div>
+            @if(sortBy === 'author')
+<span class="ml-1">
+              @if(sortOrder === 'asc')
+<div class="h-4 w-4 i-hugeicons-arrow-up-01"></div>
+              @else
+<div class="h-4 w-4 i-hugeicons-arrow-down-02"></div>
             </span>
           </button>
         </div>
 
         <!-- Detailed view -->
-        <div v-if="viewMode === 'detailed'" class="mt-6">
-          <div v-if="paginatedPosts.length === 0" class="py-12 text-center">
+        @if(viewMode === 'detailed')
+<div class="mt-6">
+          @if(paginatedPosts.length === 0)
+<div class="py-12 text-center">
             <div class="mx-auto h-12 w-12 text-gray-400 i-hugeicons-document-validation"></div>
             <h3 class="mt-2 font-semibold text-gray-900 text-sm dark:text-white">No posts found</h3>
-            <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">Try adjusting your search or filter to find what you're looking for.</p>
+            <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">Try adjusting your search or filter to find what you're looking for.</p>
           </div>
 
-          <div v-else class="space-y-6">
+          @else
+<div class="space-y-6">
             <!-- Post card -->
-            <div
-              v-for="post in paginatedPosts"
-              :key="post.id"
-              class="overflow-hidden bg-white dark:bg-blue-gray-800 border border-gray-200 rounded-lg dark:border-gray-700 shadow-sm"
+            @foreach(paginatedPosts as post)
+<div
+              class="overflow-hidden bg-white dark:bg-neutral-800 border border-gray-200 rounded-lg dark:border-neutral-700 shadow-sm"
             >
               <div class="p-6">
                 <div class="flex items-start justify-between">
@@ -744,7 +761,7 @@ function truncateText(text: string, max: number): string {
                         >
                           {{ post.platform }}
                         </span>
-                        <span class="ml-2 text-gray-500 text-sm dark:text-gray-400">{{ formatDate(post.scheduledDate) }}</span>
+                        <span class="ml-2 text-gray-500 text-sm dark:text-neutral-400">{{ formatDate(post.scheduledDate) }}</span>
                       </div>
                     </div>
                   </div>
@@ -756,8 +773,8 @@ function truncateText(text: string, max: number): string {
                     >
                       {{ post.status }}
                     </span>
-                    <span
-                      v-if="isPartOfThread(post)"
+                    @if(isPartOfThread(post))
+<span
                       class="inline-flex items-center px-2 py-1 w-fit font-medium text-purple-700 text-xs dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 ring-1 ring-inset ring-purple-600/20 rounded-full"
                     >
                       Thread {{ post.isThreadStarter ? '(Starter)' : '' }}
@@ -767,20 +784,20 @@ function truncateText(text: string, max: number): string {
 
                 <!-- Post content -->
                 <div class="mt-4">
-                  <p class="text-gray-500 text-sm dark:text-gray-400">{{ post.content }}</p>
+                  <p class="text-gray-500 text-sm dark:text-neutral-400">{{ post.content }}</p>
                 </div>
 
                 <!-- Post images -->
-                <div v-if="post.images.length > 0" class="mt-4">
+                @if(post.images.length > 0)
+<div class="mt-4">
                   <div class="grid gap-2 grid-cols-2">
-                    <div
-                      v-for="(image, index) in post.images"
-                      :key="index"
+                    @foreach(post.images as index => image)
+<div
                       class="aspect-square overflow-hidden relative rounded-lg"
                     >
                       <img
                         :src="image"
-                        :alt="`Image ${index + 1}`"
+                        alt="{{ `Image ${index + 1}` }}"
                         class="object-cover h-full w-full"
                       />
                     </div>
@@ -788,18 +805,19 @@ function truncateText(text: string, max: number): string {
                 </div>
 
                 <!-- Tags -->
-                <div v-if="post.tags.length > 0" class="flex flex-wrap gap-2 mt-4">
-                  <span
-                    v-for="tag in post.tags"
-                    :key="tag"
-                    class="inline-flex items-center px-2 py-1 font-medium text-gray-600 text-xs dark:text-gray-300 bg-gray-50 dark:bg-gray-800 ring-1 ring-gray-500/10 ring-inset rounded-full"
+                @if(post.tags.length > 0)
+<div class="flex flex-wrap gap-2 mt-4">
+                  @foreach(post.tags as tag)
+<span
+                    class="inline-flex items-center px-2 py-1 font-medium text-gray-600 text-xs dark:text-neutral-300 bg-gray-50 dark:bg-neutral-800 ring-1 ring-gray-500/10 ring-inset rounded-full"
                   >
                     #{{ tag }}
                   </span>
                 </div>
 
                 <!-- Engagement metrics (only for published posts) -->
-                <div v-if="post.status === 'Published'" class="flex items-center mt-4 text-gray-500 text-sm dark:text-gray-400">
+                @if(post.status === 'Published')
+<div class="flex items-center mt-4 text-gray-500 text-sm dark:text-neutral-400">
                   <div class="flex items-center">
                     <div class="mr-1 h-4 w-4 i-hugeicons-heart"></div>
                     <span>{{ post.likes }} likes</span>
@@ -816,31 +834,31 @@ function truncateText(text: string, max: number): string {
 
                 <!-- Actions -->
                 <div class="flex justify-end mt-4 space-x-3">
-                  <button
-                    v-if="post.status === 'Draft' || post.status === 'Scheduled'"
+                  @if(post.status === 'Draft' || post.status === 'Scheduled')
+<button
                     class="inline-flex items-center px-2.5 py-1.5 font-semibold text-blue-700 text-sm dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 ring-1 ring-blue-600/20 ring-inset rounded-md shadow-sm"
                   >
                     <div class="mr-1 h-4 w-4 i-hugeicons-paper-plane"></div>
                     Publish Now
                   </button>
                   <button
-                    @click="duplicatePost(post)"
-                    class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+                    onclick="duplicatePost(post)"
+                    class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
                   >
                     <div class="mr-1 h-4 w-4 i-hugeicons-copy"></div>
                     Duplicate
                   </button>
                   <button
-                    @click="openEditPostModal(post)"
-                    class="p-1.5 text-gray-700 dark:text-gray-300 bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+                    onclick="openEditPostModal(post)"
+                    class="p-1.5 text-gray-700 dark:text-neutral-300 bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
                     title="Edit post"
                   >
                     <div class="h-4 w-4 i-hugeicons-edit-01"></div>
                     <span class="sr-only">Edit</span>
                   </button>
                   <button
-                    @click="deletePost(post.id)"
-                    class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+                    onclick="deletePost(post.id)"
+                    class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
                   >
                     <div class="mr-1 h-4 w-4 i-hugeicons-waste"></div>
                     Delete
@@ -852,9 +870,10 @@ function truncateText(text: string, max: number): string {
         </div>
 
         <!-- Compact view -->
-        <div v-if="viewMode === 'compact'" class="overflow-hidden mt-6 ring-1 ring-black ring-opacity-5 sm:rounded-lg shadow">
-          <table class="min-w-full divide-gray-300 divide-y dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-blue-gray-700">
+        @if(viewMode === 'compact')
+<div class="overflow-hidden mt-6 ring-1 ring-black ring-opacity-5 sm:rounded-lg shadow">
+          <table class="min-w-full divide-gray-300 divide-y dark:divide-neutral-700">
+            <thead class="bg-gray-50 dark:bg-neutral-700">
               <tr>
                 <th scope="col" class="pl-4 pr-3 py-3.5 sm:pl-6 font-semibold text-gray-900 text-left text-sm dark:text-white">Content</th>
                 <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-white">Platform</th>
@@ -866,19 +885,23 @@ function truncateText(text: string, max: number): string {
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white dark:bg-blue-gray-800 divide-gray-200 divide-y dark:divide-gray-700">
-              <tr v-if="paginatedPosts.length === 0">
-                <td colspan="6" class="py-4 text-center text-gray-500 text-sm dark:text-gray-400">
+            <tbody class="bg-white dark:bg-neutral-800 divide-gray-200 divide-y dark:divide-neutral-700">
+              @if(paginatedPosts.length === 0)
+<tr>
+                <td colspan="6" class="py-4 text-center text-gray-500 text-sm dark:text-neutral-400">
                   No posts found. Try adjusting your search or filter.
                 </td>
               </tr>
-              <tr v-for="post in paginatedPosts" :key="post.id" class="hover:bg-gray-50 dark:hover:bg-blue-gray-700">
+              @foreach(paginatedPosts as post)
+<tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
                 <td class="pl-4 pr-3 py-4 sm:pl-6 text-sm">
                   <div class="flex items-center max-w-md">
-                    <div v-if="post.images && post.images.length > 0" class="flex-shrink-0 mr-3 h-10 w-10">
+                    @if(post.images && post.images.length > 0)
+<div class="flex-shrink-0 mr-3 h-10 w-10">
                       <img :src="post.images[0]" alt="Post image" class="object-cover h-10 w-10 rounded-md" />
                     </div>
-                    <div v-else class="flex flex-shrink-0 items-center justify-center mr-3 h-10 w-10 bg-blue-100 dark:bg-blue-900 rounded-md">
+                    @else
+<div class="flex flex-shrink-0 items-center justify-center mr-3 h-10 w-10 bg-blue-100 dark:bg-blue-900 rounded-md">
                       <div class="h-6 w-6 text-blue-600 dark:text-blue-300 i-hugeicons-bubble-chat"></div>
                     </div>
                     <div class="text-gray-900 truncate dark:text-white">{{ post.content }}</div>
@@ -886,11 +909,16 @@ function truncateText(text: string, max: number): string {
                 </td>
                 <td class="px-3 py-4 text-sm whitespace-nowrap">
                   <div class="flex items-center">
-                    <div v-if="post.platform === 'Bluesky'" class="mr-1.5 h-5 w-5 text-blue-500 i-hugeicons-cloud"></div>
-                    <div v-else-if="post.platform === 'Twitter'" class="mr-1.5 h-5 w-5 text-blue-400 i-hugeicons-twitter"></div>
-                    <div v-else-if="post.platform === 'Instagram'" class="mr-1.5 h-5 w-5 text-pink-500 i-hugeicons-instagram"></div>
-                    <div v-else-if="post.platform === 'Facebook'" class="mr-1.5 h-5 w-5 text-blue-600 i-hugeicons-facebook"></div>
-                    <div v-else-if="post.platform === 'LinkedIn'" class="mr-1.5 h-5 w-5 text-blue-700 i-hugeicons-linkedin"></div>
+                    @if(post.platform === 'Bluesky')
+<div class="mr-1.5 h-5 w-5 text-blue-500 i-hugeicons-cloud"></div>
+                    @elseif(post.platform === 'Twitter')
+<div class="mr-1.5 h-5 w-5 text-blue-400 i-hugeicons-twitter"></div>
+                    @elseif(post.platform === 'Instagram')
+<div class="mr-1.5 h-5 w-5 text-pink-500 i-hugeicons-instagram"></div>
+                    @elseif(post.platform === 'Facebook')
+<div class="mr-1.5 h-5 w-5 text-blue-600 i-hugeicons-facebook"></div>
+                    @elseif(post.platform === 'LinkedIn')
+<div class="mr-1.5 h-5 w-5 text-blue-700 i-hugeicons-linkedin"></div>
                     <div class="text-gray-900 dark:text-white">{{ post.platform }}</div>
                   </div>
                 </td>
@@ -907,21 +935,21 @@ function truncateText(text: string, max: number): string {
                     <span :class="[getStatusClass(post.status), 'inline-flex items-center rounded-full px-2 py-1 text-xs font-medium w-fit']">
                       {{ post.status }}
                     </span>
-                    <span
-                      v-if="isPartOfThread(post)"
+                    @if(isPartOfThread(post))
+<span
                       class="inline-flex items-center px-2 py-1 w-fit font-medium text-purple-700 text-xs dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 ring-1 ring-inset ring-purple-600/20 rounded-full"
                     >
                       Thread {{ post.isThreadStarter ? '(Starter)' : '' }}
                     </span>
                   </div>
                 </td>
-                <td class="px-3 py-4 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-400">
+                <td class="px-3 py-4 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-400">
                   {{ formatDate(post.scheduledDate || post.publishedDate) }}
                 </td>
                 <td class="relative pl-3 pr-4 py-4 sm:pr-6 font-medium text-right text-sm whitespace-nowrap">
                   <div class="flex justify-end space-x-3">
                     <button
-                      @click="openEditPostModal(post)"
+                      onclick="openEditPostModal(post)"
                       class="text-gray-400 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 duration-150 transition-all"
                       title="Edit post"
                     >
@@ -929,7 +957,7 @@ function truncateText(text: string, max: number): string {
                       <span class="sr-only">Edit</span>
                     </button>
                     <button
-                      @click="deletePost(post.id)"
+                      onclick="deletePost(post.id)"
                       class="text-gray-400 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 duration-150 transition-all"
                       title="Delete post"
                     >
@@ -944,32 +972,33 @@ function truncateText(text: string, max: number): string {
         </div>
 
         <!-- Pagination -->
-        <div v-if="totalPages > 1" class="flex items-center justify-between mt-6 px-4 py-3 sm:px-6 border-gray-200 border-t dark:border-gray-700">
+        @if(totalPages > 1)
+<div class="flex items-center justify-between mt-6 px-4 py-3 sm:px-6 border-gray-200 border-t dark:border-neutral-700">
           <div class="flex sm:hidden flex-1 justify-between">
             <button
-              @click="previousPage"
-              :disabled="currentPage === 1"
-              :class="[
-                'relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-600 dark:bg-blue-gray-800 dark:text-white',
-                currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-blue-gray-700'
-              ]"
+              onclick="previousPage"
+              disabled="{{ currentPage === 1 }}"
+              class="[
+                'relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 dark:border-neutral-600 dark:bg-neutral-800 dark:text-white',
+                currentPage === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-neutral-700'
+              ] {{ }}"
             >
               Previous
             </button>
             <button
-              @click="nextPage"
-              :disabled="currentPage === totalPages"
-              :class="[
-                'relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 dark:border-gray-600 dark:bg-blue-gray-800 dark:text-white',
-                currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-blue-gray-700'
-              ]"
+              onclick="nextPage"
+              disabled="{{ currentPage === totalPages }}"
+              class="[
+                'relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 dark:border-neutral-600 dark:bg-neutral-800 dark:text-white',
+                currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-neutral-700'
+              ] {{ }}"
             >
               Next
             </button>
           </div>
           <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
             <div>
-              <p class="text-gray-700 text-sm dark:text-gray-300">
+              <p class="text-gray-700 text-sm dark:text-neutral-300">
                 Showing <span class="font-medium">{{ (currentPage - 1) * itemsPerPage + 1 }}</span> to
                 <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, filteredPosts.length) }}</span> of
                 <span class="font-medium">{{ filteredPosts.length }}</span> results
@@ -978,32 +1007,31 @@ function truncateText(text: string, max: number): string {
             <div>
               <nav class="inline-flex -space-x-px rounded-md shadow-sm isolate" aria-label="Pagination">
                 <button
-                  @click="previousPage"
-                  :disabled="currentPage === 1"
-                  class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-blue-gray-700 ring-1 ring-gray-300 ring-inset rounded-l-md dark:ring-gray-600 focus:outline-offset-0"
-                  :class="'opacity-50 { } === 1 currentPage cursor-not-allowed':"
+                  onclick="previousPage"
+                  disabled="{{ currentPage === 1 }}"
+                  class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 dark:text-neutral-500 hover:bg-gray-50 dark:hover:bg-neutral-700 ring-1 ring-gray-300 ring-inset rounded-l-md dark:ring-neutral-600 focus:outline-offset-0"
+                  class="'opacity-50 { {{ } }} === 1 currentPage cursor-not-allowed':"
                 >
                   <span class="sr-only">Previous</span>
                   <div class="h-5 w-5 i-hugeicons-arrow-left-01"></div>
                 </button>
-                <button
-                  v-for="page in totalPages"
-                  :key="page"
-                  @click="changePage(page)"
-                  :class="[
-                    'relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-20 focus:outline-offset-0 dark:ring-gray-600',
+                @foreach(totalPages as page)
+<button
+                  onclick="changePage(page)"
+                  class="[
+                    'relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 focus:z-20 focus:outline-offset-0 dark:ring-neutral-600',
                     page === currentPage
                       ? 'bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:bg-blue-700'
-                      : 'text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-blue-gray-700'
-                  ]"
+                      : 'text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-neutral-700'
+                  ] {{ }}"
                 >
                   {{ page }}
                 </button>
                 <button
-                  @click="nextPage"
-                  :disabled="currentPage === totalPages"
-                  class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-blue-gray-700 ring-1 ring-gray-300 ring-inset rounded-r-md dark:ring-gray-600 focus:outline-offset-0"
-                  :class="'opacity-50 { } === currentPage cursor-not-allowed': totalPages"
+                  onclick="nextPage"
+                  disabled="{{ currentPage === totalPages }}"
+                  class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 dark:text-neutral-500 hover:bg-gray-50 dark:hover:bg-neutral-700 ring-1 ring-gray-300 ring-inset rounded-r-md dark:ring-neutral-600 focus:outline-offset-0"
+                  class="'opacity-50 { {{ } }} === currentPage cursor-not-allowed': totalPages"
                 >
                   <span class="sr-only">Next</span>
                   <div class="h-5 w-5 i-hugeicons-arrow-right-01"></div>
@@ -1016,16 +1044,17 @@ function truncateText(text: string, max: number): string {
     </div>
 
     <!-- Post Edit/Create Modal -->
-    <div v-if="showPostModal" class="fixed inset-0 overflow-y-auto z-10">
+    @if(showPostModal)
+<div class="fixed inset-0 overflow-y-auto z-10">
       <div class="flex items-end justify-center sm:items-center p-4 sm:p-0 min-h-full text-center">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 transition-opacity"></div>
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-neutral-900 dark:bg-opacity-75 transition-opacity"></div>
 
-        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-blue-gray-800 rounded-lg shadow-xl transition-all transform">
+        <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-neutral-800 rounded-lg shadow-xl transition-all transform">
           <div class="absolute right-0 top-0 pr-4 pt-4">
             <button
               type="button"
-              @click="closePostModal"
-              class="text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 bg-white dark:bg-blue-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              onclick="closePostModal"
+              class="text-gray-400 dark:text-neutral-500 hover:text-gray-500 dark:hover:text-gray-400 bg-white dark:bg-neutral-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               <span class="sr-only">Close</span>
               <div class="h-6 w-6 i-hugeicons-cancel-circle"></div>
@@ -1037,17 +1066,17 @@ function truncateText(text: string, max: number): string {
                 {{ isNewPost ? 'Create New Post' : 'Edit Post' }}
               </h3>
               <div class="mt-4">
-                <form @submit.prevent="savePost" class="space-y-4">
+                <form onsubmit="savePost; return false" class="space-y-4">
                   <!-- Platform selection -->
                   <div>
-                    <label for="post-platform" class="block font-medium text-gray-700 text-sm dark:text-gray-300">Platform</label>
+                    <label for="post-platform" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">Platform</label>
                     <select
-                      id="post-platform"
-                      v-if="currentPost"
-                      v-model="currentPost.platform"
-                      class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                      id="post-platform" 
+                      value="{{ currentPost.platform }}"
+                      class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                     >
-                      <option v-for="platform in platforms.slice(1)" :key="platform" :value="platform">
+                      @foreach(platforms.slice(1) as platform)
+<option value="{{ platform }}">
                         {{ platform }}
                       </option>
                     </select>
@@ -1055,49 +1084,48 @@ function truncateText(text: string, max: number): string {
 
                   <!-- Post content -->
                   <div>
-                    <label for="post-content" class="block font-medium text-gray-700 text-sm dark:text-gray-300">Content</label>
+                    <label for="post-content" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">Content</label>
                     <textarea
-                      id="post-content"
-                      v-if="currentPost"
-                      v-model="currentPost.content"
-                      @input="updateTags"
+                      id="post-content" 
+                      value="{{ currentPost.content }}"
+                      oninput="updateTags"
                       rows="4"
-                      class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                      class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                       placeholder="What's on your mind? Use #hashtags for better discoverability."
                       required
                     ></textarea>
-                    <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">
+                    <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">
                       {{ currentPost?.content?.length || 0 }}/300 characters
                     </p>
                   </div>
 
                   <!-- Images -->
                   <div>
-                    <label class="block font-medium text-gray-700 text-sm dark:text-gray-300">Images</label>
-                    <div v-if="currentPost && currentPost.images.length > 0" class="grid gap-2 grid-cols-2 mt-2">
-                      <div
-                        v-for="(image, index) in currentPost.images"
-                        :key="index"
+                    <label class="block font-medium text-gray-700 text-sm dark:text-neutral-300">Images</label>
+                    @if(currentPost && currentPost.images.length > 0)
+<div class="grid gap-2 grid-cols-2 mt-2">
+                      @foreach(currentPost.images as index => image)
+<div
                         class="aspect-square overflow-hidden relative rounded-lg"
                       >
                         <img
                           :src="image"
-                          :alt="`Image ${index + 1}`"
+                          alt="{{ `Image ${index + 1}` }}"
                           class="object-cover h-full w-full"
                         />
                         <button
                           type="button"
-                          @click="removeImageFromPost(index)"
+                          onclick="removeImageFromPost(index)"
                           class="absolute right-1 top-1 p-1 text-white bg-gray-800 bg-opacity-75 hover:bg-opacity-100 rounded-full"
                         >
                           <div class="h-4 w-4 i-hugeicons-cancel-circle"></div>
                         </button>
                       </div>
                     </div>
-                    <div class="mt-2" v-if="currentPost && currentPost.images.length < 4">
+                    <div class="mt-2" >
                       <button
                         type="button"
-                        class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+                        class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
                       >
                         <div class="mr-1 h-4 w-4 i-hugeicons-image-01"></div>
                         Add Image
@@ -1107,42 +1135,41 @@ function truncateText(text: string, max: number): string {
 
                   <!-- Tags -->
                   <div>
-                    <label class="block font-medium text-gray-700 text-sm dark:text-gray-300">Tags</label>
-                    <div v-if="currentPost && currentPost.tags.length > 0" class="flex flex-wrap gap-2 mt-2">
-                      <span
-                        v-for="tag in currentPost.tags"
-                        :key="tag"
+                    <label class="block font-medium text-gray-700 text-sm dark:text-neutral-300">Tags</label>
+                    @if(currentPost && currentPost.tags.length > 0)
+<div class="flex flex-wrap gap-2 mt-2">
+                      @foreach(currentPost.tags as tag)
+<span
                         class="inline-flex items-center px-2 py-1 font-medium text-blue-700 text-xs dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 ring-1 ring-blue-600/20 ring-inset rounded-full"
                       >
                         #{{ tag }}
                       </span>
                     </div>
-                    <p v-else class="mt-1 text-gray-500 text-sm dark:text-gray-400">
+                    @else
+<p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">
                       Add #hashtags in your content to automatically generate tags
                     </p>
                   </div>
 
                   <!-- Schedule date and time -->
                   <div>
-                    <label for="post-schedule" class="block font-medium text-gray-700 text-sm dark:text-gray-300">Schedule Date & Time</label>
+                    <label for="post-schedule" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">Schedule Date & Time</label>
                     <input
                       type="datetime-local"
-                      id="post-schedule"
-                      v-if="currentPost"
-                      v-model="currentPost.scheduledDate"
-                      class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                      id="post-schedule" 
+                      value="{{ currentPost.scheduledDate }}"
+                      class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                       required
                     />
                   </div>
 
                   <!-- Status -->
                   <div>
-                    <label for="post-status" class="block font-medium text-gray-700 text-sm dark:text-gray-300">Status</label>
+                    <label for="post-status" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">Status</label>
                     <select
-                      id="post-status"
-                      v-if="currentPost"
-                      v-model="currentPost.status"
-                      class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                      id="post-status" 
+                      value="{{ currentPost.status }}"
+                      class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                     >
                       <option value="Draft">Draft</option>
                       <option value="Scheduled">Scheduled</option>
@@ -1150,14 +1177,15 @@ function truncateText(text: string, max: number): string {
                   </div>
 
                   <!-- Thread options (if creating a new post) -->
-                  <div v-if="isNewPost">
+                  @if(isNewPost)
+<div>
                     <div class="flex items-center">
                       <input
                         id="create-thread"
                         type="checkbox"
-                        class="h-4 w-4 text-blue-600 border-gray-300 rounded dark:border-gray-600 focus:ring-blue-500"
+                        class="h-4 w-4 text-blue-600 border-gray-300 rounded dark:border-neutral-600 focus:ring-blue-500"
                       />
-                      <label for="create-thread" class="block ml-2 font-medium text-gray-700 text-sm dark:text-gray-300">
+                      <label for="create-thread" class="block ml-2 font-medium text-gray-700 text-sm dark:text-neutral-300">
                         Create as thread starter (for multi-post threads)
                       </label>
                     </div>
@@ -1172,8 +1200,8 @@ function truncateText(text: string, max: number): string {
                     </button>
                     <button
                       type="button"
-                      @click="closePostModal"
-                      class="inline-flex justify-center mt-3 px-3 py-2 sm:mt-0 w-full sm:w-auto font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+                      onclick="closePostModal"
+                      class="inline-flex justify-center mt-3 px-3 py-2 sm:mt-0 w-full sm:w-auto font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
                     >
                       Cancel
                     </button>
@@ -1187,3 +1215,5 @@ function truncateText(text: string, max: number): string {
     </div>
   </main>
 
+
+@endsection

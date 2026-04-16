@@ -1,73 +1,96 @@
-<script server>
-const API_URL = 'http://localhost:' + (process.env.PORT_API || '3008')
+@extends('layouts/default')
 
+@section('content')
+<script server>
 let actions = []
 
 try {
-  const res = await fetch(API_URL + '/dashboard/actions/list')
-  if (res.ok) {
-    const json = await res.json()
-    actions = json.actions || []
+  const { Glob } = await import('bun')
+  const path = await import('path')
+  const cwd = process.cwd()
+  const dirs = [
+    path.resolve(cwd, 'app/Actions'),
+    path.resolve(cwd, 'storage/framework/defaults/app/Actions'),
+  ]
+  const seen = new Set()
+  for (const dir of dirs) {
+    try {
+      const glob = new Glob('**/*.ts')
+      for await (const filePath of glob.scan({ cwd: dir, onlyFiles: true })) {
+        const name = path.basename(filePath, '.ts')
+        if (!seen.has(name)) {
+          seen.add(name)
+          const parts = filePath.split('/')
+          const type = parts.length > 1 ? parts[0] : 'General'
+          actions.push({
+            name: name,
+            type: type,
+            runs: 0,
+            avgTime: '-',
+            status: 'Active',
+          })
+        }
+      }
+    } catch (e) {
+      // directory not found
+    }
   }
 } catch (e) {
-  // API not available
+  // filesystem scan failed
 }
 
-function statusClass(s) {
-  if (!s) return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-  s = String(s).toLowerCase()
-  if (['active','success','healthy','connected','running','published','approved','valid','up-to-date'].indexOf(s) >= 0)
-    return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-  if (['pending','scheduled','warning','low-stock','draft','update-available'].indexOf(s) >= 0)
-    return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-  if (['failed','error','inactive','cancelled','spam','rejected','out-of-stock'].indexOf(s) >= 0)
-    return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-  if (['info','completed','processing'].indexOf(s) >= 0)
-    return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-  return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+function statusVariant(s) {
+  s = String(s || '').toLowerCase()
+  if (['active', 'success', 'healthy', 'running'].includes(s)) return 'success'
+  if (['pending', 'scheduled', 'warning'].includes(s)) return 'warning'
+  if (['failed', 'error', 'inactive'].includes(s)) return 'danger'
+  return 'default'
 }
 </script>
-<div class="p-6 min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="flex items-start justify-between mb-8">
-      <div>
-        <h1 class="font-bold text-3xl text-gray-900 dark:text-white">Actions</h1>
-        <p class="mt-1 text-gray-500 dark:text-gray-400">Application actions and automations</p>
-      </div>
-      <div class="flex gap-3 items-center">
-        <button class="px-4 py-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg">New Action</button>
-      </div>
-    </div>
+<div class="p-6 space-y-6">
 
-    <div class="flex flex-col gap-6">
-      <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
-        <div class="overflow-x-auto border border-gray-200 rounded-xl dark:border-gray-700">
-          <table class="w-full text-sm">
-            <thead class="bg-gray-50 dark:bg-gray-700/50">
-              <tr>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Action</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Type</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Runs (30d)</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Avg Time</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Status</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @foreach (actions as action)
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                  <td class="px-4 py-3 font-medium text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ action.name }}</td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700"><span class="px-2.5 py-1 font-semibold text-gray-600 text-xs dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-full">{{ action.type }}</span></td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ action.runs.toLocaleString() }}</td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ action.avgTime }}</td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">
-                    <span class="px-2.5 py-1 font-semibold text-xs rounded-full {{ }} statusClass(action.status)">{{ action.status }}</span>
-                  </td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700"><button class="px-3 py-1.5 font-medium text-gray-500 text-xs dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Edit</button></td>
-                </tr>
-              @endforeach
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+  <PageHeader title="Actions" description="Application actions and automations">
+    <template #actions>
+      <Button variant="primary">
+        <div class="h-4 w-4 i-hugeicons-plus-sign"></div>
+        New Action
+      </Button>
+    </template>
+  </PageHeader>
+
+  <!-- Actions Table -->
+  <div class="bg-white dark:bg-neutral-800/90 border border-black/5 rounded-xl dark:border-white/5">
+    <DataTable
+      :columns="{{ JSON.stringify([
+        { key: 'name', label: 'Action' },
+        { key: 'type', label: 'Type' },
+        { key: 'runs', label: 'Runs (30d)' },
+        { key: 'avgTime', label: 'Avg Time' },
+        { key: 'status', label: 'Status' },
+        { key: 'actions', label: '' }
+      ]) }}"
+      :data="actions"
+      emptyTitle="No actions found"
+      emptyDescription="Actions will appear here once they are created"
+      emptyIcon="i-hugeicons-zap"
+    >
+      @foreach(actions as action)
+        <tr class="hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors">
+          <td class="px-4 py-3 font-medium text-[13px] text-neutral-900 dark:text-white">{{ action.name }}</td>
+          <td class="px-4 py-3">
+            <Badge variant="default" size="xs">{{ action.type }}</Badge>
+          </td>
+          <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ action.runs.toLocaleString() }}</td>
+          <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ action.avgTime }}</td>
+          <td class="px-4 py-3">
+            <Badge variant="{{ statusVariant(action.status) }}" size="xs" dot>{{ action.status }}</Badge>
+          </td>
+          <td class="px-4 py-3">
+            <Button variant="ghost" size="xs" iconOnly><div class="h-4 w-4 i-hugeicons-edit-01"></div></Button>
+          </td>
+        </tr>
+      @endforeach
+    </DataTable>
   </div>
+</div>
+@endsection

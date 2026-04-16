@@ -10,19 +10,21 @@
   />
 -->
 
-<script server>
-const props = defineProps({
-  columns: { type: Array, required: true },
-  data: { type: Array, required: true },
-  striped: { type: Boolean, default: false },
-  hoverable: { type: Boolean, default: true },
+<script>
+interface TableProps {
+  columns: any[]
+  data: any[]
+  striped?: boolean
+  hoverable?: boolean
 }
+
+const { columns, data, striped, hoverable } = defineProps<TableProps>()
 </script>
 <div class="dashboard-table-container">
-    <table class=": : ? ? '' '' 'hoverable' 'striped' {{ {{ }} }} dashboard-table props.hoverable props.striped">
+    <table class=": : ? ? '' '' 'hoverable' 'striped' {{ {{ }} }} dashboard-table hoverable striped">
       <thead>
         <tr>
-          @foreach (props.columns as column)
+          @foreach (columns as column)
             <th class=": ? '' 'text-' {{ }} + column.align column.align">
               {{ column.label }}
             </th>
@@ -30,9 +32,9 @@ const props = defineProps({
         </tr>
       </thead>
       <tbody>
-        @foreach (props.data as row)
+        @foreach (data as row)
           <tr>
-            @foreach (props.columns as column)
+            @foreach (columns as column)
               <td class=": ? '' 'text-' {{ }} + column.align column.align">
                 @if (column.render)
                   {{ column.render(row[column.key], row) }}

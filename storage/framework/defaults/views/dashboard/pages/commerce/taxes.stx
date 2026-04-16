@@ -1,190 +1,118 @@
-<script server>
-const API_URL = 'http://localhost:' + (process.env.PORT_API || '3008')
+@extends('layouts/default')
 
+@section('content')
+<script server>
+// Data available when full dev server runs (buddy dev)
 let taxRates = []
 let taxSummary = []
 let recentTaxes = []
-
-try {
-  const res = await fetch(API_URL + '/dashboard/commerce/taxes')
-  if (res.ok) {
-    const json = await res.json()
-    taxRates = json.taxRates || []
-    taxSummary = json.taxSummary || []
-    recentTaxes = json.recentTaxes || []
-  }
-} catch (e) {
-  // API not available
-}
 </script>
-<div class="p-6 min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="flex items-start justify-between mb-8">
-      <div>
-        <h1 class="font-bold text-3xl text-gray-900 dark:text-white">Taxes</h1>
-        <p class="mt-1 text-gray-500 dark:text-gray-400">Tax rates and compliance</p>
-      </div>
-      <div class="flex gap-3 items-center">
-        <button class="px-4 py-2 font-medium text-gray-700 text-sm dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 rounded-lg dark:border-gray-600">Tax Reports</button>
-        <button class="px-4 py-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg">Add Tax Rate</button>
-      </div>
+<div class="p-6 space-y-6">
+
+  <PageHeader title="Taxes" description="Tax rates and compliance">
+    <template #actions>
+      <Button variant="secondary">Tax Reports</Button>
+      <Button variant="primary">Add Tax Rate</Button>
+    </template>
+  </PageHeader>
+
+  <!-- Stats -->
+  <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+    @foreach (taxSummary as stat)
+      <StatsCard :title="stat.label" value="{{ stat.value }}" icon="i-hugeicons-calculator" iconBg="primary" />
+    @endforeach
+  </div>
+
+  <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
+    <!-- Tax Rates by Region -->
+    <div class="bg-white dark:bg-neutral-800/90 border border-black/5 rounded-xl dark:border-white/5">
+      <DataTable
+        :columns="{{ JSON.stringify([
+          { key: 'region', label: 'Region' },
+          { key: 'rate', label: 'Rate' },
+          { key: 'type', label: 'Type' },
+          { key: 'status', label: 'Status' },
+        ]) }}"
+        :data="taxRates"
+        emptyTitle="No tax rates"
+        emptyDescription="Add tax rates for your regions"
+        emptyIcon="i-hugeicons-calculator"
+      >
+        @foreach (taxRates as tax)
+          <tr class="hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors">
+            <td class="px-4 py-3 font-medium text-[13px] text-neutral-900 dark:text-white">{{ tax.region }}</td>
+            <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ tax.rate }}</td>
+            <td class="px-4 py-3">
+              <Badge variant="default" size="xs">{{ tax.type }}</Badge>
+            </td>
+            <td class="px-4 py-3">
+              <Badge variant="success" size="xs">{{ tax.status }}</Badge>
+            </td>
+          </tr>
+        @endforeach
+      </DataTable>
     </div>
 
-    <div class="flex flex-col gap-6">
-      <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-        @foreach (taxSummary as stat)
-          <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700">
-            <div class="font-bold text-2xl text-gray-900 dark:text-white">{{ stat.value }}</div>
-            <div class="mt-1 text-gray-500 text-sm dark:text-gray-400">{{ stat.label }}</div>
-          </div>
+    <!-- Recent Tax Collections -->
+    <div class="bg-white dark:bg-neutral-800/90 border border-black/5 rounded-xl dark:border-white/5">
+      <DataTable
+        :columns="{{ JSON.stringify([
+          { key: 'order', label: 'Order' },
+          { key: 'subtotal', label: 'Subtotal' },
+          { key: 'taxRate', label: 'Rate' },
+          { key: 'taxAmount', label: 'Tax' },
+          { key: 'region', label: 'Region' },
+        ]) }}"
+        :data="recentTaxes"
+        emptyTitle="No tax collections"
+        emptyDescription="Tax collection data will appear here"
+        emptyIcon="i-hugeicons-calculator"
+      >
+        @foreach (recentTaxes as tax)
+          <tr class="hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors">
+            <td class="px-4 py-3 text-[13px] text-blue-600 dark:text-blue-400">{{ tax.order }}</td>
+            <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ tax.subtotal }}</td>
+            <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ tax.taxRate }}</td>
+            <td class="px-4 py-3 font-semibold text-[13px] text-neutral-900 dark:text-white">{{ tax.taxAmount }}</td>
+            <td class="px-4 py-3 text-[12px] text-neutral-500 dark:text-neutral-400">{{ tax.region }}</td>
+          </tr>
         @endforeach
-      </div>
-
-      <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
-          <div class="flex items-center justify-between mb-4">
-            <span class="font-semibold text-gray-900 dark:text-white">Tax Rates by Region</span>
-            <button class="px-3 py-1.5 font-medium text-gray-500 text-xs dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Manage</button>
-          </div>
-          <div class="overflow-x-auto border border-gray-200 rounded-xl dark:border-gray-700">
-            <table class="w-full text-sm">
-              <thead class="bg-gray-50 dark:bg-gray-700/50">
-                <tr>
-                  <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Region</th>
-                  <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Rate</th>
-                  <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Type</th>
-                  <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                @foreach (taxRates as tax)
-                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                    <td class="px-4 py-3 font-medium text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ tax.region }}</td>
-                    <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ tax.rate }}</td>
-                    <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700"><span class="px-2.5 py-1 font-semibold text-gray-600 text-xs dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-full">{{ tax.type }}</span></td>
-                    <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">
-                      <span class="px-2.5 py-1 font-semibold text-green-700 text-xs dark:text-green-400 bg-green-100 dark:bg-green-900/30 rounded-full">{{ tax.status }}</span>
-                    </td>
-                  </tr>
-                @endforeach
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
-          <div class="flex items-center justify-between mb-4">
-            <span class="font-semibold text-gray-900 dark:text-white">Recent Tax Collections</span>
-          </div>
-          <div class="overflow-x-auto border border-gray-200 rounded-xl dark:border-gray-700">
-            <table class="w-full text-sm">
-              <thead class="bg-gray-50 dark:bg-gray-700/50">
-                <tr>
-                  <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Order</th>
-                  <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Subtotal</th>
-                  <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Rate</th>
-                  <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Tax</th>
-                  <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Region</th>
-                </tr>
-              </thead>
-              <tbody>
-                @foreach (recentTaxes as tax)
-                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                    <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700"><a href="#" class="text-blue-600 dark:text-blue-400 hover:underline">{{ tax.order }}</a></td>
-                    <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ tax.subtotal }}</td>
-                    <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ tax.taxRate }}</td>
-                    <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ tax.taxAmount }}</td>
-                    <td class="px-4 py-3 text-gray-500 dark:text-gray-400 border-gray-100 border-t dark:border-gray-700">{{ tax.region }}</td>
-                  </tr>
-                @endforeach
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
-        <div class="flex items-center justify-between mb-4">
-          <span class="font-semibold text-gray-900 dark:text-white">Tax Automation</span>
-        </div>
-        <div class="p-4">
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <div class="font-medium">Automatic Tax Calculation</div>
-              <div class="text-gray-500 text-sm dark:text-gray-400">Calculate taxes based on customer location</div>
-            </div>
-            <label class="switch">
-              <input type="checkbox" checked />
-              <span class="slider"></span>
-            </label>
-          </div>
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <div class="font-medium">Tax-Inclusive Pricing</div>
-              <div class="text-gray-500 text-sm dark:text-gray-400">Display prices with tax included</div>
-            </div>
-            <label class="switch">
-              <input type="checkbox" />
-              <span class="slider"></span>
-            </label>
-          </div>
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="font-medium">Avalara Integration</div>
-              <div class="text-gray-500 text-sm dark:text-gray-400">Use Avalara for tax compliance</div>
-            </div>
-            <button class="px-3 py-1.5 font-medium text-gray-700 text-xs dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 rounded-lg dark:border-gray-600">Configure</button>
-          </div>
-        </div>
-      </div>
+      </DataTable>
     </div>
   </div>
-<style>
-.p-4 {
-  padding: 1rem;
-}
-.justify-between {
-  justify-content: space-between;
-}
-.text-primary {
-  color: var(--color-primary);
-}
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 24px;
-}
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--color-border);
-  border-radius: 24px;
-  transition: 0.2s;
-}
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  border-radius: 50%;
-  transition: 0.2s;
-}
-input:checked + .slider {
-  background-color: var(--color-primary);
-}
-input:checked + .slider:before {
-  transform: translateX(20px);
-}
-</style>
+
+  <!-- Tax Automation -->
+  <Card title="Tax Automation">
+    <div class="p-4 space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="font-medium text-[13px] text-neutral-900 dark:text-white">Automatic Tax Calculation</div>
+          <div class="text-[12px] text-neutral-500 dark:text-neutral-400">Calculate taxes based on customer location</div>
+        </div>
+        <label class="inline-flex relative items-center cursor-pointer">
+          <input type="checkbox" checked class="sr-only peer" />
+          <div class="after:absolute after:left-[2px] after:top-[2px] after:content-[''] h-6 w-11 after:h-5 after:w-5 bg-neutral-200 after:bg-white dark:bg-neutral-700 peer-checked:bg-blue-600 rounded-full after:border after:border-neutral-300 after:rounded-full dark:border-neutral-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 peer-checked:after:border-white after:transition-all peer-checked:after:translate-x-full peer"></div>
+        </label>
+      </div>
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="font-medium text-[13px] text-neutral-900 dark:text-white">Tax-Inclusive Pricing</div>
+          <div class="text-[12px] text-neutral-500 dark:text-neutral-400">Display prices with tax included</div>
+        </div>
+        <label class="inline-flex relative items-center cursor-pointer">
+          <input type="checkbox" class="sr-only peer" />
+          <div class="after:absolute after:left-[2px] after:top-[2px] after:content-[''] h-6 w-11 after:h-5 after:w-5 bg-neutral-200 after:bg-white dark:bg-neutral-700 peer-checked:bg-blue-600 rounded-full after:border after:border-neutral-300 after:rounded-full dark:border-neutral-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 peer-checked:after:border-white after:transition-all peer-checked:after:translate-x-full peer"></div>
+        </label>
+      </div>
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="font-medium text-[13px] text-neutral-900 dark:text-white">Avalara Integration</div>
+          <div class="text-[12px] text-neutral-500 dark:text-neutral-400">Use Avalara for tax compliance</div>
+        </div>
+        <Button variant="outline" size="xs">Configure</Button>
+      </div>
+    </div>
+  </Card>
+
+</div>
+@endsection

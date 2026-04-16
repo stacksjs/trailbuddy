@@ -1,51 +1,62 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
-const API_URL = 'http://localhost:' + (process.env.PORT_API || '3008')
+let modelSlug = typeof model !== 'undefined' ? model : 'unknown'
+let tableName = modelSlug.replace(/-/g, '_').replace(/[^a-z0-9_]/gi, '') + 's'
+let modelName = modelSlug.split('-').map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')
 
-var modelSlug = typeof model !== 'undefined' ? model : 'unknown'
-var tableName = modelSlug.replace(/-/g, '_').replace(/[^a-z0-9_]/gi, '') + 's'
-var modelName = modelSlug.split('-').map(function(s) { return s.charAt(0).toUpperCase() + s.slice(1) }).join(' ')
-
-var items = []
-var columns = []
-var error = null
-var totalCount = 0
-var recentCount = 0
-var statusBreakdown = {}
-var statusKeys = []
+let items = []
+let columns = []
+let error = null
+let totalCount = 0
+let recentCount = 0
+let statusBreakdown = {}
+let statusKeys = []
 
 try {
-  const res = await fetch(API_URL + '/models/' + encodeURIComponent(modelSlug))
-  if (res.ok) {
-    const json = await res.json()
-    items = json.items || []
-    columns = json.columns || []
-    totalCount = json.totalCount || 0
-    recentCount = json.recentCount || 0
-    statusBreakdown = json.statusBreakdown || {}
-    statusKeys = Object.keys(statusBreakdown)
-    if (json.tableName) tableName = json.tableName
-    if (json.modelName) modelName = json.modelName
-    if (json.error) error = json.error
+  const orm = await import('@stacksjs/orm')
+  const pascalName = modelSlug.split('-').map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join('')
+  const ModelClass = orm[pascalName]
+  if (ModelClass) {
+    const allItems = await ModelClass.orderBy('created_at', 'desc').get()
+    totalCount = allItems.length
+    if (allItems.length > 0) {
+      const first = allItems[0]
+      const attrs = first.getAttributes ? first.getAttributes() : {}
+      columns = Object.keys(attrs).filter(k => !['password', 'token', 'secret'].includes(k))
+      items = allItems.map(item => {
+        const row = {}
+        columns.forEach(col => { row[col] = String(item.get(col) || '') })
+        return row
+      })
+      const now = new Date()
+      recentCount = allItems.filter(item => {
+        const d = new Date(String(item.get('created_at') || ''))
+        return (now.getTime() - d.getTime()) < 7 * 24 * 60 * 60 * 1000
+      }).length
+      allItems.forEach(item => {
+        const s = String(item.get('status') || 'N/A')
+        statusBreakdown[s] = (statusBreakdown[s] || 0) + 1
+      })
+      statusKeys = Object.keys(statusBreakdown)
+    }
+  } else {
+    error = 'Model not found: ' + pascalName
   }
 } catch (e) {
-  error = 'API not available'
+  error = 'DB not seeded'
 }
 
-function statusClass(s) {
-  if (!s) return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-  s = String(s).toLowerCase()
-  if (['active','success','healthy','connected','running','published','approved','valid','up-to-date'].indexOf(s) >= 0)
-    return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-  if (['pending','scheduled','warning','low-stock','draft','update-available'].indexOf(s) >= 0)
-    return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-  if (['failed','error','inactive','cancelled','spam','rejected','out-of-stock'].indexOf(s) >= 0)
-    return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-  if (['info','completed','processing'].indexOf(s) >= 0)
-    return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-  return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+function statusVariant(s) {
+  s = String(s || '').toLowerCase()
+  if (['active', 'success', 'healthy', 'completed', 'running', 'published'].includes(s)) return 'success'
+  if (['pending', 'scheduled', 'warning', 'draft'].includes(s)) return 'warning'
+  if (['failed', 'error', 'inactive', 'cancelled'].includes(s)) return 'danger'
+  if (['processing', 'info'].includes(s)) return 'primary'
+  return 'default'
 }
 </script>
-<DashboardLayout pageTitle="{{ modelName }}" pageDescription="View and manage {{ modelName }} data">
   <div ref="pageRoot" class="p-6">
     <div class="mb-4">
       <a href="/app#data-dashboard" class="flex gap-1 items-center text-blue-600 text-sm dark:text-blue-400 hover:underline">
@@ -57,7 +68,7 @@ function statusClass(s) {
     <div class="flex items-center justify-between mb-6">
       <div>
         <h1 class="font-bold text-2xl text-gray-900 dark:text-white">{{ modelName }}</h1>
-        <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">
+        <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">
           @if(error)
             Table "{{ tableName }}" not found or error occurred
           @else
@@ -66,17 +77,12 @@ function statusClass(s) {
         </p>
       </div>
       <div class="flex gap-3">
-        <button class="px-4 py-2 font-medium text-gray-700 text-sm dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 rounded-lg dark:border-gray-600">
-          Export
-        </button>
-        <button class="px-4 py-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg">
-          Add New
-        </button>
+        <Button variant="outline" size="sm">Export</Button>
+        <Button variant="primary" size="sm">Add New</Button>
       </div>
     </div>
 
-    @if(error)
-      <!-- Error State -->
+    <!-- Error State -->
       <div class="p-6 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-xl dark:border-red-800">
         <div class="flex gap-3 items-center">
           <div class="flex items-center justify-center h-10 w-10 bg-red-100 dark:bg-red-900/30 rounded-full">
@@ -90,85 +96,83 @@ function statusClass(s) {
       </div>
     @elseif(items.length === 0)
       <!-- Empty State -->
-      <div class="p-12 text-center bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700">
-        <div class="flex items-center justify-center mb-4 mx-auto h-16 w-16 bg-gray-100 dark:bg-gray-700 rounded-full">
+      <div class="p-12 text-center bg-white dark:bg-neutral-800 border border-gray-200 rounded-xl dark:border-neutral-700">
+        <div class="flex items-center justify-center mb-4 mx-auto h-16 w-16 bg-gray-100 dark:bg-neutral-700 rounded-full">
           <span class="text-2xl text-gray-400">0</span>
         </div>
         <h3 class="mb-2 font-semibold text-gray-900 text-lg dark:text-white">No {{ modelName }} Found</h3>
-        <p class="mb-6 text-gray-500 dark:text-gray-400">Get started by creating your first {{ modelName }}.</p>
-        <button class="px-4 py-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg">
-          Create {{ modelName }}
-        </button>
+        <p class="mb-6 text-gray-500 dark:text-neutral-400">Get started by creating your first {{ modelName }}.</p>
+        <Button variant="primary" size="sm">Create {{ modelName }}</Button>
       </div>
     @else
       <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-6">
-        <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700">
+        <div class="p-5 bg-white dark:bg-neutral-800 border border-gray-200 rounded-xl dark:border-neutral-700">
           <div class="font-bold text-2xl text-gray-900 dark:text-white">{{ totalCount }}</div>
-          <div class="mt-1 text-gray-500 text-sm dark:text-gray-400">Total Records</div>
+          <div class="mt-1 text-gray-500 text-sm dark:text-neutral-400">Total Records</div>
         </div>
-        <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700">
+        <div class="p-5 bg-white dark:bg-neutral-800 border border-gray-200 rounded-xl dark:border-neutral-700">
           <div class="font-bold text-2xl text-gray-900 dark:text-white">{{ recentCount }}</div>
-          <div class="mt-1 text-gray-500 text-sm dark:text-gray-400">Added This Week</div>
+          <div class="mt-1 text-gray-500 text-sm dark:text-neutral-400">Added This Week</div>
         </div>
         @foreach(statusKeys as sk)
-          <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700">
+          <div class="p-5 bg-white dark:bg-neutral-800 border border-gray-200 rounded-xl dark:border-neutral-700">
             <div class="font-bold text-2xl text-gray-900 dark:text-white">{{ statusBreakdown[sk] }}</div>
-            <div class="mt-1 text-gray-500 text-sm dark:text-gray-400">{{ sk }}</div>
+            <div class="mt-1 text-gray-500 text-sm dark:text-neutral-400">{{ sk }}</div>
           </div>
         @endforeach
       </div>
 
       <div class="mb-4">
         <input type="text" id="modelSearch" placeholder="Search {{ modelName }}..."
-          class="px-4 py-2 text-gray-900 text-sm dark:text-white bg-white dark:bg-gray-800 border border-gray-300 rounded-lg dark:border-gray-600 focus:ring-2 focus:ring-blue-500" >
+          class="px-4 py-2 text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-800 border border-gray-300 rounded-lg dark:border-neutral-600 focus:ring-2 focus:ring-blue-500" >
       </div>
 
       <!-- Data Table -->
-      <div class="overflow-hidden bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700">
+      <div class="overflow-hidden bg-white dark:bg-neutral-800 border border-gray-200 rounded-xl dark:border-neutral-700">
+        @if (items.length > 0)
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead class="bg-gray-50 dark:bg-gray-700/50">
+            <thead class="bg-gray-50 dark:bg-neutral-700/50">
               <tr>
                 @foreach(columns as col)
-                  <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">
+                  <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-neutral-400">
                     {{ col.label }}
                   </th>
                 @endforeach
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-400">
+                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-400">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody id="modelTableBody" class="divide-gray-100 divide-y dark:divide-gray-700">
+            <tbody id="modelTableBody" class="divide-gray-100 divide-y dark:divide-neutral-700">
               @foreach(items as item)
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <tr class="hover:bg-gray-50 dark:hover:bg-neutral-700/30">
                   @foreach(columns as col)
                     <td class="px-4 py-3 text-gray-900 text-sm dark:text-white">
                       @if(col.name === 'id')
-                        <span class="px-2 py-1 font-mono text-xs bg-gray-100 dark:bg-gray-700 rounded">{{ item[col.name] }}</span>
+                        <span class="px-2 py-1 font-mono text-xs bg-gray-100 dark:bg-neutral-700 rounded">{{ item[col.name] }}</span>
                       @elseif(col.name.includes('_at') || col.name.includes('date'))
-                        <span class="text-gray-500 dark:text-gray-400">{{ item[col.name] ? new Date(item[col.name]).toLocaleDateString() : '-' }}</span>
+                        <span class="text-gray-500 dark:text-neutral-400">{{ item[col.name] ? new Date(item[col.name]).toLocaleDateString() : '-' }}</span>
                       @elseif(col.name === 'status')
-                        <span class="px-2.5 py-1 font-semibold text-xs rounded-full {{ }} statusClass(item[col.name])">{{ item[col.name] }}</span>
+                        <Badge variant="{{ statusVariant(item[col.name]) }}" size="sm" dot>{{ item[col.name] }}</Badge>
                       @elseif(col.name === 'email')
                         <a href="mailto:{{ item[col.name] }}" class="text-blue-600 dark:text-blue-400 hover:underline">{{ item[col.name] }}</a>
                       @elseif(col.name === 'price' || col.name === 'amount' || col.name === 'total' || col.name === 'cost')
                         <span class="font-mono">${{ typeof item[col.name] === 'number' ? item[col.name].toFixed(2) : (item[col.name] || '0.00') }}</span>
                       @elseif(col.name.startsWith('is_') || col.name.startsWith('has_'))
                         @if(item[col.name])
-                          <span class="px-2 py-1 font-medium text-green-700 text-xs dark:text-green-400 bg-green-100 dark:bg-green-900/30 rounded-full">Yes</span>
-                        @else
-                          <span class="px-2 py-1 font-medium text-gray-600 text-xs dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-full">No</span>
-                        @endif
+                          <Badge variant="success" size="sm">Yes</Badge>
+
+                          <Badge variant="default" size="sm">No</Badge>
+
                       @elseif(col.name.includes('_url') || col.name.includes('url'))
                         @if(item[col.name])
                           <a href="{{ item[col.name] }}" class="text-blue-600 text-xs dark:text-blue-400 hover:underline" target="_blank">Link</a>
-                        @else
+
                           <span class="text-gray-400">-</span>
-                        @endif
-                      @else
+
                         {{ item[col.name] !== null && item[col.name] !== undefined ? item[col.name] : '-' }}
-                      @endif
+
                     </td>
                   @endforeach
                   <td class="px-4 py-3 text-right">
@@ -194,17 +198,21 @@ function statusClass(s) {
             </tbody>
           </table>
         </div>
+        @else
+          <div class="p-8 text-center bg-white dark:bg-neutral-800 border border-gray-200 rounded-xl dark:border-neutral-700">
+            <p class="text-gray-500 text-sm dark:text-neutral-400">No data available</p>
+          </div>
 
         <!-- Pagination -->
-        <div class="flex items-center justify-between px-4 py-3 border-gray-200 border-t dark:border-gray-700">
-          <div class="text-gray-500 text-sm dark:text-gray-400">
+        <div class="flex items-center justify-between px-4 py-3 border-gray-200 border-t dark:border-neutral-700">
+          <div class="text-gray-500 text-sm dark:text-neutral-400">
             Showing {{ items.length }} of {{ totalCount }} records
           </div>
           <div class="flex gap-2">
-            <button class="px-3 py-1 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 rounded dark:border-gray-600 disabled:opacity-50" disabled>
+            <button class="px-3 py-1 text-sm hover:bg-gray-50 dark:hover:bg-neutral-700 border border-gray-300 rounded dark:border-neutral-600 disabled:opacity-50" disabled>
               Previous
             </button>
-            <button class="px-3 py-1 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 rounded dark:border-gray-600">
+            <button class="px-3 py-1 text-sm hover:bg-gray-50 dark:hover:bg-neutral-700 border border-gray-300 rounded dark:border-neutral-600">
               Next
             </button>
           </div>
@@ -212,23 +220,22 @@ function statusClass(s) {
       </div>
     @endif
   </div>
-</DashboardLayout>
 <script client>
-var _root = useRef('pageRoot')
+const _root = useRef('pageRoot')
 onMount(function() {
-  var el = _root.current;
+  const el = _root.current;
   if (!el) return;
-  var searchInput = el.querySelector('#modelSearch');
+  const searchInput = el.querySelector('#modelSearch');
   if (searchInput) {
-    var searchTimer = null;
+    let searchTimer = null;
     searchInput.addEventListener('input', function() {
-      var value = this.value;
+      const value = this.value;
       if (searchTimer) clearTimeout(searchTimer);
       searchTimer = setTimeout(function() {
-        var query = value.toLowerCase();
-        var rows = el.querySelectorAll('#modelTableBody tr');
-        for (var i = 0; i < rows.length; i++) {
-          var text = rows[i].textContent.toLowerCase();
+        const query = value.toLowerCase();
+        const rows = el.querySelectorAll('#modelTableBody tr');
+        for (let i = 0; i < rows.length; i++) {
+          const text = rows[i].textContent.toLowerCase();
           rows[i].style.display = text.indexOf(query) >= 0 ? '' : 'none';
         }
       }, 150);
@@ -236,3 +243,4 @@ onMount(function() {
   }
 });
 </script>
+@endsection

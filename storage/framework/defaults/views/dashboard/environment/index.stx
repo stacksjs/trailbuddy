@@ -1,3 +1,6 @@
+@extends('layouts/default')
+
+@section('content')
 <script>
 import CodeEditor from '../../../components/Dashboard/CodeEditor.stx'
 
@@ -41,7 +44,7 @@ function highlightedContent() {
     if (!trimmed) return '&nbsp;'
     // Comments
     if (trimmed.startsWith('#')) {
-      return `<span class="text-gray-500 dark:text-gray-400">${line}</span>`
+      return `<span class="text-gray-500 dark:text-neutral-400">${line}</span>`
     )}
     // Variable assignments
     if (line.includes('=')) {
@@ -209,20 +212,20 @@ onUnmounted(() => {
 }
 </script>
 
-<div class="py-4 lg:py-8 min-h-screen dark:bg-blue-gray-800">
+<div class="py-4 lg:py-8 min-h-screen dark:bg-neutral-800">
   <div class="px-4 sm:px-6 lg:px-8">
     <div class="sm:flex sm:items-center">
       <div class="sm:flex-auto">
-        <h1 class="font-semibold leading-6 text-base text-gray-900 dark:text-gray-100">
+        <h1 class="font-semibold leading-6 text-base text-gray-900 dark:text-neutral-100">
           Environment Variables
         </h1>
-        <p class="mt-2 text-gray-700 text-sm dark:text-gray-300">
+        <p class="mt-2 text-gray-700 text-sm dark:text-neutral-300">
           This is your project's <code class="text-red-400">.env</code> file. Be careful when editing production values.
         </p>
       </div>
       <div class="sm:flex-none mt-4 space-x-3 sm:ml-16 sm:mt-0">
         <button
-          @click="showAddModal = true"
+          onclick="showAddModal = true"
           type="button"
           class="px-3 py-2 font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
         >
@@ -230,7 +233,7 @@ onUnmounted(() => {
         </button>
         @if(backupContent)
           <button
-            @click="showBackup = true"
+            onclick="showBackup = true"
             type="button"
             class="px-3 py-2 font-semibold text-sm text-white bg-gray-600 hover:bg-gray-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-600 focus-visible:outline-offset-2 shadow-sm"
           >
@@ -244,9 +247,9 @@ onUnmounted(() => {
       <div class="overflow-x-auto -mx-4 -my-2 sm:-mx-6 lg:-mx-8">
         <div class="inline-block py-2 sm:px-6 lg:px-8 min-w-full align-middle">
           <div class="overflow-hidden sm:rounded-lg">
-            <form @submit.prevent="handleSave" class="relative">
+            <form onsubmit="handleSave; return false" class="relative">
               <CodeEditor
-                v-model="envValues"
+                value="{{ envValues }}"
                 :loading="isLoading"
                 language="env"
                 :line-numbers="true"
@@ -256,25 +259,25 @@ onUnmounted(() => {
               />
 
               <!-- Keyboard shortcuts -->
-              <div class="flex items-center mb-4 mt-2 space-x-4 text-gray-500 text-sm dark:text-gray-400">
+              <div class="flex items-center mb-4 mt-2 space-x-4 text-gray-500 text-sm dark:text-neutral-400">
                 <div class="flex items-center space-x-1">
-                  <kbd class="px-1.5 py-0.5 font-semibold text-gray-800 text-xs dark:text-gray-100 bg-gray-100 dark:bg-gray-700 border border-gray-200 rounded dark:border-gray-600">{{ isMac ? '⌘' : 'Ctrl' }}</kbd>
+                  <kbd class="px-1.5 py-0.5 font-semibold text-gray-800 text-xs dark:text-neutral-100 bg-gray-100 dark:bg-neutral-700 border border-gray-200 rounded dark:border-neutral-600">{{ isMac ? '⌘' : 'Ctrl' }}</kbd>
                   <span>+</span>
-                  <kbd class="px-1.5 py-0.5 font-semibold text-gray-800 text-xs dark:text-gray-100 bg-gray-100 dark:bg-gray-700 border border-gray-200 rounded dark:border-gray-600">S</kbd>
+                  <kbd class="px-1.5 py-0.5 font-semibold text-gray-800 text-xs dark:text-neutral-100 bg-gray-100 dark:bg-neutral-700 border border-gray-200 rounded dark:border-neutral-600">S</kbd>
                   <span class="text-xs">save</span>
                 </div>
                 <div class="flex items-center space-x-1">
-                  <kbd class="px-1.5 py-0.5 font-semibold text-gray-800 text-xs dark:text-gray-100 bg-gray-100 dark:bg-gray-700 border border-gray-200 rounded dark:border-gray-600">{{ isMac ? '⌘' : 'Ctrl' }}</kbd>
+                  <kbd class="px-1.5 py-0.5 font-semibold text-gray-800 text-xs dark:text-neutral-100 bg-gray-100 dark:bg-neutral-700 border border-gray-200 rounded dark:border-neutral-600">{{ isMac ? '⌘' : 'Ctrl' }}</kbd>
                   <span>+</span>
-                  <kbd class="px-1.5 py-0.5 font-semibold text-gray-800 text-xs dark:text-gray-100 bg-gray-100 dark:bg-gray-700 border border-gray-200 rounded dark:border-gray-600">N</kbd>
+                  <kbd class="px-1.5 py-0.5 font-semibold text-gray-800 text-xs dark:text-neutral-100 bg-gray-100 dark:bg-neutral-700 border border-gray-200 rounded dark:border-neutral-600">N</kbd>
                   <span class="text-xs">new</span>
                 </div>
                 <div class="flex items-center space-x-1">
-                  <kbd class="px-1.5 py-0.5 font-semibold text-gray-800 text-xs dark:text-gray-100 bg-gray-100 dark:bg-gray-700 border border-gray-200 rounded dark:border-gray-600">{{ isMac ? '⌘' : 'Ctrl' }}</kbd>
+                  <kbd class="px-1.5 py-0.5 font-semibold text-gray-800 text-xs dark:text-neutral-100 bg-gray-100 dark:bg-neutral-700 border border-gray-200 rounded dark:border-neutral-600">{{ isMac ? '⌘' : 'Ctrl' }}</kbd>
                   <span>+</span>
-                  <kbd class="px-1.5 py-0.5 font-semibold text-gray-800 text-xs dark:text-gray-100 bg-gray-100 dark:bg-gray-700 border border-gray-200 rounded dark:border-gray-600">⇧</kbd>
+                  <kbd class="px-1.5 py-0.5 font-semibold text-gray-800 text-xs dark:text-neutral-100 bg-gray-100 dark:bg-neutral-700 border border-gray-200 rounded dark:border-neutral-600">⇧</kbd>
                   <span>+</span>
-                  <kbd class="px-1.5 py-0.5 font-semibold text-gray-800 text-xs dark:text-gray-100 bg-gray-100 dark:bg-gray-700 border border-gray-200 rounded dark:border-gray-600">F</kbd>
+                  <kbd class="px-1.5 py-0.5 font-semibold text-gray-800 text-xs dark:text-neutral-100 bg-gray-100 dark:bg-neutral-700 border border-gray-200 rounded dark:border-neutral-600">F</kbd>
                   <span class="text-xs">format</span>
                 </div>
               </div>
@@ -283,21 +286,21 @@ onUnmounted(() => {
               <div class="flex justify-end mt-4 space-x-3">
                 <button
                   type="button"
-                  @click="formatContent"
-                  class="px-3 py-2 font-semibold text-gray-900 text-sm dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-sm"
+                  onclick="formatContent"
+                  class="px-3 py-2 font-semibold text-gray-900 text-sm dark:text-neutral-100 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-sm"
                 >
                   Format
                 </button>
                 <button
                   type="button"
-                  @click="envValues = ''"
-                  class="px-3 py-2 font-semibold text-gray-900 text-sm dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-sm"
+                  onclick="envValues = ''"
+                  class="px-3 py-2 font-semibold text-gray-900 text-sm dark:text-neutral-100 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-sm"
                 >
                   Clear
                 </button>
                 <button
                   type="submit"
-                  :disabled="isLoading"
+                  disabled="{{ isLoading }}"
                   class="px-3 py-2 font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   @if(isLoading)
@@ -320,38 +323,38 @@ onUnmounted(() => {
   <!-- Add Variable Modal -->
   @if(showAddModal)
     <div class="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 transition-opacity"></div>
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-neutral-900 dark:bg-opacity-75 transition-opacity"></div>
 
       <div class="fixed inset-0 overflow-y-auto z-10">
         <div class="flex items-end justify-center sm:items-center p-4 sm:p-0 min-h-full text-center">
-          <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-blue-gray-700 rounded-lg shadow-xl transition-all transform">
+          <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-neutral-700 rounded-lg shadow-xl transition-all transform">
             <div>
-              <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-gray-100">Add Environment Variable</h3>
+              <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-neutral-100">Add Environment Variable</h3>
               <div class="mt-4 space-y-4">
                 <div>
-                  <label class="block font-medium text-gray-700 text-sm dark:text-gray-300">Key</label>
+                  <label class="block font-medium text-gray-700 text-sm dark:text-neutral-300">Key</label>
                   <input
-                    v-model="newVariable.key"
+                    value="{{ newVariable.key }}"
                     type="text"
-                    class="block mt-1 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-gray-100 placeholder:text-gray-400 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                    class="block mt-1 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-neutral-100 placeholder:text-gray-400 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                     placeholder="APP_NAME"
                   />
                 </div>
                 <div>
-                  <label class="block font-medium text-gray-700 text-sm dark:text-gray-300">Value</label>
+                  <label class="block font-medium text-gray-700 text-sm dark:text-neutral-300">Value</label>
                   <input
-                    v-model="newVariable.value"
+                    value="{{ newVariable.value }}"
                     type="text"
-                    class="block mt-1 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-gray-100 placeholder:text-gray-400 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                    class="block mt-1 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-neutral-100 placeholder:text-gray-400 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                     placeholder="My App"
                   />
                 </div>
                 <div>
-                  <label class="block font-medium text-gray-700 text-sm dark:text-gray-300">Description (optional)</label>
+                  <label class="block font-medium text-gray-700 text-sm dark:text-neutral-300">Description (optional)</label>
                   <input
-                    v-model="newVariable.description"
+                    value="{{ newVariable.description }}"
                     type="text"
-                    class="block mt-1 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-gray-100 placeholder:text-gray-400 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                    class="block mt-1 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-neutral-100 placeholder:text-gray-400 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                     placeholder="Application name used in emails and UI"
                   />
                 </div>
@@ -361,14 +364,14 @@ onUnmounted(() => {
               <button
                 type="button"
                 class="inline-flex justify-center sm:col-start-2 px-3 py-2 w-full font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
-                @click="addVariable"
+                onclick="addVariable"
               >
                 Add
               </button>
               <button
                 type="button"
-                class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-gray-100 bg-white dark:bg-blue-gray-600 hover:bg-gray-50 dark:hover:bg-blue-gray-500 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
-                @click="showAddModal = false"
+                class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-neutral-100 bg-white dark:bg-neutral-600 hover:bg-gray-50 dark:hover:bg-neutral-500 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
+                onclick="showAddModal = false"
               >
                 Cancel
               </button>
@@ -382,18 +385,18 @@ onUnmounted(() => {
   <!-- Backup Modal -->
   @if(showBackup)
     <div class="relative z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 transition-opacity"></div>
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-neutral-900 dark:bg-opacity-75 transition-opacity"></div>
 
       <div class="fixed inset-0 overflow-y-auto z-10">
         <div class="flex items-end justify-center sm:items-center p-4 sm:p-0 min-h-full text-center">
-          <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-blue-gray-700 rounded-lg shadow-xl transition-all transform">
+          <div class="overflow-hidden relative pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-neutral-700 rounded-lg shadow-xl transition-all transform">
             <div>
-              <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-gray-100">Backup Content</h3>
+              <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-neutral-100">Backup Content</h3>
               <div class="mt-4">
                 <textarea
-                  v-model="backupContent"
+                  value="{{ backupContent }}"
                   rows="10"
-                  class="block py-1.5 w-full font-mono text-gray-900 text-sm dark:text-gray-100 placeholder:text-gray-400 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
+                  class="block py-1.5 w-full font-mono text-gray-900 text-sm dark:text-neutral-100 placeholder:text-gray-400 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 focus:ring-inset shadow-sm"
                   readonly
                 />
               </div>
@@ -402,14 +405,14 @@ onUnmounted(() => {
               <button
                 type="button"
                 class="inline-flex justify-center sm:col-start-2 px-3 py-2 w-full font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
-                @click="restoreBackup"
+                onclick="restoreBackup"
               >
                 Restore Backup
               </button>
               <button
                 type="button"
-                class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-gray-100 bg-white dark:bg-blue-gray-600 hover:bg-gray-50 dark:hover:bg-blue-gray-500 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
-                @click="showBackup = false"
+                class="inline-flex justify-center sm:col-start-1 mt-3 px-3 py-2 sm:mt-0 w-full font-semibold text-gray-900 text-sm dark:text-neutral-100 bg-white dark:bg-neutral-600 hover:bg-gray-50 dark:hover:bg-neutral-500 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
+                onclick="showBackup = false"
               >
                 Close
               </button>
@@ -421,3 +424,5 @@ onUnmounted(() => {
   @endif
 </div>
 
+
+@endsection

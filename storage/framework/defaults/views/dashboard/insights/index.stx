@@ -1,33 +1,11 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 definePageMeta({
   middleware: ['auth'],
   layout: 'default'
 })
-
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-  ArcElement,
-} from 'chart.js'
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-  ArcElement,
-)
 
 interface SystemMetrics {
   cpu: number
@@ -416,34 +394,34 @@ const statsCards = [
 </script>
 
 @title('Dashboard - Insights')
-<div class="py-4 lg:py-8 min-h-screen dark:bg-blue-gray-800">
+<div class="py-4 lg:py-8 min-h-screen dark:bg-neutral-800">
   <!-- Stats Overview -->
   <div class="mb-8 px-4 sm:px-6 lg:px-8">
     <div>
-      <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-gray-100">
+      <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-neutral-100">
         System Overview
       </h3>
 
       <dl class="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mt-5">
         @foreach(stat in statsCards)
           <div
-               class="overflow-hidden relative pt-5 px-4 sm:pt-6 sm:px-6 bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+               class="overflow-hidden relative pt-5 px-4 sm:pt-6 sm:px-6 bg-white dark:bg-neutral-700 rounded-lg shadow">
             <dt>
               <div class="absolute p-3 bg-blue-500 rounded-md">
                 <div :class="[stat.icon, 'h-6 w-6 text-white']" />
               </div>
-              <p class="ml-16 font-medium text-gray-500 text-sm truncate dark:text-gray-300">
+              <p class="ml-16 font-medium text-gray-500 text-sm truncate dark:text-neutral-300">
                 {{ stat.title }}
               </p>
             </dt>
             <dd class="flex items-baseline ml-16 pb-6 sm:pb-7">
-              <p class="font-semibold text-2xl text-gray-900 dark:text-gray-100">
+              <p class="font-semibold text-2xl text-gray-900 dark:text-neutral-100">
                 {{ stat }}
               </p>
-              <p :class="[
+              <p class="[
                 'ml-2 flex items-baseline text-sm font-semibold',
                 stat.changeType === 'increase' ? 'text-green-600' : 'text-red-600'
-              ]">
+              ] {{ }}">
                 @if(stat.changeType === 'increase')
                   <span class="flex-shrink-0 self-center h-5 w-5 text-green-500 i-hugeicons-arrow-up" />
                 @else
@@ -462,10 +440,10 @@ const statsCards = [
   <div class="px-4 sm:px-6 lg:px-8">
     <div class="sm:flex sm:items-center">
       <div class="sm:flex-auto">
-        <h1 class="font-semibold leading-6 text-base text-gray-900 dark:text-gray-100">
+        <h1 class="font-semibold leading-6 text-base text-gray-900 dark:text-neutral-100">
           System Metrics
         </h1>
-        <p class="mt-2 text-gray-700 text-sm dark:text-gray-300">
+        <p class="mt-2 text-gray-700 text-sm dark:text-neutral-300">
           Real-time monitoring of your system's performance and resource usage.
         </p>
       </div>
@@ -473,65 +451,65 @@ const statsCards = [
 
     <div class="grid gap-6 grid-cols-1 lg:grid-cols-3 mt-8">
       <!-- CPU Usage -->
-      <div class="overflow-hidden bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+      <div class="overflow-hidden bg-white dark:bg-neutral-700 rounded-lg shadow">
         <div class="p-6">
           <div class="flex items-center justify-between">
-            <h3 class="font-medium text-gray-900 text-sm dark:text-gray-100">CPU Usage</h3>
-            <span class="font-mono text-gray-500 text-sm dark:text-gray-400">{{ systemMetrics.cpu }}%</span>
+            <h3 class="font-medium text-gray-900 text-sm dark:text-neutral-100">CPU Usage</h3>
+            <span class="font-mono text-gray-500 text-sm dark:text-neutral-400">{{ systemMetrics.cpu }}%</span>
           </div>
-          <div class="mt-2 h-2 bg-gray-200 dark:bg-blue-gray-600 rounded-full">
+          <div class="mt-2 h-2 bg-gray-200 dark:bg-neutral-600 rounded-full">
             <div
               class="h-2 bg-blue-500 rounded-full"
-              :style="{ width: `${systemMetrics.cpu}%` }"
+              style="{{ { width: `${systemMetrics.cpu}%` } }}"
             ></div>
           </div>
           <div class="mt-4 h-32">
-            <Line :data="cpuData" :options="chartOptions" />
+            <canvas id="cpuChart"></canvas>
           </div>
         </div>
       </div>
 
       <!-- Memory Usage -->
-      <div class="overflow-hidden bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+      <div class="overflow-hidden bg-white dark:bg-neutral-700 rounded-lg shadow">
         <div class="p-6">
           <div class="flex items-center justify-between">
-            <h3 class="font-medium text-gray-900 text-sm dark:text-gray-100">Memory</h3>
-            <span class="font-mono text-gray-500 text-sm dark:text-gray-400">
+            <h3 class="font-medium text-gray-900 text-sm dark:text-neutral-100">Memory</h3>
+            <span class="font-mono text-gray-500 text-sm dark:text-neutral-400">
               {{ systemMetrics.memory.used }}MB / {{ systemMetrics.memory.total }}MB
             </span>
           </div>
-          <div class="mt-2 h-2 bg-gray-200 dark:bg-blue-gray-600 rounded-full">
+          <div class="mt-2 h-2 bg-gray-200 dark:bg-neutral-600 rounded-full">
             <div
               class="h-2 bg-blue-500 rounded-full"
-              :style="{ width: `${(systemMetrics.memory.used / systemMetrics.memory.total) * 100}%` }"
+              style="{{ { width: `${(systemMetrics.memory.used / systemMetrics.memory.total) * 100}%` } }}"
             ></div>
           </div>
           <div class="mt-4 h-32">
-            <Line :data="memoryData" :options="chartOptions" />
+            <canvas id="memoryChart"></canvas>
           </div>
         </div>
       </div>
 
       <!-- Storage Usage -->
-      <div class="overflow-hidden bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+      <div class="overflow-hidden bg-white dark:bg-neutral-700 rounded-lg shadow">
         <div class="p-6">
           <div class="flex items-center justify-between">
-            <h3 class="font-medium text-gray-900 text-sm dark:text-gray-100">Storage</h3>
-            <span class="font-mono text-gray-500 text-sm dark:text-gray-400">
+            <h3 class="font-medium text-gray-900 text-sm dark:text-neutral-100">Storage</h3>
+            <span class="font-mono text-gray-500 text-sm dark:text-neutral-400">
               {{ systemMetrics.storage.used }}GB / {{ systemMetrics.storage.total }}GB
             </span>
           </div>
           <div class="mt-4 h-32">
-            <Doughnut :data="storageData" :options="pieChartOptions" />
+            <canvas id="storageChart"></canvas>
           </div>
           <div class="flex justify-center mt-4 space-x-4">
             <div class="flex items-center">
               <div class="mr-2 h-3 w-3 bg-blue-500 rounded-full"></div>
-              <span class="font-mono text-gray-500 text-xs dark:text-gray-400">Used ({{ systemMetrics.storage.used }}GB)</span>
+              <span class="font-mono text-gray-500 text-xs dark:text-neutral-400">Used ({{ systemMetrics.storage.used }}GB)</span>
             </div>
             <div class="flex items-center">
-              <div class="mr-2 h-3 w-3 bg-gray-200 dark:bg-gray-600 rounded-full"></div>
-              <span class="font-mono text-gray-500 text-xs dark:text-gray-400">Available ({{ systemMetrics.storage.total - systemMetrics.storage.used }}GB)</span>
+              <div class="mr-2 h-3 w-3 bg-gray-200 dark:bg-neutral-600 rounded-full"></div>
+              <span class="font-mono text-gray-500 text-xs dark:text-neutral-400">Available ({{ systemMetrics.storage.total - systemMetrics.storage.used }}GB)</span>
             </div>
           </div>
         </div>
@@ -546,16 +524,16 @@ const statsCards = [
       <div>
         <div class="sm:flex sm:items-center">
           <div class="sm:flex-auto">
-            <h1 class="font-semibold leading-6 text-base text-gray-900 dark:text-gray-100">
+            <h1 class="font-semibold leading-6 text-base text-gray-900 dark:text-neutral-100">
               Queue Monitoring
             </h1>
-            <p class="mt-2 text-gray-700 text-sm dark:text-gray-300">
+            <p class="mt-2 text-gray-700 text-sm dark:text-neutral-300">
               Real-time monitoring of your application's queue processing.
             </p>
           </div>
         </div>
 
-        <div class="overflow-hidden mt-8 bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+        <div class="overflow-hidden mt-8 bg-white dark:bg-neutral-700 rounded-lg shadow">
           <div class="p-6">
             <div class="space-y-8">
               <!-- Queue Stats -->
@@ -563,7 +541,7 @@ const statsCards = [
                 <div class="space-y-4">
                   <div class="flex items-center justify-between">
                     <div class="flex items-center space-x-2">
-                      <h4 class="inline-flex items-center px-2.5 py-0.5 font-medium text-gray-800 text-xs dark:text-gray-200 bg-gray-100 dark:bg-blue-gray-600 rounded-full">
+                      <h4 class="inline-flex items-center px-2.5 py-0.5 font-medium text-gray-800 text-xs dark:text-neutral-200 bg-gray-100 dark:bg-neutral-600 rounded-full">
                         {{ name }}
                       </h4>
                     </div>
@@ -571,13 +549,13 @@ const statsCards = [
                       @foreach(value, status in stats)
                         <div class="relative group">
                           <div class="flex items-center space-x-2 cursor-help"
-                             :class="'failed' 'processed', 'processing', 'queued', 'released', 'text-blue-700 'text-green-700 'text-purple-700 'text-red-700 'text-yellow-700 { } === === === === === status status status status status dark:text-blue-300': dark:text-green-300': dark:text-purple-300': dark:text-red-300': dark:text-yellow-300':">
+                             class="'failed' 'processed', 'processing', 'queued', 'released', 'text-blue-700 'text-green-700 'text-purple-700 'text-red-700 'text-yellow-700 { {{ } }} === === === === === status status status status status dark:text-blue-300': dark:text-green-300': dark:text-purple-300': dark:text-red-300': dark:text-yellow-300':">
                             <div :class="[getQueueStatusColor(status), 'h-2.5 w-2.5 rounded-full']"></div>
                             <span class="font-mono text-xs">{{ value }}</span>
                           </div>
                           <div class="hidden group-hover:block absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2">
                             <div class="relative">
-                              <div class="px-2 py-1 font-medium text-white text-xs whitespace-nowrap bg-gray-900 dark:bg-gray-700 rounded shadow-lg">
+                              <div class="px-2 py-1 font-medium text-white text-xs whitespace-nowrap bg-gray-900 dark:bg-neutral-700 rounded shadow-lg">
                                 {{ status.charAt(0).toUpperCase() + status.slice(1) }} Jobs
                               </div>
                               <div class="absolute left-1/2 top-full border-4 border-t-gray-900 border-transparent dark:border-t-gray-700 -translate-x-1/2"></div>
@@ -593,15 +571,15 @@ const statsCards = [
                     <div class="flex items-center mb-2 space-x-4">
                       <div class="flex items-center space-x-2">
                         <div class="h-1 w-4 bg-green-500 rounded"></div>
-                        <span class="font-medium text-gray-500 text-xs dark:text-gray-400">Processed</span>
+                        <span class="font-medium text-gray-500 text-xs dark:text-neutral-400">Processed</span>
                       </div>
                       <div class="flex items-center space-x-2">
                         <div class="h-1 w-4 bg-red-500 rounded"></div>
-                        <span class="font-medium text-gray-500 text-xs dark:text-gray-400">Failed</span>
+                        <span class="font-medium text-gray-500 text-xs dark:text-neutral-400">Failed</span>
                       </div>
                     </div>
                     <div class="h-48">
-                      <Line :data="getQueueData(name)" :options="queueChartOptions" />
+                      <canvas id="queueChart-{{ name }}" class="queue-chart" data-queue="{{ name }}"></canvas>
                     </div>
                   </div>
                 </div>
@@ -615,30 +593,30 @@ const statsCards = [
       <div>
         <div class="sm:flex sm:items-center">
           <div class="sm:flex-auto">
-            <h1 class="font-semibold leading-6 text-base text-gray-900 dark:text-gray-100">
+            <h1 class="font-semibold leading-6 text-base text-gray-900 dark:text-neutral-100">
               Cache Performance
             </h1>
-            <p class="mt-2 text-gray-700 text-sm dark:text-gray-300">
+            <p class="mt-2 text-gray-700 text-sm dark:text-neutral-300">
               Real-time monitoring of your application's cache performance and hit rates.
             </p>
           </div>
         </div>
 
-        <div class="overflow-hidden mt-8 bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+        <div class="overflow-hidden mt-8 bg-white dark:bg-neutral-700 rounded-lg shadow">
           <div class="p-6">
             <!-- Main Stats -->
             <div class="grid gap-8 grid-cols-3">
               <div class="text-center">
-                <p class="font-mono font-semibold text-3xl text-gray-900 dark:text-gray-100">{{ cache.hits }}</p>
-                <p class="mt-1.5 font-medium text-gray-500 text-sm dark:text-gray-400">Hits</p>
+                <p class="font-mono font-semibold text-3xl text-gray-900 dark:text-neutral-100">{{ cache.hits }}</p>
+                <p class="mt-1.5 font-medium text-gray-500 text-sm dark:text-neutral-400">Hits</p>
               </div>
               <div class="text-center">
-                <p class="font-mono font-semibold text-3xl text-gray-900 dark:text-gray-100">{{ cache.misses }}</p>
-                <p class="mt-1.5 font-medium text-gray-500 text-sm dark:text-gray-400">Misses</p>
+                <p class="font-mono font-semibold text-3xl text-gray-900 dark:text-neutral-100">{{ cache.misses }}</p>
+                <p class="mt-1.5 font-medium text-gray-500 text-sm dark:text-neutral-400">Misses</p>
               </div>
               <div class="text-center">
-                <p class="font-mono font-semibold text-3xl text-gray-900 dark:text-gray-100">{{ cache.hitRate }}%</p>
-                <p class="mt-1.5 font-medium text-gray-500 text-sm dark:text-gray-400">Hit Rate</p>
+                <p class="font-mono font-semibold text-3xl text-gray-900 dark:text-neutral-100">{{ cache.hitRate }}%</p>
+                <p class="mt-1.5 font-medium text-gray-500 text-sm dark:text-neutral-400">Hit Rate</p>
               </div>
             </div>
 
@@ -647,36 +625,36 @@ const statsCards = [
               <div class="space-y-4">
                 @foreach(key in cache.keys)
                   <div
-                       class="p-4 border border-gray-100 rounded-lg dark:border-blue-gray-600 hover:border-blue-500 dark:hover:border-blue-400 duration-150 transition-colors">
+                       class="p-4 border border-gray-100 rounded-lg dark:border-neutral-600 hover:border-blue-500 dark:hover:border-blue-400 duration-150 transition-colors">
                     <div class="flex items-center justify-between mb-3">
                       <div class="flex items-center space-x-3">
                         <div class="h-2 w-2 bg-blue-500 rounded-full"></div>
-                        <span class="font-medium font-mono text-gray-900 text-sm dark:text-gray-100">{{ key.name }}</span>
+                        <span class="font-medium font-mono text-gray-900 text-sm dark:text-neutral-100">{{ key.name }}</span>
                       </div>
                       <div class="flex items-center space-x-2">
-                        <span class="font-mono text-gray-500 text-xs dark:text-gray-400">TTL: {{ key.ttl }}s</span>
+                        <span class="font-mono text-gray-500 text-xs dark:text-neutral-400">TTL: {{ key.ttl }}s</span>
                         <span class="font-mono text-gray-400 text-xs">|</span>
-                        <span class="font-mono text-gray-500 text-xs dark:text-gray-400">{{ key.lastAccessed }}</span>
+                        <span class="font-mono text-gray-500 text-xs dark:text-neutral-400">{{ key.lastAccessed }}</span>
                       </div>
                     </div>
 
                     <!-- Hit Rate Progress -->
                     <div class="flex items-center space-x-3">
-                      <div class="overflow-hidden flex-1 h-2 bg-gray-200 dark:bg-blue-gray-600 rounded-full">
-                        <div class="h-full bg-blue-500 rounded-full" :style="{ width: `${key.hitRate}%` }"></div>
+                      <div class="overflow-hidden flex-1 h-2 bg-gray-200 dark:bg-neutral-600 rounded-full">
+                        <div class="h-full bg-blue-500 rounded-full" style="{{ { width: `${key.hitRate}%` } }}"></div>
                       </div>
-                      <span class="font-medium font-mono text-gray-900 text-sm dark:text-gray-100">{{ key.hitRate }}%</span>
+                      <span class="font-medium font-mono text-gray-900 text-sm dark:text-neutral-100">{{ key.hitRate }}%</span>
                     </div>
 
                     <!-- Hits/Misses Stats -->
                     <div class="flex items-center mt-3 space-x-4 text-xs">
                       <div class="flex items-center space-x-1">
                         <div class="h-4 w-4 text-green-500 i-hugeicons-checkmark-circle-02" />
-                        <span class="font-mono text-gray-500 dark:text-gray-400">{{ key.hits }} hits</span>
+                        <span class="font-mono text-gray-500 dark:text-neutral-400">{{ key.hits }} hits</span>
                       </div>
                       <div class="flex items-center space-x-1">
                         <div class="h-4 w-4 text-red-500 i-hugeicons-x-circle" />
-                        <span class="font-mono text-gray-500 dark:text-gray-400">{{ key.misses }} misses</span>
+                        <span class="font-mono text-gray-500 dark:text-neutral-400">{{ key.misses }} misses</span>
                       </div>
                     </div>
                   </div>
@@ -696,39 +674,39 @@ const statsCards = [
       <div>
         <div class="sm:flex sm:items-center">
           <div class="sm:flex-auto">
-            <h1 class="font-semibold leading-6 text-base text-gray-900 dark:text-gray-100">
+            <h1 class="font-semibold leading-6 text-base text-gray-900 dark:text-neutral-100">
               Exceptions
             </h1>
-            <p class="mt-2 text-gray-700 text-sm dark:text-gray-300">
+            <p class="mt-2 text-gray-700 text-sm dark:text-neutral-300">
               Recent application exceptions and their occurrence rates.
             </p>
           </div>
         </div>
 
-        <div class="overflow-hidden mt-8 bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+        <div class="overflow-hidden mt-8 bg-white dark:bg-neutral-700 rounded-lg shadow">
           <div class="p-6">
             <div class="space-y-4">
               @foreach(exception in exceptions)
                 <div
-                     class="relative p-4 border border-gray-200 rounded-lg dark:border-blue-gray-600 hover:border-blue-500 dark:hover:border-blue-400 duration-150 transition-colors group">
+                     class="relative p-4 border border-gray-200 rounded-lg dark:border-neutral-600 hover:border-blue-500 dark:hover:border-blue-400 duration-150 transition-colors group">
                   <div class="mb-3">
-                    <div class="break-all font-mono leading-relaxed text-gray-900 text-sm dark:text-gray-100">
+                    <div class="break-all font-mono leading-relaxed text-gray-900 text-sm dark:text-neutral-100">
                       {{ exception.type }}
                     </div>
                   </div>
-                  <div class="flex items-center justify-between pt-3 text-sm border-gray-100 border-t dark:border-blue-gray-600">
+                  <div class="flex items-center justify-between pt-3 text-sm border-gray-100 border-t dark:border-neutral-600">
                     <div class="flex items-center space-x-2">
                       <div class="h-4 w-4 text-gray-400 i-hugeicons-code-bracket-square" />
-                      <span class="font-mono text-gray-500 dark:text-gray-400">{{ exception.location }}</span>
+                      <span class="font-mono text-gray-500 dark:text-neutral-400">{{ exception.location }}</span>
                     </div>
                     <div class="flex items-center space-x-4">
                       <div class="flex items-center space-x-1">
                         <div class="h-4 w-4 text-gray-400 i-hugeicons-clock-01" />
-                        <span class="font-mono text-gray-500 dark:text-gray-400">{{ exception.latest }}</span>
+                        <span class="font-mono text-gray-500 dark:text-neutral-400">{{ exception.latest }}</span>
                       </div>
                       <div class="flex items-center space-x-1">
                         <div class="h-4 w-4 text-gray-400 i-hugeicons-energy" />
-                        <span class="font-mono text-gray-500 dark:text-gray-400">{{ exception.count }}</span>
+                        <span class="font-mono text-gray-500 dark:text-neutral-400">{{ exception.count }}</span>
                       </div>
                     </div>
                   </div>
@@ -744,39 +722,39 @@ const statsCards = [
       <div>
         <div class="sm:flex sm:items-center">
           <div class="sm:flex-auto">
-            <h1 class="font-semibold leading-6 text-base text-gray-900 dark:text-gray-100">
+            <h1 class="font-semibold leading-6 text-base text-gray-900 dark:text-neutral-100">
               Slow Queries
             </h1>
-            <p class="mt-2 text-gray-700 text-sm dark:text-gray-300">
+            <p class="mt-2 text-gray-700 text-sm dark:text-neutral-300">
               Database queries that are taking longer than expected to execute.
             </p>
           </div>
         </div>
 
-        <div class="overflow-hidden mt-8 bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+        <div class="overflow-hidden mt-8 bg-white dark:bg-neutral-700 rounded-lg shadow">
           <div class="p-6">
             <div class="space-y-4">
               @foreach(query in slowQueries)
                 <div
-                     class="p-4 border border-gray-200 rounded-lg dark:border-blue-gray-600 hover:border-blue-500 dark:hover:border-blue-400 duration-150 transition-colors group">
+                     class="p-4 border border-gray-200 rounded-lg dark:border-neutral-600 hover:border-blue-500 dark:hover:border-blue-400 duration-150 transition-colors group">
                   <div class="mb-3">
-                    <div class="break-all font-mono leading-relaxed text-gray-900 text-sm dark:text-gray-100">
+                    <div class="break-all font-mono leading-relaxed text-gray-900 text-sm dark:text-neutral-100">
                       {{ query.query }}
                     </div>
                   </div>
-                  <div class="flex items-center justify-between pt-3 text-sm border-gray-100 border-t dark:border-blue-gray-600">
+                  <div class="flex items-center justify-between pt-3 text-sm border-gray-100 border-t dark:border-neutral-600">
                     <div class="flex items-center space-x-2">
                       <div class="h-4 w-4 text-gray-400 i-hugeicons-code-bracket-square" />
-                      <span class="font-mono text-gray-500 dark:text-gray-400">{{ query.location }}</span>
+                      <span class="font-mono text-gray-500 dark:text-neutral-400">{{ query.location }}</span>
                     </div>
                     <div class="flex items-center space-x-4">
                       <div class="flex items-center space-x-1">
                         <div class="h-4 w-4 text-gray-400 i-hugeicons-clock-01" />
-                        <span class="font-mono text-gray-500 dark:text-gray-400">{{ query.count }}</span>
+                        <span class="font-mono text-gray-500 dark:text-neutral-400">{{ query.count }}</span>
                       </div>
                       <div class="flex items-center space-x-1">
                         <div class="h-4 w-4 text-gray-400 i-hugeicons-energy" />
-                        <span class="font-mono text-gray-500 dark:text-gray-400">{{ query.slowest }}ms</span>
+                        <span class="font-mono text-gray-500 dark:text-neutral-400">{{ query.slowest }}ms</span>
                       </div>
                     </div>
                   </div>
@@ -795,45 +773,45 @@ const statsCards = [
         <div>
           <div class="sm:flex sm:items-center">
             <div class="sm:flex-auto">
-              <h1 class="font-semibold leading-6 text-base text-gray-900 dark:text-gray-100">
+              <h1 class="font-semibold leading-6 text-base text-gray-900 dark:text-neutral-100">
                 Slow Routes
               </h1>
-              <p class="mt-2 text-gray-700 text-sm dark:text-gray-300">
+              <p class="mt-2 text-gray-700 text-sm dark:text-neutral-300">
                 Routes that are taking longer than expected to respond (>1000ms).
               </p>
             </div>
           </div>
 
-          <div class="overflow-hidden mt-8 bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+          <div class="overflow-hidden mt-8 bg-white dark:bg-neutral-700 rounded-lg shadow">
             <div class="p-6">
               <div class="space-y-4">
                 @foreach(route in slowRoutes)
                   <div
-                       class="p-4 border border-gray-200 rounded-lg dark:border-blue-gray-600 hover:border-blue-500 dark:hover:border-blue-400 duration-150 transition-colors group">
+                       class="p-4 border border-gray-200 rounded-lg dark:border-neutral-600 hover:border-blue-500 dark:hover:border-blue-400 duration-150 transition-colors group">
                     <div class="mb-3">
                       <div class="flex items-center space-x-3">
                         <span class="px-2 py-1 font-medium text-xs rounded-md"
-                              :class="text-blue-700 text-green-700 text-purple-700 text-red-700 text-yellow-700 dark:bg-blue-900 dark:bg-green-900 dark:bg-purple-900 dark:bg-red-900 dark:bg-yellow-900 'bg-blue-100 'bg-green-100 'bg-purple-100 'bg-red-100 'bg-yellow-100 'DELETE', 'GET', 'PATCH' 'POST', 'PUT', { } === === === === === route.method route.method route.method route.method route.method dark:text-blue-100': dark:text-green-100': dark:text-purple-100': dark:text-red-100': dark:text-yellow-100':">
+                              class="text-blue-700 text-green-700 text-purple-700 text-red-700 text-yellow-700 dark:bg-blue-900 dark:bg-green-900 dark:bg-purple-900 dark:bg-red-900 dark:bg-yellow-900 'bg-blue-100 'bg-green-100 'bg-purple-100 'bg-red-100 'bg-yellow-100 'DELETE', 'GET', 'PATCH' 'POST', 'PUT', { {{ } }} === === === === === route.method route.method route.method route.method route.method dark:text-blue-100': dark:text-green-100': dark:text-purple-100': dark:text-red-100': dark:text-yellow-100':">
                           {{ route.method }}
                         </span>
-                        <span class="font-mono text-gray-900 text-sm dark:text-gray-100">{{ route.route }}</span>
+                        <span class="font-mono text-gray-900 text-sm dark:text-neutral-100">{{ route.route }}</span>
                       </div>
                       @if(route.action)
                         <div class="flex items-center mt-2 space-x-2">
                           <div class="h-4 w-4 text-gray-400 i-hugeicons-code-bracket-square" />
-                          <span class="font-mono text-gray-500 text-xs dark:text-gray-400">{{ route.action }}</span>
+                          <span class="font-mono text-gray-500 text-xs dark:text-neutral-400">{{ route.action }}</span>
                         </div>
                       @endif
                     </div>
-                    <div class="flex items-center justify-between pt-3 text-sm border-gray-100 border-t dark:border-blue-gray-600">
+                    <div class="flex items-center justify-between pt-3 text-sm border-gray-100 border-t dark:border-neutral-600">
                       <div class="flex items-center space-x-4">
                         <div class="flex items-center space-x-1">
                           <div class="h-4 w-4 text-gray-400 i-hugeicons-clock-01" />
-                          <span class="font-mono text-gray-500 dark:text-gray-400">{{ route.count }} requests</span>
+                          <span class="font-mono text-gray-500 dark:text-neutral-400">{{ route.count }} requests</span>
                         </div>
                         <div class="flex items-center space-x-1">
                           <div class="h-4 w-4 text-gray-400 i-hugeicons-energy" />
-                          <span class="font-mono text-gray-500 dark:text-gray-400">{{ route.slowest }}ms</span>
+                          <span class="font-mono text-gray-500 dark:text-neutral-400">{{ route.slowest }}ms</span>
                         </div>
                       </div>
                     </div>
@@ -846,17 +824,17 @@ const statsCards = [
 
         <!-- Documentation Card -->
         <div>
-          <div class="flex overflow-hidden items-center justify-center h-full dark:bg-blue-gray-700 rounded-lg">
+          <div class="flex overflow-hidden items-center justify-center h-full dark:bg-neutral-700 rounded-lg">
             <div class="p-6">
               <div class="flex flex-col items-center text-center">
                 <div class="mb-4 h-12 w-12 text-blue-500 i-hugeicons-puzzle-piece" />
-                <h3 class="mb-2 font-medium text-gray-900 text-lg dark:text-gray-100">
+                <h3 class="mb-2 font-medium text-gray-900 text-lg dark:text-neutral-100">
                   Extend Your Dashboard
                 </h3>
-                <p class="mb-6 max-w-sm text-gray-500 text-sm dark:text-gray-400">
+                <p class="mb-6 max-w-sm text-gray-500 text-sm dark:text-neutral-400">
                   Create custom insight cards to monitor your application's performance, user behavior, or any other metrics that matter to you.
                 </p>
-                <a href="https://stacksjs.com/docs/insights" class="inline-flex items-center px-4 py-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 border border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-blue-gray-800 shadow-sm">
+                <a href="https://stacksjs.com/docs/insights" class="inline-flex items-center px-4 py-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 border border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-neutral-800 shadow-sm">
                   <div class="mr-2 h-5 w-5 i-hugeicons-book-open" />
                   Read the Documentation
                 </a>
@@ -868,3 +846,48 @@ const statsCards = [
     </div>
   </div>
 </div>
+
+<script client>
+const { Chart, registerables } = await import('chart.js/auto')
+Chart.register(...registerables)
+
+const cpuCtx = document.getElementById('cpuChart')
+if (cpuCtx) {
+  new Chart(cpuCtx, {
+    type: 'line',
+    data: cpuData,
+    options: chartOptions,
+  })
+}
+
+const memoryCtx = document.getElementById('memoryChart')
+if (memoryCtx) {
+  new Chart(memoryCtx, {
+    type: 'line',
+    data: memoryData,
+    options: chartOptions,
+  })
+}
+
+const storageCtx = document.getElementById('storageChart')
+if (storageCtx) {
+  new Chart(storageCtx, {
+    type: 'doughnut',
+    data: storageData,
+    options: pieChartOptions,
+  })
+}
+
+document.querySelectorAll('.queue-chart').forEach((canvas) => {
+  const queueName = canvas.getAttribute('data-queue')
+  if (queueName) {
+    new Chart(canvas, {
+      type: 'line',
+      data: getQueueData(queueName),
+      options: queueChartOptions,
+    })
+  }
+})
+</script>
+
+@endsection

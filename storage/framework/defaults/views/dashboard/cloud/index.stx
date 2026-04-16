@@ -1,3 +1,6 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 definePageMeta({
   middleware: ['auth']
@@ -646,7 +649,7 @@ const saveWorkerConfig = async () => {
   saveError = null
 
   try {
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3008'
+    const baseUrl = 'http://localhost:' + (process.env.PORT_API || '3008')
     const response = await fetch(`${baseUrl}/api/cloud/config`, {
       method: 'PUT',
       headers: {
@@ -740,37 +743,36 @@ const updateServerDefaults = (server: ServerConfig) => {
 </script>
 
 @title('Dashboard - Cloud')
-<div class="py-4 lg:py-8 min-h-screen dark:bg-blue-gray-800">
+<div class="py-4 lg:py-8 min-h-screen dark:bg-neutral-800">
   <div class="px-4 sm:px-6 lg:px-8">
     <!-- Header -->
     <div class="mb-8">
       <div class="flex items-center justify-between">
         <div class="flex gap-2 items-center">
           <div>
-            <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-gray-100">
+            <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-neutral-100">
               Cloud Infrastructure
             </h3>
-            <p class="mt-2 text-gray-700 text-sm dark:text-gray-400">
+            <p class="mt-2 text-gray-700 text-sm dark:text-neutral-400">
               Design and manage your cloud infrastructure.
             </p>
           </div>
         </div>
 
-        <router-link
-          to="/settings/mail"
-          class="inline-flex items-center justify-center h-10 w-10 text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 duration-200 transition-colors"
+        <a           to="/settings/mail"
+          class="inline-flex items-center justify-center h-10 w-10 text-gray-500 dark:text-neutral-400 hover:text-gray-600 dark:hover:text-gray-300 duration-200 transition-colors"
         >
           <div class="h-6 w-6 i-hugeicons-cog-6-tooth"></div>
-        </router-link>
+        </a>
       </div>
     </div>
 
     <!-- Infrastructure Diagram -->
-    <div class="mb-8 bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+    <div class="mb-8 bg-white dark:bg-neutral-700 rounded-lg shadow">
       <div class="p-6">
         <div class="flex items-center justify-between mb-4">
           <div class="flex gap-2 items-center">
-            <h4 class="font-medium text-base text-gray-900 dark:text-gray-100">Cloud Diagram</h4>
+            <h4 class="font-medium text-base text-gray-900 dark:text-neutral-100">Cloud Diagram</h4>
             <!-- AWS Icon -->
             <div class="flex items-center justify-center h-8 w-8 text-[#FF9900]">
               <div class="h-6 w-6 i-hugeicons-amazon"></div>
@@ -781,25 +783,25 @@ const updateServerDefaults = (server: ServerConfig) => {
           </div>
         </div>
         <div class="relative">
-          <div ref="diagramContainer" class="h-[400px] w-full bg-blue-gray-800 rounded-lg"></div>
+          <div ref="diagramContainer" class="h-[400px] w-full bg-neutral-800 rounded-lg"></div>
 
           <!-- Node Details Panel -->
           @if(selectedNode)
           <div
-            class="absolute right-4 top-4 z-10 p-4 w-80 bg-white dark:bg-blue-gray-700 rounded-lg shadow-lg"
+            class="absolute right-4 top-4 z-10 p-4 w-80 bg-white dark:bg-neutral-700 rounded-lg shadow-lg"
             @click.stop
           >
             <div class="flex items-center justify-between mb-4">
-              <h5 class="font-medium text-gray-900 text-sm dark:text-gray-100">
+              <h5 class="font-medium text-gray-900 text-sm dark:text-neutral-100">
                 {{ selectedNode.label }}
               </h5>
               <button
-                @click="selectedNode = null"
-                class="text-gray-400 dark:text-gray-300 hover:text-gray-500 dark:hover:text-gray-200"
+                onclick="selectedNode = null"
+                class="text-gray-400 dark:text-neutral-300 hover:text-gray-500 dark:hover:text-gray-200"
               >
                 <span class="sr-only">Close</span>
                 <div class="h-5 w-5">
-                  <span class="text-gray-400 dark:text-gray-300 hover:text-gray-500 dark:hover:text-gray-200">×</span>
+                  <span class="text-gray-400 dark:text-neutral-300 hover:text-gray-500 dark:hover:text-gray-200">×</span>
                 </div>
               </button>
             </div>
@@ -808,37 +810,36 @@ const updateServerDefaults = (server: ServerConfig) => {
               <div class="flex gap-2 items-center">
                 <div
                   class="flex items-center justify-center h-8 w-8 rounded-full"
-                  :class="text-blue-600 text-green-600 text-pink-600 text-yellow-600 dark:bg-blue-900 dark:bg-green-900 dark:bg-pink-900 dark:bg-yellow-900 selectedNode.type selectedNode.type selectedNode.type selectedNode.type 'bg-blue-100 'bg-green-100 'bg-pink-100 'bg-yellow-100 'loadbalancer', 'server', 'user', 'worker', { } === === === === dark:text-blue-300': dark:text-green-300': dark:text-pink-300': dark:text-yellow-300':"
+                  class="text-blue-600 text-green-600 text-pink-600 text-yellow-600 dark:bg-blue-900 dark:bg-green-900 dark:bg-pink-900 dark:bg-yellow-900 selectedNode.type selectedNode.type selectedNode.type selectedNode.type 'bg-blue-100 'bg-green-100 'bg-pink-100 'bg-yellow-100 'loadbalancer', 'server', 'user', 'worker', { {{ } }} === === === === dark:text-blue-300': dark:text-green-300': dark:text-pink-300': dark:text-yellow-300':"
                 >
                   <span class="text-lg">
                     {{ selectedNode.type === 'user' ? '👤' : selectedNode.type === 'loadbalancer' ? '⚖️' : selectedNode.type === 'server' ? '🖥️' : '⚙️' }}
                   </span>
                 </div>
                 <div>
-                  <p class="font-medium text-gray-900 text-sm dark:text-gray-100">Type</p>
-                  <p class="text-gray-500 text-sm dark:text-gray-400">
+                  <p class="font-medium text-gray-900 text-sm dark:text-neutral-100">Type</p>
+                  <p class="text-gray-500 text-sm dark:text-neutral-400">
                     {{ selectedNode.type.charAt(0).toUpperCase() + selectedNode.type.slice(1) }}
                   </p>
                 </div>
               </div>
 
               @if(selectedNode.config)
-                <div
-                  v-for="(value, key) in formatConfigDetails(selectedNode.config)"
-                  :key="key"
-                  class="flex justify-between py-2 border-gray-100 border-t dark:border-gray-600"
+                @foreach(formatConfigDetails(selectedNode.config) as key => value)
+<div
+                  class="flex justify-between py-2 border-gray-100 border-t dark:border-neutral-600"
                 >
-                  <span class="text-gray-500 text-sm dark:text-gray-400">{{ key }}</span>
-                  <span class="font-medium text-gray-900 text-sm dark:text-gray-100">{{ value }}</span>
+                  <span class="text-gray-500 text-sm dark:text-neutral-400">{{ key }}</span>
+                  <span class="font-medium text-gray-900 text-sm dark:text-neutral-100">{{ value }}</span>
                 </div>
               @else
                 @if(selectedNode.type === 'user')
-                <div class="text-gray-500 text-sm dark:text-gray-400">
+                <div class="text-gray-500 text-sm dark:text-neutral-400">
                   Entry point for all incoming traffic to your infrastructure.
                 </div>
                 @endif
                 @if(selectedNode.type === 'loadbalancer')
-                <div class="text-gray-500 text-sm dark:text-gray-400">
+                <div class="text-gray-500 text-sm dark:text-neutral-400">
                   Distributes incoming traffic across multiple servers for improved reliability and performance.
                 </div>
                 @endif
@@ -854,23 +855,22 @@ const updateServerDefaults = (server: ServerConfig) => {
     @if(activeView === 'visual')
     <div class="space-y-8">
       <!-- Servers -->
-      <div class="bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+      <div class="bg-white dark:bg-neutral-700 rounded-lg shadow">
         <div class="p-6">
           <div class="flex items-center justify-between mb-6">
             <div>
-              <h4 class="font-medium text-base text-gray-900 dark:text-gray-100">Servers</h4>
-              <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">Configure your application servers and their specifications.</p>
+              <h4 class="font-medium text-base text-gray-900 dark:text-neutral-100">Servers</h4>
+              <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">Configure your application servers and their specifications.</p>
             </div>
             <div class="flex gap-4 items-center">
-              <router-link
-                to="servers"
+              <a                 to="servers"
                 class="inline-flex gap-1 items-center text-blue-600 text-sm dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 duration-200 transition-colors"
               >
                 View All
                 <div class="h-4 w-4 i-hugeicons-arrow-right-01"></div>
-              </router-link>
+              </a>
               <button
-                @click="addServer"
+                onclick="addServer"
                 type="button"
                 class="inline-flex gap-2 items-center px-3.5 py-2.5 font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm duration-200 transition-colors"
               >
@@ -883,14 +883,13 @@ const updateServerDefaults = (server: ServerConfig) => {
           <div class="space-y-6">
             @foreach(cloudConfig.servers as key, server)
             <div
-              :key="key"
-              class="relative p-6 border rounded-lg dark:border-gray-600 duration-200 transition-all"
-              :class="'hover:border-blue-200 { } editMode[key] dark:hover:border-blue-500':"
+              class="relative p-6 border rounded-lg dark:border-neutral-600 duration-200 transition-all"
+              class="'hover:border-blue-200 { {{ } }} editMode[key] dark:hover:border-blue-500':"
             >
               <div class="flex absolute right-4 top-4 gap-2 items-center">
                 @if(!editMode[key])
                 <button
-                  @click="toggleEditMode(key)"
+                  onclick="toggleEditMode(key)"
                   class="inline-flex items-center p-1.5 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/50 rounded-md duration-200 transition-colors"
                 >
                   <span class="sr-only">Edit</span>
@@ -898,14 +897,14 @@ const updateServerDefaults = (server: ServerConfig) => {
                 </button>
                 @else
                   <button
-                    @click="removeServer(key)"
+                    onclick="removeServer(key)"
                     class="inline-flex items-center p-1.5 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-md duration-200 transition-colors"
                   >
                     <span class="sr-only">Remove</span>
                     <div class="h-5 w-5 i-hugeicons-trash"></div>
                   </button>
                   <button
-                    @click="toggleEditMode(key)"
+                    onclick="toggleEditMode(key)"
                     class="inline-flex items-center p-1.5 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/50 rounded-md duration-200 transition-colors"
                   >
                     <span class="sr-only">Save</span>
@@ -917,22 +916,21 @@ const updateServerDefaults = (server: ServerConfig) => {
               <!-- Server Header -->
               <div class="mb-6">
                 <div class="flex gap-4 items-center mb-2">
-                  <h5 class="font-medium text-gray-900 text-lg dark:text-gray-100">{{ server.name }}</h5>
+                  <h5 class="font-medium text-gray-900 text-lg dark:text-neutral-100">{{ server.name }}</h5>
                   <div class="flex flex-wrap gap-2">
-                    <span
-                      v-for="badge in serverTypes.find((t: ServerType) => t === server.type)?.badges"
-                      :key="badge"
+                    @foreach(serverTypes.find((t: ServerType) => t === server.type)?.badges as badge)
+<span
                       class="inline-flex items-center px-2 py-1 font-medium text-blue-700 text-xs dark:text-blue-300 bg-blue-100 dark:bg-blue-900 rounded-md"
                     >
                       {{ badge }}
                     </span>
                   </div>
                 </div>
-                <div class="flex gap-2 items-center text-gray-500 text-sm dark:text-gray-400">
+                <div class="flex gap-2 items-center text-gray-500 text-sm dark:text-neutral-400">
                   <div class="h-4 w-4 i-hugeicons-link"></div>
                   <p>{{ server.domain }}</p>
                 </div>
-                <p class="mt-2 text-gray-500 text-sm dark:text-gray-400">
+                <p class="mt-2 text-gray-500 text-sm dark:text-neutral-400">
                   {{ serverTypes.find((t: ServerType) => t === server.type)?.description }}
                 </p>
               </div>
@@ -942,15 +940,15 @@ const updateServerDefaults = (server: ServerConfig) => {
               <div class="mt-4">
                 <div class="flex gap-2 items-center">
                   <div class="h-4 w-4 text-gray-400 i-hugeicons-server"></div>
-                  <span class="text-gray-900 text-sm dark:text-gray-100">
+                  <span class="text-gray-900 text-sm dark:text-neutral-100">
                     {{ (workerSizes[server.size as keyof typeof workerSizes].ram / 1024).toFixed(0) }}GB RAM ({{ server.size }})
                   </span>
-                  <span class="text-gray-500 text-sm dark:text-gray-400">•</span>
-                  <span class="text-gray-900 text-sm dark:text-gray-100">
+                  <span class="text-gray-500 text-sm dark:text-neutral-400">•</span>
+                  <span class="text-gray-900 text-sm dark:text-neutral-100">
                     {{ workerSizes[server.size as keyof typeof workerSizes].vcpu }} vCPUs
                   </span>
-                  <span class="text-gray-500 text-sm dark:text-gray-400">•</span>
-                  <span class="text-gray-900 text-sm dark:text-gray-100">
+                  <span class="text-gray-500 text-sm dark:text-neutral-400">•</span>
+                  <span class="text-gray-900 text-sm dark:text-neutral-100">
                     64-bit {{ server.size.includes('g.') ? 'ARM' : 'x86' }}
                   </span>
                 </div>
@@ -961,15 +959,15 @@ const updateServerDefaults = (server: ServerConfig) => {
               @if(editMode[key])
               <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 <div>
-                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-gray-300">Name</label>
+                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-neutral-300">Name</label>
                   <div class="flex gap-2">
                     <input
-                      v-model="server.name"
+                      value="{{ server.name }}"
                       type="text"
-                      class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-gray-100 bg-gray-50 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
+                      class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-neutral-100 bg-gray-50 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
                     >
                     <button
-                      @click="server.name = generateServerName(server.type)"
+                      onclick="server.name = generateServerName(server.type)"
                       type="button"
                       class="inline-flex items-center px-3 py-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm duration-200 transition-colors"
                     >
@@ -978,34 +976,36 @@ const updateServerDefaults = (server: ServerConfig) => {
                   </div>
                 </div>
                 <div>
-                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-gray-300">Domain</label>
+                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-neutral-300">Domain</label>
                   <input
-                    v-model="server.domain"
+                    value="{{ server.domain }}"
                     type="text"
-                    class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-gray-100 bg-gray-50 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
+                    class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-neutral-100 bg-gray-50 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
                   >
                 </div>
                 <div>
-                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-gray-300">Region</label>
+                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-neutral-300">Region</label>
                   <select
-                    v-model="server.region"
-                    class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-gray-100 bg-gray-50 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
+                    value="{{ server.region }}"
+                    class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-neutral-100 bg-gray-50 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
                   >
-                    <option v-for="region in regions" :key="region" :value="region">
+                    @foreach(regions as region)
+<option value="{{ region }}">
                       {{ region }}
                     </option>
                   </select>
                 </div>
                 <div>
-                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-gray-300">Type</label>
+                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-neutral-300">Type</label>
                   <div class="relative">
                     <select
-                      v-model="server.type"
-                      :disabled="!editMode[key]"
-                      @change="updateServerName(server, server.type)"
-                      class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-gray-100 bg-gray-50 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 disabled:opacity-50 duration-200 transition-colors disabled:cursor-not-allowed"
+                      value="{{ server.type }}"
+                      disabled="{{ !editMode[key] }}"
+                      onchange="updateServerName(server, server.type)"
+                      class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-neutral-100 bg-gray-50 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 disabled:opacity-50 duration-200 transition-colors disabled:cursor-not-allowed"
                     >
-                      <option v-for="type in serverTypes" :key="type.value" :value="type.value">
+                      @foreach(serverTypes as type)
+<option value="{{ type.value }}">
                         {{ type.label }}
                       </option>
                     </select>
@@ -1013,13 +1013,14 @@ const updateServerDefaults = (server: ServerConfig) => {
                 </div>
                 @if(['app', 'web', 'worker'].includes(server.type))
                 <div>
-                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-gray-300">Bun Version</label>
+                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-neutral-300">Bun Version</label>
                   <select
-                    v-model="server.bunVersion"
-                    class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-gray-100 bg-gray-50 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
+                    value="{{ server.bunVersion }}"
+                    class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-neutral-100 bg-gray-50 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
                   >
                     <option value="" disabled>Select a version</option>
-                    <option v-for="version in bunVersions" :key="version" :value="version">
+                    @foreach(bunVersions as version)
+<option value="{{ version }}">
                       {{ version }}
                     </option>
                   </select>
@@ -1027,10 +1028,10 @@ const updateServerDefaults = (server: ServerConfig) => {
                 @endif
                 @if(!['loadbalancer', 'cache', 'search', 'database'].includes(server.type))
                 <div>
-                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-gray-300">Database</label>
+                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-neutral-300">Database</label>
                   <select
-                    v-model="server.database"
-                    class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-gray-100 bg-gray-50 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
+                    value="{{ server.database }}"
+                    class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-neutral-100 bg-gray-50 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
                   >
                     @if(server.type !== 'database')
                     <option value="">None</option>
@@ -1043,41 +1044,42 @@ const updateServerDefaults = (server: ServerConfig) => {
                 @endif
                 @if(server.database && !['loadbalancer', 'cache', 'search'].includes(server.type))
                 <div>
-                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-gray-300">Database Name</label>
+                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-neutral-300">Database Name</label>
                   <input
-                    v-model="server.databaseName"
+                    value="{{ server.databaseName }}"
                     type="text"
-                    class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-gray-100 bg-gray-50 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
+                    class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-neutral-100 bg-gray-50 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
                     placeholder="my_database"
                   >
                 </div>
                 @endif
                 <div>
-                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-gray-300">Operating System</label>
+                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-neutral-300">Operating System</label>
                   <select
-                    v-model="server.serverOS"
-                    class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-gray-100 bg-gray-50 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
+                    value="{{ server.serverOS }}"
+                    class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-neutral-100 bg-gray-50 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
                   >
-                    <option v-for="os in operatingSystems" :key="os" :value="os">
+                    @foreach(operatingSystems as os)
+<option value="{{ os }}">
                       {{ os }}
                     </option>
                   </select>
                 </div>
                 <div>
-                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-gray-300">Disk Size (GB)</label>
+                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-neutral-300">Disk Size (GB)</label>
                   <input
                     v-model.number="server.diskSize"
                     type="number"
                     min="1"
-                    class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-gray-100 bg-gray-50 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
+                    class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-neutral-100 bg-gray-50 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
                   >
                 </div>
                 @if(!['loadbalancer', 'cache', 'search', 'database'].includes(server.type))
                 <div>
-                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-gray-300">Search Engine</label>
+                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-neutral-300">Search Engine</label>
                   <select
-                    v-model="server.searchEngine"
-                    class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-gray-100 bg-gray-50 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
+                    value="{{ server.searchEngine }}"
+                    class="block px-3 py-2 h-10 w-full text-gray-900 text-sm dark:text-neutral-100 bg-gray-50 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
                   >
                     <option value="">None</option>
                     <option value="meilisearch">Meilisearch</option>
@@ -1086,11 +1088,11 @@ const updateServerDefaults = (server: ServerConfig) => {
                 </div>
                 @endif
                 <div class="sm:col-span-2 lg:col-span-3">
-                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-gray-300">User Data Script</label>
+                  <label class="block mb-1 font-medium text-gray-700 text-sm dark:text-neutral-300">User Data Script</label>
                   <textarea
-                    v-model="server.userData"
+                    value="{{ server.userData }}"
                     rows="3"
-                    class="block px-3 py-2 w-full font-mono text-gray-900 text-sm dark:text-gray-100 bg-gray-50 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
+                    class="block px-3 py-2 w-full font-mono text-gray-900 text-sm dark:text-neutral-100 bg-gray-50 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
                     placeholder="#!/bin/bash"
                   ></textarea>
                 </div>
@@ -1114,3 +1116,5 @@ onMount(async () => {
   }
 })
 </script>
+
+@endsection

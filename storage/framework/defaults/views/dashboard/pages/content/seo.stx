@@ -1,3 +1,6 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 /**
  * SEO Settings Page
@@ -5,54 +8,59 @@
  * Configure search engine optimization.
  */
 
-const API_URL = 'http://localhost:' + (process.env.PORT_API || '3008')
-
-var seoData = { title: '', description: '', keywords: [], ogImage: '' }
+let seoData = { title: '', description: '', keywords: [], ogImage: '' }
 
 try {
-  const res = await fetch(API_URL + '/cms/seo')
-  if (res.ok) {
-    const json = await res.json()
-    seoData = json.seoData || { title: '', description: '', keywords: [], ogImage: '' }
+  const fs = await import('fs')
+  const path = await import('path')
+  const pkgPath = path.resolve(process.cwd(), 'package.json')
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'))
+  seoData = {
+    title: String(pkg.name || ''),
+    description: String(pkg.description || ''),
+    keywords: pkg.keywords && Array.isArray(pkg.keywords) ? pkg.keywords : [],
+    ogImage: '',
   }
 } catch (e) {
-  // API not available
+  // package.json not found
 }
 </script>
-<div class="p-6 min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="flex items-start justify-between mb-8">
-      <div>
-        <h1 class="font-bold text-3xl text-gray-900 dark:text-white">SEO Settings</h1>
-        <p class="mt-1 text-gray-500 dark:text-gray-400">Configure search engine optimization</p>
-      </div>
-      <div class="flex gap-3 items-center">
-        <button class="px-4 py-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg">Save Changes</button>
-      </div>
-    </div>
+<div class="p-6 space-y-6">
 
-    <div class="flex flex-col gap-6">
-      <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
-        <div class="flex items-center justify-between mb-4">
-          <span class="font-semibold text-gray-900 dark:text-white">Default Meta Tags</span>
-        </div>
-        <div class="text-gray-600 dark:text-gray-400">
-          <div class="mb-4">
-            <label class="block mb-1.5 font-semibold text-gray-500 text-xs tracking-wide uppercase dark:text-gray-400">Site Title</label>
-            <input type="text" class="px-3 py-2 w-full text-gray-900 text-sm dark:text-white bg-white dark:bg-gray-800 border border-gray-300 rounded-lg dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500" value="{{ seoData.title }}" />
-          </div>
-          <div class="mb-4">
-            <label class="block mb-1.5 font-semibold text-gray-500 text-xs tracking-wide uppercase dark:text-gray-400">Meta Description</label>
-            <textarea class="px-3 py-2 w-full text-gray-900 text-sm dark:text-white bg-white dark:bg-gray-800 border border-gray-300 rounded-lg dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">{{ seoData.description }}</textarea>
-          </div>
-          <div class="mb-4">
-            <label class="block mb-1.5 font-semibold text-gray-500 text-xs tracking-wide uppercase dark:text-gray-400">Keywords</label>
-            <input type="text" class="px-3 py-2 w-full text-gray-900 text-sm dark:text-white bg-white dark:bg-gray-800 border border-gray-300 rounded-lg dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500" value="{{ seoData.keywords.join(', ') }}" />
-          </div>
-          <div class="mb-4">
-            <label class="block mb-1.5 font-semibold text-gray-500 text-xs tracking-wide uppercase dark:text-gray-400">OG Image URL</label>
-            <input type="text" class="px-3 py-2 w-full text-gray-900 text-sm dark:text-white bg-white dark:bg-gray-800 border border-gray-300 rounded-lg dark:border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500" value="{{ seoData.ogImage }}" />
-          </div>
-        </div>
+  <PageHeader title="SEO Settings" description="Configure search engine optimization">
+    <template #actions>
+      <Button variant="primary">Save Changes</Button>
+    </template>
+  </PageHeader>
+
+  @if (seoData.title || seoData.description || seoData.keywords.length > 0 || seoData.ogImage)
+  <Card title="Default Meta Tags">
+    <div class="p-4 space-y-4">
+      <div>
+        <label class="block mb-1.5 font-semibold text-neutral-500 text-xs tracking-wide uppercase dark:text-neutral-400">Site Title</label>
+        <input type="text" class="px-3 py-2 w-full text-neutral-900 text-sm dark:text-white bg-white dark:bg-neutral-800 border border-neutral-300 rounded-lg dark:border-neutral-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500" value="{{ seoData.title }}" />
+      </div>
+      <div>
+        <label class="block mb-1.5 font-semibold text-neutral-500 text-xs tracking-wide uppercase dark:text-neutral-400">Meta Description</label>
+        <textarea class="px-3 py-2 w-full text-neutral-900 text-sm dark:text-white bg-white dark:bg-neutral-800 border border-neutral-300 rounded-lg dark:border-neutral-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500">{{ seoData.description }}</textarea>
+      </div>
+      <div>
+        <label class="block mb-1.5 font-semibold text-neutral-500 text-xs tracking-wide uppercase dark:text-neutral-400">Keywords</label>
+        <input type="text" class="px-3 py-2 w-full text-neutral-900 text-sm dark:text-white bg-white dark:bg-neutral-800 border border-neutral-300 rounded-lg dark:border-neutral-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500" value="{{ seoData.keywords.join(', ') }}" />
+      </div>
+      <div>
+        <label class="block mb-1.5 font-semibold text-neutral-500 text-xs tracking-wide uppercase dark:text-neutral-400">OG Image URL</label>
+        <input type="text" class="px-3 py-2 w-full text-neutral-900 text-sm dark:text-white bg-white dark:bg-neutral-800 border border-neutral-300 rounded-lg dark:border-neutral-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500" value="{{ seoData.ogImage }}" />
       </div>
     </div>
-  </div>
+  </Card>
+  @else
+  <EmptyState
+    icon="i-hugeicons-search-01"
+    title="No SEO data yet"
+    description="SEO insights will appear once your site has indexed pages."
+  />
+  @endif
+
+</div>
+@endsection

@@ -81,23 +81,13 @@ async function traverseDirectory(
 async function getSignalsRuntime(): Promise<string> {
   try {
     const { generateSignalsRuntime } = await import(
-      // @ts-ignore - dynamic import from dev path, may not exist at runtime
-      /* @vite-ignore */ '/Users/chrisbreuer/Code/Tools/stx/packages/stx/src/signals.ts'
+      // @ts-ignore - dynamic import, module may not be installed
+      /* @vite-ignore */ '@stacksjs/stx/signals'
     )
     return `<script>\n${generateSignalsRuntime()}\n</script>`
-  } catch (_e) {
-    if (isVerbose) log.debug('Failed to import signals runtime from stx, using fallback path')
-    try {
-      // Fallback: try from node_modules
-      const { generateSignalsRuntime } = await import(
-        // @ts-ignore - dynamic import, module may not be installed
-        /* @vite-ignore */ '@stacksjs/stx/signals'
-      )
-      return `<script>\n${generateSignalsRuntime()}\n</script>`
-    } catch {
-      console.warn('Could not load STX signals runtime')
-      return ''
-    }
+  } catch {
+    console.warn('Could not load STX signals runtime')
+    return ''
   }
 }
 
@@ -117,14 +107,13 @@ async function withS3Retry<T>(fn: () => Promise<T>, label = 's3 operation'): Pro
 }
 
 // Build framework - show output so user knows it's working
-// Temporarily skip framework build due to bun workspace issue
-// Framework was already built in previous deployment
-log.debug('Skipping framework build (already built)...')
-// await runCommand('bun run build', {
-//   cwd: p.frameworkPath(),
-//   quiet: false,  // Always show build output so it doesn't appear stuck
-// })
-log.success('Framework build skipped')
+const frameworkBuildSpinner = spinner('Building framework...')
+frameworkBuildSpinner.start()
+await runCommand('bun run build', {
+  cwd: p.frameworkPath('core'),
+  quiet: false, // Always show build output so it doesn't appear stuck
+})
+frameworkBuildSpinner.succeed('Framework built')
 
 // Build documentation with BunPress
 // Skip if docs directory doesn't exist or if pre-built docs exist
@@ -172,17 +161,8 @@ if (!blogDistExists) {
   if (isVerbose) log.debug('Pre-built blog found at dist/blog, skipping build')
 }
 
-// Skip views build for now - vite-config is not set up
-// TODO: Set up vite-config for views build
-// if (config.app.docMode !== true) {
-//   const viewsSpinner = spinner('Building views...')
-//   viewsSpinner.start()
-//   await runCommand('bun run build', {
-//     cwd: p.frameworkPath('views/web'),
-//     quiet: !isVerbose,
-//   })
-//   viewsSpinner.succeed('Views built')
-// }
+// Views are served via STX at runtime (SSR) — no pre-build step needed.
+// Static site generation (SSG) can be added here in the future if required.
 if (isVerbose) log.debug('Skipping views build (vite-config not configured)')
 
 // await runCommand('bun run build-edge', {

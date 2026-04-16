@@ -1,3 +1,6 @@
+@extends('layouts/default')
+
+@section('content')
 <script>
 interface User {
   id: number
@@ -141,23 +144,23 @@ const selectConversation = (id) => {
 function isActive() { return (id } => activeConversation === id)
 </script>
 
-<div class="flex overflow-hidden h-screen bg-gray-100 dark:bg-gray-900">
-  <div class="flex flex-col w-80 bg-white dark:bg-gray-800 border-gray-200 border-r">
+<div class="flex overflow-hidden h-screen bg-gray-100 dark:bg-neutral-900">
+  <div class="flex flex-col w-80 bg-white dark:bg-neutral-800 border-gray-200 border-r">
     <!-- Sidebar Header -->
-    <div class="flex-none p-4 border-b border-gray-200 dark:border-gray-700">
+    <div class="flex-none p-4 border-b border-gray-200 dark:border-neutral-700">
       <h2 class="font-semibold text-gray-900 text-lg dark:text-white">Conversations</h2>
-      <p class="text-gray-500 text-sm dark:text-gray-400">Ask any question you may have.</p>
+      <p class="text-gray-500 text-sm dark:text-neutral-400">Ask any question you may have.</p>
     </div>
 
     <!-- Conversations List -->
     <div class="overflow-y-auto flex-1">
       @foreach(conversations as chat)
         <div
-             @click="selectConversation(chat.id)"
-             :class="[
+             onclick="selectConversation(chat.id)"
+             class="[
                'p-4 cursor-pointer border-b border-gray-200',
                isActive(chat.id) ? 'bg-blue-50' : 'hover:bg-gray-50'
-             ]">
+             ] {{ }}">
           <div class="flex items-start justify-between">
             <div class="flex items-center space-x-3">
               <div class="relative">
@@ -188,7 +191,7 @@ function isActive() { return (id } => activeConversation === id)
   <!-- Main Content -->
   <div class="flex flex-1 flex-col">
     <!-- Chat Header -->
-    <div class="flex-none p-4 bg-white dark:bg-gray-800 border-b border-gray-200">
+    <div class="flex-none p-4 bg-white dark:bg-neutral-800 border-b border-gray-200">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-4">
           <div class="flex items-center justify-center h-10 w-10 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full">
@@ -203,24 +206,24 @@ function isActive() { return (id } => activeConversation === id)
     </div>
 
     <!-- Chat Area -->
-    <div class="overflow-y-auto flex-1 p-4 bg-gray-50 dark:bg-gray-900">
+    <div class="overflow-y-auto flex-1 p-4 bg-gray-50 dark:bg-neutral-900">
       <div class="flex flex-col mx-auto space-y-4 max-w-3xl">
         @foreach(messages as message)
           <div
-               :class="[
+               class="[
                  'flex items-start space-x-4',
                  message.type === 'ai' ? '' : 'justify-end'
-               ]">
+               ] {{ }}">
             @if(message.type === 'ai')
               <div class="flex items-center justify-center h-10 w-10 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full">
                 <span class="font-medium text-sm text-white">AI</span>
               </div>
             @endif
 
-            <div :class="[
+            <div class="[
                    'rounded-lg p-4 shadow max-w-lg',
-                   message.type === 'ai' ? 'bg-white dark:bg-gray-800' : 'bg-blue-500 text-white'
-                 ]">
+                   message.type === 'ai' ? 'bg-white dark:bg-neutral-800' : 'bg-blue-500 text-white'
+                 ] {{ }}">
               <div class="flex items-center justify-between mb-1">
                 <span class="font-medium">{{ message.user.name }}</span>
                 <span class="text-sm opacity-75">{{ message.timestamp }}</span>
@@ -245,15 +248,15 @@ function isActive() { return (id } => activeConversation === id)
     </div>
 
     <!-- Message Input -->
-    <div class="flex-none p-4 bg-white dark:bg-gray-800 border-gray-200 border-t">
+    <div class="flex-none p-4 bg-white dark:bg-neutral-800 border-gray-200 border-t">
       <div class="mx-auto max-w-3xl">
         <div class="flex items-center space-x-4">
-          <input v-model="newMessage"
+          <input value="{{ newMessage }}"
                  type="text"
                  placeholder="Ask anything about your project..."
                  @keyup.enter="sendMessage"
                  class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-          <button @click="sendMessage"
+          <button onclick="sendMessage"
                   class="px-6 py-2 text-white bg-blue-500 hover:bg-blue-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
             Send
           </button>
@@ -277,3 +280,5 @@ function isActive() { return (id } => activeConversation === id)
 }
 </style>
 
+
+@endsection

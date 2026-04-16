@@ -1,3 +1,6 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 /**
  * Content Dashboard Page
@@ -5,86 +8,78 @@
  * Overview of blog and content performance.
  */
 
-const API_URL = 'http://localhost:' + (process.env.PORT_API || '3008')
+const { Post } = await import('@stacksjs/orm')
 
-var stats = []
-var topPosts = []
-var recentComments = []
+let stats = []
+let topPosts = []
+let recentComments = []
 
 try {
-  const res = await fetch(API_URL + '/cms/dashboard')
-  if (res.ok) {
-    const json = await res.json()
-    stats = json.stats || []
-    topPosts = json.topPosts || []
-    recentComments = json.recentComments || []
-  }
+  const allPosts = await Post.orderBy('created_at', 'desc').get()
+  const publishedPosts = allPosts.filter(p => String(p.get('status') || '').toLowerCase() === 'published')
+  topPosts = publishedPosts.slice(0, 5).map(p => ({
+    title: String(p.get('title') || ''),
+    views: Number(p.get('views') || 0),
+    comments: String(p.get('comments_count') || '0'),
+    date: String(p.get('published_at') || p.get('created_at') || ''),
+  }))
+  stats = [
+    { value: String(allPosts.length), label: 'Total Posts', trend: '' },
+    { value: String(publishedPosts.length), label: 'Published', trend: '' },
+    { value: String(allPosts.filter(p => String(p.get('status') || '').toLowerCase() === 'draft').length), label: 'Drafts', trend: '' },
+    { value: String(allPosts.reduce((sum, p) => sum + Number(p.get('views') || 0), 0)), label: 'Total Views', trend: '' },
+  ]
 } catch (e) {
-  // API not available
+  // DB not seeded
 }
 </script>
-<div class="p-6 min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="flex items-start justify-between mb-8">
-      <div>
-        <h1 class="font-bold text-3xl text-gray-900 dark:text-white">Content Dashboard</h1>
-        <p class="mt-1 text-gray-500 dark:text-gray-400">Overview of your blog and content performance</p>
-      </div>
-      <div class="flex gap-3 items-center">
-        <button class="px-4 py-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg">New Post</button>
-      </div>
-    </div>
+<div class="p-6 space-y-6">
 
-    <div class="flex flex-col gap-6">
-      <!-- Stats -->
-      <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-        @foreach (stats as stat)
-          <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700">
-            <div class="font-bold text-2xl text-gray-900 dark:text-white">{{ stat.value }}</div>
-            <div class="mt-1 text-gray-500 text-sm dark:text-gray-400">{{ stat.label }}</div>
-            <div class="inline-flex gap-1 items-center mt-2 px-2 py-1 font-medium text-green-700 text-xs dark:text-green-400 bg-green-100 dark:bg-green-900/30 rounded-md">{{ stat.trend }}</div>
+  <PageHeader title="Content Dashboard" description="Overview of your blog and content performance">
+    <template #actions>
+      <Button variant="primary">New Post</Button>
+    </template>
+  </PageHeader>
+
+  <!-- Stats -->
+  <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+    @foreach (stats as stat)
+      <StatsCard :title="stat.label" value="{{ stat.value }}" trend="{{ stat.trend }}" icon="i-hugeicons-note-01" iconBg="primary" />
+    @endforeach
+  </div>
+
+  <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
+    <!-- Top Performing Posts -->
+    <Card title="Top Performing Posts">
+      <div class="divide-neutral-100 divide-y dark:divide-neutral-700/50">
+        @foreach (topPosts as post)
+          <div class="flex gap-3 items-center p-4 hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors">
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-[13px] text-neutral-900 dark:text-white">{{ post.title }}</div>
+              <div class="text-[12px] text-neutral-500 dark:text-neutral-400">{{ post.views.toLocaleString() }} views &middot; {{ post.comments }} comments</div>
+            </div>
+            <span class="text-[12px] text-neutral-500 dark:text-neutral-400">{{ post.date }}</span>
           </div>
         @endforeach
       </div>
+    </Card>
 
-      <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        <!-- Top Posts -->
-        <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
-          <div class="flex items-center justify-between mb-4">
-            <span class="font-semibold text-gray-900 dark:text-white">Top Performing Posts</span>
-            <button class="px-3 py-1.5 font-medium text-gray-500 text-xs dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">View All</button>
+    <!-- Recent Comments -->
+    <Card title="Recent Comments">
+      <div class="divide-neutral-100 divide-y dark:divide-neutral-700/50">
+        @foreach (recentComments as comment)
+          <div class="flex gap-3 items-center p-4 hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors">
+            <div class="flex items-center justify-center h-8 w-8 font-semibold text-white text-xs bg-blue-600 rounded-full">{{ comment.author.charAt(0) }}</div>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-[13px] text-neutral-900 dark:text-white">{{ comment.author }}</div>
+              <div class="text-[12px] text-neutral-500 truncate dark:text-neutral-400">{{ comment.content }}</div>
+            </div>
+            <span class="text-[12px] text-neutral-500 dark:text-neutral-400">{{ comment.time }}</span>
           </div>
-          <div class="divide-gray-100 divide-y dark:divide-gray-700">
-            @foreach (topPosts as post)
-              <div class="flex gap-3 items-center p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                <div class="flex-1 min-w-0">
-                  <div class="font-medium text-gray-900 dark:text-white">{{ post.title }}</div>
-                  <div class="text-gray-500 text-sm dark:text-gray-400">{{ post.views.toLocaleString() }} views &middot; {{ post.comments }} comments</div>
-                </div>
-                <span class="text-gray-500 text-sm dark:text-gray-400">{{ post.date }}</span>
-              </div>
-            @endforeach
-          </div>
-        </div>
-
-        <!-- Recent Comments -->
-        <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
-          <div class="flex items-center justify-between mb-4">
-            <span class="font-semibold text-gray-900 dark:text-white">Recent Comments</span>
-            <button class="px-3 py-1.5 font-medium text-gray-500 text-xs dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">View All</button>
-          </div>
-          <div class="divide-gray-100 divide-y dark:divide-gray-700">
-            @foreach (recentComments as comment)
-              <div class="flex gap-3 items-center p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                <div class="flex items-center justify-center h-8 w-8 font-semibold text-white text-xs bg-blue-600 rounded-full">{{ comment.author.charAt(0) }}</div>
-                <div class="flex-1 min-w-0">
-                  <div class="font-medium text-gray-900 dark:text-white">{{ comment.author }}</div>
-                  <div class="text-gray-500 text-sm truncate dark:text-gray-400">{{ comment.content }}</div>
-                </div>
-                <span class="text-gray-500 text-sm dark:text-gray-400">{{ comment.time }}</span>
-              </div>
-            @endforeach
-          </div>
-        </div>
+        @endforeach
       </div>
-    </div>
+    </Card>
   </div>
+
+</div>
+@endsection

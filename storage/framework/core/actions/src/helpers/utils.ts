@@ -20,11 +20,11 @@ type Action = ActionPath | ActionName | string
  * @returns The result of the command.
  */
 export async function runAction(action: Action, options?: ActionOptions): Promise<Result<Subprocess, CommandError>> {
+  log.debug(`[action] Running: ${action}`)
+
   // Special case: handle dev/views directly for maximum performance
   if (action === 'dev/views') {
     try {
-      const port = Number(process.env.PORT) || 3000
-
       // Ensure pantry packages are resolvable for compiled dependencies
       // that import @stacksjs/* packages at runtime
       const pantryPath = p.projectPath('pantry')
@@ -34,23 +34,35 @@ export async function runAction(action: Action, options?: ActionOptions): Promis
         require('module').Module._initPaths?.()
       }
 
-      // Import and call serve function directly - no subprocess!
-      // Try standard resolution first, then fall back to pantry path
-      let serve: any
-      try {
-        ;({ serve } = await import('bun-plugin-stx/serve'))
+      // Check if the project has its own serve.ts — if so, use it directly.
+      // This allows projects to define their own API routes, middleware, and config.
+      const projectServe = p.projectPath('serve.ts')
+      const projectServeFile = Bun.file(projectServe)
+      if (await projectServeFile.exists()) {
+        await import(projectServe)
       }
-      catch {
-        ;({ serve } = await import(p.projectPath('pantry/bun-plugin-stx/dist/serve.js')))
+      else {
+        const port = Number(process.env.PORT) || 3000
+
+        // Import and call serve function directly - no subprocess!
+        // Try standard resolution first, then fall back to pantry path
+        let serve: any
+        try {
+          ;({ serve } = await import('bun-plugin-stx/serve'))
+        }
+        catch {
+          ;({ serve } = await import(p.projectPath('pantry/bun-plugin-stx/dist/serve.js')))
+        }
+        await serve({
+          patterns: ['resources/views', 'storage/framework/defaults/resources/views'],
+          port,
+          componentsDir: 'storage/framework/defaults/resources/components/Dashboard',
+          layoutsDir: 'resources/layouts',
+          partialsDir: 'resources/components',
+          fallbackPartialsDir: 'resources/views',
+          quiet: true,
+        })
       }
-      await serve({
-        patterns: ['resources/views', 'storage/framework/defaults/resources/views'],
-        port,
-        componentsDir: 'storage/framework/defaults/components/Dashboard',
-        layoutsDir: 'resources/layouts',
-        partialsDir: 'resources/views',
-        quiet: true,
-      })
 
       // This will never return since serve runs forever
       // eslint-disable-next-line no-unreachable
@@ -81,6 +93,7 @@ export async function runAction(action: Action, options?: ActionOptions): Promis
 
       if (relativePath === action || file.endsWith(`${action}.ts`) || file.endsWith(`${action}.js`)) {
         // Direct filename match - import and execute immediately
+        log.debug(`[action] Resolved: ${action} → ${file}`)
         return await ((await import(file)).default as ActionType).handle(undefined as unknown as Parameters<ActionType['handle']>[0])
       }
       // Collect all files for potential name matching (only if direct match fails)
@@ -93,6 +106,7 @@ export async function runAction(action: Action, options?: ActionOptions): Promis
       try {
         const a = await import(file)
         if (a.name === action) {
+          log.debug(`[action] Resolved: ${action} → ${file}`)
           return await a.handle()
         }
       }
@@ -104,12 +118,14 @@ export async function runAction(action: Action, options?: ActionOptions): Promis
   }
 
   // or else, just run the action normally by assuming the action is core Action,  stored in p.actionsPath
-  const opts = buddyOptions(options) || ''
   const path = p.relativeActionsPath(`src/${action}.ts`)
+  log.debug(`[action] Resolved: ${action} → ${path}`)
 
   // Use --watch for dev actions to enable hot reloading
   const isDevAction = action.startsWith('dev/')
   const watchFlag = isDevAction ? '--watch' : ''
+  // Dev actions manage their own config — don't pass CLI flags that trigger dep loading
+  const opts = isDevAction ? '' : (buddyOptions(options) || '')
   const cmd = `bun ${watchFlag} ${path} ${opts}`.trimEnd()
 
   // Ensure pantry packages are resolvable via NODE_PATH
@@ -119,19 +135,21 @@ export async function runAction(action: Action, options?: ActionOptions): Promis
   const existingNodePath = process.env.NODE_PATH
   const nodePath = existingNodePath ? `${pantryNodePath}:${existingNodePath}` : pantryNodePath
 
+  // Dev actions manage their own output (buffered banners, etc.), so inherit
+  // stdout/stderr by default. Suppress with quiet (used by multi-server mode).
+  const shouldInherit = options?.verbose || (isDevAction && !options?.quiet)
+
   const optionsWithCwd: CliOptions = {
     cwd: options?.cwd || p.projectPath(),
     ...options,
-    // Explicitly set stdout/stderr to 'inherit' when verbose so subprocess
-    // output (including log.info which writes to stderr) is always visible
-    stdout: options?.verbose ? 'inherit' : undefined,
-    stderr: options?.verbose ? 'inherit' : undefined,
+    stdout: shouldInherit ? 'inherit' : undefined,
+    stderr: shouldInherit ? 'inherit' : undefined,
     env: { ...options?.env, NODE_PATH: nodePath },
-    // Suppress stdout for dev actions (output handled by unified dev output)
-    ...(isDevAction && !options?.verbose && { quiet: true }),
   }
 
-  return await runCommand(cmd, optionsWithCwd)
+  const result = await runCommand(cmd, optionsWithCwd)
+  log.debug(`[action] Completed: ${action}`)
+  return result
 }
 
 /**

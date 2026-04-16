@@ -1,98 +1,96 @@
-<script server>
-const API_URL = 'http://localhost:' + (process.env.PORT_API || '3008')
+@extends('layouts/default')
 
+@section('content')
+<script server>
 let functions = []
 let stats = []
 let edges = []
-
-try {
-  const res = await fetch(API_URL + '/serverless')
-  if (res.ok) {
-    const json = await res.json()
-    functions = json.functions || []
-    stats = json.serverlessStats || []
-    edges = json.edges || []
-  }
-} catch (e) {
-  // API not available
-}
 </script>
-<div class="p-6 min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="flex items-start justify-between mb-8">
-      <div>
-        <h1 class="font-bold text-3xl text-gray-900 dark:text-white">Serverless</h1>
-        <p class="mt-1 text-gray-500 dark:text-gray-400">Functions and edge computing</p>
-      </div>
-      <div class="flex gap-3 items-center">
-        <button class="px-4 py-2 font-medium text-gray-700 text-sm dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 rounded-lg dark:border-gray-600">View Logs</button>
-        <button class="px-4 py-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg">Deploy Function</button>
-      </div>
-    </div>
+<div class="p-6 space-y-6">
 
-    <div class="flex flex-col gap-6">
-      <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-        @foreach (stats as stat)
-          <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700">
-            <div class="font-bold text-2xl text-gray-900 dark:text-white">{{ stat.value }}</div>
-            <div class="mt-1 text-gray-500 text-sm dark:text-gray-400">{{ stat.label }}</div>
-          </div>
-        @endforeach
-      </div>
+  <PageHeader title="Serverless" description="Functions and edge computing">
+    <template #actions>
+      <Button variant="secondary">View Logs</Button>
+      <Button variant="primary">
+        <div class="h-4 w-4 i-hugeicons-plus-sign"></div>
+        Deploy Function
+      </Button>
+    </template>
+  </PageHeader>
 
-      <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
-        <div class="flex items-center justify-between mb-4">
-          <span class="font-semibold text-gray-900 dark:text-white">Functions</span>
-        </div>
-        <div class="overflow-x-auto border border-gray-200 rounded-xl dark:border-gray-700">
-          <table class="w-full text-sm">
-            <thead class="bg-gray-50 dark:bg-gray-700/50">
-              <tr>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Function</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Runtime</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Invocations</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Avg Duration</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Errors</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Status</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @foreach (functions as fn)
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                  <td class="px-4 py-3 font-medium text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ fn.name }}</td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700"><span class="px-2.5 py-1 font-semibold text-gray-600 text-xs dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-full">{{ fn.runtime }}</span></td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ fn.invocations }}</td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ fn.avgDuration }}</td>
-                  <td class=": ? '' 'text-error' {{ }} > 0 fn.errors">{{ fn.errors }}</td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">
-                    <span class="px-2.5 py-1 font-semibold text-green-700 text-xs dark:text-green-400 bg-green-100 dark:bg-green-900/30 rounded-full">{{ fn.status }}</span>
-                  </td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">
-                    <div class="flex gap-2">
-                      <button class="px-3 py-1.5 font-medium text-gray-500 text-xs dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Logs</button>
-                      <button class="px-3 py-1.5 font-medium text-gray-500 text-xs dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Edit</button>
-                    </div>
-                  </td>
-                </tr>
-              @endforeach
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
-        <div class="flex items-center justify-between mb-4">
-          <span class="font-semibold text-gray-900 dark:text-white">Edge Locations</span>
-        </div>
-        <div class="grid gap-4 grid-cols-4 p-4">
-          @foreach (edges as edge)
-            <div class="p-4 text-center bg-gray-50 rounded-lg">
-              <div class="font-semibold text-lg">{{ edge.region }}</div>
-              <div class="mt-2 font-bold text-2xl text-blue-600 dark:text-blue-400">{{ edge.latency }}</div>
-              <div class="text-gray-500 text-sm dark:text-gray-400">{{ edge.requests }} requests</div>
-            </div>
-          @endforeach
-        </div>
-      </div>
-    </div>
+  <!-- Stats -->
+  <div class="grid gap-4 grid-cols-2 lg:grid-cols-4">
+    @foreach (stats as stat)
+      <StatsCard :title="stat.label" value="{{ stat.value }}" icon="i-hugeicons-zap" iconBg="primary" />
+    @endforeach
   </div>
+
+  @if (functions.length > 0 || edges.length > 0)
+  <!-- Functions Table -->
+  <div class="bg-white dark:bg-neutral-800/90 border border-black/5 rounded-xl dark:border-white/5">
+    <div class="p-4 border-b border-neutral-200/60 dark:border-white/5">
+      <span class="font-semibold text-[14px] text-neutral-900 dark:text-white">Functions</span>
+    </div>
+
+    <DataTable
+      :columns="{{ JSON.stringify([
+        { key: 'name', label: 'Function' },
+        { key: 'runtime', label: 'Runtime' },
+        { key: 'invocations', label: 'Invocations' },
+        { key: 'avgDuration', label: 'Avg Duration' },
+        { key: 'errors', label: 'Errors' },
+        { key: 'status', label: 'Status' },
+        { key: 'actions', label: '' }
+      ]) }}"
+      :data="functions"
+      emptyTitle="No functions"
+      emptyDescription="Deploy serverless functions to see them here"
+      emptyIcon="i-hugeicons-zap"
+    >
+      @foreach (functions as fn)
+        <tr class="hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors">
+          <td class="px-4 py-3 font-medium text-[13px] text-neutral-900 dark:text-white">{{ fn.name }}</td>
+          <td class="px-4 py-3">
+            <Badge variant="default" size="xs">{{ fn.runtime }}</Badge>
+          </td>
+          <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ fn.invocations }}</td>
+          <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ fn.avgDuration }}</td>
+          <td class="px-4 py-3 text-[13px] dark:text-neutral-300' : ? 'text-neutral-600 'text-red-500' {{ }} > 0 fn.errors">{{ fn.errors }}</td>
+          <td class="px-4 py-3">
+            <Badge variant="success" size="xs" dot>{{ fn.status }}</Badge>
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex gap-1 items-center">
+              <Button variant="ghost" size="xs">Logs</Button>
+              <Button variant="ghost" size="xs" iconOnly><div class="h-4 w-4 i-hugeicons-edit-01"></div></Button>
+            </div>
+          </td>
+        </tr>
+      @endforeach
+    </DataTable>
+  </div>
+
+  <!-- Edge Locations -->
+  <Card>
+    <div class="p-4 border-b border-neutral-200/60 dark:border-white/5">
+      <span class="font-semibold text-[14px] text-neutral-900 dark:text-white">Edge Locations</span>
+    </div>
+    <div class="grid gap-4 grid-cols-2 lg:grid-cols-4 p-4">
+      @foreach (edges as edge)
+        <div class="p-4 text-center bg-neutral-50 dark:bg-neutral-800 rounded-lg">
+          <div class="font-semibold text-[14px] text-neutral-900 dark:text-white">{{ edge.region }}</div>
+          <div class="mt-2 font-bold text-blue-600 text-xl dark:text-blue-400">{{ edge.latency }}</div>
+          <div class="text-[12px] text-neutral-500 dark:text-neutral-400">{{ edge.requests }} requests</div>
+        </div>
+      @endforeach
+    </div>
+  </Card>
+  @else
+  <EmptyState
+    icon="i-hugeicons-zap"
+    title="No serverless functions"
+    description="Deploy Lambda or edge functions to see them here"
+  />
+  @endif
+</div>
+@endsection

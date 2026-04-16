@@ -1,3 +1,6 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 import type { StorePost } from '../../../../types/defaults'
 import { usePosts } from '../../../../functions/cms/posts'
@@ -6,1197 +9,305 @@ import { useCategorizables } from '../../../../functions/cms/categorizables'
 const postsModule = usePosts()
 const categorizablesModule = useCategorizables()
 
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js'
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-)
-
-// Chart options
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: false,
-    },
-  },
+  plugins: { legend: { display: false } },
   scales: {
-    y: {
-      beginAtZero: true,
-      grid: {
-        display: true,
-        color: 'rgba(0, 0, 0, 0.05)',
-      },
-    },
-    x: {
-      grid: {
-        display: false,
-      },
-    },
+    y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
+    x: { grid: { display: false } },
   },
 }
 
-// Doughnut chart options (no scales)
 const doughnutChartOptions = {
   responsive: true,
   maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: true,
-      position: 'bottom' as const,
-    },
-  },
+  plugins: { legend: { display: true, position: 'bottom' as const } },
 }
 
-// Generate monthly data for charts
-function monthlyChartData() {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-  // Sample data - in a real app, this would be calculated from actual post data
-  const viewsData = [2500, 3200, 2800, 3600, 4100, 3800, 4500, 5200, 5800, 5400, 6200, 6800]
-  const postsData = [4, 6, 5, 7, 8, 6, 9, 10, 12, 9, 11, 14]
-  const commentsData = [35, 42, 38, 45, 52, 48, 56, 62, 68, 58, 72, 78]
-
-  // Views chart data
-  const viewsChartData = {
-    labels: months,
-    datasets: [
-      {
-        label: 'Post Views',
-        backgroundColor: 'rgba(59, 130, 246, 0.2)',
-        borderColor: 'rgba(59, 130, 246, 1)',
-        borderWidth: 2,
-        pointBackgroundColor: 'rgba(59, 130, 246, 1)',
-        pointBorderColor: '#fff',
-        pointHoverBackgroundColor: '#fff',
-        pointHoverBorderColor: 'rgba(59, 130, 246, 1)',
-        fill: true,
-        tension: 0.4,
-        data: viewsData,
-      },
-    ],
-  }
-
-  // Posts and comments chart data
-  const postsCommentsChartData = {
-    labels: months,
-    datasets: [
-      {
-        label: 'Posts Published',
-        backgroundColor: 'rgba(16, 185, 129, 0.8)',
-        borderColor: 'rgba(16, 185, 129, 1)',
-        borderWidth: 1,
-        borderRadius: 4,
-        data: postsData,
-      },
-      {
-        label: 'Comments',
-        backgroundColor: 'rgba(245, 158, 11, 0.8)',
-        borderColor: 'rgba(245, 158, 11, 1)',
-        borderWidth: 1,
-        borderRadius: 4,
-        data: commentsData,
-      },
-    ],
-  }
-
-  // Category distribution chart data
-  const categoryCounts: Record<string, number> = {}
-
-  posts.forEach(post => {
-    if (post.category) {
-      categoryCounts[post.category] = (categoryCounts[post.category] || 0) + 1
-    }
-  }
-
-  const categoryLabels = Object.keys(categoryCounts)
-  const categoryData = Object.values(categoryCounts)
-  const backgroundColors = [
-    'rgba(59, 130, 246, 0.8)',
-    'rgba(16, 185, 129, 0.8)',
-    'rgba(245, 158, 11, 0.8)',
-    'rgba(239, 68, 68, 0.8)',
-    'rgba(139, 92, 246, 0.8)',
-    'rgba(236, 72, 153, 0.8)',
-  ]
-
-  const categoryChartData = {
-    labels: categoryLabels,
-    datasets: [
-      {
-        data: categoryData,
-        backgroundColor: backgroundColors.slice(0, categoryLabels.length),
-        borderWidth: 0,
-      },
-    ],
-  }
-
-  return {
-    viewsChartData,
-    postsCommentsChartData,
-    categoryChartData,
-  }
+const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const viewsChartData = {
+  labels: months,
+  datasets: [{
+    label: 'Post Views',
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+    borderColor: 'rgba(59, 130, 246, 1)',
+    borderWidth: 2, fill: true, tension: 0.4,
+    data: [2500, 3200, 2800, 3600, 4100, 3800, 4500, 5200, 5800, 5400, 6200, 6800],
+  }],
 }
-
-// Time range selector
-let timeRange = 'Last 30 days'
-const timeRanges = ['Today', 'Last 7 days', 'Last 30 days', 'Last 90 days', 'Last year', 'All time']
+const postsCommentsChartData = {
+  labels: months,
+  datasets: [
+    { label: 'Posts Published', backgroundColor: 'rgba(16, 185, 129, 0.8)', borderRadius: 4, data: [4, 6, 5, 7, 8, 6, 9, 10, 12, 9, 11, 14] },
+    { label: 'Comments', backgroundColor: 'rgba(245, 158, 11, 0.8)', borderRadius: 4, data: [35, 42, 38, 45, 52, 48, 56, 62, 68, 58, 72, 78] },
+  ],
+}
 
 // Sample posts data
-let posts: Posts[] = ([
-  {
-    id: 1,
-    title: '10 Tips for Better Code Quality',
-    excerpt: 'Improve your code quality with these essential tips that every developer should know.',
-    slug: '10-tips-for-better-code-quality',
-    category: 'Tutorials',
-    tags: ['Coding', 'Best Practices', 'Development'],
-    author: 'Jane Doe',
-    views: 12450,
-    comments: 78,
-    published: '2023-12-01',
-    status: 'Published',
-    featured: true,
-    poster: 'https://picsum.photos/seed/1/280/160'
-  },
-  {
-    id: 2,
-    title: 'The Future of JavaScript Frameworks',
-    excerpt: 'Exploring what\'s next for JavaScript frameworks and the evolving web development landscape.',
-    slug: 'future-of-javascript-frameworks',
-    category: 'Technology',
-    tags: ['JavaScript', 'Frameworks', 'Web Development'],
-    author: 'John Smith',
-    views: 9870,
-    comments: 124,
-    published: '2023-11-28',
-    status: 'Published',
-    featured: true,
-    poster: 'https://picsum.photos/seed/2/280/160'
-  },
-  {
-    id: 3,
-    title: 'Getting Started with Vue 3',
-    excerpt: 'A comprehensive guide to getting started with Vue 3 and its composition API.',
-    slug: 'getting-started-with-vue-3',
-    category: 'Tutorials',
-    tags: ['Vue', 'JavaScript', 'Frontend'],
-    author: 'Jane Doe',
-    views: 8760,
-    comments: 45,
-    published: '2023-11-25',
-    status: 'Published',
-    featured: false,
-    poster: 'https://picsum.photos/seed/3/280/160'
-  },
-  {
-    id: 4,
-    title: 'Review: Latest MacBook Pro',
-    excerpt: 'An in-depth review of the latest MacBook Pro and how it performs for developers.',
-    slug: 'review-latest-macbook-pro',
-    category: 'Reviews',
-    tags: ['Hardware', 'Apple', 'Development Tools'],
-    author: 'Michael Brown',
-    views: 7650,
-    comments: 92,
-    published: '2023-11-20',
-    status: 'Published',
-    featured: false,
-    poster: 'https://picsum.photos/seed/4/280/160'
-  },
-  {
-    id: 5,
-    title: 'Understanding Web Accessibility',
-    excerpt: 'Why web accessibility matters and how to implement it in your projects.',
-    slug: 'understanding-web-accessibility',
-    category: 'Tutorials',
-    tags: ['Accessibility', 'Web Development', 'UX'],
-    author: 'Emily Davis',
-    views: 6540,
-    comments: 31,
-    published: '2023-11-15',
-    status: 'Published',
-    featured: false,
-    poster: 'https://picsum.photos/seed/5/280/160'
-  },
-  {
-    id: 6,
-    title: 'Introduction to TypeScript',
-    excerpt: 'Learn the basics of TypeScript and how it can improve your JavaScript projects.',
-    slug: 'introduction-to-typescript',
-    category: 'Tutorials',
-    tags: ['TypeScript', 'JavaScript', 'Development'],
-    author: 'Jane Doe',
-    views: 0,
-    comments: 0,
-    published: '',
-    status: 'Draft',
-    featured: false,
-    poster: 'https://picsum.photos/seed/6/280/160'
-  },
-  {
-    id: 7,
-    title: 'Building a REST API with Node.js',
-    excerpt: 'A step-by-step guide to building a robust REST API using Node.js and Express.',
-    slug: 'building-rest-api-nodejs',
-    category: 'Tutorials',
-    tags: ['Node.js', 'API', 'Backend'],
-    author: 'John Smith',
-    views: 0,
-    comments: 0,
-    published: '',
-    status: 'Draft',
-    featured: false,
-    poster: 'https://picsum.photos/seed/7/280/160'
-  },
-  {
-    id: 8,
-    title: 'CSS Grid vs Flexbox',
-    excerpt: 'Comparing CSS Grid and Flexbox: when to use each layout system.',
-    slug: 'css-grid-vs-flexbox',
-    category: 'Tutorials',
-    tags: ['CSS', 'Web Design', 'Frontend'],
-    author: 'Jane Doe',
-    views: 0,
-    comments: 0,
-    published: '',
-    status: 'Draft',
-    featured: false,
-    poster: 'https://picsum.photos/seed/8/280/160'
-  },
-  {
-    id: 9,
-    title: 'The Impact of AI on Software Development',
-    excerpt: 'How artificial intelligence is changing the landscape of software development.',
-    slug: 'ai-impact-software-development',
-    category: 'Technology',
-    tags: ['AI', 'Software Development', 'Future Tech'],
-    author: 'Michael Brown',
-    views: 5430,
-    comments: 67,
-    published: '2023-11-10',
-    status: 'Published',
-    featured: false,
-    poster: 'https://picsum.photos/seed/9/280/160'
-  },
-  {
-    id: 10,
-    title: 'Optimizing Website Performance',
-    excerpt: 'Techniques and best practices for optimizing your website\'s performance.',
-    slug: 'optimizing-website-performance',
-    category: 'Tutorials',
-    tags: ['Performance', 'Web Development', 'Optimization'],
-    author: 'Emily Davis',
-    views: 4980,
-    comments: 23,
-    published: '2023-11-05',
-    status: 'Published',
-    featured: false,
-    poster: 'https://picsum.photos/seed/10/280/160'
-  }
-])
-
-// Categories for filtering
-let categories = []
-
-// Statuses for filtering
-const statuses = [
-  { id: 1, name: 'All Statuses' },
-  { id: 2, name: 'Published' },
-  { id: 3, name: 'Draft' },
-  { id: 4, name: 'Scheduled' },
-  { id: 5, name: 'Archived' }
+const posts = [
+  { id: 1, title: '10 Tips for Better Code Quality', excerpt: 'Improve your code quality with these essential tips.', slug: '10-tips-for-better-code-quality', category: 'Tutorials', tags: ['Coding', 'Best Practices'], author: 'Jane Doe', views: 12450, comments: 78, published: '2023-12-01', status: 'Published', featured: true, poster: 'https://picsum.photos/seed/1/280/160' },
+  { id: 2, title: 'The Future of JavaScript Frameworks', excerpt: 'Exploring what\'s next for JS frameworks.', slug: 'future-of-javascript-frameworks', category: 'Technology', tags: ['JavaScript', 'Frameworks'], author: 'John Smith', views: 9870, comments: 124, published: '2023-11-28', status: 'Published', featured: true, poster: 'https://picsum.photos/seed/2/280/160' },
+  { id: 3, title: 'Getting Started with Vue 3', excerpt: 'A comprehensive guide to Vue 3 composition API.', slug: 'getting-started-with-vue-3', category: 'Tutorials', tags: ['Vue', 'JavaScript'], author: 'Jane Doe', views: 8760, comments: 45, published: '2023-11-25', status: 'Published', featured: false, poster: 'https://picsum.photos/seed/3/280/160' },
+  { id: 4, title: 'Review: Latest MacBook Pro', excerpt: 'In-depth review for developers.', slug: 'review-latest-macbook-pro', category: 'Reviews', tags: ['Hardware', 'Apple'], author: 'Michael Brown', views: 7650, comments: 92, published: '2023-11-20', status: 'Published', featured: false, poster: 'https://picsum.photos/seed/4/280/160' },
+  { id: 5, title: 'Understanding Web Accessibility', excerpt: 'Why accessibility matters and how to implement it.', slug: 'understanding-web-accessibility', category: 'Tutorials', tags: ['Accessibility', 'UX'], author: 'Emily Davis', views: 6540, comments: 31, published: '2023-11-15', status: 'Published', featured: false, poster: 'https://picsum.photos/seed/5/280/160' },
+  { id: 6, title: 'Introduction to TypeScript', excerpt: 'Learn the basics of TypeScript.', slug: 'introduction-to-typescript', category: 'Tutorials', tags: ['TypeScript', 'JavaScript'], author: 'Jane Doe', views: 0, comments: 0, published: '', status: 'Draft', featured: false, poster: 'https://picsum.photos/seed/6/280/160' },
+  { id: 7, title: 'Building a REST API with Node.js', excerpt: 'Step-by-step guide to building REST APIs.', slug: 'building-rest-api-nodejs', category: 'Tutorials', tags: ['Node.js', 'API'], author: 'John Smith', views: 0, comments: 0, published: '', status: 'Draft', featured: false, poster: 'https://picsum.photos/seed/7/280/160' },
+  { id: 8, title: 'The Impact of AI on Software Development', excerpt: 'How AI is changing software development.', slug: 'ai-impact-software-development', category: 'Technology', tags: ['AI', 'Future Tech'], author: 'Michael Brown', views: 5430, comments: 67, published: '2023-11-10', status: 'Published', featured: false, poster: 'https://picsum.photos/seed/8/280/160' },
 ]
 
-// Filter and sort options
+const statuses = ['All Statuses', 'Published', 'Draft', 'Scheduled', 'Archived']
+const categories = [{ id: 0, name: 'All Categories' }, { id: 1, name: 'Tutorials' }, { id: 2, name: 'Technology' }, { id: 3, name: 'Reviews' }]
+
 let searchQuery = ''
 let selectedCategory = 'All Categories'
 let selectedStatus = 'All Statuses'
-let selectedTag = 'All Tags'
-let sortBy = 'published'
-let sortOrder = 'desc'
-
-// New Post Modal
-let showNewPostModal = false
-let newPost = {
-  title: '',
-  excerpt: '',
-  category: 'Tutorials',
-  tags: '',
-  content: '',
-  status: 'Draft',
-  poster: 'https://picsum.photos/seed/new/280/160'
-}
-
-// Get all unique tags from posts
-function allTags() {
-  const tagsSet = new Set<string>()
-  tagsSet.add('All Tags')
-
-  posts.forEach(post => {
-    post.tags.forEach(tag => {
-      tagsSet.add(tag)
-    })
-  }
-
-  return Array.from(tagsSet)
-}
-
-function openNewPostModal() {
-  showNewPostModal = true
-}
-
-async function fetchCategories() {
-  const allCategories = await categorizablesModule.fetchCategorizables()
-  categories = allCategories
-}
-
-function closeNewPostModal() {
-  showNewPostModal = false
-  // Reset form
-  newPost = {
-    title: '',
-    excerpt: '',
-    category: 'Tutorials',
-    tags: '',
-    content: '',
-    status: 'Draft',
-    poster: 'https://picsum.photos/seed/new/280/160'
-  }
-}
-
-async function createNewPost() {
-  // In a real app, this would send data to the server
-  const tagsArray = newPost.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
-
-  const post = {
-    id: posts.length + 1,
-    title: newPost.title,
-    excerpt: newPost.excerpt,
-    slug: newPost.title.toLowerCase().replace(/[^\w\s]/gi, '').replace(/\s+/g, '-'),
-    category: newPost.category,
-    tags: tagsArray,
-    content: newPost.content,
-    author: 'Current User', // In a real app, this would be the current user
-    published: newPost.status === 'Published' ? new Date().toISOString().split('T')[0] : '',
-    status: newPost.status,
-    featured: false,
-    poster: newPost.poster
-  } as StorePost
-
-  await postsModule.createPost(post)
-  
-  // posts.unshift(post)
-  closeNewPostModal()
-}
-
-// Computed filtered and sorted posts
-function filteredPosts() {
-  return posts
-    .filter(post => {
-      // Apply search filter
-      const matchesSearch =
-        post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-
-      // Apply category filter
-      const matchesCategory = selectedCategory === 'All Categories' || post.category === selectedCategory
-
-      // Apply status filter
-      const matchesStatus = selectedStatus === 'All Statuses' || post.status === selectedStatus
-
-      // Apply tag filter
-      const matchesTag = selectedTag === 'All Tags' || post.tags.includes(selectedTag)
-
-      return matchesSearch && matchesCategory && matchesStatus && matchesTag
-    })
-    .sort((a, b) => {
-      // Apply sorting
-      let comparison = 0
-      if (sortBy === 'title') {
-        comparison = a.title.localeCompare(b.title)
-      } else if (sortBy === 'author') {
-        comparison = a.author.localeCompare(b.author)
-      } else if (sortBy === 'views') {
-        comparison = a.views - b.views
-      } else if (sortBy === 'comments') {
-        comparison = a.comments - b.comments
-      } else if (sortBy === 'published') {
-        // Handle draft posts (empty published date)
-        if (!a.published && !b.published) return 0
-        if (!a.published) return 1
-        if (!b.published) return -1
-        return new Date(a.published).getTime() - new Date(b.published).getTime()
-      }
-
-      return sortOrder === 'asc' ? comparison : -comparison
-    })
-}
-
-// Pagination
 let currentPage = 1
-let itemsPerPage = 5
-function totalPages() { return Math.ceil(filteredPosts.length / itemsPerPage) }
+let itemsPerPage = 10
 
-function paginatedPosts() {
-  const start = (currentPage - 1) * itemsPerPage
-  const end = start + itemsPerPage
-  return filteredPosts.slice(start, end)
+const filteredPosts = posts.filter(p => {
+  const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) || p.author.toLowerCase().includes(searchQuery.toLowerCase())
+  const matchesCategory = selectedCategory === 'All Categories' || p.category === selectedCategory
+  const matchesStatus = selectedStatus === 'All Statuses' || p.status === selectedStatus
+  return matchesSearch && matchesCategory && matchesStatus
+})
+
+const totalPages = Math.ceil(filteredPosts.length / itemsPerPage)
+const paginatedPosts = filteredPosts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+
+// Blog stats
+const publishedPosts = posts.filter(p => p.status === 'Published')
+const totalViews = publishedPosts.reduce((sum, p) => sum + p.views, 0)
+const totalComments = publishedPosts.reduce((sum, p) => sum + p.comments, 0)
+
+const authorCounts = {}
+posts.forEach(p => { authorCounts[p.author] = (authorCounts[p.author] || 0) + 1 })
+let topAuthor = { name: 'None', count: 0 }
+for (const [author, count] of Object.entries(authorCounts)) {
+  if (count > topAuthor.count) topAuthor = { name: author, count }
 }
 
-function changePage(page: number): void {
-  currentPage = page
+// Category chart data
+const categoryCounts = {}
+posts.forEach(p => { if (p.category) categoryCounts[p.category] = (categoryCounts[p.category] || 0) + 1 })
+const categoryChartData = {
+  labels: Object.keys(categoryCounts),
+  datasets: [{ data: Object.values(categoryCounts), backgroundColor: ['rgba(59,130,246,0.8)', 'rgba(16,185,129,0.8)', 'rgba(245,158,11,0.8)', 'rgba(239,68,68,0.8)'], borderWidth: 0 }],
 }
 
-function previousPage(): void {
-  if (currentPage > 1) {
-    currentPage--
-  }
-}
-
-function nextPage(): void {
-  if (currentPage < totalPages) {
-    currentPage++
-  }
-}
-
-// Toggle sort order
-function toggleSort(column: string): void {
-  if (sortBy === column) {
-    sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortBy = column
-    sortOrder = 'desc'
-  }
-}
-
-// Get status badge class
-function getStatusClass(status: string): string {
-  switch (status) {
-    case 'Published':
-      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-    case 'Draft':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-    case 'Scheduled':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-    case 'Archived':
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
-    default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
-  }
-}
-
-// Format date
-function formatDate(dateString: string): string {
+function formatDate(dateString) {
   if (!dateString) return 'Not published'
-
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  }
+  return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-// Bulk actions
-let selectedPostIds = []
-let selectAll = false
-
-function toggleSelectAll(): void {
-  if (selectAll) {
-    selectedPostIds = paginatedPosts.map(post => post.id)
-  } else {
-    selectedPostIds = []
-  }
+function statusVariant(status) {
+  if (status === 'Published') return 'success'
+  if (status === 'Draft') return 'warning'
+  if (status === 'Scheduled') return 'primary'
+  return 'default'
 }
 
-function togglePostSelection(postId: number): void {
-  const index = selectedPostIds.indexOf(postId)
-  if (index === -1) {
-    selectedPostIds.push(postId)
-  } else {
-    selectedPostIds.splice(index, 1)
-  }
-
-  // Update selectAll based on whether all posts are selected
-  selectAll = paginatedPosts.every(post => selectedPostIds.includes(post.id))
-}
-
-// Filter by tag
-function filterByTag(tag: string): void {
-  selectedTag = tag
-  // Reset to first page when changing filters
-  currentPage = 1
-}
-
-function hasSelectedPosts() { return selectedPostIds.length > 0 }
-
-// Preview tags for new post
-function previewTags() {
-  if (!newPost.tags) return []
-  return newPost.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
-}
-
-// Computed blog post statistics
-function blogStats() {
-  // Count posts by status
-  const publishedPosts = posts.filter(post => post.status === 'Published').length
-  const draftPosts = posts.filter(post => post.status === 'Draft').length
-  const scheduledPosts = posts.filter(post => post.status === 'Scheduled').length
-  const archivedPosts = posts.filter(post => post.status === 'Archived').length
-
-  // Calculate total views and comments
-  const totalViews = posts.reduce((sum, post) => sum + post.views, 0)
-  const totalComments = posts.reduce((sum, post) => sum + post.comments, 0)
-
-  // Calculate average views and comments per post
-  const publishedPostsCount = Math.max(1, publishedPosts) // Avoid division by zero
-  const avgViewsPerPost = Math.round(totalViews / publishedPostsCount)
-  const avgCommentsPerPost = (totalComments / publishedPostsCount).toFixed(1)
-
-  // Find most popular post
-  let mostPopularPost = posts[0] || { title: 'None', views: 0 }
-
-  for (const post of posts) {
-    if (post.views > mostPopularPost.views) {
-      mostPopularPost = post
-    }
-  }
-
-  // Find most commented post
-  let mostCommentedPost = posts[0] || { title: 'None', comments: 0 }
-
-  for (const post of posts) {
-    if (post.comments > mostCommentedPost.comments) {
-      mostCommentedPost = post
-    }
-  }
-
-  // Count posts by author
-  const authorCounts: Record<string, number> = {}
-
-  posts.forEach(post => {
-    if (post.author) {
-      authorCounts[post.author] = (authorCounts[post.author] || 0) + 1
-    }
-  }
-
-  // Find top author
-  let topAuthor = { name: 'None', count: 0 }
-
-  for (const [author, count] of Object.entries(authorCounts)) {
-    if (count > topAuthor.count) {
-      topAuthor = { name: author, count }
-    }
-  }
-
-  return {
-    totalPosts: posts.length,
-    publishedPosts,
-    draftPosts,
-    scheduledPosts,
-    archivedPosts,
-    totalViews,
-    totalComments,
-    avgViewsPerPost,
-    avgCommentsPerPost,
-    mostPopularPost,
-    mostCommentedPost,
-    topAuthor
-  }
-}
+let showNewPostModal = false
 </script>
 
-<main>
-    <div class="px-6 py-6 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-7xl">
-        <div class="sm:flex sm:items-center sm:justify-between">
-          <div>
-            <h1 class="font-semibold text-2xl text-gray-900 dark:text-white">Posts</h1>
-            <p class="mt-2 text-gray-700 text-sm dark:text-gray-300">
-              Manage all your blog posts
-            </p>
-          </div>
-          <div class="mt-4 sm:mt-0">
-            <button
-              type="button"
-              @click="openNewPostModal"
-              class="inline-flex items-center px-3 py-2 font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
-            >
-              <div class="mr-1 h-5 w-5 i-hugeicons-plus-sign"></div>
-              New Post
-            </button>
-          </div>
-        </div>
+<div class="p-6 space-y-6">
 
-        <!-- Time range selector -->
-        <div class="flex items-center justify-between mt-4">
-          <p class="text-gray-500 text-sm dark:text-gray-400">
-            Overview of your blog performance
-          </p>
-          <div class="relative">
-            <select v-model="timeRange" class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600">
-              <option v-for="range in timeRanges" :key="range" :value="range">{{ range }}</option>
-            </select>
-          </div>
-        </div>
+  <!-- Page Header -->
+  <PageHeader title="Posts" description="Manage all your blog posts">
+    <template #actions>
+      <Button variant="primary" @click="showNewPostModal = true">
+        <div class="h-4 w-4 i-hugeicons-plus-sign"></div>
+        New Post
+      </Button>
+    </template>
+  </PageHeader>
 
-        <!-- Stats -->
-        <dl class="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mt-5">
-          <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-            <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-300">Total Posts</dt>
-            <dd class="mt-1 font-semibold text-3xl text-gray-900 tracking-tight dark:text-white">{{ blogStats.totalPosts }}</dd>
-            <dd class="flex items-center mt-2 text-gray-500 text-sm dark:text-gray-400">
-              <span>{{ blogStats.publishedPosts }} published, {{ blogStats.draftPosts }} drafts</span>
-            </dd>
-          </div>
+  <!-- Stats -->
+  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+    <StatsCard
+      title="Total Posts"
+      value="{{ posts.length }}"
+      subtitle="{{ publishedPosts.length }} published, {{ posts.length - publishedPosts.length }} drafts"
+      icon="i-hugeicons-quill-write-02"
+      iconBg="primary"
+    />
+    <StatsCard
+      title="Total Views"
+      value="{{ totalViews.toLocaleString() }}"
+      trend="{{ 12 }}"
+      trendLabel="avg per post"
+      icon="i-hugeicons-analytics-up"
+      iconBg="success"
+    />
+    <StatsCard
+      title="Total Comments"
+      value="{{ totalComments }}"
+      trend="{{ 8 }}"
+      trendLabel="avg per post"
+      icon="i-hugeicons-comment-01"
+      iconBg="warning"
+    />
+    <StatsCard
+      title="Top Author"
+      value="{{ topAuthor.name }}"
+      subtitle="{{ topAuthor.count }} posts"
+      icon="i-hugeicons-user-star-02"
+      iconBg="info"
+    />
+  </div>
 
-          <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-            <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-300">Total Views</dt>
-            <dd class="mt-1 font-semibold text-3xl text-gray-900 tracking-tight dark:text-white">{{ blogStats.totalViews.toLocaleString() }}</dd>
-            <dd class="flex items-center mt-2 text-green-600 text-sm dark:text-green-400">
-              <div class="mr-1 h-4 w-4 i-hugeicons-analytics-up"></div>
-              <span>{{ blogStats.avgViewsPerPost.toLocaleString() }} avg per post</span>
-            </dd>
-          </div>
+  <!-- Charts -->
+  <div class="grid gap-6 grid-cols-1 lg:grid-cols-3">
+    <div class="lg:col-span-2">
+      <ChartCard title="Post Views" height="320px">
+        <canvas id="chart_1"></canvas>
+      </ChartCard>
+    </div>
+    <ChartCard title="Category Distribution" height="320px">
+      <canvas id="chart_2"></canvas>
+    </ChartCard>
+  </div>
 
-          <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-            <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-300">Total Comments</dt>
-            <dd class="mt-1 font-semibold text-3xl text-gray-900 tracking-tight dark:text-white">{{ blogStats.totalComments }}</dd>
-            <dd class="flex items-center mt-2 text-green-600 text-sm dark:text-green-400">
-              <div class="mr-1 h-4 w-4 i-hugeicons-analytics-up"></div>
-              <span>{{ blogStats.avgCommentsPerPost }} avg per post</span>
-            </dd>
-          </div>
+  <ChartCard title="Posts & Comments">
+    <canvas id="chart_3"></canvas>
+  </ChartCard>
 
-          <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-            <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-300">Top Author</dt>
-            <dd class="mt-1 font-semibold text-3xl text-gray-900 tracking-tight dark:text-white">{{ blogStats.topAuthor.name }}</dd>
-            <dd class="flex items-center mt-2 text-gray-500 text-sm dark:text-gray-400">
-              <span>{{ blogStats.topAuthor.count }} posts</span>
-            </dd>
-          </div>
-        </dl>
-
-        <!-- Charts -->
-        <div class="grid gap-5 grid-cols-1 lg:grid-cols-3 mt-8">
-          <div class="overflow-hidden lg:col-span-2 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-            <div class="p-6">
-              <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white">Post Views</h3>
-              <div class="mt-2 h-80">
-                <Line :data="monthlyChartData.viewsChartData" :options="chartOptions" />
-              </div>
-            </div>
-          </div>
-
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-            <div class="p-6">
-              <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white">Category Distribution</h3>
-              <div class="mt-2 h-80">
-                <Doughnut :data="monthlyChartData.categoryChartData" :options="doughnutChartOptions" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="grid gap-5 grid-cols-1 lg:grid-cols-1 mt-5">
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-            <div class="p-6">
-              <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white">Posts & Comments</h3>
-              <div class="mt-2 h-80">
-                <Bar :data="monthlyChartData.postsCommentsChartData" :options="chartOptions" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Filters -->
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mt-8">
-          <div class="relative max-w-sm">
-            <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-              <div class="h-5 w-5 text-gray-400 i-hugeicons-search-01"></div>
-            </div>
-            <input
-              v-model="searchQuery"
-              type="text"
-              class="block pl-10 pr-3 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
-              placeholder="Search posts..."
-            />
-          </div>
-
-          <div class="flex flex-col gap-4 sm:flex-row">
-            <select
-              v-model="selectedCategory"
-              class="block pl-3 pr-10 py-1.5 w-full sm:min-w-[180px] text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
-            >
-              <option v-for="category in categories" :key="category.id" :value="category.name">{{ category.name }}</option>
-            </select>
-
-            <select
-              v-model="selectedStatus"
-              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
-            >
-              <option v-for="status in statuses" :key="status.id" :value="status.name">{{ status.name }}</option>
-            </select>
-
-            <select
-              v-model="selectedTag"
-              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
-            >
-              <option v-for="tag in allTags" :key="tag" :value="tag">{{ tag }}</option>
-            </select>
-
-            <select
-              v-model="itemsPerPage"
-              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
-            >
-              <option :value="5">5 per page</option>
-              <option :value="10">10 per page</option>
-              <option :value="25">25 per page</option>
-              <option :value="50">50 per page</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Bulk actions -->
-        <div v-if="hasSelectedPosts" class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-md">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <div class="mr-2 h-5 w-5 text-blue-400 i-hugeicons-info-circle"></div>
-              <span class="text-blue-700 text-sm dark:text-blue-300">{{ selectedPostIds.length }} posts selected</span>
-            </div>
-            <div class="flex space-x-2">
-              <button type="button" class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm">
-                <div class="mr-1 h-4 w-4 i-hugeicons-archive-box"></div>
-                Archive
-              </button>
-              <button type="button" class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm">
-                <div class="mr-1 h-4 w-4 i-hugeicons-duplicate"></div>
-                Duplicate
-              </button>
-              <button type="button" class="inline-flex items-center px-2.5 py-1.5 font-semibold text-sm text-white bg-red-600 hover:bg-red-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 shadow-sm">
-                <div class="mr-1 h-4 w-4 i-hugeicons-waste"></div>
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Active tag filter -->
-        <div v-if="selectedTag !== 'All Tags'" class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-md">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <div class="mr-2 h-5 w-5 text-blue-400 i-hugeicons-tag-01"></div>
-              <span class="text-blue-700 text-sm dark:text-blue-300">
-                Filtering by tag: <span class="font-medium">{{ selectedTag }}</span>
-              </span>
-            </div>
-            <button
-              @click="selectedTag = 'All Tags'"
-              class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
-            >
-              <div class="mr-1 h-4 w-4 i-hugeicons-cancel-01"></div>
-              Clear Filter
-            </button>
-          </div>
-        </div>
-
-        <!-- Posts table -->
-        <div class="flow-root mt-6">
-          <div class="sm:flex sm:items-center sm:justify-between mb-4">
-            <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white">All Posts</h3>
-            <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">
-              A list of all blog posts including title, author, views, and status.
-            </p>
-          </div>
-          <div class="overflow-x-auto -mx-4 -my-2 sm:-mx-6 lg:-mx-8">
-            <div class="inline-block py-2 sm:px-6 lg:px-8 min-w-full align-middle">
-              <div class="overflow-hidden ring-1 ring-black ring-opacity-5 sm:rounded-lg shadow">
-                <table class="min-w-full divide-gray-300 divide-y dark:divide-gray-700">
-                  <thead class="bg-gray-50 dark:bg-blue-gray-700">
-                    <tr>
-                      <th scope="col" class="relative pl-3 pr-4 py-3.5 sm:pr-6">
-                        <div class="flex items-center">
-                          <input
-                            id="select-all"
-                            type="checkbox"
-                            v-model="selectAll"
-                            @change="toggleSelectAll"
-                            class="h-4 w-4 text-blue-600 dark:bg-blue-gray-700 border-gray-300 rounded dark:border-gray-600 focus:ring-blue-600 dark:focus:ring-offset-blue-gray-800"
-                          />
-                        </div>
-                      </th>
-                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">
-                        <!-- OG Image column (no header text) -->
-                      </th>
-                      <th scope="col" class="pl-4 pr-3 py-3.5 sm:pl-6 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">
-                        <button @click="toggleSort('title')" class="inline-flex items-center group">
-                          Title
-                          <span class="group-focus:visible group-hover:visible flex-none ml-2 text-gray-400 rounded">
-                            <div v-if="sortBy === 'title'" :class="[
-                              sortOrder === 'asc' ? 'i-hugeicons-arrow-up-02' : 'i-hugeicons-arrow-down-02',
-                              'h-4 w-4'
-                            ]"></div>
-                            <div v-else class="h-4 w-4 i-hugeicons-arrows-up-down"></div>
-                          </span>
-                        </button>
-                      </th>
-                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">
-                        <button @click="toggleSort('author')" class="inline-flex items-center group">
-                          Author
-                          <span class="group-focus:visible group-hover:visible flex-none ml-2 text-gray-400 rounded">
-                            <div v-if="sortBy === 'author'" :class="[
-                              sortOrder === 'asc' ? 'i-hugeicons-arrow-up-02' : 'i-hugeicons-arrow-down-02',
-                              'h-4 w-4'
-                            ]"></div>
-                            <div v-else class="h-4 w-4 i-hugeicons-arrows-up-down"></div>
-                          </span>
-                        </button>
-                      </th>
-                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">Category</th>
-                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">
-                        <button @click="toggleSort('views')" class="inline-flex items-center group">
-                          Views
-                          <span class="group-focus:visible group-hover:visible flex-none ml-2 text-gray-400 rounded">
-                            <div v-if="sortBy === 'views'" :class="[
-                              sortOrder === 'asc' ? 'i-hugeicons-arrow-up-02' : 'i-hugeicons-arrow-down-02',
-                              'h-4 w-4'
-                            ]"></div>
-                            <div v-else class="h-4 w-4 i-hugeicons-arrows-up-down"></div>
-                          </span>
-                        </button>
-                      </th>
-                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">
-                        <button @click="toggleSort('comments')" class="inline-flex items-center group">
-                          Comments
-                          <span class="group-focus:visible group-hover:visible flex-none ml-2 text-gray-400 rounded">
-                            <div v-if="sortBy === 'comments'" :class="[
-                              sortOrder === 'asc' ? 'i-hugeicons-arrow-up-02' : 'i-hugeicons-arrow-down-02',
-                              'h-4 w-4'
-                            ]"></div>
-                            <div v-else class="h-4 w-4 i-hugeicons-arrows-up-down"></div>
-                          </span>
-                        </button>
-                      </th>
-                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">
-                        <button @click="toggleSort('published')" class="inline-flex items-center group">
-                          Published
-                          <span class="group-focus:visible group-hover:visible flex-none ml-2 text-gray-400 rounded">
-                            <div v-if="sortBy === 'published'" :class="[
-                              sortOrder === 'asc' ? 'i-hugeicons-arrow-up-02' : 'i-hugeicons-arrow-down-02',
-                              'h-4 w-4'
-                            ]"></div>
-                            <div v-else class="h-4 w-4 i-hugeicons-arrows-up-down"></div>
-                          </span>
-                        </button>
-                      </th>
-                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">Status</th>
-                      <th scope="col" class="relative pl-3 pr-4 py-3.5 sm:pr-6">
-                        <span class="sr-only">Actions</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody class="bg-white dark:bg-blue-gray-800 divide-gray-200 divide-y dark:divide-gray-700">
-                    <tr v-for="post in paginatedPosts" :key="post.id" :class="selectedPostIds.includes(post.id) 'bg-blue-50 { } dark:bg-blue-900/10':">
-                      <td class="relative pl-3 pr-4 py-4 sm:pr-6 font-medium text-sm">
-                        <div class="flex items-center">
-                          <input
-                            :id="`post-${post.id}`"
-                            type="checkbox"
-                            :checked="selectedPostIds.includes(post.id)"
-                            @change="togglePostSelection(post.id)"
-                            class="h-4 w-4 text-blue-600 dark:bg-blue-gray-700 border-gray-300 rounded dark:border-gray-600 focus:ring-blue-600 dark:focus:ring-offset-blue-gray-800"
-                          />
-                        </div>
-                      </td>
-                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-300">
-                        <div class="overflow-hidden h-16 w-28 bg-gray-100 dark:bg-gray-700 rounded">
-                          <img
-                            :src="post.poster"
-                            :alt="`OG image for ${post.title}`"
-                            class="object-cover h-full w-full"
-                          />
-                        </div>
-                      </td>
-                      <td class="pl-4 pr-3 py-4 sm:pl-6 font-medium text-gray-900 text-sm whitespace-nowrap dark:text-white">
-                        <div class="flex items-center">
-                          <div>
-                            <div class="font-medium">{{ post.title }}</div>
-                            <div class="mt-1 max-w-md text-gray-500 text-xs truncate dark:text-gray-400">{{ post.excerpt }}</div>
-                            <div class="flex items-center mt-1 text-gray-500 text-xs dark:text-gray-400">
-                              <span class="truncate">{{ post.slug }}</span>
-                            </div>
-                            <div class="flex flex-wrap gap-1 mt-2">
-                              <button
-                                v-for="tag in post.tags"
-                                :key="tag"
-                                @click="filterByTag(tag)"
-                                class="inline-flex items-center px-2 py-1 font-medium text-blue-700 text-xs dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 ring-1 ring-blue-700/10 ring-inset rounded-full dark:ring-blue-400/30"
-                                :class="selectedTag 'bg-blue-100 { } === tag dark:bg-blue-900/50':"
-                              >
-                                <div class="mr-1 h-3 w-3 i-hugeicons-tag-01"></div>
-                                {{ tag }}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-300">
-                        {{ post.author }}
-                      </td>
-                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-300">
-                        {{ post.category }}
-                      </td>
-                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-300">
-                        {{ post.views.toLocaleString() }}
-                      </td>
-                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-300">
-                        {{ post.comments }}
-                      </td>
-                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-300">
-                        {{ formatDate(post.published) }}
-                      </td>
-                      <td class="px-3 py-4 text-sm whitespace-nowrap">
-                        <span class="inline-flex items-center px-2 py-1 font-medium text-xs rounded-md" :class="getStatusClass(post.status)">
-                          {{ post.status }}
-                        </span>
-                      </td>
-                      <td class="relative pl-3 pr-4 py-4 sm:pr-6 font-medium text-right text-sm whitespace-nowrap">
-                        <div class="flex items-center justify-end space-x-2">
-                          <button type="button" class="text-gray-400 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 duration-150 transition-colors">
-                            <div class="h-5 w-5 i-hugeicons-view"></div>
-                          </button>
-                          <button type="button" class="text-gray-400 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 duration-150 transition-colors">
-                            <div class="h-5 w-5 i-hugeicons-edit-01"></div>
-                          </button>
-                          <button type="button" class="text-gray-400 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 duration-150 transition-colors">
-                            <div class="h-5 w-5 i-hugeicons-waste"></div>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                    <tr v-if="paginatedPosts.length === 0">
-                      <td colspan="10" class="px-6 py-4 text-center text-gray-500 text-sm dark:text-gray-400">
-                        No posts found matching your criteria
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Pagination -->
-        <div class="flex items-center justify-between mt-6">
-          <div class="text-gray-700 text-sm dark:text-gray-300">
-            Showing <span class="font-medium">{{ (currentPage - 1) * itemsPerPage + 1 }}</span> to
-            <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, filteredPosts.length) }}</span> of
-            <span class="font-medium">{{ filteredPosts.length }}</span> results
-          </div>
-          <div class="flex space-x-2">
-            <button
-              @click="previousPage"
-              :disabled="currentPage === 1"
-              :class="[
-                'relative inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold ring-1 ring-inset',
-                currentPage === 1
-                  ? 'text-gray-400 ring-gray-300 dark:text-gray-500 dark:ring-gray-700'
-                  : 'text-gray-900 ring-gray-300 hover:bg-gray-50 dark:text-white dark:ring-gray-700 dark:hover:bg-blue-gray-700'
-              ]"
-            >
-              <div class="h-5 w-5 i-hugeicons-arrow-left-01"></div>
-            </button>
-            <button
-              v-for="page in totalPages"
-              :key="page"
-              @click="changePage(page)"
-              :class="[
-                'relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset',
-                page === currentPage
-                  ? 'z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
-                  : 'text-gray-900 ring-gray-300 hover:bg-gray-50 focus:z-20 dark:text-white dark:ring-gray-700 dark:hover:bg-blue-gray-700'
-              ]"
-            >
-              {{ page }}
-            </button>
-            <button
-              @click="nextPage"
-              :disabled="currentPage === totalPages"
-              :class="[
-                'relative inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold ring-1 ring-inset',
-                currentPage === totalPages
-                  ? 'text-gray-400 ring-gray-300 dark:text-gray-500 dark:ring-gray-700'
-                  : 'text-gray-900 ring-gray-300 hover:bg-gray-50 dark:text-white dark:ring-gray-700 dark:hover:bg-blue-gray-700'
-              ]"
-            >
-              <div class="h-5 w-5 i-hugeicons-arrow-right-01"></div>
-            </button>
-          </div>
-        </div>
-      </div>
+  <!-- Filters -->
+  <div class="bg-white dark:bg-neutral-800/90 border border-black/5 rounded-xl dark:border-white/5">
+    <div class="p-4 border-b border-neutral-200/60 dark:border-white/5">
+      <FilterBar searchPlaceholder="Search posts..." searchValue="{{ searchQuery }}">
+        <Select
+          placeholder="All Categories"
+          :options="{{ JSON.stringify(categories.map(c => ({ value: c.name, label: c.name }))) }}"
+          size="sm"
+        />
+        <Select
+          placeholder="All Statuses"
+          :options="{{ JSON.stringify(statuses.map(s => ({ value: s, label: s }))) }}"
+          size="sm"
+        />
+      </FilterBar>
     </div>
 
-    <!-- New Post Modal -->
-    <div v-if="showNewPostModal" class="fixed inset-0 overflow-y-auto z-10" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-      <div class="flex sm:block items-end justify-center pb-20 pt-4 px-4 sm:p-0 min-h-screen text-center">
-        <!-- Background overlay -->
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="closeNewPostModal"></div>
-
-        <!-- Modal panel -->
-        <div class="inline-block overflow-hidden sm:my-8 sm:max-w-3xl sm:w-full text-left bg-white dark:bg-blue-gray-800 rounded-lg shadow-xl transition-all transform align-bottom sm:align-middle">
-          <div class="pb-4 pt-5 px-4 sm:p-6 sm:pb-4 bg-white dark:bg-blue-gray-800">
-            <div class="sm:flex sm:items-start">
-              <div class="mt-3 sm:ml-4 sm:mt-0 w-full text-center sm:text-left">
-                <h3 class="font-medium leading-6 text-gray-900 text-lg dark:text-white" id="modal-title">Create New Post</h3>
-                <div class="mt-6 space-y-6">
-                  <div>
-                    <label for="post-title" class="block font-medium text-gray-700 text-sm dark:text-gray-300">Title</label>
-                    <div class="mt-1">
-                      <input
-                        type="text"
-                        id="post-title"
-                        v-model="newPost.title"
-                        class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label for="post-excerpt" class="block font-medium text-gray-700 text-sm dark:text-gray-300">Excerpt</label>
-                    <div class="mt-1">
-                      <textarea
-                        id="post-excerpt"
-                        v-model="newPost.excerpt"
-                        rows="3"
-                        class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
-                      ></textarea>
-                    </div>
-                  </div>
-
-                  <div class="grid gap-6 grid-cols-1 sm:grid-cols-2">
-                    <div>
-                      <label for="post-category" class="block font-medium text-gray-700 text-sm dark:text-gray-300">Category</label>
-                      <div class="mt-1">
-                        <select
-                          id="post-category"
-                          v-model="newPost.category"
-                          class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
-                        >
-                          <option v-for="category in categories.filter(c => c.name !== 'All Categories')" :key="category.id" :value="category.name">{{ category.name }}</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label for="post-status" class="block font-medium text-gray-700 text-sm dark:text-gray-300">Status</label>
-                      <div class="mt-1">
-                        <select
-                          id="post-status"
-                          v-model="newPost.status"
-                          class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
-                        >
-                          <option v-for="status in statuses.filter(s => s.name !== 'All Statuses')" :key="status.id" :value="status.name">{{ status.name }}</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label for="post-tags" class="block font-medium text-gray-700 text-sm dark:text-gray-300">Tags (comma separated)</label>
-                    <div class="mt-1">
-                      <input
-                        type="text"
-                        id="post-tags"
-                        v-model="newPost.tags"
-                        class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
-                        placeholder="e.g. JavaScript, Web Development, Tutorial"
-                      />
-                    </div>
-                    <div v-if="previewTags.length > 0" class="flex flex-wrap gap-1 mt-2">
-                      <div
-                        v-for="tag in previewTags"
-                        :key="tag"
-                        class="inline-flex items-center px-2 py-1 font-medium text-blue-700 text-xs dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 ring-1 ring-blue-700/10 ring-inset rounded-full dark:ring-blue-400/30"
-                      >
-                        <div class="mr-1 h-3 w-3 i-hugeicons-tag-01"></div>
-                        {{ tag }}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label for="post-content" class="block font-medium text-gray-700 text-sm dark:text-gray-300">Content</label>
-                    <div class="mt-1">
-                      <textarea
-                        id="post-content"
-                        v-model="newPost.content"
-                        rows="6"
-                        class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
-                      ></textarea>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label class="block font-medium text-gray-700 text-sm dark:text-gray-300">OG Image</label>
-                    <div class="flex items-center mt-1 space-x-4">
-                      <div class="overflow-hidden h-24 w-40 bg-gray-100 dark:bg-gray-700 rounded">
-                        <img :src="newPost.poster" alt="OG Image Preview" class="object-cover h-full w-full" />
-                      </div>
-                      <button
-                        type="button"
-                        class="inline-flex items-center px-3 py-2 font-medium text-gray-700 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 border border-gray-300 rounded-md dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
-                      >
-                        <div class="mr-1 h-5 w-5 i-hugeicons-image-01"></div>
-                        Change Image
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+    <!-- Posts Table -->
+    <DataTable
+      :columns="{{ JSON.stringify([
+        { key: 'poster', label: '' },
+        { key: 'title', label: 'Title' },
+        { key: 'author', label: 'Author' },
+        { key: 'category', label: 'Category' },
+        { key: 'views', label: 'Views' },
+        { key: 'published', label: 'Published' },
+        { key: 'status', label: 'Status' },
+        { key: 'actions', label: '' }
+      ]) }}"
+      :data="paginatedPosts"
+      emptyTitle="No posts found"
+      emptyDescription="Try adjusting your search or filters"
+      emptyIcon="i-hugeicons-quill-write-02"
+    >
+      @foreach(paginatedPosts as post)
+        <tr class="hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors">
+          <td class="px-4 py-3">
+            <div class="overflow-hidden h-14 w-24 bg-neutral-100 dark:bg-neutral-700 rounded">
+              <img :src="post.poster" :alt="post.title" class="object-cover h-full w-full" />
             </div>
-          </div>
-          <div class="sm:flex sm:flex-row-reverse px-4 py-3 sm:px-6 bg-gray-50 dark:bg-blue-gray-900">
-            <button
-              type="button"
-              @click="createNewPost"
-              class="inline-flex justify-center px-4 py-2 sm:ml-3 w-full sm:w-auto font-medium text-base text-white sm:text-sm bg-blue-600 hover:bg-blue-700 border border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
-            >
-              Create Post
-            </button>
-            <button
-              type="button"
-              @click="closeNewPostModal"
-              class="inline-flex justify-center mt-3 px-4 py-2 sm:mt-0 w-full sm:w-auto font-medium text-base text-gray-700 sm:text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 border border-gray-300 rounded-md dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </div>
+          </td>
+          <td class="px-4 py-3">
+            <div class="font-medium text-[13px] text-neutral-900 dark:text-white">{{ post.title }}</div>
+            <div class="mt-0.5 max-w-sm text-[12px] text-neutral-500 truncate dark:text-neutral-400">{{ post.excerpt }}</div>
+            <div class="flex flex-wrap gap-1 mt-1.5">
+              @foreach(post.tags as tag)
+                <Badge variant="primary" size="xs">{{ tag }}</Badge>
+              @endforeach
+            </div>
+          </td>
+          <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ post.author }}</td>
+          <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ post.category }}</td>
+          <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ post.views.toLocaleString() }}</td>
+          <td class="px-4 py-3 text-[12px] text-neutral-500 dark:text-neutral-400">{{ formatDate(post.published) }}</td>
+          <td class="px-4 py-3">
+            <Badge variant="{{ statusVariant(post.status) }}" size="sm">{{ post.status }}</Badge>
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex gap-1 items-center">
+              <Button variant="ghost" size="xs" iconOnly><div class="h-4 w-4 i-hugeicons-view"></div></Button>
+              <Button variant="ghost" size="xs" iconOnly><div class="h-4 w-4 i-hugeicons-edit-01"></div></Button>
+              <Button variant="ghost" size="xs" iconOnly><div class="h-4 w-4 text-red-500 i-hugeicons-waste"></div></Button>
+            </div>
+          </td>
+        </tr>
+      @endforeach
+    </DataTable>
+
+    <!-- Pagination -->
+    <div class="p-4 border-neutral-200/60 border-t dark:border-white/5">
+      <Pagination
+        currentPage="{{ currentPage }}"
+        totalPages="{{ totalPages }}"
+        totalItems="{{ filteredPosts.length }}"
+        itemsPerPage="{{ itemsPerPage }}"
+        showItemsPerPage
+      />
     </div>
-</main>
+  </div>
+
+  <!-- New Post Modal -->
+  <Modal isOpen="{{ showNewPostModal }}" title="Create New Post" size="lg" data-new-post-modal>
+    <form class="space-y-4">
+      <Input label="Title" name="title" placeholder="Post title" required />
+      <Textarea label="Excerpt" name="excerpt" placeholder="Brief description" />
+      <div class="grid gap-4 grid-cols-2">
+        <Select
+          label="Category"
+          :options="{{ JSON.stringify(categories.filter(c => c.name !== 'All Categories').map(c => ({ value: c.name, label: c.name }))) }}"
+        />
+        <Select
+          label="Status"
+          :options="{{ JSON.stringify(['Draft', 'Published', 'Scheduled'].map(s => ({ value: s, label: s }))) }}"
+        />
+      </div>
+      <Input label="Tags" name="tags" placeholder="e.g. JavaScript, Web Development" hint="Comma separated" />
+      <Textarea label="Content" name="content" />
+      <div class="flex gap-2 justify-end pt-4 border-neutral-200 border-t dark:border-neutral-700">
+        <Button variant="secondary" data-modal-close>Cancel</Button>
+        <Button variant="primary" type="submit">Create Post</Button>
+      </div>
+    </form>
+  </Modal>
+</div>
+
+<script client>
+const { Chart, registerables } = await import('chart.js/auto')
+Chart.register(...registerables)
+
+const chart_1_ctx = document.getElementById('chart_1')
+if (chart_1_ctx) {
+  new Chart(chart_1_ctx, {
+    type: 'line',
+    data: viewsChartData,
+    options: chartOptions,
+  })
+}
+
+const chart_2_ctx = document.getElementById('chart_2')
+if (chart_2_ctx) {
+  new Chart(chart_2_ctx, {
+    type: 'doughnut',
+    data: categoryChartData,
+    options: doughnutChartOptions,
+  })
+}
+
+const chart_3_ctx = document.getElementById('chart_3')
+if (chart_3_ctx) {
+  new Chart(chart_3_ctx, {
+    type: 'bar',
+    data: postsCommentsChartData,
+    options: chartOptions,
+  })
+}
+
+</script>
+
+@endsection

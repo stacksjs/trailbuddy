@@ -1,72 +1,74 @@
-<script server>
-const API_URL = 'http://localhost:' + (process.env.PORT_API || '3008')
+@extends('layouts/default')
 
+@section('content')
+<script server>
 let teams = []
-let stats = []
+let totalTeams = 0
+let totalMembers = 0
+let activeProjects = 0
 
 try {
-  const res = await fetch(API_URL + '/data/teams')
-  if (res.ok) {
-    const json = await res.json()
-    teams = json.teams || []
-    stats = json.stats || []
-  }
+  // Team table does not exist yet -- leave empty
+  teams = []
+  totalTeams = 0
+  totalMembers = 0
+  activeProjects = 0
 } catch (e) {
-  // API not available
+  // DB not seeded
 }
 </script>
-<div class="p-6 min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="flex items-start justify-between mb-8">
-      <div>
-        <h1 class="font-bold text-3xl text-gray-900 dark:text-white">Teams</h1>
-        <p class="mt-1 text-gray-500 dark:text-gray-400">Manage team organization</p>
-      </div>
-      <div class="flex gap-3 items-center">
-        <button class="px-4 py-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg">Create Team</button>
-      </div>
-    </div>
+<div class="p-6 space-y-6">
 
-    <div class="flex flex-col gap-6">
-      <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        @foreach (stats as stat)
-          <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700">
-            <div class="font-bold text-2xl text-gray-900 dark:text-white">{{ stat.value }}</div>
-            <div class="mt-1 text-gray-500 text-sm dark:text-gray-400">{{ stat.label }}</div>
-          </div>
-        @endforeach
-      </div>
+  <PageHeader title="Teams" description="Manage team organization">
+    <template #actions>
+      <Button variant="primary">
+        <div class="h-4 w-4 i-hugeicons-plus-sign"></div>
+        Create Team
+      </Button>
+    </template>
+  </PageHeader>
 
-      <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        @foreach (teams as team)
-          <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
-            <div class="flex items-center justify-between mb-4">
-              <span class="font-semibold text-gray-900 dark:text-white">{{ team.name }}</span>
-              <span class="px-2.5 py-1 font-semibold text-green-700 text-xs dark:text-green-400 bg-green-100 dark:bg-green-900/30 rounded-full">{{ team.status }}</span>
-            </div>
-            <div class="mt-4">
-              <div class="mb-2 text-gray-500 text-sm dark:text-gray-400">Team Lead: {{ team.lead }}</div>
-              <div class="grid gap-4 grid-2 mt-4">
-                <div>
-                  <div class="font-semibold text-2xl">{{ team.members }}</div>
-                  <div class="text-gray-500 text-sm dark:text-gray-400">Members</div>
-                </div>
-                <div>
-                  <div class="font-semibold text-2xl">{{ team.projects }}</div>
-                  <div class="text-gray-500 text-sm dark:text-gray-400">Projects</div>
-                </div>
-              </div>
-            </div>
-            <div class="flex gap-2 mt-4 pt-4 border-t">
-              <button class="flex-1 px-3 py-1.5 font-medium text-gray-700 text-xs dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 rounded-lg dark:border-gray-600">View</button>
-              <button class="px-3 py-1.5 font-medium text-gray-500 text-xs dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Edit</button>
-            </div>
-          </div>
-        @endforeach
-      </div>
-    </div>
+  <!-- Stats -->
+  <div class="grid gap-4 grid-cols-1 md:grid-cols-3">
+    <StatsCard title="Total Teams" value="{{ totalTeams }}" icon="i-hugeicons-user-group" iconBg="primary" />
+    <StatsCard title="Total Members" value="{{ totalMembers }}" icon="i-hugeicons-users-01" iconBg="success" />
+    <StatsCard title="Active Projects" value="{{ activeProjects }}" icon="i-hugeicons-folder-02" iconBg="info" />
   </div>
-<style>
-.border-t {
-  border-top: 1px solid var(--color-border);
-}
-</style>
+
+  <!-- Teams Grid -->
+  @if (teams.length > 0)
+  <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+    @foreach(teams as team)
+      <Card>
+        <div class="flex items-center justify-between mb-4">
+          <span class="font-semibold text-[13px] text-neutral-900 dark:text-white">{{ team.name }}</span>
+          <Badge variant="success" size="xs" dot>{{ team.status }}</Badge>
+        </div>
+        <div class="mb-3 text-[13px] text-neutral-500 dark:text-neutral-400">Team Lead: {{ team.lead }}</div>
+        <div class="grid gap-4 grid-cols-2 mt-4">
+          <div>
+            <div class="font-semibold text-2xl text-neutral-900 dark:text-white">{{ team.members }}</div>
+            <div class="text-[12px] text-neutral-500 dark:text-neutral-400">Members</div>
+          </div>
+          <div>
+            <div class="font-semibold text-2xl text-neutral-900 dark:text-white">{{ team.projects }}</div>
+            <div class="text-[12px] text-neutral-500 dark:text-neutral-400">Projects</div>
+          </div>
+        </div>
+        <div class="flex gap-2 mt-4 pt-4 border-neutral-200/60 border-t dark:border-white/5">
+          <Button variant="outline" size="xs" class="flex-1">View</Button>
+          <Button variant="ghost" size="xs">Edit</Button>
+        </div>
+      </Card>
+    @endforeach
+  </div>
+  @else
+  <EmptyState
+    icon="i-hugeicons-user-group"
+    title="No teams created"
+    description="Teams will be available after running migrations."
+    actionLabel="Create Team"
+  />
+  @endif
+</div>
+@endsection

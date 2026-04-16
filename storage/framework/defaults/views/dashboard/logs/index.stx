@@ -1,31 +1,11 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 definePageMeta({
   middleware: ['auth'],
   layout: 'default'
 })
-
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js'
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-)
 
 interface Log {
   id: string
@@ -509,19 +489,21 @@ let timeRange = 'day'
 </script>
 
 @title('Dashboard - Logs')
-<div class="py-4 lg:py-8 min-h-screen dark:bg-blue-gray-800">
-  <div class="px-4 sm:px-6 lg:px-8">
+<div class="p-6 space-y-6">
+
+  <PageHeader title="System Logs" description="A list of all system logs. Monitor system activities and events in real-time." />
+
     <!-- Log Volume Chart -->
-    <div class="bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+    <div class="bg-white dark:bg-neutral-700 rounded-lg shadow">
       <div class="p-6">
         <div class="flex items-center justify-between mb-6">
           <div>
-            <h3 class="font-medium text-base text-gray-900 dark:text-gray-100">Log Volume</h3>
-            <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">Distribution of log types over time</p>
+            <h3 class="font-medium text-base text-gray-900 dark:text-neutral-100">Log Volume</h3>
+            <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">Distribution of log types over time</p>
           </div>
           <select
-            v-model="timeRange"
-            class="pl-3 pr-8 py-1.5 h-9 text-gray-900 text-sm dark:text-gray-100 bg-gray-50 dark:bg-blue-gray-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600"
+            value="{{ timeRange }}"
+            class="pl-3 pr-8 py-1.5 h-9 text-gray-900 text-sm dark:text-neutral-100 bg-gray-50 dark:bg-neutral-600 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600"
           >
             <option value="day">Last 24 Hours</option>
             <option value="week">Last 7 Days</option>
@@ -531,23 +513,12 @@ let timeRange = 'day'
         </div>
         <div class="relative h-[300px]">
           @if(isLoading)
-            <div class="flex absolute inset-0 z-10 items-center justify-center bg-opacity-75 bg-white dark:bg-blue-gray-700 dark:bg-opacity-75">
+            <div class="flex absolute inset-0 z-10 items-center justify-center bg-opacity-75 bg-white dark:bg-neutral-700 dark:bg-opacity-75">
               <div class="h-8 w-8 border-b-2 border-blue-500 rounded-full animate-spin"></div>
             </div>
           @endif
-          <Line :data="logVolumeData" :options="chartOptions" />
+          <canvas id="chart_1"></canvas>
         </div>
-      </div>
-    </div>
-
-    <div class="sm:flex sm:items-center mt-8">
-      <div class="sm:flex-auto">
-        <h1 class="font-semibold leading-6 text-base text-gray-900">
-          System Logs
-        </h1>
-        <p class="mt-2 text-gray-700 text-sm dark:text-gray-400">
-          A list of all system logs. Monitor system activities and events in real-time.
-        </p>
       </div>
     </div>
 
@@ -557,7 +528,7 @@ let timeRange = 'day'
         <div class="flex flex-wrap gap-4 items-center">
           <div class="flex-1 min-w-[200px]">
             <input
-              v-model="searchTerm"
+              value="{{ searchTerm }}"
               type="text"
               placeholder="Search logs..."
               class="px-4 py-2 w-full border rounded-lg"
@@ -565,8 +536,8 @@ let timeRange = 'day'
           </div>
 
           <select
-            v-model="filter"
-            class="px-4 py-2 min-w-[140px] bg-white dark:bg-gray-800 border rounded-lg"
+            value="{{ filter }}"
+            class="px-4 py-2 min-w-[140px] bg-white dark:bg-neutral-800 border rounded-lg"
           >
             <option value="all">All Sources</option>
             <option value="cli">CLI</option>
@@ -577,8 +548,8 @@ let timeRange = 'day'
           </select>
 
           <select
-            v-model="logTypeFilter"
-            class="px-4 py-2 min-w-[140px] bg-white dark:bg-gray-800 border rounded-lg"
+            value="{{ logTypeFilter }}"
+            class="px-4 py-2 min-w-[140px] bg-white dark:bg-neutral-800 border rounded-lg"
           >
             <option value="all">All Types</option>
             <option value="info">Info</option>
@@ -591,11 +562,11 @@ let timeRange = 'day'
           <button
             class="flex gap-2 items-center px-4 py-2 rounded-lg"
             :class="text-blue-700' text-gray-700' : ? 'bg-blue-100 'bg-gray-100 autoRefresh"
-            @click="toggleAutoRefresh"
+            onclick="toggleAutoRefresh"
           >
             <i
               class="h-4 w-4 i-hugeicons-refresh"
-              :class="'animate-spin': { } autoRefresh"
+              :class=": ? '' 'animate-spin' autoRefresh"
               aria-hidden="true"
             />
             {{ autoRefresh ? 'Auto-refreshing' : 'Auto-refresh' }}
@@ -604,7 +575,7 @@ let timeRange = 'day'
           @if(searchTerm || filter !== 'all' || logTypeFilter !== 'all' || selectedProjects.length > 0)
             <button
               class="flex gap-2 items-center px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg"
-              @click="resetFilters"
+              onclick="resetFilters"
             >
               <i class="h-4 w-4 i-hugeicons-cancel-01" aria-hidden="true" />
               Reset Filters
@@ -615,14 +586,9 @@ let timeRange = 'day'
         <div class="flex flex-wrap gap-2">
           @foreach(project in projects)
             <button
-              :key="project.id"
-              @click="toggleProject(project.id)"
+              onclick="toggleProject(project.id)"
               class="inline-flex items-center px-3 py-1 font-medium text-sm rounded-full transition-colors"
-              :class="[
-                selectedProjects.includes(project.id)
-                  ? [...Object.values(getProjectClasses(project.id)), 'ring-2']
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              ]"
+              :class="text-gray-700 hover:bg-gray-200' ring-2' selectedProjects.includes(project.id) : ? ' ' ' 'bg-gray-100 + + + getProjectClasses(project.id).bg getProjectClasses(project.id).text"
             >
               {{ project.name }}
               @if(selectedProjects.includes(project.id))
@@ -636,8 +602,8 @@ let timeRange = 'day'
       <div class="overflow-x-auto -mx-4 -my-2 sm:-mx-6 lg:-mx-8">
         <div class="inline-block py-2 sm:px-6 lg:px-8 min-w-full align-middle">
           <div class="overflow-hidden ring-1 ring-black ring-opacity-5 sm:rounded-lg shadow">
-            <table class="min-w-full divide-gray-200 divide-y dark:divide-gray-700">
-              <thead class="bg-gray-50 dark:bg-gray-700/50">
+            <table class="min-w-full divide-gray-200 divide-y dark:divide-neutral-700">
+              <thead class="bg-gray-50 dark:bg-neutral-700/50">
                 <tr>
                   <th class="px-6 py-3 font-medium text-gray-500 text-left text-xs tracking-wider uppercase">Timestamp</th>
                   <th class="px-6 py-3 font-medium text-gray-500 text-left text-xs tracking-wider uppercase">Type</th>
@@ -647,12 +613,11 @@ let timeRange = 'day'
                   <th class="px-6 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase">Details</th>
                 </tr>
               </thead>
-              <tbody class="bg-white dark:bg-gray-800 divide-gray-200 divide-y">
+              <tbody class="bg-white dark:bg-neutral-800 divide-gray-200 divide-y">
                 @foreach(log in paginatedLogs)
                   <tr
-                    :key="log.id"
-                    :class="[getLogRowClass(log.type), 'hover:bg-gray-50 cursor-pointer']"
-                    @click="selectedLog = log"
+                    class="hover:bg-gray-50 cursor-pointer {{ }} getLogRowClass(log.type)"
+                    onclick="selectedLog = log"
                   >
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="text-gray-900 text-sm">
@@ -666,7 +631,7 @@ let timeRange = 'day'
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="flex items-center">
                         <i
-                          :class="[getLogIcon(log.type), getLogIconColor(log.type), 'h-5 w-5']"
+                          class="h-5 w-5 {{ {{ }} }} getLogIcon(log.type) getLogIconColor(log.type)"
                           aria-hidden="true"
                         />
                       </div>
@@ -688,7 +653,7 @@ let timeRange = 'day'
                       @if(log.project)
                         <span
                           class="inline-flex px-2 font-semibold leading-5 text-xs rounded-full"
-                          :class="[getProjectClasses(log.project).bg, getProjectClasses(log.project).text]"
+                          class="{{ {{ }} }} getProjectClasses(log.project).bg getProjectClasses(log.project).text"
                         >
                           {{ projects.find(p => p.id === log.project)?.name }}
                         </span>
@@ -710,26 +675,26 @@ let timeRange = 'day'
       <!-- Pagination Controls -->
       <div class="flex items-center justify-between mt-4">
         <div class="flex items-center">
-          <span class="text-gray-700 text-sm dark:text-gray-400">
+          <span class="text-gray-700 text-sm dark:text-neutral-400">
             Showing <span class="font-medium">{{ paginatedLogs.length }}</span> of <span class="font-medium">{{ totalItems }}</span> results
           </span>
         </div>
         <div class="flex items-center space-x-2">
           <select
-            v-model="itemsPerPage"
+            value="{{ itemsPerPage }}"
             class="px-2 py-1 text-sm border rounded-md"
-            @change="currentPage = 1"
+            onchange="currentPage = 1"
           >
-            <option :value="10">10 per page</option>
-            <option :value="25">25 per page</option>
-            <option :value="50">50 per page</option>
-            <option :value="100">100 per page</option>
+            <option value="{{ 10 }}">10 per page</option>
+            <option value="{{ 25 }}">25 per page</option>
+            <option value="{{ 50 }}">50 per page</option>
+            <option value="{{ 100 }}">100 per page</option>
           </select>
 
           <div class="flex items-center space-x-1">
             <button
-              @click="prevPage"
-              :disabled="currentPage === 1"
+              onclick="prevPage"
+              disabled="{{ currentPage === 1 }}"
               class="px-2 py-1 text-sm border rounded-md"
               :class="'hover:bg-gray-100' cursor-not-allowed' : ? 'opacity-50 === 1 currentPage"
             >
@@ -738,8 +703,7 @@ let timeRange = 'day'
 
             @foreach(page in Math.min(5, totalPages))
               <button
-                :key="page"
-                @click="goToPage(page)"
+                onclick="goToPage(page)"
                 class="px-3 py-1 text-sm border rounded-md"
                 :class="text-white' 'hover:bg-gray-100' : ? 'bg-blue-600 === currentPage page"
               >
@@ -753,7 +717,7 @@ let timeRange = 'day'
 
             @if(totalPages > 5)
               <button
-                @click="goToPage(totalPages)"
+                onclick="goToPage(totalPages)"
                 class="px-3 py-1 text-sm border rounded-md"
                 :class="text-white' 'hover:bg-gray-100' : ? 'bg-blue-600 === currentPage totalPages"
               >
@@ -762,8 +726,8 @@ let timeRange = 'day'
             @endif
 
             <button
-              @click="nextPage"
-              :disabled="currentPage === totalPages || totalPages === 0"
+              onclick="nextPage"
+              disabled="{{ currentPage === totalPages || totalPages === 0 }}"
               class="px-2 py-1 text-sm border rounded-md"
               :class="'hover:bg-gray-100' cursor-not-allowed' : ? 'opacity-50 === === || 0 currentPage totalPages totalPages"
             >
@@ -779,11 +743,11 @@ let timeRange = 'day'
             class="flex fixed inset-0 items-center justify-center p-4 bg-black bg-opacity-50"
             @click.self="selectedLog = null"
           >
-            <div class="overflow-y-auto p-6 max-h-[90vh] max-w-2xl w-full bg-white dark:bg-gray-800 rounded-lg">
+            <div class="overflow-y-auto p-6 max-h-[90vh] max-w-2xl w-full bg-white dark:bg-neutral-800 rounded-lg">
               <div class="flex items-center justify-between mb-4">
                 <h3 class="font-semibold text-lg">Log Details</h3>
                 <button
-                  @click="selectedLog = null"
+                  onclick="selectedLog = null"
                   class="text-gray-500 hover:text-gray-700"
                 >
                   <i
@@ -803,7 +767,7 @@ let timeRange = 'day'
                   <label class="block font-medium text-gray-700 text-sm">Type</label>
                   <div class="flex items-center mt-1">
                     <i
-                      :class="[getLogIcon(selectedLog.type), getLogIconColor(selectedLog.type), 'h-5 w-5 mr-2']"
+                      class="mr-2 h-5 w-5 {{ {{ }} }} getLogIcon(selectedLog.type) getLogIconColor(selectedLog.type)"
                       aria-hidden="true"
                     />
                     <span class="capitalize text-gray-900 text-sm">{{ selectedLog.type }}</span>
@@ -872,7 +836,6 @@ let timeRange = 'day'
                         <div class="flex flex-wrap gap-2 mt-2">
                           @foreach(attachment, index in selectedLog.email.attachments)
                             <div
-                              :key="index"
                               class="inline-flex items-center px-3 py-1 font-medium text-gray-800 text-sm bg-gray-100 rounded-full"
                             >
                               <i class="mr-1 h-4 w-4 i-hugeicons-attachment-01" aria-hidden="true" />
@@ -888,18 +851,15 @@ let timeRange = 'day'
                       <div class="mt-4">
                         <label class="block font-medium text-gray-700 text-sm">Authentication Results</label>
                         <div class="grid gap-2 grid-cols-3 mt-2">
-                          <div class="px-3 py-1 font-medium text-sm rounded-md"
-                            :class="selectedLog.email.authResults.spf selectedLog.email.authResults.spf selectedLog.email.authResults.spf 'bg-gray-100 'bg-green-100 'bg-red-100 'fail', 'neutral' 'pass', { } === === === text-gray-800': text-green-800': text-red-800':"
+                          <div class="px-3 py-1 font-medium text-gray-800' text-green-800' text-red-800' text-sm rounded-md selectedLog.email.authResults.spf selectedLog.email.authResults.spf : : ? ? 'bg-gray-100 'bg-green-100 'bg-red-100 'fail' 'pass' {{ }} === ==="
                           >
                             SPF: {{ selectedLog.email.authResults.spf }}
                           </div>
-                          <div class="px-3 py-1 font-medium text-sm rounded-md"
-                            :class="selectedLog.email.authResults.dkim selectedLog.email.authResults.dkim selectedLog.email.authResults.dkim 'bg-gray-100 'bg-green-100 'bg-red-100 'fail', 'neutral' 'pass', { } === === === text-gray-800': text-green-800': text-red-800':"
+                          <div class="px-3 py-1 font-medium text-gray-800' text-green-800' text-red-800' text-sm rounded-md selectedLog.email.authResults.dkim selectedLog.email.authResults.dkim : : ? ? 'bg-gray-100 'bg-green-100 'bg-red-100 'fail' 'pass' {{ }} === ==="
                           >
                             DKIM: {{ selectedLog.email.authResults.dkim }}
                           </div>
-                          <div class="px-3 py-1 font-medium text-sm rounded-md"
-                            :class="selectedLog.email.authResults.dmarc selectedLog.email.authResults.dmarc selectedLog.email.authResults.dmarc 'bg-gray-100 'bg-green-100 'bg-red-100 'fail', 'neutral' 'pass', { } === === === text-gray-800': text-green-800': text-red-800':"
+                          <div class="px-3 py-1 font-medium text-gray-800' text-green-800' text-red-800' text-sm rounded-md selectedLog.email.authResults.dmarc selectedLog.email.authResults.dmarc : : ? ? 'bg-gray-100 'bg-green-100 'bg-red-100 'fail' 'pass' {{ }} === ==="
                           >
                             DMARC: {{ selectedLog.email.authResults.dmarc }}
                           </div>
@@ -927,10 +887,7 @@ let timeRange = 'day'
                           <div class="p-2 bg-gray-50 rounded-md">
                             <div class="flex items-center">
                               <i
-                                :class="[
-                                  selectedLog.email.userInteraction.opened ? 'i-hugeicons-checkmark-circle-02 text-green-500' : 'i-hugeicons-cancel-circle text-red-500',
-                                  'h-5 w-5 mr-2'
-                                ]"
+                                class="mr-2 h-5 w-5 text-green-500' text-red-500' selectedLog.email.userInteraction.opened : ? 'i-hugeicons-cancel-circle 'i-hugeicons-checkmark-circle-02 {{ }}"
                                 aria-hidden="true"
                               />
                               <span class="font-medium text-sm">{{ selectedLog.email.userInteraction.opened ? 'Opened' : 'Not opened' }}</span>
@@ -945,10 +902,7 @@ let timeRange = 'day'
                           <div class="p-2 bg-gray-50 rounded-md">
                             <div class="flex items-center">
                               <i
-                                :class="[
-                                  selectedLog.email.userInteraction.clicked ? 'i-hugeicons-checkmark-circle-02 text-green-500' : 'i-hugeicons-cancel-01-circle text-red-500',
-                                  'h-5 w-5 mr-2'
-                                ]"
+                                class="mr-2 h-5 w-5 text-green-500' text-red-500' selectedLog.email.userInteraction.clicked : ? 'i-hugeicons-cancel-01-circle 'i-hugeicons-checkmark-circle-02 {{ }}"
                                 aria-hidden="true"
                               />
                               <span class="font-medium text-sm">{{ selectedLog.email.userInteraction.clicked ? 'Clicked' : 'No clicks' }}</span>
@@ -966,7 +920,7 @@ let timeRange = 'day'
                             <p class="font-medium text-gray-700 text-xs">Clicked links:</p>
                             <ul class="mt-1 pl-7 list-disc">
                               @foreach(link, index in selectedLog.email.userInteraction.links)
-                                <li :key="index" class="text-blue-600 text-xs">
+                                <li class="text-blue-600 text-xs">
                                   {{ link }}
                                 </li>
                               @endforeach
@@ -998,9 +952,20 @@ let timeRange = 'day'
         @endif
       </Teleport>
     </div>
-  </div>
 </div>
 <script client>
+const { Chart, registerables } = await import('chart.js/auto')
+Chart.register(...registerables)
+
+const chart_1_ctx = document.getElementById('chart_1')
+if (chart_1_ctx) {
+  new Chart(chart_1_ctx, {
+    type: 'line',
+    data: logVolumeData,
+    options: chartOptions,
+  })
+}
+
 import { onMount } from 'stx'
 
 onMount(async () => {
@@ -1009,3 +974,5 @@ onMount(async () => {
 })
 </script>
 
+
+@endsection

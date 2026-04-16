@@ -1,13 +1,13 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 definePageMeta({
   middleware: ['auth'],
   layout: 'default'
 })
 
-import { Chart, registerables, ChartTypeRegistry } from 'chart.js'
 
-// Register Chart.js components
-Chart.register(...registerables)
 
 // Types
 interface DateRange {
@@ -93,90 +93,6 @@ let marketingData = [
   { date: '2025-02-01', spend: 5000, revenue: 15000 }
 ]
 
-// Chart.js configuration
-const chartConfig = reactive({
-  type: 'line' as keyof ChartTypeRegistry,
-  data: {
-    labels: marketingData.map(item => item.date),
-    datasets: [
-      {
-        label: 'Revenue ($)',
-        data: marketingData.map(item => item.revenue),
-        backgroundColor: 'rgba(16, 185, 129, 0.3)',
-        borderColor: 'rgba(16, 185, 129, 0.8)',
-        borderWidth: 2,
-        tension: 0.4,
-        fill: true,
-        yAxisID: 'y'
-      },
-      {
-        label: 'Spend ($)',
-        data: marketingData.map(item => item.spend),
-        backgroundColor: 'rgba(244, 63, 94, 0.1)',
-        borderColor: 'rgba(244, 63, 94, 0.8)',
-        borderWidth: 2,
-        tension: 0.4,
-        fill: false,
-        yAxisID: 'y'
-      }
-    ]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      x: {
-        grid: {
-          display: false
-        },
-        ticks: {
-          maxTicksLimit: 4,
-          callback: function(value, index) {
-            const labels = ['Jan 2024', 'May 2024', 'Sep 2024', 'Jan 2025']
-            return index % Math.floor(marketingData.length / 4) === 0 ? labels[Math.floor(index / (marketingData.length / 4))] || '' : ''
-          }
-        }
-      },
-      y: {
-        type: 'linear' as const,
-        display: true,
-        position: 'left' as const,
-        beginAtZero: true,
-        grid: {
-          borderDash: [2, 4],
-          color: 'rgba(160, 174, 192, 0.2)'
-        },
-        ticks: {
-          maxTicksLimit: 6,
-          callback: function(value) {
-            return '$' + value.toLocaleString()
-          }
-        }
-      }
-    },
-    plugins: {
-      legend: {
-        display: true,
-        position: 'top' as const
-      },
-      tooltip: {
-        mode: 'index' as const,
-        intersect: false,
-        callbacks: {
-          label: function(context) {
-            let label = context.dataset.label || '';
-            if (label) {
-              label += ': ';
-            }
-            label += '$' + context.parsed.y.toLocaleString();
-            return label;
-          }
-        }
-      }
-    }
-  }
-}
-
 // Campaigns data
 let campaignsData = [
   { name: 'Summer Sale 2024', id: 'SUMMER24', spend: 25000, revenue: 75000, roi: 200, conversions: 1500, percentage: 0 },
@@ -248,8 +164,6 @@ function formatPercentage(value) {
   return value.toFixed(1) + '%'
 }
 
-// Initialize chart when component is mounted
-let marketingChart: Chart | null = null
 
 </script>
 
@@ -260,17 +174,17 @@ let marketingChart: Chart | null = null
       <!-- Header with date range selector -->
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div class="flex items-center space-x-2">
-          <div class="h-5 w-5 text-gray-500 dark:text-gray-400 i-hugeicons-calendar-03"></div>
-          <span class="font-medium text-gray-700 text-sm dark:text-gray-300">{{ dateRangeDisplay }}</span>
+          <div class="h-5 w-5 text-gray-500 dark:text-neutral-400 i-hugeicons-calendar-03"></div>
+          <span class="font-medium text-gray-700 text-sm dark:text-neutral-300">{{ dateRangeDisplay }}</span>
         </div>
 
         <div class="flex flex-wrap gap-2 items-center">
-          <span class="text-gray-500 text-sm dark:text-gray-400">compared to</span>
+          <span class="text-gray-500 text-sm dark:text-neutral-400">compared to</span>
 
           <div class="relative">
             <select
-              v-model="comparisonType"
-              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              value="{{ comparisonType }}"
+              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             >
               <option value="no-comparison">No comparison</option>
               <option value="previous-period">Previous period</option>
@@ -280,7 +194,7 @@ let marketingChart: Chart | null = null
 
           <button
             type="button"
-            class="inline-flex items-center px-3 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+            class="inline-flex items-center px-3 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
           >
             <div class="mr-1 h-4 w-4 i-hugeicons-settings-01"></div>
             Auto
@@ -289,7 +203,7 @@ let marketingChart: Chart | null = null
       </div>
 
       <!-- Overview Cards -->
-      <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 mb-8 p-4 bg-black dark:bg-blue-gray-900 rounded-lg">
+      <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 mb-8 p-4 bg-black dark:bg-neutral-900 rounded-lg">
         <!-- Total Spend -->
         <div class="flex flex-col items-center justify-center">
           <div class="font-bold text-4xl text-white">$125k</div>
@@ -328,11 +242,11 @@ let marketingChart: Chart | null = null
       </div>
 
       <!-- Marketing Chart -->
-      <div class="mb-8 p-4 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+      <div class="mb-8 p-4 bg-white dark:bg-neutral-800 rounded-lg shadow">
         <!-- Chart header -->
         <div class="mb-4">
           <h3 class="font-medium leading-6 text-gray-900 text-lg dark:text-white">Marketing Performance</h3>
-          <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">
+          <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">
             Revenue vs. marketing spend over time
           </p>
         </div>
@@ -351,45 +265,45 @@ let marketingChart: Chart | null = null
             <h3 class="font-medium text-gray-900 text-lg dark:text-white">Campaigns</h3>
           </div>
 
-          <div class="overflow-hidden border border-gray-200 rounded-lg dark:border-gray-700">
-            <table class="min-w-full divide-gray-200 divide-y dark:divide-gray-700">
-              <thead class="bg-gray-50 dark:bg-blue-gray-700/50">
+          <div class="overflow-hidden border border-gray-200 rounded-lg dark:border-neutral-700">
+            <table class="min-w-full divide-gray-200 divide-y dark:divide-neutral-700">
+              <thead class="bg-gray-50 dark:bg-neutral-700/50">
                 <tr>
-                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-300">
+                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-neutral-300">
                     Campaign
                   </th>
-                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                     Spend
                   </th>
-                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                     Revenue
                   </th>
-                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                     ROI
                   </th>
-                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                     %
                   </th>
                 </tr>
               </thead>
-              <tbody class="bg-white dark:bg-blue-gray-800 divide-gray-200 divide-y dark:divide-gray-700">
+              <tbody class="bg-white dark:bg-neutral-800 divide-gray-200 divide-y dark:divide-neutral-700">
                 @foreach(campaignsData as campaign)
-                <tr :key="index" class="relative hover:bg-gray-50 dark:hover:bg-blue-gray-700/50">
+                <tr class="relative hover:bg-gray-50 dark:hover:bg-neutral-700/50">
                   <td class="px-4 py-3 text-gray-900 text-sm whitespace-nowrap dark:text-white">
-                    <div class="absolute inset-0 bg-rose-100/50 dark:bg-rose-900/50" :style="{ width: campaign.percentage + '%' }"></div>
+                    <div class="absolute inset-0 bg-rose-100/50 dark:bg-rose-900/50" style="{{ { width: campaign.percentage + '%' } }}"></div>
                     <span class="relative z-10">{{ campaign.name }}</span>
-                    <span class="block relative z-10 text-gray-500 text-xs dark:text-gray-400">{{ campaign.id }}</span>
+                    <span class="block relative z-10 text-gray-500 text-xs dark:text-neutral-400">{{ campaign.id }}</span>
                   </td>
-                  <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                  <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                     <span class="relative z-10">{{ formatCurrency(campaign.spend) }}</span>
                   </td>
-                  <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                  <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                     <span class="relative z-10">{{ formatCurrency(campaign.revenue) }}</span>
                   </td>
-                  <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                  <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                     <span class="relative z-10">{{ campaign.roi }}%</span>
                   </td>
-                  <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                  <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                     <span class="relative z-10">{{ campaign.percentage }}%</span>
                   </td>
                 </tr>
@@ -411,44 +325,44 @@ let marketingChart: Chart | null = null
             <h3 class="font-medium text-gray-900 text-lg dark:text-white">Channels</h3>
           </div>
 
-          <div class="overflow-hidden border border-gray-200 rounded-lg dark:border-gray-700">
-            <table class="min-w-full divide-gray-200 divide-y dark:divide-gray-700">
-              <thead class="bg-gray-50 dark:bg-blue-gray-700/50">
+          <div class="overflow-hidden border border-gray-200 rounded-lg dark:border-neutral-700">
+            <table class="min-w-full divide-gray-200 divide-y dark:divide-neutral-700">
+              <thead class="bg-gray-50 dark:bg-neutral-700/50">
                 <tr>
-                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-300">
+                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-neutral-300">
                     Channel
                   </th>
-                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                     Spend
                   </th>
-                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                     Revenue
                   </th>
-                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                     ROI
                   </th>
-                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                  <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                     %
                   </th>
                 </tr>
               </thead>
-              <tbody class="bg-white dark:bg-blue-gray-800 divide-gray-200 divide-y dark:divide-gray-700">
+              <tbody class="bg-white dark:bg-neutral-800 divide-gray-200 divide-y dark:divide-neutral-700">
                 @foreach(channelsData as channel)
-                <tr :key="index" class="relative hover:bg-gray-50 dark:hover:bg-blue-gray-700/50">
+                <tr class="relative hover:bg-gray-50 dark:hover:bg-neutral-700/50">
                   <td class="px-4 py-3 text-gray-900 text-sm whitespace-nowrap dark:text-white">
-                    <div class="absolute inset-0 bg-blue-100/50 dark:bg-blue-900/50" :style="{ width: channel.percentage + '%' }"></div>
+                    <div class="absolute inset-0 bg-blue-100/50 dark:bg-blue-900/50" style="{{ { width: channel.percentage + '%' } }}"></div>
                     <span class="relative z-10">{{ channel.name }}</span>
                   </td>
-                  <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                  <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                     <span class="relative z-10">{{ formatCurrency(channel.spend) }}</span>
                   </td>
-                  <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                  <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                     <span class="relative z-10">{{ formatCurrency(channel.revenue) }}</span>
                   </td>
-                  <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                  <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                     <span class="relative z-10">{{ channel.roi }}%</span>
                   </td>
-                  <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                  <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                     <span class="relative z-10">{{ channel.percentage }}%</span>
                   </td>
                 </tr>
@@ -471,57 +385,57 @@ let marketingChart: Chart | null = null
           <h3 class="font-medium text-gray-900 text-lg dark:text-white">Top Performing Ads</h3>
         </div>
 
-        <div class="overflow-hidden border border-gray-200 rounded-lg dark:border-gray-700">
-          <table class="min-w-full divide-gray-200 divide-y dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-blue-gray-700/50">
+        <div class="overflow-hidden border border-gray-200 rounded-lg dark:border-neutral-700">
+          <table class="min-w-full divide-gray-200 divide-y dark:divide-neutral-700">
+            <thead class="bg-gray-50 dark:bg-neutral-700/50">
               <tr>
-                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-300">
+                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-neutral-300">
                   Ad
                 </th>
-                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                   Impressions
                 </th>
-                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                   Clicks
                 </th>
-                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                   CTR
                 </th>
-                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                   Conversions
                 </th>
-                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                   CPA
                 </th>
-                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-gray-300">
+                <th scope="col" class="px-4 py-3 font-medium text-gray-500 text-right text-xs tracking-wider uppercase dark:text-neutral-300">
                   %
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white dark:bg-blue-gray-800 divide-gray-200 divide-y dark:divide-gray-700">
+            <tbody class="bg-white dark:bg-neutral-800 divide-gray-200 divide-y dark:divide-neutral-700">
               @foreach(adsData as ad)
-              <tr :key="index" class="relative hover:bg-gray-50 dark:hover:bg-blue-gray-700/50">
+              <tr class="relative hover:bg-gray-50 dark:hover:bg-neutral-700/50">
                 <td class="px-4 py-3 text-gray-900 text-sm whitespace-nowrap dark:text-white">
-                  <div class="absolute inset-0 bg-purple-100/50 dark:bg-purple-900/50" :style="{ width: ad.percentage + '%' }"></div>
+                  <div class="absolute inset-0 bg-purple-100/50 dark:bg-purple-900/50" style="{{ { width: ad.percentage + '%' } }}"></div>
                   <span class="relative z-10">{{ ad.name }}</span>
-                  <span class="block relative z-10 text-gray-500 text-xs dark:text-gray-400">{{ ad.id }}</span>
+                  <span class="block relative z-10 text-gray-500 text-xs dark:text-neutral-400">{{ ad.id }}</span>
                 </td>
-                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                   <span class="relative z-10">{{ formatNumber(ad.impressions) }}</span>
                 </td>
-                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                   <span class="relative z-10">{{ formatNumber(ad.clicks) }}</span>
                 </td>
-                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                   <span class="relative z-10">{{ ad.ctr }}%</span>
                 </td>
-                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                   <span class="relative z-10">{{ formatNumber(ad.conversions) }}</span>
                 </td>
-                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                   <span class="relative z-10">${{ ad.cpa }}</span>
                 </td>
-                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-gray-300">
+                <td class="relative px-4 py-3 text-gray-500 text-right text-sm whitespace-nowrap dark:text-neutral-300">
                   <span class="relative z-10">{{ ad.percentage }}%</span>
                 </td>
               </tr>
@@ -540,14 +454,33 @@ let marketingChart: Chart | null = null
   </div>
 </main>
 <script client>
-import { onMount } from 'stx'
+const { Chart, registerables } = await import('chart.js/auto')
+Chart.register(...registerables)
 
-onMount(async () => {
-  const ctx = document.getElementById('marketingChart') as HTMLCanvasElement
-  if (ctx) {
-    marketingChart = new Chart(ctx, chartConfig)
-  }
-})
+const ctx = document.getElementById('marketingChart')
+if (ctx) {
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: marketingData.map(item => item.date),
+      datasets: [
+        { label: 'Revenue ($)', data: marketingData.map(item => item.revenue), backgroundColor: 'rgba(16, 185, 129, 0.3)', borderColor: 'rgba(16, 185, 129, 0.8)', borderWidth: 2, tension: 0.4, fill: true, yAxisID: 'y' },
+        { label: 'Spend ($)', data: marketingData.map(item => item.spend), backgroundColor: 'rgba(244, 63, 94, 0.1)', borderColor: 'rgba(244, 63, 94, 0.8)', borderWidth: 2, tension: 0.4, fill: false, yAxisID: 'y' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 4 } },
+        y: { type: 'linear', display: true, position: 'left', beginAtZero: true, grid: { borderDash: [2, 4], color: 'rgba(160, 174, 192, 0.2)' }, ticks: { maxTicksLimit: 6, callback: function(value) { return '$' + value.toLocaleString() } } }
+      },
+      plugins: {
+        legend: { display: true, position: 'top' },
+        tooltip: { mode: 'index', intersect: false, callbacks: { label: function(context) { let label = context.dataset.label || ''; if (label) label += ': '; label += '$' + context.parsed.y.toLocaleString(); return label } } }
+      }
+    }
+  })
+}
 </script>
 
 <style scoped>
@@ -556,3 +489,5 @@ onMount(async () => {
 }
 </style>
 
+
+@endsection

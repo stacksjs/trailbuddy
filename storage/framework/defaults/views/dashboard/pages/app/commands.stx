@@ -1,68 +1,72 @@
-<script server>
-const API_URL = 'http://localhost:' + (process.env.PORT_API || '3008')
+@extends('layouts/default')
 
+@section('content')
+<script server>
 let commands = []
 
 try {
-  const res = await fetch(API_URL + '/infrastructure/commands')
-  if (res.ok) {
-    const json = await res.json()
-    commands = json.commands || []
+  const { Glob } = await import('bun')
+  const path = await import('path')
+  const cwd = process.cwd()
+  const cmdDir = path.resolve(cwd, 'storage/framework/core/buddy/src/commands')
+  const glob = new Glob('**/*.ts')
+  for await (const filePath of glob.scan({ cwd: cmdDir, onlyFiles: true })) {
+    const name = path.basename(filePath, '.ts')
+    if (name === 'index') continue
+    commands.push({
+      name: 'buddy ' + name.replace(/([A-Z])/g, '-$1').toLowerCase().replace(/^-/, ''),
+      description: name.replace(/([A-Z])/g, ' $1').trim(),
+      lastRun: '-',
+      status: 'Active',
+    })
   }
 } catch (e) {
-  // API not available
+  // filesystem scan failed
 }
 
-function statusClass(s) {
-  if (!s) return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-  s = String(s).toLowerCase()
-  if (['active','success','healthy','connected','running','published','approved','valid','up-to-date'].indexOf(s) >= 0)
-    return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-  if (['pending','scheduled','warning','low-stock','draft','update-available'].indexOf(s) >= 0)
-    return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-  if (['failed','error','inactive','cancelled','spam','rejected','out-of-stock'].indexOf(s) >= 0)
-    return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-  if (['info','completed','processing'].indexOf(s) >= 0)
-    return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-  return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+function statusVariant(s) {
+  s = String(s || '').toLowerCase()
+  if (['active', 'success', 'healthy', 'running'].includes(s)) return 'success'
+  if (['pending', 'scheduled', 'warning'].includes(s)) return 'warning'
+  if (['failed', 'error', 'inactive'].includes(s)) return 'danger'
+  return 'default'
 }
 </script>
-<div class="p-6 min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="flex items-start justify-between mb-8">
-      <div>
-        <h1 class="font-bold text-3xl text-gray-900 dark:text-white">Commands</h1>
-        <p class="mt-1 text-gray-500 dark:text-gray-400">CLI commands and artisan tasks</p>
-      </div>
-    </div>
+<div class="p-6 space-y-6">
 
-    <div class="flex flex-col gap-6">
-      <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
-        <div class="overflow-x-auto border border-gray-200 rounded-xl dark:border-gray-700">
-          <table class="w-full text-sm">
-            <thead class="bg-gray-50 dark:bg-gray-700/50">
-              <tr>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Command</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Description</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Last Run</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Status</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @foreach (commands as cmd)
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700"><code class="px-1.5 py-0.5 font-mono text-xs bg-gray-100 dark:bg-gray-700 rounded">{{ cmd.name }}</code></td>
-                  <td class="px-4 py-3 text-gray-500 dark:text-gray-400 border-gray-100 border-t dark:border-gray-700">{{ cmd.description }}</td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ cmd.lastRun }}</td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">
-                    <span class="px-2.5 py-1 font-semibold text-xs rounded-full {{ }} statusClass(cmd.status)">{{ cmd.status }}</span>
-                  </td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700"><button class="px-3 py-1.5 font-medium text-gray-700 text-xs dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 rounded-lg dark:border-gray-600">Run</button></td>
-                </tr>
-              @endforeach
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+  <PageHeader title="Commands" description="CLI commands and artisan tasks" />
+
+  <!-- Commands Table -->
+  <div class="bg-white dark:bg-neutral-800/90 border border-black/5 rounded-xl dark:border-white/5">
+    <DataTable
+      :columns="{{ JSON.stringify([
+        { key: 'name', label: 'Command' },
+        { key: 'description', label: 'Description' },
+        { key: 'lastRun', label: 'Last Run' },
+        { key: 'status', label: 'Status' },
+        { key: 'actions', label: '' }
+      ]) }}"
+      :data="commands"
+      emptyTitle="No commands found"
+      emptyDescription="CLI commands will appear here once discovered"
+      emptyIcon="i-hugeicons-terminal"
+    >
+      @foreach(commands as cmd)
+        <tr class="hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors">
+          <td class="px-4 py-3">
+            <code class="px-1.5 py-0.5 font-mono text-xs bg-neutral-100 dark:bg-neutral-700 rounded">{{ cmd.name }}</code>
+          </td>
+          <td class="px-4 py-3 text-[13px] text-neutral-500 dark:text-neutral-400">{{ cmd.description }}</td>
+          <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ cmd.lastRun }}</td>
+          <td class="px-4 py-3">
+            <Badge variant="{{ statusVariant(cmd.status) }}" size="xs" dot>{{ cmd.status }}</Badge>
+          </td>
+          <td class="px-4 py-3">
+            <Button variant="outline" size="xs">Run</Button>
+          </td>
+        </tr>
+      @endforeach
+    </DataTable>
   </div>
+</div>
+@endsection

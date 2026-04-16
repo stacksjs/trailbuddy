@@ -1,3 +1,6 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 import { get, post } from '../../../functions/api'
 
@@ -59,17 +62,13 @@ async function handleInvite(event) {
 fetchTeammates()
 </script>
 
-<div class="px-4 py-8 sm:px-6 lg:px-8">
-  <form class="px-6 py-4 text-sm bg-white dark:bg-blue-gray-800 rounded-lg" @submit="handleInvite">
-    <div class="sm:flex sm:items-center">
-      <div class="sm:flex-auto">
-        <h1 class="font-semibold leading-6 text-base text-gray-900 dark:text-gray-100">
-          Team Members
-        </h1>
-      </div>
-    </div>
+<div class="p-6 space-y-6">
+
+  <PageHeader title="Team Members" description="Manage your team members and invitations" />
+
+  <form class="px-6 py-4 text-sm bg-white dark:bg-neutral-800 rounded-lg" @submit="handleInvite">
     <div class="py-2">
-      <div class="flex flex-row p-4 text-gray-600 text-sm dark:text-gray-400 bg-gray-50 dark:bg-blue-gray-700 rounded-lg">
+      <div class="flex flex-row p-4 text-gray-600 text-sm dark:text-neutral-400 bg-gray-50 dark:bg-neutral-700 rounded-lg">
         <div class="flex-shrink-0 h-6 w-6 text-gray-400 i-hugeicons-information-circle" />
         <div class="flex flex-grow ml-4 mt-0.5">
           <p>You can add teammates here.</p>
@@ -89,14 +88,14 @@ fetchTeammates()
       @endif
 
       <div class="flex flex-col mt-4">
-        <label class="text-gray-700 dark:text-gray-300">Enter teammate email to invite them.</label>
+        <label class="text-gray-700 dark:text-neutral-300">Enter teammate email to invite them.</label>
         <div class="flex flex-col mt-1">
           <input
             type="email"
-            :value="inviteEmail"
-            @input="inviteEmail = $event.target.value"
+            value="{{ inviteEmail }}"
+            oninput="inviteEmail = $event.target.value"
             placeholder="teammate@example.com"
-            class="block px-4 py-2 w-full text-gray-900 dark:text-gray-100 dark:bg-blue-gray-800 border border-gray-300 rounded-md dark:border-gray-600 focus:border-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+            class="block px-4 py-2 w-full text-gray-900 dark:text-neutral-100 dark:bg-neutral-800 border border-gray-300 rounded-md dark:border-neutral-600 focus:border-none focus:ring-2 focus:ring-blue-500 shadow-sm"
             autocorrect="off"
           >
         </div>
@@ -104,21 +103,17 @@ fetchTeammates()
     </div>
     <div>
       <div class="flex justify-end mt-4">
-        <button
-          type="submit"
-          :disabled="isInviting"
-          class="px-3 py-2 font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <Button type="submit" variant="primary" disabled="{{ isInviting }}">
           {{ isInviting ? 'Inviting...' : 'Invite' }}
-        </button>
+        </Button>
       </div>
     </div>
   </form>
 
-  <div class="mt-16 px-6 py-4 text-sm bg-white dark:bg-blue-gray-800 rounded-lg">
+  <div class="mt-16 px-6 py-4 text-sm bg-white dark:bg-neutral-800 rounded-lg">
     <div class="sm:flex sm:items-center">
       <div class="sm:flex-auto">
-        <h1 class="font-semibold leading-6 text-base text-gray-900 dark:text-gray-100">
+        <h1 class="font-semibold leading-6 text-base text-gray-900 dark:text-neutral-100">
           Teammates
         </h1>
       </div>
@@ -126,16 +121,16 @@ fetchTeammates()
     <div class="flow-root mt-8">
       <div class="overflow-x-auto -mx-4 -my-2 sm:-mx-6 lg:-mx-8">
         <div class="inline-block py-2 sm:px-6 lg:px-8 min-w-full align-middle">
-          <table class="min-w-full divide-gray-300 divide-y dark:divide-gray-600">
+          <table class="min-w-full divide-gray-300 divide-y dark:divide-neutral-600">
             <thead>
               <tr>
-                <th scope="col" class="pl-4 pr-3 py-3 sm:pl-0 font-medium text-gray-500 text-left text-xs tracking-wide uppercase dark:text-gray-400">
+                <th scope="col" class="pl-4 pr-3 py-3 sm:pl-0 font-medium text-gray-500 text-left text-xs tracking-wide uppercase dark:text-neutral-400">
                   Name
                 </th>
-                <th scope="col" class="px-3 py-3 font-medium text-gray-500 text-left text-xs tracking-wide uppercase dark:text-gray-400">
+                <th scope="col" class="px-3 py-3 font-medium text-gray-500 text-left text-xs tracking-wide uppercase dark:text-neutral-400">
                   Email
                 </th>
-                <th scope="col" class="px-3 py-3 font-medium text-gray-500 text-left text-xs tracking-wide uppercase dark:text-gray-400">
+                <th scope="col" class="px-3 py-3 font-medium text-gray-500 text-left text-xs tracking-wide uppercase dark:text-neutral-400">
                   Role
                 </th>
                 <th scope="col" class="relative pl-3 pr-4 py-3 sm:pr-0">
@@ -143,33 +138,33 @@ fetchTeammates()
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white dark:bg-blue-gray-800 divide-gray-200 divide-y dark:divide-gray-600">
+            <tbody class="bg-white dark:bg-neutral-800 divide-gray-200 divide-y dark:divide-neutral-600">
               @if(isLoading)
                 <tr>
-                  <td colspan="4" class="py-8 text-center text-gray-500 text-sm dark:text-gray-400">
+                  <td colspan="4" class="py-8 text-center text-gray-500 text-sm dark:text-neutral-400">
                     Loading teammates...
                   </td>
                 </tr>
               @elseif(teammates.length === 0)
                 <tr>
-                  <td colspan="4" class="py-8 text-center text-gray-500 text-sm dark:text-gray-400">
+                  <td colspan="4" class="py-8 text-center text-gray-500 text-sm dark:text-neutral-400">
                     No teammates yet. Invite someone above.
                   </td>
                 </tr>
               @else
                 @for(teammate in teammates)
                   <tr>
-                    <td class="pl-4 pr-3 py-4 sm:pl-0 font-medium text-gray-900 text-sm whitespace-nowrap dark:text-gray-100">
+                    <td class="pl-4 pr-3 py-4 sm:pl-0 font-medium text-gray-900 text-sm whitespace-nowrap dark:text-neutral-100">
                       {{ teammate.name }}
                     </td>
-                    <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-400">
+                    <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-400">
                       {{ teammate.email }}
                     </td>
-                    <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-400">
+                    <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-400">
                       {{ teammate.role }}
                     </td>
                     <td class="relative pl-3 pr-4 py-4 sm:pr-0 font-medium text-right text-sm whitespace-nowrap">
-                      <button class="text-gray-400 hover:text-blue-gray-500 duration-150 transition-colors">
+                      <button class="text-gray-400 hover:text-neutral-500 duration-150 transition-colors">
                         <div class="h-6 w-6 i-hugeicons-ellipsis-vertical" />
                       </button>
                     </td>
@@ -183,3 +178,5 @@ fetchTeammates()
     </div>
   </div>
 </div>
+
+@endsection

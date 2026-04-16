@@ -1,137 +1,111 @@
-<script server>
-const API_URL = 'http://localhost:' + (process.env.PORT_API || '3008')
+@extends('layouts/default')
 
+@section('content')
+<script server>
+// Data available when full dev server runs (buddy dev)
 let shipments = []
 let stats = []
 let carriers = []
 let zones = []
 
-try {
-  const res = await fetch(API_URL + '/dashboard/commerce/delivery')
-  if (res.ok) {
-    const json = await res.json()
-    shipments = json.shipments || []
-    stats = json.stats || []
-    carriers = json.carriers || []
-    zones = json.zones || []
-  }
-} catch (e) {
-  // API not available
-}
-
-function statusClass(s) {
-  if (!s) return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-  s = String(s).toLowerCase()
-  if (['active','success','healthy','connected','running','published','approved','valid','up-to-date'].indexOf(s) >= 0)
-    return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-  if (['pending','scheduled','warning','low-stock','draft','update-available'].indexOf(s) >= 0)
-    return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-  if (['failed','error','inactive','cancelled','spam','rejected','out-of-stock'].indexOf(s) >= 0)
-    return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-  if (['info','completed','processing'].indexOf(s) >= 0)
-    return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-  return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+function statusVariant(s) {
+  s = String(s || '').toLowerCase()
+  if (['active', 'connected', 'delivered'].includes(s)) return 'success'
+  if (['pending', 'in_transit', 'in-transit', 'processing'].includes(s)) return 'warning'
+  if (['failed', 'cancelled', 'lost'].includes(s)) return 'danger'
+  if (['info', 'shipped'].includes(s)) return 'info'
+  return 'default'
 }
 </script>
-<div class="p-6 min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="flex items-start justify-between mb-8">
-      <div>
-        <h1 class="font-bold text-3xl text-gray-900 dark:text-white">Delivery</h1>
-        <p class="mt-1 text-gray-500 dark:text-gray-400">Shipping and fulfillment management</p>
-      </div>
-      <div class="flex gap-3 items-center">
-        <button class="px-4 py-2 font-medium text-gray-700 text-sm dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 rounded-lg dark:border-gray-600">Shipping Zones</button>
-        <button class="px-4 py-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg">Create Shipment</button>
-      </div>
-    </div>
+<div class="p-6 space-y-6">
 
-    <div class="flex flex-col gap-6">
-      <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-        @foreach (stats as stat)
-          <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700">
-            <div class="font-bold text-2xl text-gray-900 dark:text-white">{{ stat.value }}</div>
-            <div class="mt-1 text-gray-500 text-sm dark:text-gray-400">{{ stat.label }}</div>
+  <PageHeader title="Delivery" description="Shipping and fulfillment management">
+    <template #actions>
+      <Button variant="secondary">Shipping Zones</Button>
+      <Button variant="primary">Create Shipment</Button>
+    </template>
+  </PageHeader>
+
+  <!-- Stats -->
+  <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+    @foreach (stats as stat)
+      <StatsCard :title="stat.label" value="{{ stat.value }}" icon="i-hugeicons-truck-delivery" iconBg="primary" />
+    @endforeach
+  </div>
+
+  <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
+    <!-- Carriers -->
+    <Card title="Carriers">
+      <div class="divide-neutral-100 divide-y dark:divide-neutral-700/50">
+        @foreach (carriers as carrier)
+          <div class="flex gap-3 items-center p-4 hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors">
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-[13px] text-neutral-900 dark:text-white">{{ carrier.name }}</div>
+              <div class="text-[12px] text-neutral-500 dark:text-neutral-400">{{ carrier.shipments }} shipments</div>
+            </div>
+            <div class="flex gap-3 items-center">
+              <span class="text-[13px] text-green-600 dark:text-green-400">{{ carrier.onTime }} on-time</span>
+              <Badge variant="success" size="xs">{{ carrier.status }}</Badge>
+            </div>
           </div>
         @endforeach
       </div>
+    </Card>
 
-      <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
-          <div class="flex items-center justify-between mb-4">
-            <span class="font-semibold text-gray-900 dark:text-white">Carriers</span>
-            <button class="px-3 py-1.5 font-medium text-gray-500 text-xs dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Manage</button>
+    <!-- Shipping Zones -->
+    <Card title="Shipping Zones">
+      <div class="divide-neutral-100 divide-y dark:divide-neutral-700/50">
+        @foreach (zones as zone)
+          <div class="flex gap-3 items-center p-4 hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors">
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-[13px] text-neutral-900 dark:text-white">{{ zone.name }}</div>
+              <div class="text-[12px] text-neutral-500 dark:text-neutral-400">{{ zone.delivery }}</div>
+            </div>
+            <span class="font-semibold text-[13px] text-neutral-900 dark:text-white">{{ zone.rate }}</span>
           </div>
-          <div class="divide-gray-100 divide-y dark:divide-gray-700">
-            @foreach (carriers as carrier)
-              <div class="flex gap-3 items-center p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                <div class="flex-1 min-w-0">
-                  <div class="font-medium text-gray-900 dark:text-white">{{ carrier.name }}</div>
-                  <div class="text-gray-500 text-sm dark:text-gray-400">{{ carrier.shipments }} shipments</div>
-                </div>
-                <div class="flex gap-3 items-center">
-                  <span class="text-green-600 dark:text-green-400">{{ carrier.onTime }} on-time</span>
-                  <span class="px-2.5 py-1 font-semibold text-green-700 text-xs dark:text-green-400 bg-green-100 dark:bg-green-900/30 rounded-full">{{ carrier.status }}</span>
-                </div>
-              </div>
-            @endforeach
-          </div>
-        </div>
-
-        <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
-          <div class="flex items-center justify-between mb-4">
-            <span class="font-semibold text-gray-900 dark:text-white">Shipping Zones</span>
-            <button class="px-3 py-1.5 font-medium text-gray-500 text-xs dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Edit</button>
-          </div>
-          <div class="divide-gray-100 divide-y dark:divide-gray-700">
-            @foreach (zones as zone)
-              <div class="flex gap-3 items-center p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                <div class="flex-1 min-w-0">
-                  <div class="font-medium text-gray-900 dark:text-white">{{ zone.name }}</div>
-                  <div class="text-gray-500 text-sm dark:text-gray-400">{{ zone.delivery }}</div>
-                </div>
-                <span class="font-semibold">{{ zone.rate }}</span>
-              </div>
-            @endforeach
-          </div>
-        </div>
+        @endforeach
       </div>
-
-      <div class="p-5 bg-white dark:bg-gray-800 border border-gray-200 rounded-xl dark:border-gray-700 hover:shadow-lg transition-shadow">
-        <div class="flex items-center justify-between mb-4">
-          <span class="font-semibold text-gray-900 dark:text-white">Active Shipments</span>
-        </div>
-        <div class="overflow-x-auto border border-gray-200 rounded-xl dark:border-gray-700">
-          <table class="w-full text-sm">
-            <thead class="bg-gray-50 dark:bg-gray-700/50">
-              <tr>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Shipment ID</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Order</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Carrier</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Tracking</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Status</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">ETA</th>
-                <th scope="col" class="px-4 py-3 font-semibold text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              @foreach (shipments as shipment)
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700"><code class="px-1.5 py-0.5 font-mono text-xs bg-gray-100 dark:bg-gray-700 rounded">{{ shipment.id }}</code></td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700"><a href="#" class="text-blue-600 dark:text-blue-400 hover:underline">{{ shipment.order }}</a></td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ shipment.carrier }}</td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700"><code class="px-1.5 py-0.5 font-mono text-xs bg-gray-100 dark:bg-gray-700 rounded">{{ shipment.tracking }}</code></td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">
-                    <span class="px-2.5 py-1 font-semibold text-xs rounded-full {{ }} statusClass(shipment.status)">{{ shipment.status.replace('_', ' ') }}</span>
-                  </td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">{{ shipment.eta }}</td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-white border-gray-100 border-t dark:border-gray-700">
-                    <button class="px-3 py-1.5 font-medium text-gray-500 text-xs dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Track</button>
-                  </td>
-                </tr>
-              @endforeach
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    </Card>
   </div>
+
+  <!-- Active Shipments -->
+  <div class="bg-white dark:bg-neutral-800/90 border border-black/5 rounded-xl dark:border-white/5">
+    <DataTable
+      :columns="{{ JSON.stringify([
+        { key: 'id', label: 'Shipment ID' },
+        { key: 'order', label: 'Order' },
+        { key: 'carrier', label: 'Carrier' },
+        { key: 'tracking', label: 'Tracking' },
+        { key: 'status', label: 'Status' },
+        { key: 'eta', label: 'ETA' },
+        { key: 'actions', label: '' },
+      ]) }}"
+      :data="shipments"
+      emptyTitle="No active shipments"
+      emptyDescription="Shipments will appear here once orders are fulfilled"
+      emptyIcon="i-hugeicons-truck-delivery"
+    >
+      @foreach (shipments as shipment)
+        <tr class="hover:bg-neutral-50 dark:hover:bg-white/[0.02] transition-colors">
+          <td class="px-4 py-3">
+            <code class="px-1.5 py-0.5 font-mono text-xs bg-neutral-100 dark:bg-neutral-700 rounded">{{ shipment.id }}</code>
+          </td>
+          <td class="px-4 py-3 text-[13px] text-blue-600 dark:text-blue-400">{{ shipment.order }}</td>
+          <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ shipment.carrier }}</td>
+          <td class="px-4 py-3">
+            <code class="px-1.5 py-0.5 font-mono text-xs bg-neutral-100 dark:bg-neutral-700 rounded">{{ shipment.tracking }}</code>
+          </td>
+          <td class="px-4 py-3">
+            <Badge variant="{{ statusVariant(shipment.status) }}" size="xs" dot>{{ shipment.status.replace('_', ' ') }}</Badge>
+          </td>
+          <td class="px-4 py-3 text-[13px] text-neutral-600 dark:text-neutral-300">{{ shipment.eta }}</td>
+          <td class="px-4 py-3">
+            <Button variant="ghost" size="xs">Track</Button>
+          </td>
+        </tr>
+      @endforeach
+    </DataTable>
+  </div>
+
+</div>
+@endsection

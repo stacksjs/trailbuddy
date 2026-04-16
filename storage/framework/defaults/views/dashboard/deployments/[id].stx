@@ -1,3 +1,6 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 definePageMeta({
   middleware: ['auth']
@@ -18,19 +21,19 @@ function getStatus(conclusion) {
 </script>
 @if(gitStore.workflowRun)
   <div class="px-4 py-8 sm:px-6 lg:px-8">
-    <div class="px-6 py-8 text-sm bg-white dark:bg-blue-gray-800 rounded-lg">
+    <div class="px-6 py-8 text-sm bg-white dark:bg-neutral-800 rounded-lg">
       <div class="px-4 sm:px-0">
-        <h3 class="font-semibold leading-7 text-base text-gray-900 dark:text-gray-100">
+        <h3 class="font-semibold leading-7 text-base text-gray-900 dark:text-neutral-100">
           Latest Deployment
         </h3>
       </div>
-      <div class="mt-6 border-gray-100 border-t dark:border-gray-600">
-        <dl class="divide-gray-100 divide-y dark:divide-gray-600">
+      <div class="mt-6 border-gray-100 border-t dark:border-neutral-600">
+        <dl class="divide-gray-100 divide-y dark:divide-neutral-600">
           <div class="sm:grid sm:gap-4 sm:grid-cols-3 px-4 py-6 sm:px-0">
-            <dt class="font-medium leading-6 text-gray-900 text-sm dark:text-gray-100">
+            <dt class="font-medium leading-6 text-gray-900 text-sm dark:text-neutral-100">
               Status
             </dt>
-            <dd class="flex items-center sm:col-span-2 mt-1 sm:mt-0 leading-6 text-gray-700 text-sm dark:text-gray-200 dark:text-gray-200">
+            <dd class="flex items-center sm:col-span-2 mt-1 sm:mt-0 leading-6 text-gray-700 text-sm dark:text-neutral-200 dark:text-neutral-200">
               <span> {{ getStatus(gitStore.workflowRun.conclusion) }} </span>
               <svg fill="none" class="ml-2 h-5 w-5 text-green-500" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -39,26 +42,26 @@ function getStatus(conclusion) {
           </div>
 
           <div class="sm:grid sm:gap-4 sm:grid-cols-3 px-4 py-6 sm:px-0">
-            <dt class="font-medium leading-6 text-gray-900 text-sm dark:text-gray-100">
+            <dt class="font-medium leading-6 text-gray-900 text-sm dark:text-neutral-100">
               Duration
             </dt>
-            <dd class="sm:col-span-2 mt-1 sm:mt-0 leading-6 text-gray-700 text-sm dark:text-gray-200 dark:text-gray-200">
+            <dd class="sm:col-span-2 mt-1 sm:mt-0 leading-6 text-gray-700 text-sm dark:text-neutral-200 dark:text-neutral-200">
               {{ github.getActionRunDuration(gitStore.workflowRun.created_at, gitStore.workflowRun.updated_at) }}
             </dd>
           </div>
           <div class="sm:grid sm:gap-4 sm:grid-cols-3 px-4 py-6 sm:px-0">
-            <dt class="font-medium leading-6 text-gray-900 text-sm dark:text-gray-100">
+            <dt class="font-medium leading-6 text-gray-900 text-sm dark:text-neutral-100">
               Domain
             </dt>
-            <dd class="sm:col-span-2 mt-1 sm:mt-0 leading-6 text-gray-700 text-sm dark:text-gray-200 dark:text-gray-200">
+            <dd class="sm:col-span-2 mt-1 sm:mt-0 leading-6 text-gray-700 text-sm dark:text-neutral-200 dark:text-neutral-200">
               www.stacks.com
             </dd>
           </div>
           <div class="sm:grid sm:gap-4 sm:grid-cols-3 px-4 py-6 sm:px-0">
-            <dt class="font-medium leading-6 text-gray-900 text-sm dark:text-gray-100">
+            <dt class="font-medium leading-6 text-gray-900 text-sm dark:text-neutral-100">
               Source
             </dt>
-            <dd class="sm:col-span-2 mt-1 sm:mt-0 leading-6 text-gray-700 text-sm dark:text-gray-200 dark:text-gray-200">
+            <dd class="sm:col-span-2 mt-1 sm:mt-0 leading-6 text-gray-700 text-sm dark:text-neutral-200 dark:text-neutral-200">
               <div class="flex items-center">
                 <svg
                   class="with-icon_icon__MHUeb"
@@ -125,23 +128,23 @@ function getStatus(conclusion) {
       </div>
     </div>
 
-    <div class="mt-12 px-6 py-8 text-sm bg-white dark:bg-blue-gray-800 rounded-lg">
-      <h2 class="font-bold leading-10 text-2xl text-gray-900 tracking-tight dark:text-gray-100">
+    <div class="mt-12 px-6 py-8 text-sm bg-white dark:bg-neutral-800 rounded-lg">
+      <h2 class="font-bold leading-10 text-2xl text-gray-900 tracking-tight dark:text-neutral-100">
         Deployment Details
       </h2>
       <div>
         <ul
           role="list"
-          class="mt-8 border divide-gray-200 divide-y rounded-md dark:divide-gray-600"
+          class="mt-8 border divide-gray-200 divide-y rounded-md dark:divide-neutral-600"
         >
           <li
             class="relative flex-col cursor-pointer"
-            @click="flag = !flag"
+            onclick="flag = !flag"
           >
             <div class="flex justify-between px-4 py-5">
               <div class="flex gap-x-4">
                 <div class="flex-auto min-w-0">
-                  <div class="flex items-center font-semibold leading-6 text-gray-900 text-sm dark:text-gray-100">
+                  <div class="flex items-center font-semibold leading-6 text-gray-900 text-sm dark:text-neutral-100">
                     <div class="flex-none h-6 w-6 text-gray-400 i-hugeicons-chevron-right-20-solid" />
 
                     <span>
@@ -186,12 +189,12 @@ function getStatus(conclusion) {
           </li>
           <li
             class="relative flex-col cursor-pointer"
-            @click="flag = !flag"
+            onclick="flag = !flag"
           >
             <div class="flex justify-between px-4 py-5">
               <div class="flex gap-x-4">
                 <div class="flex-auto min-w-0">
-                  <div class="flex items-center font-semibold leading-6 text-gray-900 text-sm dark:text-gray-100">
+                  <div class="flex items-center font-semibold leading-6 text-gray-900 text-sm dark:text-neutral-100">
                     <div class="flex-none h-6 w-6 text-gray-400 i-hugeicons-chevron-right-20-solid" />
                     <span>
                       Deployment Summary
@@ -235,12 +238,12 @@ function getStatus(conclusion) {
           </li>
           <li
             class="relative flex-col cursor-pointer"
-            @click="flag = !flag"
+            onclick="flag = !flag"
           >
             <div class="flex justify-between px-4 py-5">
               <div class="flex gap-x-4">
                 <div class="flex-auto min-w-0">
-                  <div class="flex items-center font-semibold leading-6 text-gray-900 text-sm dark:text-gray-100">
+                  <div class="flex items-center font-semibold leading-6 text-gray-900 text-sm dark:text-neutral-100">
                     <div class="flex-none h-6 w-6 text-gray-400 i-hugeicons-chevron-right-20-solid" />
                     <span>
                       Running Checks
@@ -294,3 +297,5 @@ onMount(async () => {
   await gitStore.fetchWorkflowAction(route.params.id)
 })
 </script>
+
+@endsection

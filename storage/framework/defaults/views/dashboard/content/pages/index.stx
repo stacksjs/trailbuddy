@@ -1,31 +1,7 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js'
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-)
-
 // Chart options
 const chartOptions = {
   responsive: true,
@@ -608,7 +584,7 @@ function toggleSort(column: string): void {
 }
 
 // Get status badge class
-function getStatusClass(status: string): string {
+const getStatusClass = (status: string): string => {
   switch (status) {
     case 'Published':
       return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
@@ -617,9 +593,9 @@ function getStatusClass(status: string): string {
     case 'Scheduled':
       return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
     case 'Archived':
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
+      return 'bg-gray-100 text-gray-800 dark:bg-neutral-900/30 dark:text-neutral-400'
     default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
+      return 'bg-gray-100 text-gray-800 dark:bg-neutral-900/30 dark:text-neutral-400'
   }
 }
 
@@ -747,52 +723,41 @@ function websiteStats() {
 }
 </script>
 
-<main>
-    <div class="px-6 py-6 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-7xl">
-        <div class="sm:flex sm:items-center sm:justify-between">
-          <div>
-            <h1 class="font-semibold text-2xl text-gray-900 dark:text-white">Pages</h1>
-            <p class="mt-2 text-gray-700 text-sm dark:text-gray-300">
-              Manage all your website pages
-            </p>
-          </div>
-          <div class="mt-4 sm:mt-0">
-            <button
-              type="button"
-              @click="openNewPageModal"
-              class="inline-flex items-center px-3 py-2 font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
-            >
-              <div class="mr-1 h-5 w-5 i-hugeicons-plus-sign"></div>
-              New Page
-            </button>
-          </div>
-        </div>
+<div class="p-6 space-y-6">
+
+  <PageHeader title="Pages" description="Manage all your website pages">
+    <template #actions>
+      <Button variant="primary" @click="openNewPageModal">
+        <div class="h-4 w-4 i-hugeicons-plus-sign"></div>
+        New Page
+      </Button>
+    </template>
+  </PageHeader>
 
         <!-- Time range selector -->
         <div class="flex items-center justify-between mt-4">
-          <p class="text-gray-500 text-sm dark:text-gray-400">
+          <p class="text-gray-500 text-sm dark:text-neutral-400">
             Overview of your website performance
           </p>
           <div class="relative">
-            <select v-model="timeRange" class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600">
-              <option v-for="range in timeRanges" :key="range" :value="range">{{ range }}</option>
+            <select value="{{ timeRange }}" class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600">
+              <option v-for="range in timeRanges" :key="range" value="{{ range }}">{{ range }}</option>
             </select>
           </div>
         </div>
 
         <!-- Stats -->
         <dl class="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mt-5">
-          <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-            <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-300">Total Pages</dt>
+          <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+            <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-300">Total Pages</dt>
             <dd class="mt-1 font-semibold text-3xl text-gray-900 tracking-tight dark:text-white">{{ websiteStats.totalPages }}</dd>
-            <dd class="flex items-center mt-2 text-gray-500 text-sm dark:text-gray-400">
+            <dd class="flex items-center mt-2 text-gray-500 text-sm dark:text-neutral-400">
               <span>{{ websiteStats.publishedPages }} published, {{ websiteStats.draftPages }} drafts</span>
             </dd>
           </div>
 
-          <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-            <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-300">Total Views</dt>
+          <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+            <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-300">Total Views</dt>
             <dd class="mt-1 font-semibold text-3xl text-gray-900 tracking-tight dark:text-white">{{ websiteStats.totalViews.toLocaleString() }}</dd>
             <dd class="flex items-center mt-2 text-green-600 text-sm dark:text-green-400">
               <div class="mr-1 h-4 w-4 i-hugeicons-analytics-up"></div>
@@ -800,8 +765,8 @@ function websiteStats() {
             </dd>
           </div>
 
-          <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-            <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-300">Conversion Rate</dt>
+          <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+            <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-300">Conversion Rate</dt>
             <dd class="mt-1 font-semibold text-3xl text-gray-900 tracking-tight dark:text-white">{{ websiteStats.conversionRate }}%</dd>
             <dd class="flex items-center mt-2 text-green-600 text-sm dark:text-green-400">
               <div class="mr-1 h-4 w-4 i-hugeicons-analytics-up"></div>
@@ -809,10 +774,10 @@ function websiteStats() {
             </dd>
           </div>
 
-          <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-            <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-300">Most Viewed Page</dt>
+          <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+            <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-300">Most Viewed Page</dt>
             <dd class="mt-1 font-semibold text-3xl text-gray-900 tracking-tight dark:text-white">{{ websiteStats.mostViewedPage.title }}</dd>
-            <dd class="flex items-center mt-2 text-gray-500 text-sm dark:text-gray-400">
+            <dd class="flex items-center mt-2 text-gray-500 text-sm dark:text-neutral-400">
               <span>{{ websiteStats.mostViewedPage.views.toLocaleString() }} views</span>
             </dd>
           </div>
@@ -820,31 +785,31 @@ function websiteStats() {
 
         <!-- Charts -->
         <div class="grid gap-5 grid-cols-1 lg:grid-cols-3 mt-8">
-          <div class="overflow-hidden lg:col-span-2 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          <div class="overflow-hidden lg:col-span-2 bg-white dark:bg-neutral-800 rounded-lg shadow">
             <div class="p-6">
               <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white">Page Views</h3>
               <div class="mt-2 h-80">
-                <Line :data="monthlyChartData.viewsChartData" :options="chartOptions" />
+                <canvas id="chart_pages_1"></canvas>
               </div>
             </div>
           </div>
 
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
             <div class="p-6">
               <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white">Template Distribution</h3>
               <div class="mt-2 h-80">
-                <Doughnut :data="monthlyChartData.templateChartData" :options="doughnutChartOptions" />
+                <canvas id="chart_pages_2"></canvas>
               </div>
             </div>
           </div>
         </div>
 
         <div class="grid gap-5 grid-cols-1 lg:grid-cols-1 mt-5">
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
             <div class="p-6">
               <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white">Pages & Conversions</h3>
               <div class="mt-2 h-80">
-                <Bar :data="monthlyChartData.pagesConversionsChartData" :options="chartOptions" />
+                <canvas id="chart_pages_3"></canvas>
               </div>
             </div>
           </div>
@@ -857,43 +822,43 @@ function websiteStats() {
               <div class="h-5 w-5 text-gray-400 i-hugeicons-search-01"></div>
             </div>
             <input
-              v-model="searchQuery"
+              value="{{ searchQuery }}"
               type="text"
-              class="block pl-10 pr-3 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              class="block pl-10 pr-3 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
               placeholder="Search pages..."
             />
           </div>
 
           <div class="flex flex-col gap-4 sm:flex-row">
             <select
-              v-model="selectedTemplate"
-              class="block pl-3 pr-10 py-1.5 w-full sm:min-w-[180px] text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              value="{{ selectedTemplate }}"
+              class="block pl-3 pr-10 py-1.5 w-full sm:min-w-[180px] text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             >
-              <option v-for="template in templates" :key="template.id" :value="template.name">{{ template.name }}</option>
+              <option v-for="template in templates" :key="template.id" value="{{ template.name }}">{{ template.name }}</option>
             </select>
 
             <select
-              v-model="selectedStatus"
-              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              value="{{ selectedStatus }}"
+              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             >
-              <option v-for="status in statuses" :key="status.id" :value="status.name">{{ status.name }}</option>
+              <option v-for="status in statuses" :key="status.id" value="{{ status.name }}">{{ status.name }}</option>
             </select>
 
             <select
-              v-model="selectedLocation"
-              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              value="{{ selectedLocation }}"
+              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             >
-              <option v-for="location in locations" :key="location.id" :value="location.name">{{ location.name }}</option>
+              <option v-for="location in locations" :key="location.id" value="{{ location.name }}">{{ location.name }}</option>
             </select>
 
             <select
-              v-model="itemsPerPage"
-              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              value="{{ itemsPerPage }}"
+              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             >
-              <option :value="5">5 per page</option>
-              <option :value="10">10 per page</option>
-              <option :value="25">25 per page</option>
-              <option :value="50">50 per page</option>
+              <option value="{{ 5 }}">5 per page</option>
+              <option value="{{ 10 }}">10 per page</option>
+              <option value="{{ 25 }}">25 per page</option>
+              <option value="{{ 50 }}">50 per page</option>
             </select>
           </div>
         </div>
@@ -906,11 +871,11 @@ function websiteStats() {
               <span class="text-blue-700 text-sm dark:text-blue-300">{{ selectedPageIds.length }} pages selected</span>
             </div>
             <div class="flex space-x-2">
-              <button type="button" class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm">
+              <button type="button" class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm">
                 <div class="mr-1 h-4 w-4 i-hugeicons-archive-box"></div>
                 Archive
               </button>
-              <button type="button" class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm">
+              <button type="button" class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm">
                 <div class="mr-1 h-4 w-4 i-hugeicons-duplicate"></div>
                 Duplicate
               </button>
@@ -933,7 +898,7 @@ function websiteStats() {
             </div>
             <button
               @click="selectedLocation = 'All Locations'"
-              class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 shadow-sm"
+              class="inline-flex items-center px-2.5 py-1.5 font-semibold text-gray-900 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 shadow-sm"
             >
               <div class="mr-1 h-4 w-4 i-hugeicons-cancel-01"></div>
               Clear Filter
@@ -945,116 +910,116 @@ function websiteStats() {
         <div class="flow-root mt-6">
           <div class="sm:flex sm:items-center sm:justify-between mb-4">
             <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white">All Pages</h3>
-            <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">
+            <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">
               A list of all website pages including title, template, views, and status.
             </p>
           </div>
           <div class="overflow-x-auto -mx-4 -my-2 sm:-mx-6 lg:-mx-8">
             <div class="inline-block py-2 sm:px-6 lg:px-8 min-w-full align-middle">
               <div class="overflow-hidden ring-1 ring-black ring-opacity-5 sm:rounded-lg shadow">
-                <table class="min-w-full divide-gray-300 divide-y dark:divide-gray-700">
-                  <thead class="bg-gray-50 dark:bg-blue-gray-700">
+                <table class="min-w-full divide-gray-300 divide-y dark:divide-neutral-700">
+                  <thead class="bg-gray-50 dark:bg-neutral-700">
                     <tr>
                       <th scope="col" class="relative pl-3 pr-4 py-3.5 sm:pr-6">
                         <div class="flex items-center">
                           <input
                             id="select-all"
                             type="checkbox"
-                            v-model="selectAll"
+                            value="{{ selectAll }}"
                             @change="toggleSelectAll"
-                            class="h-4 w-4 text-blue-600 dark:bg-blue-gray-700 border-gray-300 rounded dark:border-gray-600 focus:ring-blue-600 dark:focus:ring-offset-blue-gray-800"
+                            class="h-4 w-4 text-blue-600 dark:bg-neutral-700 border-gray-300 rounded dark:border-neutral-600 focus:ring-blue-600 dark:focus:ring-offset-neutral-800"
                           />
                         </div>
                       </th>
-                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">
+                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">
                         <!-- OG Image column (no header text) -->
                       </th>
-                      <th scope="col" class="pl-4 pr-3 py-3.5 sm:pl-6 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">
+                      <th scope="col" class="pl-4 pr-3 py-3.5 sm:pl-6 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">
                         <button @click="toggleSort('title')" class="inline-flex items-center group">
                           Title
                           <span class="group-focus:visible group-hover:visible flex-none ml-2 text-gray-400 rounded">
-                            <div v-if="sortBy === 'title'" :class="[
+                            <div v-if="sortBy === 'title'" class="[
                               sortOrder === 'asc' ? 'i-hugeicons-arrow-up-02' : 'i-hugeicons-arrow-down-02',
                               'h-4 w-4'
-                            ]"></div>
+                            ] {{ }}"></div>
                             <div v-else class="h-4 w-4 i-hugeicons-arrows-up-down"></div>
                           </span>
                         </button>
                       </th>
-                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">
+                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">
                         <button @click="toggleSort('author')" class="inline-flex items-center group">
                           Author
                           <span class="group-focus:visible group-hover:visible flex-none ml-2 text-gray-400 rounded">
-                            <div v-if="sortBy === 'author'" :class="[
+                            <div v-if="sortBy === 'author'" class="[
                               sortOrder === 'asc' ? 'i-hugeicons-arrow-up-02' : 'i-hugeicons-arrow-down-02',
                               'h-4 w-4'
-                            ]"></div>
+                            ] {{ }}"></div>
                             <div v-else class="h-4 w-4 i-hugeicons-arrows-up-down"></div>
                           </span>
                         </button>
                       </th>
-                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">Template</th>
-                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">
+                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">Template</th>
+                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">
                         <button @click="toggleSort('views')" class="inline-flex items-center group">
                           Views
                           <span class="group-focus:visible group-hover:visible flex-none ml-2 text-gray-400 rounded">
-                            <div v-if="sortBy === 'views'" :class="[
+                            <div v-if="sortBy === 'views'" class="[
                               sortOrder === 'asc' ? 'i-hugeicons-arrow-up-02' : 'i-hugeicons-arrow-down-02',
                               'h-4 w-4'
-                            ]"></div>
+                            ] {{ }}"></div>
                             <div v-else class="h-4 w-4 i-hugeicons-arrows-up-down"></div>
                           </span>
                         </button>
                       </th>
-                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">
+                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">
                         <button @click="toggleSort('conversions')" class="inline-flex items-center group">
                           Conversions
                           <span class="group-focus:visible group-hover:visible flex-none ml-2 text-gray-400 rounded">
-                            <div v-if="sortBy === 'conversions'" :class="[
+                            <div v-if="sortBy === 'conversions'" class="[
                               sortOrder === 'asc' ? 'i-hugeicons-arrow-up-02' : 'i-hugeicons-arrow-down-02',
                               'h-4 w-4'
-                            ]"></div>
+                            ] {{ }}"></div>
                             <div v-else class="h-4 w-4 i-hugeicons-arrows-up-down"></div>
                           </span>
                         </button>
                       </th>
-                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">
+                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">
                         <button @click="toggleSort('published')" class="inline-flex items-center group">
                           Published
                           <span class="group-focus:visible group-hover:visible flex-none ml-2 text-gray-400 rounded">
-                            <div v-if="sortBy === 'published'" :class="[
+                            <div v-if="sortBy === 'published'" class="[
                               sortOrder === 'asc' ? 'i-hugeicons-arrow-up-02' : 'i-hugeicons-arrow-down-02',
                               'h-4 w-4'
-                            ]"></div>
+                            ] {{ }}"></div>
                             <div v-else class="h-4 w-4 i-hugeicons-arrows-up-down"></div>
                           </span>
                         </button>
                       </th>
-                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">Status</th>
-                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-gray-200">Location</th>
+                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">Status</th>
+                      <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-neutral-200">Location</th>
                       <th scope="col" class="relative pl-3 pr-4 py-3.5 sm:pr-6">
                         <span class="sr-only">Actions</span>
                       </th>
                     </tr>
                   </thead>
-                  <tbody class="bg-white dark:bg-blue-gray-800 divide-gray-200 divide-y dark:divide-gray-700">
-                    <tr v-for="page in paginatedPages" :key="page.id" :class="selectedPageIds.includes(page.id) 'bg-blue-50 { } dark:bg-blue-900/10':">
+                  <tbody class="bg-white dark:bg-neutral-800 divide-gray-200 divide-y dark:divide-neutral-700">
+                    <tr v-for="page in paginatedPages" :key="page.id" class="selectedPageIds.includes(page.id) 'bg-blue-50 { {{ } }} dark:bg-blue-900/10':">
                       <td class="relative pl-3 pr-4 py-4 sm:pr-6 font-medium text-sm">
                         <div class="flex items-center">
                           <input
-                            :id="`page-${page.id}`"
+                            id="{{ `page-${page.id}` }}"
                             type="checkbox"
-                            :checked="selectedPageIds.includes(page.id)"
+                            checked="{{ selectedPageIds.includes(page.id) }}"
                             @change="togglePageSelection(page.id)"
-                            class="h-4 w-4 text-blue-600 dark:bg-blue-gray-700 border-gray-300 rounded dark:border-gray-600 focus:ring-blue-600 dark:focus:ring-offset-blue-gray-800"
+                            class="h-4 w-4 text-blue-600 dark:bg-neutral-700 border-gray-300 rounded dark:border-neutral-600 focus:ring-blue-600 dark:focus:ring-offset-neutral-800"
                           />
                         </div>
                       </td>
-                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-300">
-                        <div class="overflow-hidden h-16 w-28 bg-gray-100 dark:bg-gray-700 rounded">
+                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-300">
+                        <div class="overflow-hidden h-16 w-28 bg-gray-100 dark:bg-neutral-700 rounded">
                           <img
                             :src="page.ogImage"
-                            :alt="`OG image for ${page.title}`"
+                            alt="{{ `OG image for ${page.title}` }}"
                             class="object-cover h-full w-full"
                           />
                         </div>
@@ -1063,33 +1028,33 @@ function websiteStats() {
                         <div class="flex items-center">
                           <div>
                             <div class="font-medium">{{ page.title }}</div>
-                            <div class="flex items-center mt-1 text-gray-500 text-xs dark:text-gray-400">
+                            <div class="flex items-center mt-1 text-gray-500 text-xs dark:text-neutral-400">
                               <span class="truncate">{{ page.slug }}</span>
                             </div>
                             <div class="flex flex-wrap gap-1 mt-1">
-                              <span v-for="section in page.sections.slice(0, 3)" :key="section" class="inline-flex items-center px-2 py-1 font-medium text-gray-600 text-xs dark:text-gray-300 bg-gray-50 dark:bg-gray-800 ring-1 ring-gray-500/10 ring-inset rounded-full">
+                              <span v-for="section in page.sections.slice(0, 3)" :key="section" class="inline-flex items-center px-2 py-1 font-medium text-gray-600 text-xs dark:text-neutral-300 bg-gray-50 dark:bg-neutral-800 ring-1 ring-gray-500/10 ring-inset rounded-full">
                                 {{ section }}
                               </span>
-                              <span v-if="page.sections.length > 3" class="inline-flex items-center px-2 py-1 font-medium text-gray-600 text-xs dark:text-gray-300 bg-gray-50 dark:bg-gray-800 ring-1 ring-gray-500/10 ring-inset rounded-full">
+                              <span v-if="page.sections.length > 3" class="inline-flex items-center px-2 py-1 font-medium text-gray-600 text-xs dark:text-neutral-300 bg-gray-50 dark:bg-neutral-800 ring-1 ring-gray-500/10 ring-inset rounded-full">
                                 +{{ page.sections.length - 3 }} more
                               </span>
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-300">
+                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-300">
                         {{ page.author }}
                       </td>
-                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-300">
+                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-300">
                         {{ page.template }}
                       </td>
-                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-300">
+                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-300">
                         {{ page.views.toLocaleString() }}
                       </td>
-                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-300">
+                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-300">
                         {{ page.conversions }}
                       </td>
-                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-300">
+                      <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-300">
                         {{ formatDate(page.published) }}
                       </td>
                       <td class="px-3 py-4 text-sm whitespace-nowrap">
@@ -1102,7 +1067,7 @@ function websiteStats() {
                           <button
                             @click="toggleHomepage(page.id)"
                             class="inline-flex items-center px-2 py-1 font-medium text-xs rounded-md"
-                            :class="text-gray-600 text-purple-800 dark:text-gray-400' dark:text-purple-400' dark:bg-gray-800/50 dark:bg-purple-900/30 : ? 'bg-gray-100 'bg-purple-100 page.isHomepage"
+                            :class="text-gray-600 text-purple-800 dark:text-neutral-400' dark:text-purple-400' dark:bg-neutral-800/50 dark:bg-purple-900/30 : ? 'bg-gray-100 'bg-purple-100 page.isHomepage"
                           >
                             <div class="mr-1 h-3 w-3 i-hugeicons-home-01"></div>
                             Homepage
@@ -1110,7 +1075,7 @@ function websiteStats() {
                           <button
                             @click="toggleMainMenu(page.id)"
                             class="inline-flex items-center px-2 py-1 font-medium text-xs rounded-md"
-                            :class="text-blue-800 text-gray-600 dark:text-blue-400' dark:text-gray-400' dark:bg-blue-900/30 dark:bg-gray-800/50 : ? 'bg-blue-100 'bg-gray-100 page.inMainMenu"
+                            :class="text-blue-800 text-gray-600 dark:text-blue-400' dark:text-neutral-400' dark:bg-blue-900/30 dark:bg-neutral-800/50 : ? 'bg-blue-100 'bg-gray-100 page.inMainMenu"
                           >
                             <div class="mr-1 h-3 w-3 i-hugeicons-menu-01"></div>
                             Menu
@@ -1118,7 +1083,7 @@ function websiteStats() {
                           <button
                             @click="toggleFooter(page.id)"
                             class="inline-flex items-center px-2 py-1 font-medium text-xs rounded-md"
-                            :class="text-gray-600 text-teal-800 dark:text-gray-400' dark:text-teal-400' dark:bg-gray-800/50 dark:bg-teal-900/30 : ? 'bg-gray-100 'bg-teal-100 page.inFooter"
+                            :class="text-gray-600 text-teal-800 dark:text-neutral-400' dark:text-teal-400' dark:bg-neutral-800/50 dark:bg-teal-900/30 : ? 'bg-gray-100 'bg-teal-100 page.inFooter"
                           >
                             <div class="mr-1 h-3 w-3 i-hugeicons-layout-bottom"></div>
                             Footer
@@ -1140,7 +1105,7 @@ function websiteStats() {
                       </td>
                     </tr>
                     <tr v-if="paginatedPages.length === 0">
-                      <td colspan="11" class="px-6 py-4 text-center text-gray-500 text-sm dark:text-gray-400">
+                      <td colspan="11" class="px-6 py-4 text-center text-gray-500 text-sm dark:text-neutral-400">
                         No pages found matching your criteria
                       </td>
                     </tr>
@@ -1153,7 +1118,7 @@ function websiteStats() {
 
         <!-- Pagination -->
         <div class="flex items-center justify-between mt-6">
-          <div class="text-gray-700 text-sm dark:text-gray-300">
+          <div class="text-gray-700 text-sm dark:text-neutral-300">
             Showing <span class="font-medium">{{ (currentPage - 1) * itemsPerPage + 1 }}</span> to
             <span class="font-medium">{{ Math.min(currentPage * itemsPerPage, filteredPages.length) }}</span> of
             <span class="font-medium">{{ filteredPages.length }}</span> results
@@ -1161,13 +1126,13 @@ function websiteStats() {
           <div class="flex space-x-2">
             <button
               @click="previousPage"
-              :disabled="currentPage === 1"
-              :class="[
+              disabled="{{ currentPage === 1 }}"
+              class="[
                 'relative inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold ring-1 ring-inset',
                 currentPage === 1
-                  ? 'text-gray-400 ring-gray-300 dark:text-gray-500 dark:ring-gray-700'
-                  : 'text-gray-900 ring-gray-300 hover:bg-gray-50 dark:text-white dark:ring-gray-700 dark:hover:bg-blue-gray-700'
-              ]"
+                  ? 'text-gray-400 ring-gray-300 dark:text-neutral-500 dark:ring-neutral-700'
+                  : 'text-gray-900 ring-gray-300 hover:bg-gray-50 dark:text-white dark:ring-neutral-700 dark:hover:bg-neutral-700'
+              ] {{ }}"
             >
               <div class="h-5 w-5 i-hugeicons-arrow-left-01"></div>
             </button>
@@ -1175,24 +1140,24 @@ function websiteStats() {
               v-for="page in totalPages"
               :key="page"
               @click="changePage(page)"
-              :class="[
+              class="[
                 'relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset',
                 page === currentPage
                   ? 'z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
-                  : 'text-gray-900 ring-gray-300 hover:bg-gray-50 focus:z-20 dark:text-white dark:ring-gray-700 dark:hover:bg-blue-gray-700'
-              ]"
+                  : 'text-gray-900 ring-gray-300 hover:bg-gray-50 focus:z-20 dark:text-white dark:ring-neutral-700 dark:hover:bg-neutral-700'
+              ] {{ }}"
             >
               {{ page }}
             </button>
             <button
               @click="nextPage"
-              :disabled="currentPage === totalPages"
-              :class="[
+              disabled="{{ currentPage === totalPages }}"
+              class="[
                 'relative inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold ring-1 ring-inset',
                 currentPage === totalPages
-                  ? 'text-gray-400 ring-gray-300 dark:text-gray-500 dark:ring-gray-700'
-                  : 'text-gray-900 ring-gray-300 hover:bg-gray-50 dark:text-white dark:ring-gray-700 dark:hover:bg-blue-gray-700'
-              ]"
+                  ? 'text-gray-400 ring-gray-300 dark:text-neutral-500 dark:ring-neutral-700'
+                  : 'text-gray-900 ring-gray-300 hover:bg-gray-50 dark:text-white dark:ring-neutral-700 dark:hover:bg-neutral-700'
+              ] {{ }}"
             >
               <div class="h-5 w-5 i-hugeicons-arrow-right-01"></div>
             </button>
@@ -1208,32 +1173,32 @@ function websiteStats() {
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="closeNewPageModal"></div>
 
         <!-- Modal panel -->
-        <div class="inline-block overflow-hidden sm:my-8 sm:max-w-3xl sm:w-full text-left bg-white dark:bg-blue-gray-800 rounded-lg shadow-xl transition-all transform align-bottom sm:align-middle">
-          <div class="pb-4 pt-5 px-4 sm:p-6 sm:pb-4 bg-white dark:bg-blue-gray-800">
+        <div class="inline-block overflow-hidden sm:my-8 sm:max-w-3xl sm:w-full text-left bg-white dark:bg-neutral-800 rounded-lg shadow-xl transition-all transform align-bottom sm:align-middle">
+          <div class="pb-4 pt-5 px-4 sm:p-6 sm:pb-4 bg-white dark:bg-neutral-800">
             <div class="sm:flex sm:items-start">
               <div class="mt-3 sm:ml-4 sm:mt-0 w-full text-center sm:text-left">
                 <h3 class="font-medium leading-6 text-gray-900 text-lg dark:text-white" id="modal-title">Create New Page</h3>
                 <div class="mt-6 space-y-6">
                   <div>
-                    <label for="page-title" class="block font-medium text-gray-700 text-sm dark:text-gray-300">Title</label>
+                    <label for="page-title" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">Title</label>
                     <div class="mt-1">
                       <input
                         type="text"
                         id="page-title"
-                        v-model="newPage.title"
-                        class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                        value="{{ newPage.title }}"
+                        class="block w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label for="page-slug" class="block font-medium text-gray-700 text-sm dark:text-gray-300">Slug (optional)</label>
+                    <label for="page-slug" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">Slug (optional)</label>
                     <div class="mt-1">
                       <input
                         type="text"
                         id="page-slug"
-                        v-model="newPage.slug"
-                        class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                        value="{{ newPage.slug }}"
+                        class="block w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                         placeholder="e.g. about-us (leave empty to generate from title)"
                       />
                     </div>
@@ -1241,112 +1206,112 @@ function websiteStats() {
 
                   <div class="grid gap-6 grid-cols-1 sm:grid-cols-2">
                     <div>
-                      <label for="page-template" class="block font-medium text-gray-700 text-sm dark:text-gray-300">Template</label>
+                      <label for="page-template" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">Template</label>
                       <div class="mt-1">
                         <select
                           id="page-template"
-                          v-model="newPage.template"
-                          class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                          value="{{ newPage.template }}"
+                          class="block w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                         >
-                          <option v-for="template in templates.filter(t => t.name !== 'All Templates')" :key="template.id" :value="template.name">{{ template.name }}</option>
+                          <option v-for="template in templates.filter(t => t.name !== 'All Templates')" :key="template.id" value="{{ template.name }}">{{ template.name }}</option>
                         </select>
                       </div>
                     </div>
 
                     <div>
-                      <label for="page-status" class="block font-medium text-gray-700 text-sm dark:text-gray-300">Status</label>
+                      <label for="page-status" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">Status</label>
                       <div class="mt-1">
                         <select
                           id="page-status"
-                          v-model="newPage.status"
-                          class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                          value="{{ newPage.status }}"
+                          class="block w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                         >
-                          <option v-for="status in statuses.filter(s => s.name !== 'All Statuses')" :key="status.id" :value="status.name">{{ status.name }}</option>
+                          <option v-for="status in statuses.filter(s => s.name !== 'All Statuses')" :key="status.id" value="{{ status.name }}">{{ status.name }}</option>
                         </select>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <label for="page-sections" class="block font-medium text-gray-700 text-sm dark:text-gray-300">Page Sections</label>
+                    <label for="page-sections" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">Page Sections</label>
                     <div class="mt-1">
-                      <div class="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-md dark:border-gray-600">
+                      <div class="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-md dark:border-neutral-600">
                         <div v-for="section in availableSections" :key="section" class="flex items-center">
                           <input
-                            :id="`section-${section}`"
+                            id="{{ `section-${section}` }}"
                             type="checkbox"
-                            :value="section"
-                            v-model="newPage.sections"
-                            class="h-4 w-4 text-blue-600 dark:bg-blue-gray-700 border-gray-300 rounded dark:border-gray-600 focus:ring-blue-600 dark:focus:ring-offset-blue-gray-800"
+                            value="{{ section }}"
+                            value="{{ newPage.sections }}"
+                            class="h-4 w-4 text-blue-600 dark:bg-neutral-700 border-gray-300 rounded dark:border-neutral-600 focus:ring-blue-600 dark:focus:ring-offset-neutral-800"
                           />
-                          <label :for="`section-${section}`" class="ml-2 text-gray-700 text-sm dark:text-gray-300">{{ section }}</label>
+                          <label for="{{ `section-${section}` }}" class="ml-2 text-gray-700 text-sm dark:text-neutral-300">{{ section }}</label>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <label class="block font-medium text-gray-700 text-sm dark:text-gray-300">Page Location</label>
+                    <label class="block font-medium text-gray-700 text-sm dark:text-neutral-300">Page Location</label>
                     <div class="mt-2 space-y-2">
                       <div class="flex items-center">
                         <input
                           id="homepage"
                           type="checkbox"
-                          v-model="newPage.isHomepage"
-                          class="h-4 w-4 text-blue-600 dark:bg-blue-gray-700 border-gray-300 rounded dark:border-gray-600 focus:ring-blue-600 dark:focus:ring-offset-blue-gray-800"
+                          value="{{ newPage.isHomepage }}"
+                          class="h-4 w-4 text-blue-600 dark:bg-neutral-700 border-gray-300 rounded dark:border-neutral-600 focus:ring-blue-600 dark:focus:ring-offset-neutral-800"
                         />
-                        <label for="homepage" class="ml-2 text-gray-700 text-sm dark:text-gray-300">Set as Homepage</label>
+                        <label for="homepage" class="ml-2 text-gray-700 text-sm dark:text-neutral-300">Set as Homepage</label>
                       </div>
                       <div class="flex items-center">
                         <input
                           id="main-menu"
                           type="checkbox"
-                          v-model="newPage.inMainMenu"
-                          class="h-4 w-4 text-blue-600 dark:bg-blue-gray-700 border-gray-300 rounded dark:border-gray-600 focus:ring-blue-600 dark:focus:ring-offset-blue-gray-800"
+                          value="{{ newPage.inMainMenu }}"
+                          class="h-4 w-4 text-blue-600 dark:bg-neutral-700 border-gray-300 rounded dark:border-neutral-600 focus:ring-blue-600 dark:focus:ring-offset-neutral-800"
                         />
-                        <label for="main-menu" class="ml-2 text-gray-700 text-sm dark:text-gray-300">Show in Main Menu</label>
+                        <label for="main-menu" class="ml-2 text-gray-700 text-sm dark:text-neutral-300">Show in Main Menu</label>
                       </div>
                       <div class="flex items-center">
                         <input
                           id="footer"
                           type="checkbox"
-                          v-model="newPage.inFooter"
-                          class="h-4 w-4 text-blue-600 dark:bg-blue-gray-700 border-gray-300 rounded dark:border-gray-600 focus:ring-blue-600 dark:focus:ring-offset-blue-gray-800"
+                          value="{{ newPage.inFooter }}"
+                          class="h-4 w-4 text-blue-600 dark:bg-neutral-700 border-gray-300 rounded dark:border-neutral-600 focus:ring-blue-600 dark:focus:ring-offset-neutral-800"
                         />
-                        <label for="footer" class="ml-2 text-gray-700 text-sm dark:text-gray-300">Show in Footer</label>
+                        <label for="footer" class="ml-2 text-gray-700 text-sm dark:text-neutral-300">Show in Footer</label>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <label class="block font-medium text-gray-700 text-sm dark:text-gray-300">SEO Settings</label>
+                    <label class="block font-medium text-gray-700 text-sm dark:text-neutral-300">SEO Settings</label>
                     <div class="mt-2 space-y-3">
                       <div>
-                        <label for="seo-title" class="block text-gray-500 text-xs dark:text-gray-400">SEO Title</label>
+                        <label for="seo-title" class="block text-gray-500 text-xs dark:text-neutral-400">SEO Title</label>
                         <input
                           type="text"
                           id="seo-title"
-                          v-model="newPage.seo.title"
-                          class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                          value="{{ newPage.seo.title }}"
+                          class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                           placeholder="Leave empty to use page title"
                         />
                       </div>
                       <div>
-                        <label for="seo-description" class="block text-gray-500 text-xs dark:text-gray-400">Meta Description</label>
+                        <label for="seo-description" class="block text-gray-500 text-xs dark:text-neutral-400">Meta Description</label>
                         <textarea
                           id="seo-description"
-                          v-model="newPage.seo.description"
+                          value="{{ newPage.seo.description }}"
                           rows="2"
-                          class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                          class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                         ></textarea>
                       </div>
                       <div>
-                        <label for="seo-keywords" class="block text-gray-500 text-xs dark:text-gray-400">Meta Keywords</label>
+                        <label for="seo-keywords" class="block text-gray-500 text-xs dark:text-neutral-400">Meta Keywords</label>
                         <input
                           type="text"
                           id="seo-keywords"
-                          v-model="newPage.seo.keywords"
-                          class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                          value="{{ newPage.seo.keywords }}"
+                          class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                           placeholder="e.g. about, company, team"
                         />
                       </div>
@@ -1354,14 +1319,14 @@ function websiteStats() {
                   </div>
 
                   <div>
-                    <label class="block font-medium text-gray-700 text-sm dark:text-gray-300">OG Image</label>
+                    <label class="block font-medium text-gray-700 text-sm dark:text-neutral-300">OG Image</label>
                     <div class="flex items-center mt-1 space-x-4">
-                      <div class="overflow-hidden h-24 w-40 bg-gray-100 dark:bg-gray-700 rounded">
+                      <div class="overflow-hidden h-24 w-40 bg-gray-100 dark:bg-neutral-700 rounded">
                         <img :src="newPage.ogImage" alt="OG Image Preview" class="object-cover h-full w-full" />
                       </div>
                       <button
                         type="button"
-                        class="inline-flex items-center px-3 py-2 font-medium text-gray-700 text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 border border-gray-300 rounded-md dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
+                        class="inline-flex items-center px-3 py-2 font-medium text-gray-700 text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 border border-gray-300 rounded-md dark:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
                       >
                         <div class="mr-1 h-5 w-5 i-hugeicons-image-01"></div>
                         Change Image
@@ -1372,7 +1337,7 @@ function websiteStats() {
               </div>
             </div>
           </div>
-          <div class="sm:flex sm:flex-row-reverse px-4 py-3 sm:px-6 bg-gray-50 dark:bg-blue-gray-900">
+          <div class="sm:flex sm:flex-row-reverse px-4 py-3 sm:px-6 bg-gray-50 dark:bg-neutral-900">
             <button
               type="button"
               @click="createNewPage"
@@ -1383,7 +1348,7 @@ function websiteStats() {
             <button
               type="button"
               @click="closeNewPageModal"
-              class="inline-flex justify-center mt-3 px-4 py-2 sm:mt-0 w-full sm:w-auto font-medium text-base text-gray-700 sm:text-sm dark:text-white bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 border border-gray-300 rounded-md dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
+              class="inline-flex justify-center mt-3 px-4 py-2 sm:mt-0 w-full sm:w-auto font-medium text-base text-gray-700 sm:text-sm dark:text-white bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 border border-gray-300 rounded-md dark:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
             >
               Cancel
             </button>
@@ -1391,4 +1356,37 @@ function websiteStats() {
         </div>
       </div>
     </div>
-  </main>
+</div>
+<script client>
+const { Chart, registerables } = await import('chart.js/auto')
+Chart.register(...registerables)
+
+const chart_pages_1_ctx = document.getElementById('chart_pages_1')
+if (chart_pages_1_ctx) {
+  new Chart(chart_pages_1_ctx, {
+    type: 'line',
+    data: monthlyChartData.viewsChartData,
+    options: chartOptions,
+  })
+}
+
+const chart_pages_2_ctx = document.getElementById('chart_pages_2')
+if (chart_pages_2_ctx) {
+  new Chart(chart_pages_2_ctx, {
+    type: 'doughnut',
+    data: monthlyChartData.templateChartData,
+    options: doughnutChartOptions,
+  })
+}
+
+const chart_pages_3_ctx = document.getElementById('chart_pages_3')
+if (chart_pages_3_ctx) {
+  new Chart(chart_pages_3_ctx, {
+    type: 'bar',
+    data: monthlyChartData.pagesConversionsChartData,
+    options: chartOptions,
+  })
+}
+</script>
+
+@endsection

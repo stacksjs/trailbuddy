@@ -1,30 +1,10 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 definePageMeta({
   middleware: ['auth']
 })
-
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js'
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler,
-)
 
 interface QueryStats {
   total: number
@@ -218,7 +198,7 @@ const queryStatusColors = {
 }
 
 const getQueryStatusColor = (status) => {
-  return queryStatusColors[status] || 'text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/50 ring-gray-600/20'
+  return queryStatusColors[status] || 'text-gray-700 dark:text-neutral-300 bg-gray-50 dark:bg-neutral-900/50 ring-gray-600/20'
 }
 
 const getPerformanceData = () => {
@@ -310,7 +290,7 @@ const queryTypeBadges = {
   INSERT: 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 ring-green-700/10 dark:ring-green-400/30',
   UPDATE: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 ring-amber-700/10 dark:ring-amber-400/30',
   DELETE: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 ring-red-700/10 dark:ring-red-400/30',
-  OTHER: 'bg-gray-50 dark:bg-gray-900/20 text-gray-700 dark:text-gray-300 ring-gray-700/10 dark:ring-gray-400/30'
+  OTHER: 'bg-gray-50 dark:bg-neutral-900/20 text-gray-700 dark:text-neutral-300 ring-gray-700/10 dark:ring-neutral-400/30'
 }
 
 function filteredQueries() {
@@ -330,12 +310,12 @@ function filteredQueries() {
 
 @title('Dashboard - Queries')
 <div class="min-h-screen">
-  <header class="flex sticky top-0 z-10 flex-wrap gap-6 items-center justify-between px-4 py-4 sm:px-6 lg:px-8 bg-white dark:bg-blue-gray-900 shadow-sm">
+  <header class="flex sticky top-0 z-10 flex-wrap gap-6 items-center justify-between px-4 py-4 sm:px-6 lg:px-8 bg-white dark:bg-neutral-900 shadow-sm">
     <div>
       <h1 class="font-semibold leading-7 text-gray-900 text-lg dark:text-white">
         Queries Dashboard
       </h1>
-      <p class="mt-1 leading-6 text-gray-500 text-sm dark:text-gray-400">
+      <p class="mt-1 leading-6 text-gray-500 text-sm dark:text-neutral-400">
         Monitor and analyze database query performance
       </p>
     </div>
@@ -344,24 +324,24 @@ function filteredQueries() {
         <button
           type="button"
           class="inline-flex relative items-center px-3 py-2 font-medium text-sm rounded-l-md"
-          :class="text-gray-700 text-white' dark:text-gray-200 dark:bg-blue-gray-800 hover:bg-gray-50 dark:hover:bg-blue-gray-700' ring-1 ring-gray-300 ring-inset dark:ring-blue-gray-700 : ? 'bg-blue-600 'bg-white 'hour' === timeRange"
-          @click="timeRange = 'hour'"
+          :class="text-gray-700 text-white' dark:text-neutral-200 dark:bg-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-700' ring-1 ring-gray-300 ring-inset dark:ring-neutral-700 : ? 'bg-blue-600 'bg-white 'hour' === timeRange"
+          onclick="timeRange = 'hour'"
         >
           Hour
         </button>
         <button
           type="button"
           class="inline-flex relative items-center -ml-px px-3 py-2 font-medium text-sm"
-          :class="text-gray-700 text-white' dark:text-gray-200 dark:bg-blue-gray-800 hover:bg-gray-50 dark:hover:bg-blue-gray-700' ring-1 ring-gray-300 ring-inset dark:ring-blue-gray-700 : ? 'bg-blue-600 'bg-white 'day' === timeRange"
-          @click="timeRange = 'day'"
+          :class="text-gray-700 text-white' dark:text-neutral-200 dark:bg-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-700' ring-1 ring-gray-300 ring-inset dark:ring-neutral-700 : ? 'bg-blue-600 'bg-white 'day' === timeRange"
+          onclick="timeRange = 'day'"
         >
           Day
         </button>
         <button
           type="button"
           class="inline-flex relative items-center -ml-px px-3 py-2 font-medium text-sm rounded-r-md"
-          :class="text-gray-700 text-white' dark:text-gray-200 dark:bg-blue-gray-800 hover:bg-gray-50 dark:hover:bg-blue-gray-700' ring-1 ring-gray-300 ring-inset dark:ring-blue-gray-700 : ? 'bg-blue-600 'bg-white 'week' === timeRange"
-          @click="timeRange = 'week'"
+          :class="text-gray-700 text-white' dark:text-neutral-200 dark:bg-neutral-800 hover:bg-gray-50 dark:hover:bg-neutral-700' ring-1 ring-gray-300 ring-inset dark:ring-neutral-700 : ? 'bg-blue-600 'bg-white 'week' === timeRange"
+          onclick="timeRange = 'week'"
         >
           Week
         </button>
@@ -370,8 +350,8 @@ function filteredQueries() {
         <select
           id="connection"
           name="connection"
-          class="block pl-3 pr-10 py-2 w-full text-sm dark:text-gray-200 bg-white dark:bg-blue-gray-800 border-gray-300 rounded-md dark:border-blue-gray-700 focus:border-blue-600 focus:outline-none focus:ring-blue-600"
-          v-model="selectedConnection"
+          class="block pl-3 pr-10 py-2 w-full text-sm dark:text-neutral-200 bg-white dark:bg-neutral-800 border-gray-300 rounded-md dark:border-neutral-700 focus:border-blue-600 focus:outline-none focus:ring-blue-600"
+          value="{{ selectedConnection }}"
         >
           <option value="all">All connections</option>
           <option value="mysql">MySQL</option>
@@ -384,8 +364,8 @@ function filteredQueries() {
         <select
           id="type"
           name="type"
-          class="block pl-3 pr-10 py-2 w-full text-sm dark:text-gray-200 bg-white dark:bg-blue-gray-800 border-gray-300 rounded-md dark:border-blue-gray-700 focus:border-blue-600 focus:outline-none focus:ring-blue-600"
-          v-model="selectedType"
+          class="block pl-3 pr-10 py-2 w-full text-sm dark:text-neutral-200 bg-white dark:bg-neutral-800 border-gray-300 rounded-md dark:border-neutral-700 focus:border-blue-600 focus:outline-none focus:ring-blue-600"
+          value="{{ selectedType }}"
         >
           <option value="all">All types</option>
           <option value="SELECT">SELECT</option>
@@ -401,59 +381,59 @@ function filteredQueries() {
   <main class="px-4 py-8 sm:px-6 lg:px-8">
     <!-- Stats section -->
     <div class="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-6">
-      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-        <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">Total Queries</dt>
+      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+        <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">Total Queries</dt>
         <dd class="mt-1 font-semibold text-3xl text-gray-900 tracking-tight dark:text-white">{{ stats.total }}</dd>
       </div>
-      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-        <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">SELECT Queries</dt>
+      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+        <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">SELECT Queries</dt>
         <dd class="mt-1 font-semibold text-3xl text-blue-600 tracking-tight dark:text-blue-400">{{ stats.select }}</dd>
       </div>
-      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-        <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">INSERT Queries</dt>
+      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+        <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">INSERT Queries</dt>
         <dd class="mt-1 font-semibold text-3xl text-green-600 tracking-tight dark:text-green-400">{{ stats.insert }}</dd>
       </div>
-      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-        <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">UPDATE Queries</dt>
+      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+        <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">UPDATE Queries</dt>
         <dd class="mt-1 font-semibold text-3xl text-amber-600 tracking-tight dark:text-amber-400">{{ stats.update }}</dd>
       </div>
-      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-        <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">DELETE Queries</dt>
+      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+        <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">DELETE Queries</dt>
         <dd class="mt-1 font-semibold text-3xl text-red-600 tracking-tight dark:text-red-400">{{ stats.delete }}</dd>
       </div>
-      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-        <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">Slow Queries</dt>
+      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+        <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">Slow Queries</dt>
         <dd class="mt-1 font-semibold text-3xl text-yellow-600 tracking-tight dark:text-yellow-400">{{ stats.slow }}</dd>
       </div>
     </div>
 
     <!-- Charts section -->
     <div class="grid gap-5 grid-cols-1 lg:grid-cols-2 mt-8">
-      <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+      <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
         <div class="p-6">
           <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white">Query Volume</h3>
-          <p class="mt-2 text-gray-500 text-sm dark:text-gray-400">Number of queries by type over time</p>
+          <p class="mt-2 text-gray-500 text-sm dark:text-neutral-400">Number of queries by type over time</p>
           <div class="relative mt-6 h-80">
             @if(isLoading)
-              <div class="flex absolute inset-0 items-center justify-center bg-gray-100/50 dark:bg-blue-gray-800/50">
+              <div class="flex absolute inset-0 items-center justify-center bg-gray-100/50 dark:bg-neutral-800/50">
                 <div class="h-8 w-8 text-blue-600 dark:text-blue-400 animate-spin i-hugeicons-loading-01"></div>
               </div>
             @endif
-            <Line :data="performanceData" :options="chartOptions" />
+            <canvas id="chart_1"></canvas>
           </div>
         </div>
       </div>
-      <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+      <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
         <div class="p-6">
           <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white">Query Duration</h3>
-          <p class="mt-2 text-gray-500 text-sm dark:text-gray-400">Average query execution time over time</p>
+          <p class="mt-2 text-gray-500 text-sm dark:text-neutral-400">Average query execution time over time</p>
           <div class="relative mt-6 h-80">
             @if(isLoading)
-              <div class="flex absolute inset-0 items-center justify-center bg-gray-100/50 dark:bg-blue-gray-800/50">
+              <div class="flex absolute inset-0 items-center justify-center bg-gray-100/50 dark:bg-neutral-800/50">
                 <div class="h-8 w-8 text-blue-600 dark:text-blue-400 animate-spin i-hugeicons-loading-01"></div>
               </div>
             @endif
-            <Line :data="durationData" :options="chartOptions" />
+            <canvas id="chart_2"></canvas>
           </div>
         </div>
       </div>
@@ -463,8 +443,8 @@ function filteredQueries() {
     <div class="mt-8">
       <h3 class="font-semibold leading-6 text-base text-gray-900 dark:text-white">Recent Queries</h3>
       <div class="overflow-hidden mt-6 ring-1 ring-black ring-opacity-5 rounded-lg shadow">
-        <table class="min-w-full divide-gray-300 divide-y dark:divide-blue-gray-700">
-          <thead class="bg-gray-50 dark:bg-blue-gray-800">
+        <table class="min-w-full divide-gray-300 divide-y dark:divide-neutral-700">
+          <thead class="bg-gray-50 dark:bg-neutral-800">
             <tr>
               <th scope="col" class="pl-4 pr-3 py-3.5 sm:pl-6 font-semibold text-gray-900 text-left text-sm dark:text-white">
                 Query
@@ -489,7 +469,7 @@ function filteredQueries() {
               </th>
             </tr>
           </thead>
-          <tbody class="bg-white dark:bg-blue-gray-900 divide-gray-200 divide-y dark:divide-blue-gray-700">
+          <tbody class="bg-white dark:bg-neutral-900 divide-gray-200 divide-y dark:divide-neutral-700">
             @foreach(filteredQueries as query)
               <tr>
                 <td class="pl-4 pr-3 py-4 sm:pl-6 text-sm">
@@ -504,7 +484,7 @@ function filteredQueries() {
                       {{ formatQuery(query.query) }}
                     </div>
                   </div>
-                  <div class="hidden xl:block text-gray-500 dark:text-gray-400">
+                  <div class="hidden xl:block text-gray-500 dark:text-neutral-400">
                     @foreach(query.tags as tag)
                       <span class="inline-flex items-center mr-1 px-2 py-1 font-medium text-xs rounded-md">
                         {{ tag }}
@@ -512,13 +492,13 @@ function filteredQueries() {
                     @endforeach
                   </div>
                 </td>
-                <td class="hidden lg:table-cell px-3 py-4 text-gray-500 text-sm dark:text-gray-400">
+                <td class="hidden lg:table-cell px-3 py-4 text-gray-500 text-sm dark:text-neutral-400">
                   {{ query.connection }}
                 </td>
-                <td class="hidden sm:table-cell px-3 py-4 text-gray-500 text-sm dark:text-gray-400" :class="dark:text-yellow-400' : ? '' 'text-yellow-600 > 10 query.duration">
+                <td class="hidden sm:table-cell px-3 py-4 text-gray-500 text-sm dark:text-neutral-400" :class="dark:text-yellow-400' : ? '' 'text-yellow-600 > 10 query.duration">
                   {{ formatDuration(query.duration) }}
                 </td>
-                <td class="hidden lg:table-cell px-3 py-4 text-gray-500 text-sm dark:text-gray-400">
+                <td class="hidden lg:table-cell px-3 py-4 text-gray-500 text-sm dark:text-neutral-400">
                   {{ query.model }}
                 </td>
                 <td class="px-3 py-4 text-sm">
@@ -529,13 +509,13 @@ function filteredQueries() {
                     {{ query.status }}
                   </span>
                 </td>
-                <td class="hidden sm:table-cell px-3 py-4 text-gray-500 text-sm dark:text-gray-400">
+                <td class="hidden sm:table-cell px-3 py-4 text-gray-500 text-sm dark:text-neutral-400">
                   {{ query.executed_at }}
                 </td>
                 <td class="relative pl-3 pr-4 py-4 sm:pr-6 font-medium text-right text-sm">
-                  <router-link :to="`/queries/${query.id}`" class="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">
+                  <a :href="`/queries/${query.id}`" class="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300">
                     View<span class="sr-only">, {{ query.id }}</span>
-                  </router-link>
+                  </a>
                 </td>
               </tr>
             @endforeach
@@ -576,3 +556,29 @@ function filteredQueries() {
   line-height: 1.5;
 }
 </style>
+
+<script client>
+const { Chart, registerables } = await import('chart.js/auto')
+Chart.register(...registerables)
+
+const chart_1_ctx = document.getElementById('chart_1')
+if (chart_1_ctx) {
+  new Chart(chart_1_ctx, {
+    type: 'line',
+    data: performanceData,
+    options: chartOptions,
+  })
+}
+
+const chart_2_ctx = document.getElementById('chart_2')
+if (chart_2_ctx) {
+  new Chart(chart_2_ctx, {
+    type: 'line',
+    data: durationData,
+    options: chartOptions,
+  })
+}
+
+</script>
+
+@endsection

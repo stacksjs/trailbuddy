@@ -1,3 +1,6 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 definePageMeta({
   middleware: ['auth'],
@@ -481,7 +484,7 @@ const createDiagram = () => {
     .append('svg')
     .attr('width', width)
     .attr('height', height)
-    .attr('class', 'dark:bg-blue-gray-800')
+    .attr('class', 'dark:bg-neutral-800')
 
   // Define arrow markers for different relationship types
   const defs = svg.append('defs')
@@ -1081,12 +1084,12 @@ onUnmounted(() => {
 </script>
 
 @title('Dashboard - Models')
-<div class="py-4 lg:py-8 min-h-screen dark:bg-blue-gray-800">
+<div class="py-4 lg:py-8 min-h-screen dark:bg-neutral-800">
   <div class="px-4 sm:px-6 lg:px-8">
     <!-- Stats Cards -->
     <dl class="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-8 mt-5">
-      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-        <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-300">Total Models</dt>
+      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+        <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-300">Total Models</dt>
         <dd class="mt-1 font-semibold text-3xl text-gray-900 tracking-tight dark:text-white">{{ modelStats.totalModels }}</dd>
         <dd class="flex items-center mt-2 text-blue-600 text-sm dark:text-blue-400">
           <div class="mr-1 h-4 w-4 i-hugeicons-database"></div>
@@ -1094,8 +1097,8 @@ onUnmounted(() => {
         </dd>
       </div>
 
-      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-        <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-300">Total Properties</dt>
+      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+        <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-300">Total Properties</dt>
         <dd class="mt-1 font-semibold text-3xl text-gray-900 tracking-tight dark:text-white">{{ modelStats.totalProperties }}</dd>
         <dd class="flex items-center mt-2 text-green-600 text-sm dark:text-green-400">
           <div class="mr-1 h-4 w-4 i-hugeicons-check-list"></div>
@@ -1103,8 +1106,8 @@ onUnmounted(() => {
         </dd>
       </div>
 
-      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-        <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-300">Total Relationships</dt>
+      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+        <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-300">Total Relationships</dt>
         <dd class="mt-1 font-semibold text-3xl text-gray-900 tracking-tight dark:text-white">{{ modelStats.totalRelationships }}</dd>
         <dd class="flex items-center mt-2 text-purple-600 text-sm dark:text-purple-400">
           <div class="mr-1 h-4 w-4 i-hugeicons-link-01"></div>
@@ -1112,8 +1115,8 @@ onUnmounted(() => {
         </dd>
       </div>
 
-      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-blue-gray-800 rounded-lg shadow">
-        <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-300">Model Categories</dt>
+      <div class="overflow-hidden px-4 py-5 sm:p-6 bg-white dark:bg-neutral-800 rounded-lg shadow">
+        <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-300">Model Categories</dt>
         <dd class="mt-1 font-semibold text-3xl text-gray-900 tracking-tight dark:text-white">{{ modelTypes.length - 1 }}</dd>
         <dd class="flex items-center mt-2 text-orange-600 text-sm dark:text-orange-400">
           <div class="mr-1 h-4 w-4 i-hugeicons-tag-01"></div>
@@ -1129,48 +1132,48 @@ onUnmounted(() => {
           <div class="h-5 w-5 text-gray-400 i-hugeicons-search-01"></div>
         </div>
         <input
-          v-model="searchQuery"
+          value="{{ searchQuery }}"
           type="text"
-          class="block placeholder-gray-500 dark:placeholder-gray-400 pl-10 pr-3 py-2 w-full leading-5 text-gray-900 sm:text-sm dark:text-white bg-white dark:bg-blue-gray-700 border border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+          class="block placeholder-gray-500 dark:placeholder-gray-400 pl-10 pr-3 py-2 w-full leading-5 text-gray-900 sm:text-sm dark:text-white bg-white dark:bg-neutral-700 border border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
           placeholder="Search models or properties..."
         />
       </div>
 
       <div class="flex gap-2 items-center w-full sm:w-auto">
-        <label for="model-type" class="font-medium text-gray-700 text-sm dark:text-gray-300">Filter by type:</label>
+        <label for="model-type" class="font-medium text-gray-700 text-sm dark:text-neutral-300">Filter by type:</label>
         <select
           id="model-type"
-          v-model="selectedModelType"
-          class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600"
+          value="{{ selectedModelType }}"
+          class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-700 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600"
         >
           @foreach(modelTypes as type)
-            <option :value="type">{{ type }}</option>
+            <option value="{{ type }}">{{ type }}</option>
           @endforeach
         </select>
       </div>
     </div>
 
     <!-- Model Diagram -->
-    <div class="mb-8 bg-white dark:bg-blue-gray-700 rounded-lg shadow">
+    <div class="mb-8 bg-white dark:bg-neutral-700 rounded-lg shadow">
       <div class="p-6">
         <div class="flex items-center justify-between mb-4">
           <div class="flex gap-2 items-center">
             <h4 class="font-medium text-base text-gray-900 dark:text-white">Entity Relationship Diagram</h4>
-            <span class="text-gray-500 text-sm dark:text-gray-400">
+            <span class="text-gray-500 text-sm dark:text-neutral-400">
               (Drag nodes to rearrange)
             </span>
           </div>
           <div class="inline-flex rounded-md shadow-sm">
             <select
-              v-model="downloadFormat"
-              class="pl-3 pr-7 py-1.5 h-9 text-gray-700 text-sm dark:text-gray-200 bg-white dark:bg-blue-gray-600 hover:bg-gray-50 dark:hover:bg-blue-gray-500 border-0 ring-1 ring-gray-300 ring-inset rounded-l-md dark:ring-gray-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
+              value="{{ downloadFormat }}"
+              class="pl-3 pr-7 py-1.5 h-9 text-gray-700 text-sm dark:text-neutral-200 bg-white dark:bg-neutral-600 hover:bg-gray-50 dark:hover:bg-neutral-500 border-0 ring-1 ring-gray-300 ring-inset rounded-l-md dark:ring-neutral-600 focus:ring-2 focus:ring-blue-600 duration-200 transition-colors"
             >
               <option value="svg">SVG</option>
               <option value="png">PNG</option>
             </select>
             <button
-              @click="downloadDiagram"
-              :disabled="isDownloading"
+              onclick="downloadDiagram"
+              disabled="{{ isDownloading }}"
               class="inline-flex relative gap-1.5 items-center px-3 py-1.5 font-medium text-sm text-white bg-blue-600 hover:bg-blue-500 border border-transparent rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 shadow-sm disabled:opacity-50 duration-200 transition-colors disabled:cursor-not-allowed"
             >
               @if(isDownloading)
@@ -1182,21 +1185,21 @@ onUnmounted(() => {
             </button>
           </div>
         </div>
-        <div ref="diagramContainer" class="h-[1200px] w-full bg-gray-50 dark:bg-blue-gray-800 rounded-lg"></div>
+        <div ref="diagramContainer" class="h-[1200px] w-full bg-gray-50 dark:bg-neutral-800 rounded-lg"></div>
       </div>
     </div>
 
     <!-- Selected Model Details Panel -->
     @if(selectedModel)
-      <div class="mb-8 bg-white dark:bg-blue-gray-700 rounded-lg shadow">
-        <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+      <div class="mb-8 bg-white dark:bg-neutral-700 rounded-lg shadow">
+        <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-neutral-700">
           <div class="flex items-center justify-between">
             <div class="flex gap-2 items-center">
               <span class="text-2xl">{{ selectedModel.emoji }}</span>
               <h3 class="font-medium text-gray-900 text-lg dark:text-white">{{ selectedModel.name }} Details</h3>
             </div>
             <button
-              @click="selectedModel = null"
+              onclick="selectedModel = null"
               class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
             >
               <div class="h-5 w-5 i-hugeicons-x-mark"></div>
@@ -1208,20 +1211,20 @@ onUnmounted(() => {
             <!-- Properties Section -->
             <div>
               <h4 class="mb-4 font-medium text-base text-gray-900 dark:text-white">Properties</h4>
-              <div class="p-4 bg-gray-50 dark:bg-blue-gray-800 rounded-md">
-                <table class="min-w-full divide-gray-200 divide-y dark:divide-gray-700">
+              <div class="p-4 bg-gray-50 dark:bg-neutral-800 rounded-md">
+                <table class="min-w-full divide-gray-200 divide-y dark:divide-neutral-700">
                   <thead>
                     <tr>
-                      <th scope="col" class="px-3 py-2 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Name</th>
-                      <th scope="col" class="px-3 py-2 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Type</th>
-                      <th scope="col" class="px-3 py-2 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Nullable</th>
+                      <th scope="col" class="px-3 py-2 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-neutral-400">Name</th>
+                      <th scope="col" class="px-3 py-2 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-neutral-400">Type</th>
+                      <th scope="col" class="px-3 py-2 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-neutral-400">Nullable</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-gray-200 divide-y dark:divide-gray-700">
+                  <tbody class="divide-gray-200 divide-y dark:divide-neutral-700">
                     @foreach(selectedModel.properties as prop)
                       <tr>
                         <td class="px-3 py-2 font-medium text-sm whitespace-nowrap" :class="dark:text-white' dark:text-yellow-400' : ? 'id' 'text-gray-900 'text-yellow-600 === prop.name">{{ prop.name }}</td>
-                        <td class="px-3 py-2 text-gray-500 text-sm whitespace-nowrap dark:text-gray-400">{{ prop.type }}</td>
+                        <td class="px-3 py-2 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-400">{{ prop.type }}</td>
                         <td class="px-3 py-2 text-sm whitespace-nowrap">
                           <span :class="dark:text-green-400' dark:text-red-400' : ? 'text-green-600 'text-red-600 prop.nullable">
                             {{ prop.nullable ? 'Yes' : 'No' }}
@@ -1237,19 +1240,19 @@ onUnmounted(() => {
             <!-- Relationships Section -->
             <div>
               <h4 class="mb-4 font-medium text-base text-gray-900 dark:text-white">Relationships</h4>
-              <div class="p-4 bg-gray-50 dark:bg-blue-gray-800 rounded-md">
-                <table class="min-w-full divide-gray-200 divide-y dark:divide-gray-700">
+              <div class="p-4 bg-gray-50 dark:bg-neutral-800 rounded-md">
+                <table class="min-w-full divide-gray-200 divide-y dark:divide-neutral-700">
                   <thead>
                     <tr>
-                      <th scope="col" class="px-3 py-2 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Type</th>
-                      <th scope="col" class="px-3 py-2 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-gray-400">Related Model</th>
+                      <th scope="col" class="px-3 py-2 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-neutral-400">Type</th>
+                      <th scope="col" class="px-3 py-2 font-medium text-gray-500 text-left text-xs tracking-wider uppercase dark:text-neutral-400">Related Model</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-gray-200 divide-y dark:divide-gray-700">
+                  <tbody class="divide-gray-200 divide-y dark:divide-neutral-700">
                     @foreach(selectedModel.relationships as rel, index)
                       <tr>
                         <td class="px-3 py-2 font-medium text-sm whitespace-nowrap">
-                          <span :class="'belongsTo', 'belongsToMany' 'hasMany', 'hasOne', 'text-blue-600 'text-green-600 'text-purple-600 'text-red-600 { } === === === === rel.type rel.type rel.type rel.type dark:text-blue-400': dark:text-green-400': dark:text-purple-400': dark:text-red-400':">
+                          <span class="'belongsTo', 'belongsToMany' 'hasMany', 'hasOne', 'text-blue-600 'text-green-600 'text-purple-600 'text-red-600 { {{ } }} === === === === rel.type rel.type rel.type rel.type dark:text-blue-400': dark:text-green-400': dark:text-purple-400': dark:text-red-400':">
                             {{ rel.type }}
                           </span>
                         </td>
@@ -1277,3 +1280,5 @@ onMount(async () => {
 })
 </script>
 
+
+@endsection

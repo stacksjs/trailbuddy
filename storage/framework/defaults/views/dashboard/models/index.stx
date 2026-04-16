@@ -1,11 +1,14 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 /**
  * Models Overview Page
  * Shows all available models with their record counts.
  */
-const { Database } = require('bun:sqlite')
-const fs = require('node:fs')
-const path = require('node:path')
+const { Database } = await import('bun:sqlite')
+const fs = await import('node:fs')
+const path = await import('node:path')
 
 // Get list of models from app/Models directory
 function getModels() {
@@ -71,22 +74,16 @@ const models = getModels()
 const totalModels = models.length
 const totalRecords = models.reduce((sum, m) => sum + m.count, 0)
 </script>
-<div class="space-y-6">
-  <!-- Page Header -->
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="font-semibold text-2xl text-neutral-900 dark:text-white">Models</h1>
-      <p class="mt-1 text-neutral-500 text-sm dark:text-neutral-400">
-        {{ totalModels }} models with {{ totalRecords }} total records
-      </p>
-    </div>
-    <div class="flex gap-3 items-center">
-      <button class="px-4 py-2 font-medium text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
-        <span class="inline-block mr-2 h-4 w-4 i-hugeicons-add-01"></span>
+<div class="p-6 space-y-6">
+
+  <PageHeader title="Models" :description="`${totalModels} models with ${totalRecords} total records`">
+    <template #actions>
+      <Button variant="primary">
+        <div class="h-4 w-4 i-hugeicons-add-01"></div>
         New Model
-      </button>
-    </div>
-  </div>
+      </Button>
+    </template>
+  </PageHeader>
 
   <!-- Stats Cards -->
   <div class="grid gap-4 grid-cols-1 md:grid-cols-3">
@@ -165,3 +162,5 @@ const totalRecords = models.reduce((sum, m) => sum + m.count, 0)
     </div>
   @endif
 </div>
+
+@endsection

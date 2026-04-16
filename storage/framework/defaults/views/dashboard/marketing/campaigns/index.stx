@@ -1,3 +1,6 @@
+@extends('layouts/default')
+
+@section('content')
 <script server>
 // Define campaign type
 interface Campaign {
@@ -560,7 +563,7 @@ function toggleSort(column: string): void {
 }
 
 // Get status badge class
-function getStatusClass(status: string): string {
+const getStatusClass = (status: string): string => {
   switch (status) {
     case 'Active':
       return 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20 dark:bg-green-900/30 dark:text-green-400'
@@ -569,9 +572,9 @@ function getStatusClass(status: string): string {
     case 'Draft':
       return 'bg-yellow-50 text-yellow-700 ring-1 ring-inset ring-yellow-600/20 dark:bg-yellow-900/30 dark:text-yellow-400'
     case 'Completed':
-      return 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20 dark:bg-gray-900/30 dark:text-gray-400'
+      return 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20 dark:bg-neutral-900/30 dark:text-neutral-400'
     default:
-      return 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20 dark:bg-gray-900/30 dark:text-gray-400'
+      return 'bg-gray-50 text-gray-700 ring-1 ring-inset ring-gray-600/20 dark:bg-neutral-900/30 dark:text-neutral-400'
   }
 }
 
@@ -786,9 +789,9 @@ const getCampaignTypeColor = (type: string): string => {
     case 'PPC':
       return 'text-red-600 dark:text-red-400'
     case 'SEO':
-      return 'text-gray-600 dark:text-gray-400'
+      return 'text-gray-600 dark:text-neutral-400'
     default:
-      return 'text-gray-600 dark:text-gray-400'
+      return 'text-gray-600 dark:text-neutral-400'
   }
 }
 
@@ -879,14 +882,14 @@ const removeCondition = (index: number) => {
         <div class="sm:flex sm:items-center sm:justify-between">
           <div>
             <h1 class="font-semibold text-2xl text-gray-900 dark:text-white">Campaigns</h1>
-            <p class="mt-2 text-gray-700 text-sm dark:text-gray-300">
+            <p class="mt-2 text-gray-700 text-sm dark:text-neutral-300">
               Manage your marketing campaigns across different channels
             </p>
           </div>
           <div class="mt-4 sm:mt-0">
             <button
               type="button"
-              @click="openNewCampaignModal"
+              onclick="openNewCampaignModal"
               class="inline-flex items-center px-3 py-2 font-semibold text-sm text-white bg-blue-600 hover:bg-blue-500 rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600 focus-visible:outline-offset-2 shadow-sm"
             >
               <div class="mr-1 h-5 w-5 i-hugeicons-plus-sign"></div>
@@ -898,7 +901,7 @@ const removeCondition = (index: number) => {
         <!-- Summary cards -->
         <div class="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mt-6">
           <!-- Active campaigns card -->
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -908,7 +911,7 @@ const removeCondition = (index: number) => {
                 </div>
                 <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">Active Campaigns</dt>
+                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">Active Campaigns</dt>
                     <dd>
                       <div class="font-medium text-gray-900 text-lg dark:text-white">{{ totalActiveCampaigns }}</div>
                     </dd>
@@ -919,7 +922,7 @@ const removeCondition = (index: number) => {
           </div>
 
           <!-- Scheduled campaigns card -->
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -929,7 +932,7 @@ const removeCondition = (index: number) => {
                 </div>
                 <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">Scheduled Campaigns</dt>
+                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">Scheduled Campaigns</dt>
                     <dd>
                       <div class="font-medium text-gray-900 text-lg dark:text-white">{{ totalScheduledCampaigns }}</div>
                     </dd>
@@ -940,7 +943,7 @@ const removeCondition = (index: number) => {
           </div>
 
           <!-- Email campaigns card -->
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -950,7 +953,7 @@ const removeCondition = (index: number) => {
                 </div>
                 <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">Email Campaigns</dt>
+                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">Email Campaigns</dt>
                     <dd>
                       <div class="font-medium text-gray-900 text-lg dark:text-white">{{ totalEmailCampaigns }}</div>
                     </dd>
@@ -961,7 +964,7 @@ const removeCondition = (index: number) => {
           </div>
 
           <!-- SMS campaigns card -->
-          <div class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          <div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -971,7 +974,7 @@ const removeCondition = (index: number) => {
                 </div>
                 <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-gray-400">SMS Campaigns</dt>
+                    <dt class="font-medium text-gray-500 text-sm truncate dark:text-neutral-400">SMS Campaigns</dt>
                     <dd>
                       <div class="font-medium text-gray-900 text-lg dark:text-white">{{ totalSmsCampaigns }}</div>
                     </dd>
@@ -989,9 +992,9 @@ const removeCondition = (index: number) => {
               <div class="h-5 w-5 text-gray-400 i-hugeicons-search-01"></div>
             </div>
             <input
-              v-model="searchQuery"
+              value="{{ searchQuery }}"
               type="text"
-              class="block pl-10 pr-3 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              class="block pl-10 pr-3 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white placeholder:text-gray-400 dark:placeholder:text-neutral-500 dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
               placeholder="Search campaigns..."
             />
           </div>
@@ -999,8 +1002,8 @@ const removeCondition = (index: number) => {
           <div class="flex flex-col gap-4 sm:flex-row">
             <!-- Status filter -->
             <select
-              v-model="statusFilter"
-              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              value="{{ statusFilter }}"
+              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             >
               <option value="all">All Statuses</option>
               <option value="Active">Active</option>
@@ -1011,8 +1014,8 @@ const removeCondition = (index: number) => {
 
             <!-- Type filter -->
             <select
-              v-model="typeFilter"
-              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-blue-gray-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-gray-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
+              value="{{ typeFilter }}"
+              class="block pl-3 pr-10 py-1.5 w-full text-gray-900 sm:leading-6 sm:text-sm dark:text-white dark:bg-neutral-800 border-0 ring-1 ring-gray-300 ring-inset rounded-md dark:ring-neutral-700 focus:ring-2 focus:ring-blue-600 focus:ring-inset"
             >
               <option value="all">All Types</option>
               <option value="Email">Email</option>
@@ -1023,25 +1026,25 @@ const removeCondition = (index: number) => {
             <div class="flex rounded-md shadow-sm">
               <button
                 type="button"
-                @click="viewMode = 'detailed'"
-                :class="[
+                onclick="viewMode = 'detailed'"
+                class="[
                   'relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold ring-1 ring-inset focus:z-10',
                   viewMode === 'detailed'
                     ? 'bg-blue-600 text-white ring-blue-600'
-                    : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50 dark:bg-blue-gray-800 dark:text-white dark:ring-gray-700 dark:hover:bg-blue-gray-700'
-                ]"
+                    : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50 dark:bg-neutral-800 dark:text-white dark:ring-neutral-700 dark:hover:bg-neutral-700'
+                ] {{ }}"
               >
                 <div class="h-5 w-5 i-hugeicons-grid"></div>
               </button>
               <button
                 type="button"
-                @click="viewMode = 'compact'"
-                :class="[
+                onclick="viewMode = 'compact'"
+                class="[
                   'relative -ml-px inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold ring-1 ring-inset focus:z-10',
                   viewMode === 'compact'
                     ? 'bg-blue-600 text-white ring-blue-600'
-                    : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50 dark:bg-blue-gray-800 dark:text-white dark:ring-gray-700 dark:hover:bg-blue-gray-700'
-                ]"
+                    : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50 dark:bg-neutral-800 dark:text-white dark:ring-neutral-700 dark:hover:bg-neutral-700'
+                ] {{ }}"
               >
                 <div class="h-5 w-5 i-hugeicons-list-view"></div>
               </button>
@@ -1050,58 +1053,71 @@ const removeCondition = (index: number) => {
         </div>
 
         <!-- Sort options -->
-        <div class="flex items-center mt-4 text-gray-500 text-sm dark:text-gray-400">
+        <div class="flex items-center mt-4 text-gray-500 text-sm dark:text-neutral-400">
           <span class="mr-2">Sort by:</span>
           <button
-            @click="toggleSort('name')"
+            onclick="toggleSort('name')"
             class="flex items-center mr-3 hover:text-gray-700 dark:hover:text-gray-300"
-            :class="text-blue-600 'font-semibold 'name' { } === sortBy dark:text-blue-400':"
+            class="text-blue-600 'font-semibold 'name' { {{ } }} === sortBy dark:text-blue-400':"
           >
             Name
-            <span v-if="sortBy === 'name'" class="ml-1">
-              <div v-if="sortOrder === 'asc'" class="h-4 w-4 i-hugeicons-arrow-up-01"></div>
-              <div v-else class="h-4 w-4 i-hugeicons-arrow-down-02"></div>
+            @if(sortBy === 'name')
+<span class="ml-1">
+              @if(sortOrder === 'asc')
+<div class="h-4 w-4 i-hugeicons-arrow-up-01"></div>
+              @else
+<div class="h-4 w-4 i-hugeicons-arrow-down-02"></div>
             </span>
           </button>
           <button
-            @click="toggleSort('startDate')"
+            onclick="toggleSort('startDate')"
             class="flex items-center mr-3 hover:text-gray-700 dark:hover:text-gray-300"
-            :class="text-blue-600 'font-semibold 'startDate' { } === sortBy dark:text-blue-400':"
+            class="text-blue-600 'font-semibold 'startDate' { {{ } }} === sortBy dark:text-blue-400':"
           >
             Date
-            <span v-if="sortBy === 'startDate'" class="ml-1">
-              <div v-if="sortOrder === 'asc'" class="h-4 w-4 i-hugeicons-arrow-up-01"></div>
-              <div v-else class="h-4 w-4 i-hugeicons-arrow-down-02"></div>
+            @if(sortBy === 'startDate')
+<span class="ml-1">
+              @if(sortOrder === 'asc')
+<div class="h-4 w-4 i-hugeicons-arrow-up-01"></div>
+              @else
+<div class="h-4 w-4 i-hugeicons-arrow-down-02"></div>
             </span>
           </button>
           <!-- <button
-            @click="toggleSort('budget')"
+            onclick="toggleSort('budget')"
             class="flex items-center mr-3 hover:text-gray-700 dark:hover:text-gray-300"
-            :class="text-blue-600 'budget' 'font-semibold { } === sortBy dark:text-blue-400':"
+            class="text-blue-600 'budget' 'font-semibold { {{ } }} === sortBy dark:text-blue-400':"
           >
             Budget
-            <span v-if="sortBy === 'budget'" class="ml-1">
-              <div v-if="sortOrder === 'asc'" class="h-4 w-4 i-hugeicons-arrow-up-01"></div>
-              <div v-else class="h-4 w-4 i-hugeicons-arrow-down-02"></div>
+            @if(sortBy === 'budget')
+<span class="ml-1">
+              @if(sortOrder === 'asc')
+<div class="h-4 w-4 i-hugeicons-arrow-up-01"></div>
+              @else
+<div class="h-4 w-4 i-hugeicons-arrow-down-02"></div>
             </span>
           </button> -->
           <button
-            @click="toggleSort('goalProgress')"
+            onclick="toggleSort('goalProgress')"
             class="flex items-center hover:text-gray-700 dark:hover:text-gray-300"
-            :class="text-blue-600 'font-semibold 'goalProgress' { } === sortBy dark:text-blue-400':"
+            class="text-blue-600 'font-semibold 'goalProgress' { {{ } }} === sortBy dark:text-blue-400':"
           >
             Progress
-            <span v-if="sortBy === 'goalProgress'" class="ml-1">
-              <div v-if="sortOrder === 'asc'" class="h-4 w-4 i-hugeicons-arrow-up-01"></div>
-              <div v-else class="h-4 w-4 i-hugeicons-arrow-down-02"></div>
+            @if(sortBy === 'goalProgress')
+<span class="ml-1">
+              @if(sortOrder === 'asc')
+<div class="h-4 w-4 i-hugeicons-arrow-up-01"></div>
+              @else
+<div class="h-4 w-4 i-hugeicons-arrow-down-02"></div>
             </span>
           </button>
         </div>
 
         <!-- Compact view (table) -->
-        <div v-if="viewMode === 'compact'" class="overflow-hidden mt-6 ring-1 ring-black ring-opacity-5 sm:rounded-lg shadow">
-          <table class="min-w-full divide-gray-300 divide-y dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-blue-gray-700">
+        @if(viewMode === 'compact')
+<div class="overflow-hidden mt-6 ring-1 ring-black ring-opacity-5 sm:rounded-lg shadow">
+          <table class="min-w-full divide-gray-300 divide-y dark:divide-neutral-700">
+            <thead class="bg-gray-50 dark:bg-neutral-700">
               <tr>
                 <th scope="col" class="pl-4 pr-3 py-3.5 sm:pl-6 font-semibold text-gray-900 text-left text-sm dark:text-white">Campaign</th>
                 <th scope="col" class="px-3 py-3.5 font-semibold text-gray-900 text-left text-sm dark:text-white">Type</th>
@@ -1113,22 +1129,24 @@ const removeCondition = (index: number) => {
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white dark:bg-blue-gray-800 divide-gray-200 divide-y dark:divide-gray-700">
-              <tr v-if="paginatedCampaigns.length === 0">
-                <td colspan="6" class="py-4 text-center text-gray-500 text-sm dark:text-gray-400">
+            <tbody class="bg-white dark:bg-neutral-800 divide-gray-200 divide-y dark:divide-neutral-700">
+              @if(paginatedCampaigns.length === 0)
+<tr>
+                <td colspan="6" class="py-4 text-center text-gray-500 text-sm dark:text-neutral-400">
                   No campaigns found. Try adjusting your search or filter.
                 </td>
               </tr>
-              <tr v-for="campaign in paginatedCampaigns" :key="campaign.id" class="hover:bg-gray-50 dark:hover:bg-blue-gray-700">
+              @foreach(paginatedCampaigns as campaign)
+<tr class="hover:bg-gray-50 dark:hover:bg-neutral-700">
                 <td class="pl-4 pr-3 py-4 sm:pl-6 text-sm whitespace-nowrap">
                   <div class="flex items-center">
                     <div class="ml-4">
                       <div class="font-medium text-gray-900 dark:text-white">{{ campaign.name }}</div>
-                      <div class="text-gray-500 text-xs dark:text-gray-400">{{ campaign.audience }}</div>
+                      <div class="text-gray-500 text-xs dark:text-neutral-400">{{ campaign.audience }}</div>
                     </div>
                   </div>
                 </td>
-                <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-400">
+                <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-400">
                   <div class="flex items-center">
                     <div :class="mr-2 h-4 w-4 ' ' + + getCampaignTypeColor(campaign.type) getCampaignTypeIcon(campaign.type)"></div>
                     {{ campaign.type }}
@@ -1139,13 +1157,14 @@ const removeCondition = (index: number) => {
                     {{ campaign.status }}
                   </span>
                 </td>
-                <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-400">
+                <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-400">
                   <div>{{ formatDate(campaign.startDate) }}</div>
                   <div class="text-xs">to {{ formatDate(campaign.endDate) }}</div>
                 </td>
-                <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-gray-400">
+                <td class="px-3 py-4 text-gray-500 text-sm whitespace-nowrap dark:text-neutral-400">
                   <div class="space-y-1">
-                    <div v-for="metric in getCampaignMetrics(campaign)" :key="metric.label" class="flex items-center">
+                    @foreach(getCampaignMetrics(campaign) as metric)
+<div class="flex items-center">
                       <div :class="mr-2' h-4 w-4 ' + metric.icon"></div>
                       <span class="text-xs">{{ metric.label }}: {{ metric }}</span>
                     </div>
@@ -1153,18 +1172,18 @@ const removeCondition = (index: number) => {
                 </td>
                 <td class="relative pl-3 pr-4 py-4 sm:pr-6 font-medium text-right text-sm whitespace-nowrap">
                   <div class="flex justify-end space-x-2">
-                    <button
-                      v-if="campaign.status === 'draft' || campaign.status === 'scheduled'"
-                      @click="sendTestCampaign(campaign)"
+                    @if(campaign.status === 'draft' || campaign.status === 'scheduled')
+<button
+                      onclick="sendTestCampaign(campaign)"
                       class="text-gray-400 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 duration-150 transition-all"
                       title="Send Test"
                     >
                       <div class="h-5 w-5 i-hugeicons-paper-plane"></div>
                       <span class="sr-only">Send Test</span>
                     </button>
-                    <button
-                      v-if="campaign.status === 'draft'"
-                      @click="sendCampaign(campaign)"
+                    @if(campaign.status === 'draft')
+<button
+                      onclick="sendCampaign(campaign)"
                       class="text-gray-400 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 duration-150 transition-all"
                       title="Send Campaign"
                     >
@@ -1172,7 +1191,7 @@ const removeCondition = (index: number) => {
                       <span class="sr-only">Send Campaign</span>
                     </button>
                     <button
-                      @click="openEditCampaignModal(campaign)"
+                      onclick="openEditCampaignModal(campaign)"
                       class="text-gray-400 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 duration-150 transition-all"
                       title="Edit"
                     >
@@ -1180,7 +1199,7 @@ const removeCondition = (index: number) => {
                       <span class="sr-only">Edit</span>
                     </button>
                     <button
-                      @click="deleteCampaign(campaign.id)"
+                      onclick="deleteCampaign(campaign.id)"
                       class="text-gray-400 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 duration-150 transition-all"
                       title="Delete"
                     >
@@ -1195,15 +1214,19 @@ const removeCondition = (index: number) => {
         </div>
 
         <!-- Detailed view (cards) -->
-        <div v-if="viewMode === 'detailed'" class="mt-6">
-          <div v-if="paginatedCampaigns.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
-            <div class="h-12 w-12 text-gray-400 dark:text-gray-600 i-hugeicons-search-magnifying-glass"></div>
+        @if(viewMode === 'detailed')
+<div class="mt-6">
+          @if(paginatedCampaigns.length === 0)
+<div class="flex flex-col items-center justify-center py-12 text-center">
+            <div class="h-12 w-12 text-gray-400 dark:text-neutral-600 i-hugeicons-search-magnifying-glass"></div>
             <h3 class="mt-2 font-semibold text-gray-900 text-sm dark:text-white">No campaigns found</h3>
-            <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">Try adjusting your search or filters.</p>
+            <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">Try adjusting your search or filters.</p>
           </div>
 
-          <div v-else class="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            <div v-for="campaign in paginatedCampaigns" :key="campaign.id" class="overflow-hidden bg-white dark:bg-blue-gray-800 rounded-lg shadow">
+          @else
+<div class="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach(paginatedCampaigns as campaign)
+<div class="overflow-hidden bg-white dark:bg-neutral-800 rounded-lg shadow">
               <div class="px-4 py-5 sm:p-6">
                 <div class="flex items-center justify-between">
                   <h3 class="font-medium leading-6 text-gray-900 text-lg dark:text-white">{{ campaign.name }}</h3>
@@ -1211,119 +1234,122 @@ const removeCondition = (index: number) => {
                     {{ campaign.status }}
                   </span>
                 </div>
-                <div class="mt-1 text-gray-500 text-sm dark:text-gray-400">{{ campaign.type }}</div>
-                <div class="mt-1 text-gray-500 text-sm dark:text-gray-400">{{ campaign.audience }}</div>
+                <div class="mt-1 text-gray-500 text-sm dark:text-neutral-400">{{ campaign.type }}</div>
+                <div class="mt-1 text-gray-500 text-sm dark:text-neutral-400">{{ campaign.audience }}</div>
 
                 <div class="mt-4">
                   <div class="flex justify-between text-sm">
-                    <span class="text-gray-500 dark:text-gray-400">Start date:</span>
+                    <span class="text-gray-500 dark:text-neutral-400">Start date:</span>
                     <span class="font-medium text-gray-900 dark:text-white">{{ formatDate(campaign.startDate) }}</span>
                   </div>
                   <div class="flex justify-between text-sm">
-                    <span class="text-gray-500 dark:text-gray-400">End date:</span>
+                    <span class="text-gray-500 dark:text-neutral-400">End date:</span>
                     <span class="font-medium text-gray-900 dark:text-white">{{ formatDate(campaign.endDate) }}</span>
                   </div>
                 </div>
 
                 <!-- Campaign Metrics -->
                 <div class="grid gap-4 grid-cols-2 mt-4">
-                  <div v-for="metric in getCampaignMetrics(campaign)" :key="metric.label" class="col-span-1">
+                  @foreach(getCampaignMetrics(campaign) as metric)
+<div class="col-span-1">
                     <div class="flex items-center">
-                      <div :class="mr-2 h-5 w-5 text-gray-400 dark:text-gray-500' ' + metric.icon"></div>
+                      <div :class="mr-2 h-5 w-5 text-gray-400 dark:text-neutral-500' ' + metric.icon"></div>
                       <div>
                         <div class="font-medium text-gray-900 text-sm dark:text-white">{{ metric }}</div>
-                        <div class="text-gray-500 text-xs dark:text-gray-400">{{ metric.label }}</div>
+                        <div class="text-gray-500 text-xs dark:text-neutral-400">{{ metric.label }}</div>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <!-- Email campaign details -->
-                <div v-if="campaign.type === 'Email'" class="mt-4 pt-4 border-gray-200 border-t dark:border-gray-700">
+                @if(campaign.type === 'Email')
+<div class="mt-4 pt-4 border-gray-200 border-t dark:border-neutral-700">
                   <h4 class="mb-2 font-medium text-gray-900 text-sm dark:text-white">Email Details</h4>
                   <div class="flex justify-between text-sm">
-                    <span class="text-gray-500 dark:text-gray-400">Subject:</span>
+                    <span class="text-gray-500 dark:text-neutral-400">Subject:</span>
                     <span class="font-medium text-gray-900 dark:text-white">{{ campaign.emailSubject }}</span>
                   </div>
                   <div class="flex justify-between mt-1 text-sm">
-                    <span class="text-gray-500 dark:text-gray-400">Sender:</span>
+                    <span class="text-gray-500 dark:text-neutral-400">Sender:</span>
                     <span class="font-medium text-gray-900 dark:text-white">{{ campaign.emailSender }}</span>
                   </div>
                   <div class="flex justify-between mt-1 text-sm">
-                    <span class="text-gray-500 dark:text-gray-400">Recipients:</span>
+                    <span class="text-gray-500 dark:text-neutral-400">Recipients:</span>
                     <span class="font-medium text-gray-900 dark:text-white">{{ campaign.emailList }}</span>
                   </div>
                   <div class="flex justify-between mt-1 text-sm">
-                    <span class="text-gray-500 dark:text-gray-400">Template:</span>
+                    <span class="text-gray-500 dark:text-neutral-400">Template:</span>
                     <span class="font-medium text-gray-900 dark:text-white">{{ campaign.emailTemplate }}</span>
                   </div>
                 </div>
 
                 <!-- SMS campaign details -->
-                <div v-if="campaign.type === 'SMS'" class="mt-4 pt-4 border-gray-200 border-t dark:border-gray-700">
+                @if(campaign.type === 'SMS')
+<div class="mt-4 pt-4 border-gray-200 border-t dark:border-neutral-700">
                   <h4 class="mb-2 font-medium text-gray-900 text-sm dark:text-white">Text Message Campaign Details</h4>
 
                   <div class="text-sm">
-                    <span class="text-gray-500 dark:text-gray-400">Message:</span>
+                    <span class="text-gray-500 dark:text-neutral-400">Message:</span>
                     <p class="mt-1 font-medium text-gray-900 dark:text-white">{{ campaign.smsContent }}</p>
                   </div>
                   <div class="flex justify-between mt-2 text-sm">
-                    <span class="text-gray-500 dark:text-gray-400">Recipients:</span>
+                    <span class="text-gray-500 dark:text-neutral-400">Recipients:</span>
                     <span class="font-medium text-gray-900 dark:text-white">{{ campaign.smsPhoneList }}</span>
                   </div>
                   <div class="flex justify-between mt-1 text-sm">
-                    <span class="text-gray-500 dark:text-gray-400">Schedule:</span>
+                    <span class="text-gray-500 dark:text-neutral-400">Schedule:</span>
                     <span class="font-medium text-gray-900 dark:text-white">{{ campaign.smsSchedule }}</span>
                   </div>
                   <div class="flex justify-between mt-1 text-sm">
-                    <span class="text-gray-500 dark:text-gray-400">Characters:</span>
+                    <span class="text-gray-500 dark:text-neutral-400">Characters:</span>
                     <span class="font-medium text-gray-900 dark:text-white">{{ campaign.smsCharacterCount }}/160</span>
                   </div>
                 </div>
 
                 <div class="mt-4">
                   <div class="flex justify-between mb-1 text-sm">
-                    <span class="text-gray-500 dark:text-gray-400">{{ campaign.goal }}:</span>
+                    <span class="text-gray-500 dark:text-neutral-400">{{ campaign.goal }}:</span>
                     <span class="font-medium text-gray-900 dark:text-white">
                       {{ campaign.goalProgress }} / {{ campaign.goalTarget }}
                     </span>
                   </div>
-                  <div class="h-2.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full">
+                  <div class="h-2.5 w-full bg-gray-200 dark:bg-neutral-700 rounded-full">
                     <div
                       class="h-2.5 bg-blue-600 dark:bg-blue-500 rounded-full"
-                      :style="{ width: `${calculateProgress(campaign.goalProgress, campaign.goalTarget)}%` }"
+                      style="{{ { width: `${calculateProgress(campaign.goalProgress, campaign.goalTarget)}%` } }}"
                     ></div>
                   </div>
                 </div>
 
                 <!-- Campaign Actions -->
                 <div class="flex justify-end mt-5 space-x-3">
-                  <button
-                    v-if="campaign.status === 'draft' || campaign.status === 'scheduled'"
-                    @click="sendTestCampaign(campaign)"
-                    class="inline-flex items-center px-3 py-2 font-medium leading-4 text-gray-700 text-sm dark:text-gray-200 bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 border border-gray-300 rounded-md dark:border-gray-600 shadow-sm"
+                  @if(campaign.status === 'draft' || campaign.status === 'scheduled')
+<button
+                    onclick="sendTestCampaign(campaign)"
+                    class="inline-flex items-center px-3 py-2 font-medium leading-4 text-gray-700 text-sm dark:text-neutral-200 bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 border border-gray-300 rounded-md dark:border-neutral-600 shadow-sm"
                   >
                     <div class="-ml-0.5 mr-2 h-4 w-4 i-hugeicons-paper-plane"></div>
                     Test
                   </button>
-                  <button
-                    v-if="campaign.status === 'draft'"
-                    @click="sendCampaign(campaign)"
-                    class="inline-flex items-center px-3 py-2 font-medium leading-4 text-gray-700 text-sm dark:text-gray-200 bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 border border-gray-300 rounded-md dark:border-gray-600 shadow-sm"
+                  @if(campaign.status === 'draft')
+<button
+                    onclick="sendCampaign(campaign)"
+                    class="inline-flex items-center px-3 py-2 font-medium leading-4 text-gray-700 text-sm dark:text-neutral-200 bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 border border-gray-300 rounded-md dark:border-neutral-600 shadow-sm"
                   >
                     <div class="-ml-0.5 mr-2 h-4 w-4 i-hugeicons-send"></div>
                     Send
                   </button>
                   <button
-                    @click="openEditCampaignModal(campaign)"
-                    class="inline-flex items-center px-3 py-2 font-medium leading-4 text-gray-700 text-sm dark:text-gray-200 bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 border border-gray-300 rounded-md dark:border-gray-600 shadow-sm"
+                    onclick="openEditCampaignModal(campaign)"
+                    class="inline-flex items-center px-3 py-2 font-medium leading-4 text-gray-700 text-sm dark:text-neutral-200 bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 border border-gray-300 rounded-md dark:border-neutral-600 shadow-sm"
                   >
                     <div class="-ml-0.5 mr-2 h-4 w-4 i-hugeicons-edit-01"></div>
                     Edit
                   </button>
                   <button
-                    @click="deleteCampaign(campaign.id)"
-                    class="inline-flex items-center px-3 py-2 font-medium leading-4 text-gray-700 text-sm dark:text-gray-200 bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 border border-gray-300 rounded-md dark:border-gray-600 shadow-sm"
+                    onclick="deleteCampaign(campaign.id)"
+                    class="inline-flex items-center px-3 py-2 font-medium leading-4 text-gray-700 text-sm dark:text-neutral-200 bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 border border-gray-300 rounded-md dark:border-neutral-600 shadow-sm"
                   >
                     <div class="-ml-0.5 mr-2 h-4 w-4 i-hugeicons-waste"></div>
                     Delete
@@ -1335,28 +1361,29 @@ const removeCondition = (index: number) => {
         </div>
 
         <!-- Pagination -->
-        <div v-if="totalPages > 1" class="flex items-center justify-between mt-6 px-4 py-3 sm:px-6 dark:bg-blue-gray-800 border-gray-200 border-t dark:border-gray-700">
+        @if(totalPages > 1)
+<div class="flex items-center justify-between mt-6 px-4 py-3 sm:px-6 dark:bg-neutral-800 border-gray-200 border-t dark:border-neutral-700">
           <div class="flex sm:hidden flex-1 justify-between">
             <button
-              @click="prevPage"
-              :disabled="currentPage === 1"
-              class="inline-flex relative items-center px-4 py-2 font-medium text-gray-700 text-sm dark:text-gray-200 bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 border border-gray-300 rounded-md dark:border-gray-600"
-              :class="'opacity-50 { } === 1 currentPage cursor-not-allowed':"
+              onclick="prevPage"
+              disabled="{{ currentPage === 1 }}"
+              class="inline-flex relative items-center px-4 py-2 font-medium text-gray-700 text-sm dark:text-neutral-200 bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 border border-gray-300 rounded-md dark:border-neutral-600"
+              class="'opacity-50 { {{ } }} === 1 currentPage cursor-not-allowed':"
             >
               Previous
             </button>
             <button
-              @click="nextPage"
-              :disabled="currentPage === totalPages"
-              class="inline-flex relative items-center ml-3 px-4 py-2 font-medium text-gray-700 text-sm dark:text-gray-200 bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 border border-gray-300 rounded-md dark:border-gray-600"
-              :class="'opacity-50 { } === currentPage cursor-not-allowed': totalPages"
+              onclick="nextPage"
+              disabled="{{ currentPage === totalPages }}"
+              class="inline-flex relative items-center ml-3 px-4 py-2 font-medium text-gray-700 text-sm dark:text-neutral-200 bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 border border-gray-300 rounded-md dark:border-neutral-600"
+              class="'opacity-50 { {{ } }} === currentPage cursor-not-allowed': totalPages"
             >
               Next
             </button>
           </div>
           <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
             <div>
-              <p class="text-gray-700 text-sm dark:text-gray-300">
+              <p class="text-gray-700 text-sm dark:text-neutral-300">
                 Showing
                 <span class="font-medium">{{ (currentPage - 1) * itemsPerPage + 1 }}</span>
                 to
@@ -1369,31 +1396,30 @@ const removeCondition = (index: number) => {
             <div>
               <nav class="inline-flex -space-x-px rounded-md shadow-sm isolate" aria-label="Pagination">
                 <button
-                  @click="prevPage"
-                  :disabled="currentPage === 1"
-                  class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-blue-gray-700 ring-1 ring-gray-300 ring-inset rounded-l-md dark:ring-gray-600 focus:outline-offset-0"
-                  :class="'opacity-50 { } === 1 currentPage cursor-not-allowed':"
+                  onclick="prevPage"
+                  disabled="{{ currentPage === 1 }}"
+                  class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 dark:text-neutral-500 hover:bg-gray-50 dark:hover:bg-neutral-700 ring-1 ring-gray-300 ring-inset rounded-l-md dark:ring-neutral-600 focus:outline-offset-0"
+                  class="'opacity-50 { {{ } }} === 1 currentPage cursor-not-allowed':"
                 >
                   <span class="sr-only">Previous</span>
                   <div class="h-5 w-5 i-hugeicons-arrow-left-01"></div>
                 </button>
-                <button
-                  v-for="page in displayedPages"
-                  :key="page"
-                  @click="goToPage(page)"
-                  :class="[
+                @foreach(displayedPages as page)
+<button
+                  onclick="goToPage(page)"
+                  class="[
                     page === currentPage
                       ? 'relative z-10 inline-flex items-center bg-blue-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:bg-blue-700'
-                      : 'relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 dark:text-white dark:ring-gray-600 dark:hover:bg-blue-gray-700',
-                  ]"
+                      : 'relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 dark:text-white dark:ring-neutral-600 dark:hover:bg-neutral-700',
+                  ] {{ }}"
                 >
                   {{ page }}
                 </button>
                 <button
-                  @click="nextPage"
-                  :disabled="currentPage === totalPages"
-                  class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-blue-gray-700 ring-1 ring-gray-300 ring-inset rounded-r-md dark:ring-gray-600 focus:outline-offset-0"
-                  :class="'opacity-50 { } === currentPage cursor-not-allowed': totalPages"
+                  onclick="nextPage"
+                  disabled="{{ currentPage === totalPages }}"
+                  class="inline-flex relative focus:z-20 items-center px-2 py-2 text-gray-400 dark:text-neutral-500 hover:bg-gray-50 dark:hover:bg-neutral-700 ring-1 ring-gray-300 ring-inset rounded-r-md dark:ring-neutral-600 focus:outline-offset-0"
+                  class="'opacity-50 { {{ } }} === currentPage cursor-not-allowed': totalPages"
                 >
                   <span class="sr-only">Next</span>
                   <div class="h-5 w-5 i-hugeicons-arrow-right-01"></div>
@@ -1406,19 +1432,20 @@ const removeCondition = (index: number) => {
     </div>
 
     <!-- Campaign Modal -->
-    <div v-if="showCampaignModal" class="fixed inset-0 overflow-y-auto z-10">
+    @if(showCampaignModal)
+<div class="fixed inset-0 overflow-y-auto z-10">
       <div class="flex sm:block items-end justify-center pb-20 pt-4 px-4 sm:p-0 min-h-screen text-center">
         <div class="fixed inset-0 transition-opacity" aria-hidden="true">
-          <div class="absolute inset-0 bg-gray-500 dark:bg-gray-900 opacity-75"></div>
+          <div class="absolute inset-0 bg-gray-500 dark:bg-neutral-900 opacity-75"></div>
         </div>
 
         <span class="hidden sm:inline-block sm:h-screen sm:align-middle" aria-hidden="true">&#8203;</span>
-        <div class="inline-block overflow-hidden pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-blue-gray-800 rounded-lg shadow-xl transition-all transform align-bottom sm:align-middle">
+        <div class="inline-block overflow-hidden pb-4 pt-5 px-4 sm:my-8 sm:p-6 sm:max-w-lg sm:w-full text-left bg-white dark:bg-neutral-800 rounded-lg shadow-xl transition-all transform align-bottom sm:align-middle">
           <div class="hidden sm:block absolute right-0 top-0 pr-4 pt-4">
             <button
-              @click="showCampaignModal = false"
+              onclick="showCampaignModal = false"
               type="button"
-              class="text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 bg-white dark:bg-blue-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              class="text-gray-400 dark:text-neutral-500 hover:text-gray-500 dark:hover:text-gray-400 bg-white dark:bg-neutral-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               <span class="sr-only">Close</span>
               <div class="h-6 w-6 i-hugeicons-cancel-01"></div>
@@ -1431,33 +1458,33 @@ const removeCondition = (index: number) => {
                 {{ isEditMode ? 'Edit Campaign' : 'Create New Campaign' }}
               </h3>
               <div class="mt-6">
-                <form @submit.prevent="saveCampaign">
+                <form onsubmit="saveCampaign; return false">
                   <div class="grid gap-x-4 gap-y-6 grid-cols-1 sm:grid-cols-6">
                     <div class="sm:col-span-6">
-                      <label for="campaign-name" class="block font-medium text-gray-700 text-sm dark:text-gray-300">
+                      <label for="campaign-name" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">
                         Campaign Name
                       </label>
                       <div class="mt-1">
                         <input
                           id="campaign-name"
-                          v-model="currentCampaign.name"
+                          value="{{ currentCampaign.name }}"
                           type="text"
                           placeholder="e.g. Summer Sale 2024"
-                          class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                          class="block w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                           required
                         />
                       </div>
                     </div>
 
                     <div class="sm:col-span-3">
-                      <label for="campaign-type" class="block font-medium text-gray-700 text-sm dark:text-gray-300">
+                      <label for="campaign-type" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">
                         Type
                       </label>
                       <div class="mt-1">
                         <select
                           id="campaign-type"
-                          v-model="currentCampaign.type"
-                          class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                          value="{{ currentCampaign.type }}"
+                          class="block w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                           required
                         >
                           <option value="Email">Email</option>
@@ -1467,14 +1494,14 @@ const removeCondition = (index: number) => {
                     </div>
 
                     <div class="sm:col-span-3">
-                      <label for="campaign-status" class="block font-medium text-gray-700 text-sm dark:text-gray-300">
+                      <label for="campaign-status" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">
                         Status
                       </label>
                       <div class="mt-1">
                         <select
                           id="campaign-status"
-                          v-model="currentCampaign.status"
-                          class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                          value="{{ currentCampaign.status }}"
+                          class="block w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                           required
                         >
                           <option value="Draft">Draft</option>
@@ -1486,36 +1513,36 @@ const removeCondition = (index: number) => {
                     </div>
 
                     <div class="sm:col-span-6">
-                      <label for="campaign-audience" class="block font-medium text-gray-700 text-sm dark:text-gray-300">
+                      <label for="campaign-audience" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">
                         Target Audience
                       </label>
                       <div class="mt-1">
                         <input
                           id="campaign-audience"
-                          v-model="currentCampaign.audience"
+                          value="{{ currentCampaign.audience }}"
                           type="text"
                           placeholder="e.g. All Customers, Premium Members, New Users"
-                          class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                          class="block w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                         />
                       </div>
                     </div>
 
                     <!-- Goal Definition Section -->
                     <div class="sm:col-span-6 pt-8">
-                      <div class="pb-4 border-b border-gray-200 dark:border-gray-700">
+                      <div class="pb-4 border-b border-gray-200 dark:border-neutral-700">
                         <h3 class="font-semibold text-base text-gray-900 dark:text-white">Goal Definition</h3>
-                        <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">Define what constitutes a successful conversion for this campaign.</p>
+                        <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">Define what constitutes a successful conversion for this campaign.</p>
                       </div>
 
                       <div class="mt-4 space-y-4">
                         <div>
-                          <label for="goal-type" class="block font-medium text-gray-700 text-sm dark:text-gray-300">
+                          <label for="goal-type" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">
                             Goal Type
                           </label>
                           <select
                             id="goal-type"
-                            v-model="currentCampaign.goal"
-                            class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                            value="{{ currentCampaign.goal }}"
+                            class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                             required
                           >
                             <option value="Sales">Sales</option>
@@ -1527,30 +1554,31 @@ const removeCondition = (index: number) => {
                           </select>
                         </div>
 
-                        <div v-if="currentCampaign.goal === 'Custom'" class="space-y-4">
+                        @if(currentCampaign.goal === 'Custom')
+<div class="space-y-4">
                           <div>
-                            <label for="custom-goal-name" class="block font-medium text-gray-700 text-sm dark:text-gray-300">
+                            <label for="custom-goal-name" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">
                               Custom Goal Name
                             </label>
                             <input
                               id="custom-goal-name"
-                              v-model="currentCampaign.customGoalName"
+                              value="{{ currentCampaign.customGoalName }}"
                               type="text"
                               placeholder="e.g. Product Demo Requests"
-                              class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                              class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                             />
                           </div>
                         </div>
 
                         <div class="space-y-4">
                           <div>
-                            <label for="goal-trigger" class="block font-medium text-gray-700 text-sm dark:text-gray-300">
+                            <label for="goal-trigger" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">
                               Trigger
                             </label>
                             <select
                               id="goal-trigger"
-                              v-model="currentCampaign.goalTrigger"
-                              class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                              value="{{ currentCampaign.goalTrigger }}"
+                              class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                             >
                               <option value="page_visit">Page Visit</option>
                               <option value="button_click">Button Click</option>
@@ -1562,130 +1590,141 @@ const removeCondition = (index: number) => {
                             </select>
                           </div>
 
-                          <div v-if="currentCampaign.goalTrigger === 'page_visit'">
-                            <label for="trigger-url" class="block font-medium text-gray-700 text-sm dark:text-gray-300">
+                          @if(currentCampaign.goalTrigger === 'page_visit')
+<div>
+                            <label for="trigger-url" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">
                               Target URL
                             </label>
                             <input
                               id="trigger-url"
-                              v-model="currentCampaign.triggerUrl"
+                              value="{{ currentCampaign.triggerUrl }}"
                               type="text"
                               placeholder="e.g. /thank-you or https://example.com/success"
-                              class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                              class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                             />
                           </div>
 
-                          <div v-if="currentCampaign.goalTrigger === 'button_click'">
-                            <label for="trigger-selector" class="block font-medium text-gray-700 text-sm dark:text-gray-300">
+                          @if(currentCampaign.goalTrigger === 'button_click')
+<div>
+                            <label for="trigger-selector" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">
                               Button Selector
                             </label>
                             <input
                               id="trigger-selector"
-                              v-model="currentCampaign.triggerSelector"
+                              value="{{ currentCampaign.triggerSelector }}"
                               type="text"
                               placeholder="e.g. #submit-button or .buy-now"
-                              class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                              class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                             />
                           </div>
 
-                          <div v-if="currentCampaign.goalTrigger === 'custom_event'">
-                            <label for="trigger-event" class="block font-medium text-gray-700 text-sm dark:text-gray-300">
+                          @if(currentCampaign.goalTrigger === 'custom_event')
+<div>
+                            <label for="trigger-event" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">
                               Event Name
                             </label>
                             <input
                               id="trigger-event"
-                              v-model="currentCampaign.triggerEvent"
+                              value="{{ currentCampaign.triggerEvent }}"
                               type="text"
                               placeholder="e.g. productView, checkoutComplete"
-                              class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                              class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                             />
                           </div>
 
                           <!-- Model Event Configuration -->
-                          <div v-if="currentCampaign.goalTrigger === 'model_event'" class="pt-4 space-y-6 border-gray-200 border-t dark:border-gray-700">
+                          @if(currentCampaign.goalTrigger === 'model_event')
+<div class="pt-4 space-y-6 border-gray-200 border-t dark:border-neutral-700">
                             <h4 class="font-medium text-gray-900 text-sm dark:text-white">Model Event Settings</h4>
 
                             <!-- Initialize modelTrigger if not exists -->
-                            <div v-if="!currentCampaign.modelTrigger">
+                            @if(!currentCampaign.modelTrigger)
+<div>
                               <button
                                 type="button"
-                                @click="addCondition"
-                                class="inline-flex items-center px-3 py-2 font-medium text-gray-700 text-sm dark:text-gray-200 bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 border border-gray-300 rounded-md dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
+                                onclick="addCondition"
+                                class="inline-flex items-center px-3 py-2 font-medium text-gray-700 text-sm dark:text-neutral-200 bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 border border-gray-300 rounded-md dark:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
                               >
                                 <div class="mr-2 h-4 w-4 i-hugeicons-plus-circle"></div>
                                 Initialize Model Event
                               </button>
                             </div>
 
-                            <template v-else>
+                            @else
+<template>
                               <!-- Model Selection -->
                               <div>
-                                <label for="model-select" class="block font-medium text-gray-700 text-sm dark:text-gray-300">
+                                <label for="model-select" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">
                                   Select Model
                                 </label>
                                 <select
                                   id="model-select"
-                                  v-model="currentCampaign.modelTrigger.model"
-                                  class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                                  value="{{ currentCampaign.modelTrigger.model }}"
+                                  class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                                 >
-                                  <option v-for="model in availableModels" :key="model" :value="model">{{ model }}</option>
+                                  @foreach(availableModels as model)
+<option value="{{ model }}">{{ model }}</option>
                                 </select>
                               </div>
 
                                <!-- Event Type -->
                               <div>
-                                <label for="event-type" class="block font-medium text-gray-700 text-sm dark:text-gray-300">
+                                <label for="event-type" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">
                                   Event Type
                                 </label>
                                 <select
                                   id="event-type"
-                                  v-model="currentCampaign.modelTrigger.event"
-                                  class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                                  value="{{ currentCampaign.modelTrigger.event }}"
+                                  class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                                 >
-                                  <option v-for="event in standardModelEvents" :key="event" :value="event">
+                                  @foreach(standardModelEvents as event)
+<option value="{{ event }}">
                                     {{ event.charAt(0).toUpperCase() + event.slice(1) }}
                                   </option>
                                 </select>
                               </div>
 
                               <!-- Custom Event Name (if custom selected) -->
-                              <div v-if="currentCampaign.modelTrigger.event === 'custom'">
-                                <label for="custom-event-name" class="block font-medium text-gray-700 text-sm dark:text-gray-300">
+                              @if(currentCampaign.modelTrigger.event === 'custom')
+<div>
+                                <label for="custom-event-name" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">
                                   Custom Event Name
                                 </label>
                                 <input
                                   id="custom-event-name"
-                                  v-model="currentCampaign.modelTrigger.customEvent"
+                                  value="{{ currentCampaign.modelTrigger.customEvent }}"
                                   type="text"
                                   placeholder="e.g. subscription_renewed"
-                                  class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                                  class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                                 />
                               </div>
 
                               <!-- Conditions -->
                               <div>
                                 <div class="flex items-center justify-between">
-                                  <label class="block font-medium text-gray-700 text-sm dark:text-gray-300">
+                                  <label class="block font-medium text-gray-700 text-sm dark:text-neutral-300">
                                     Conditions
                                   </label>
                                   <button
                                     type="button"
-                                    @click="addCondition"
-                                    class="inline-flex items-center px-2.5 py-1.5 font-medium text-gray-700 text-sm dark:text-gray-200 bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 border border-gray-300 rounded-md dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
+                                    onclick="addCondition"
+                                    class="inline-flex items-center px-2.5 py-1.5 font-medium text-gray-700 text-sm dark:text-neutral-200 bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 border border-gray-300 rounded-md dark:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
                                   >
                                     <div class="mr-2 h-4 w-4 i-hugeicons-plus-sign-circle"></div>
                                     Add Condition
                                   </button>
                                 </div>
 
-                                <div v-for="(condition, index) in currentCampaign.modelTrigger.conditions" :key="index" class="grid gap-2 grid-cols-12 mt-3">
+                                @foreach(currentCampaign.modelTrigger.conditions as index => condition)
+<div class="grid gap-2 grid-cols-12 mt-3">
                                   <!-- Field -->
                                   <div class="col-span-4">
                                     <select
-                                      v-model="condition.field"
-                                      class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                                      value="{{ condition.field }}"
+                                      class="block w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                                     >
-                                      <option v-for="field in modelFields[currentCampaign.modelTrigger.model]" :key="field" :value="field">
+                                      @foreach(modelFields[currentCampaign.modelTrigger.model] as field)
+<option value="{{ field }}">
                                         {{ field }}
                                       </option>
                                     </select>
@@ -1694,8 +1733,8 @@ const removeCondition = (index: number) => {
                                   <!-- Operator -->
                                   <div class="col-span-3">
                                     <select
-                                      v-model="condition.operator"
-                                      class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                                      value="{{ condition.operator }}"
+                                      class="block w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                                     >
                                       <option value="equals">Equals</option>
                                       <option value="not_equals">Not Equals</option>
@@ -1712,10 +1751,10 @@ const removeCondition = (index: number) => {
                                   <!-- Value -->
                                   <div class="col-span-4">
                                     <input
-                                      v-model="condition.value"
+                                      value="{{ condition.value }}"
                                       type="text"
                                       placeholder="Value"
-                                      class="block w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                                      class="block w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                                     />
                                   </div>
 
@@ -1723,33 +1762,34 @@ const removeCondition = (index: number) => {
                                   <div class="col-span-1">
                                     <button
                                       type="button"
-                                      @click="removeCondition(index)"
-                                      class="inline-flex items-center p-2 text-gray-700 dark:text-gray-200 bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 border border-gray-300 rounded-md dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
+                                      onclick="removeCondition(index)"
+                                      class="inline-flex items-center p-2 text-gray-700 dark:text-neutral-200 bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 border border-gray-300 rounded-md dark:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
                                     >
                                       <div class="h-4 w-4 i-hugeicons-cancel-01"></div>
                                     </button>
                                   </div>
                                 </div>
                               </div>
-                            </template>
+                            @endforeach
                           </div>
 
                           <!-- Email List Selection -->
-                          <div v-if="currentCampaign.type === 'Email'" class="sm:col-span-6 pt-8">
-                            <div class="pb-4 border-b border-gray-200 dark:border-gray-700">
+                          @if(currentCampaign.type === 'Email')
+<div class="sm:col-span-6 pt-8">
+                            <div class="pb-4 border-b border-gray-200 dark:border-neutral-700">
                               <h3 class="font-semibold text-base text-gray-900 dark:text-white">Email Campaign Settings</h3>
-                              <p class="mt-1 text-gray-500 text-sm dark:text-gray-400">Configure your email campaign details.</p>
+                              <p class="mt-1 text-gray-500 text-sm dark:text-neutral-400">Configure your email campaign details.</p>
                             </div>
 
                             <div class="mt-4 space-y-4">
                               <div>
-                                <label for="email-list" class="block font-medium text-gray-700 text-sm dark:text-gray-300">
+                                <label for="email-list" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">
                                   Email List
                                 </label>
                                 <select
                                   id="email-list"
-                                  v-model="currentCampaign.emailList"
-                                  class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                                  value="{{ currentCampaign.emailList }}"
+                                  class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                                   required
                                 >
                                   <option value="All Subscribers">All Subscribers</option>
@@ -1761,41 +1801,41 @@ const removeCondition = (index: number) => {
                               </div>
 
                               <div>
-                                <label for="email-subject" class="block font-medium text-gray-700 text-sm dark:text-gray-300">
+                                <label for="email-subject" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">
                                   Email Subject
                                 </label>
                                 <input
                                   id="email-subject"
-                                  v-model="currentCampaign.emailSubject"
+                                  value="{{ currentCampaign.emailSubject }}"
                                   type="text"
-                                  class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                                  class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                                   placeholder="Enter email subject"
                                   required
                                 />
                               </div>
 
                               <div>
-                                <label for="email-sender" class="block font-medium text-gray-700 text-sm dark:text-gray-300">
+                                <label for="email-sender" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">
                                   Sender Email
                                 </label>
                                 <input
                                   id="email-sender"
-                                  v-model="currentCampaign.emailSender"
+                                  value="{{ currentCampaign.emailSender }}"
                                   type="email"
-                                  class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                                  class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                                   placeholder="noreply@example.com"
                                   required
                                 />
                               </div>
 
                               <div>
-                                <label for="email-template" class="block font-medium text-gray-700 text-sm dark:text-gray-300">
+                                <label for="email-template" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">
                                   Email Template
                                 </label>
                                 <select
                                   id="email-template"
-                                  v-model="currentCampaign.emailTemplate"
-                                  class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                                  value="{{ currentCampaign.emailTemplate }}"
+                                  class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                                   required
                                 >
                                   <option value="default">Default Template</option>
@@ -1806,14 +1846,14 @@ const removeCondition = (index: number) => {
                               </div>
 
                               <div>
-                                <label for="email-content" class="block font-medium text-gray-700 text-sm dark:text-gray-300">
+                                <label for="email-content" class="block font-medium text-gray-700 text-sm dark:text-neutral-300">
                                   Email Content
                                 </label>
                                 <textarea
                                   id="email-content"
-                                  v-model="currentCampaign.emailContent"
+                                  value="{{ currentCampaign.emailContent }}"
                                   rows="6"
-                                  class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-blue-gray-700 border-gray-300 rounded-md dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
+                                  class="block mt-1 w-full sm:text-sm dark:text-white dark:bg-neutral-700 border-gray-300 rounded-md dark:border-neutral-600 focus:border-blue-500 focus:ring-blue-500 shadow-sm"
                                   placeholder="Enter your email content here..."
                                   required
                                 ></textarea>
@@ -1822,7 +1862,8 @@ const removeCondition = (index: number) => {
                           </div>
 
                           <!-- Text Message Campaign Fields -->
-                          <div v-if="currentCampaign.type === 'SMS'" class="sm:col-span-6">
+                          @if(currentCampaign.type === 'SMS')
+<div class="sm:col-span-6">
                             <!-- ... rest of the existing template ... -->
                           </div>
 
@@ -1851,8 +1892,8 @@ const removeCondition = (index: number) => {
                             </button>
                             <button
                               type="button"
-                              @click="showCampaignModal = false"
-                              class="inline-flex justify-center sm:col-start-1 mt-3 px-4 py-2 sm:mt-0 w-full font-medium text-base text-gray-700 sm:text-sm dark:text-gray-200 bg-white dark:bg-blue-gray-700 hover:bg-gray-50 dark:hover:bg-blue-gray-600 border border-gray-300 rounded-md dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
+                              onclick="showCampaignModal = false"
+                              class="inline-flex justify-center sm:col-start-1 mt-3 px-4 py-2 sm:mt-0 w-full font-medium text-base text-gray-700 sm:text-sm dark:text-neutral-200 bg-white dark:bg-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-600 border border-gray-300 rounded-md dark:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
                             >
                               Cancel
                             </button>
@@ -1870,3 +1911,5 @@ const removeCondition = (index: number) => {
     </div>
   </main>
 
+
+@endsection
