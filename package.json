@@ -85,5 +85,8 @@
       }
     },
     "commit-msg": "bunx gitlint --edit .git/COMMIT_EDITMSG"
+  },
+  "patchedDependencies": {
+    "@stacksjs/bun-router@0.0.2": "patches/@stacksjs%2Fbun-router@0.0.2.patch"
   }
 }

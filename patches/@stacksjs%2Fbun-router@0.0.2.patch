@@ -1,0 +1,40 @@
+diff --git a/dist/errors/error-handler.d.ts b/dist/errors/error-handler.d.ts
+index 794bda34c8ccd5e4ea36f913ac3126fc5fa5f03b..23eb45365cbbbeb4718c5b87644bdfb98c5c4d95 100644
+--- a/dist/errors/error-handler.d.ts
++++ b/dist/errors/error-handler.d.ts
+@@ -18,7 +18,7 @@ export declare const ErrorHandlerPresets: {
+   development: () => any;
+   production: (sentryDsn?: string, bugsnagApiKey?: string) => any;
+   staging: (sentryDsn?: string) => any;
+-  resilient: (config: { sentryDsn?: string bugsnagApiKey?: string services?: string[] } = {}) => any
++  resilient: (config?: { sentryDsn?: string; bugsnagApiKey?: string; services?: string[] }) => any
+ };
+ export declare interface AdvancedErrorHandlerConfig {
+   errorReporting?: ErrorReportingConfig[]
+diff --git a/dist/testing/websocket-testing.d.ts b/dist/testing/websocket-testing.d.ts
+index 06ce62ffe0ada00fba9d43c8e742a13684ec064c..c283e038d65d44bcd75594b5497711ca09a807a3 100644
+--- a/dist/testing/websocket-testing.d.ts
++++ b/dist/testing/websocket-testing.d.ts
+@@ -98,11 +98,11 @@ export declare const wsPerformance: {
+   /**
+    * Test message throughput
+    */
+-  testThroughput: ( messageCount: number?, messageSize: number?, ) => Promise<{ messagesPerSecond: number totalTime: number averageLatency: number }>;
++  testThroughput: ( messageCount?: number, messageSize?: number, ) => Promise<{ messagesPerSecond: number; totalTime: number; averageLatency: number }>;
+   /**
+    * Test concurrent connections
+    */
+-  testConcurrentConnections: ( connectionCount: number?, ) => Promise<{ successfulConnections: number failedConnections: number averageConnectionTime: number }>
++  testConcurrentConnections: ( connectionCount?: number, ) => Promise<{ successfulConnections: number; failedConnections: number; averageConnectionTime: number }>
+ };
+ /**
+  * WebSocket test utilities
+@@ -123,7 +123,7 @@ export declare const wsTestUtils: {
+   /**
+    * Create message generator
+    */
+-  * messageGenerator(count: number, prefix: string = 'Message'): unknown
++  messageGenerator(count: number, prefix?: string): unknown
+ };
+ /**
+  * WebSocket testing utilities
