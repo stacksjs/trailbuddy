@@ -56,6 +56,14 @@
         }).addTo(map).bindPopup(`<b>${t.name}</b><br>Owner: ${isYours ? 'You' : 'User ' + t.user_id}<br>${formatArea(t.areaSize)}`)
         bounds.push(...poly)
       })
+      tb.trails().forEach((tr: any) => {
+        if (!tr.lat || !tr.lng) return
+        const fill = tr.difficulty === 'hard' ? '#dc2626' : tr.difficulty === 'moderate' ? '#f59e0b' : '#10b981'
+        L.circleMarker([tr.lat, tr.lng], {
+          radius: 6, color: '#fff', weight: 2, fillColor: fill, fillOpacity: 0.95,
+        }).addTo(map).bindPopup(`<b>${tr.name}</b><br>${tr.location}<br>${tr.distance} mi • ${tr.difficulty}`)
+        bounds.push([tr.lat, tr.lng])
+      })
       if (bounds.length) map.fitBounds(L.latLngBounds(bounds), { padding: [30, 30] })
     }, 100)
   })

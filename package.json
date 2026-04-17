@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@stacksjs/stx": "link:@stacksjs/stx",
+    "perfect-debounce": "^1.0.0",
     "stacks": "workspace:*"
   },
   "bugs": {
