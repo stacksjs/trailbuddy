@@ -25,9 +25,7 @@ const props = withDefaults(defineProps<TerritoryMapProps>(), {
       <!-- Placeholder Map Visual -->
       <div class="flex absolute inset-0 items-center justify-center">
         <div class="text-center">
-          <svg class="mb-4 mx-auto h-16 w-16 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-          </svg>
+          <Icon name="map" size="64" class="mb-4 mx-auto text-emerald-300" />
           <p class="text-gray-500">Territory Map</p>
           <p class="mt-1 text-gray-400 text-sm">Territories will be displayed here</p>
         </div>
@@ -41,20 +39,13 @@ const props = withDefaults(defineProps<TerritoryMapProps>(), {
     @if(props.showControls)
       <div class="flex absolute right-4 top-4 flex-col space-y-2">
         <button class="flex items-center justify-center h-10 w-10 bg-white hover:bg-gray-50 rounded-lg shadow-md transition">
-          <svg class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
+          <Icon name="plus" size="20" class="text-gray-600" />
         </button>
         <button class="flex items-center justify-center h-10 w-10 bg-white hover:bg-gray-50 rounded-lg shadow-md transition">
-          <svg class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
-          </svg>
+          <Icon name="minus" size="20" class="text-gray-600" />
         </button>
         <button class="flex items-center justify-center h-10 w-10 bg-white hover:bg-gray-50 rounded-lg shadow-md transition">
-          <svg class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
+          <Icon name="map-pin" size="20" class="text-gray-600" />
         </button>
       </div>
     @endif

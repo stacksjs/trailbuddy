@@ -58,9 +58,7 @@ const typeLabels = {
     <!-- Header -->
     <div class="px-6 py-4 bg-gradient-to-r from-emerald-600 to-teal-600">
       <h3 class="flex items-center font-bold text-lg text-white">
-        <svg class="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-        </svg>
+        <Icon name="award" size="20" class="mr-2" />
         Territory Leaderboard
       </h3>
       <p class="mt-1 text-emerald-100 text-sm">Ranked by {{ typeLabels[props.type] }}</p>
@@ -112,9 +110,7 @@ const typeLabels = {
 
       @if(props.entries.length === 0)
         <div class="px-4 py-8 text-center text-gray-500">
-          <svg class="mb-3 mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-          </svg>
+          <Icon name="award" size="48" class="mb-3 mx-auto text-gray-300" />
           <p>No entries yet. Start claiming territories!</p>
         </div>
       @endif
@@ -124,9 +120,7 @@ const typeLabels = {
     <div class="px-4 py-3 bg-gray-50 border-gray-100 border-t">
       <StxLink to="/territories/leaderboard" class="flex items-center justify-center font-medium text-emerald-600 text-sm hover:text-emerald-700 transition">
         View Full Leaderboard
-        <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-        </svg>
+        <Icon name="chevron-right" size="16" class="ml-1" />
       </StxLink>
     </div>
   </div>

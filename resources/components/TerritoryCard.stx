@@ -52,9 +52,7 @@ const formattedArea = formatArea(props.areaSize)
       @endif
       @if(props.conquestCount > 0)
         <div class="flex absolute left-2 top-2 items-center px-2 py-1 font-bold text-white text-xs bg-orange-500 rounded-full">
-          <svg class="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"/>
-          </svg>
+          <Icon name="flame" size="12" class="mr-1" />
           {{ props.conquestCount }}x Conquered
         </div>
       @endif
@@ -81,9 +79,7 @@ const formattedArea = formatArea(props.areaSize)
       </div>
 
       <button class="flex items-center justify-center mt-4 py-2.5 w-full font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition">
-        <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-        </svg>
+        <Icon name="map" size="16" class="mr-2" />
         View on Map
       </button>
     </div>

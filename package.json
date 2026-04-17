@@ -90,5 +90,8 @@
   },
   "patchedDependencies": {
     "@stacksjs/bun-router@0.0.2": "patches/@stacksjs%2Fbun-router@0.0.2.patch"
+  },
+  "devDependencies": {
+    "@iconify/json": "^2.2.463"
   }
 }

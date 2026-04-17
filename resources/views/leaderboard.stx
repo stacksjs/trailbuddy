@@ -92,9 +92,7 @@
     <!-- Empty state -->
     <div :if="leaders.length === 0" class="py-20 text-center">
       <div class="w-20 h-20 mx-auto mb-6 bg-yellow-100 dark:bg-yellow-900/20 rounded-2xl flex items-center justify-center">
-        <svg class="w-10 h-10 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-        </svg>
+        <Icon name="award" size="40" class="text-yellow-400" />
       </div>
       <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No rankings yet</h3>
       <p class="text-gray-500 dark:text-slate-400 max-w-sm mx-auto mb-6">Start recording activities to climb the leaderboard.</p>

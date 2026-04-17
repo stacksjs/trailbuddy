@@ -36,9 +36,7 @@ function formatArea(sqMeters: number): string {
 <template>
   <div class="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm">
     <h3 class="flex items-center mb-4 font-bold text-gray-900 text-lg">
-      <svg class="mr-2 h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
+      <Icon name="globe" size="20" class="mr-2 text-emerald-600" />
       Your Territory Empire
     </h3>
 
@@ -60,36 +58,28 @@ function formatArea(sqMeters: number): string {
     <div class="space-y-3">
       <div class="flex items-center justify-between py-2 border-b border-gray-100">
         <span class="flex items-center text-gray-600 text-sm">
-          <svg class="mr-2 h-4 w-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-          </svg>
+          <Icon name="check-circle" size="16" class="mr-2 text-green-500" />
           Territories Claimed
         </span>
         <span class="font-semibold text-gray-900">{{ props.territoriesClaimed }}</span>
       </div>
       <div class="flex items-center justify-between py-2 border-b border-gray-100">
         <span class="flex items-center text-gray-600 text-sm">
-          <svg class="mr-2 h-4 w-4 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"/>
-          </svg>
+          <Icon name="flame" size="16" class="mr-2 text-orange-500" />
           Territories Conquered
         </span>
         <span class="font-semibold text-gray-900">{{ props.territoriesConquered }}</span>
       </div>
       <div class="flex items-center justify-between py-2 border-b border-gray-100">
         <span class="flex items-center text-gray-600 text-sm">
-          <svg class="mr-2 h-4 w-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/>
-          </svg>
+          <Icon name="shield" size="16" class="mr-2 text-blue-500" />
           Successfully Defended
         </span>
         <span class="font-semibold text-gray-900">{{ props.territoriesDefended }}</span>
       </div>
       <div class="flex items-center justify-between py-2">
         <span class="flex items-center text-gray-600 text-sm">
-          <svg class="mr-2 h-4 w-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-          </svg>
+          <Icon name="x-circle" size="16" class="mr-2 text-red-500" />
           Territories Lost
         </span>
         <span class="font-semibold text-gray-900">{{ props.territoriesLost }}</span>
