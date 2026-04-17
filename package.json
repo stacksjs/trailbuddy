@@ -31,6 +31,8 @@
     "build": "bun build.ts",
     "build:stacks": "./buddy build",
     "preview": "bun preview.ts",
+    "serve": "bun --watch serve.ts",
+    "start": "bun serve.ts",
     "prod": "./buddy build",
     "deploy": "./buddy deploy",
     "lint": "./buddy lint",
