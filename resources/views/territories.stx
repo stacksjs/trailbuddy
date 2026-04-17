@@ -83,18 +83,18 @@
         <div class="flex items-center justify-between mb-6">
           <h2 class="font-display text-2xl font-bold text-gray-900 dark:text-white">Nearby Territories</h2>
           <div class="flex gap-2">
-            <button @click="filter.set('all')" :class="filter === 'all' ? 'text-emerald-600 bg-emerald-50' : 'text-gray-600 hover:bg-gray-100'" class="px-4 py-2 text-sm font-medium rounded-lg transition">All</button>
-            <button @click="filter.set('mine')" :class="filter === 'mine' ? 'text-emerald-600 bg-emerald-50' : 'text-gray-600 hover:bg-gray-100'" class="px-4 py-2 text-sm font-medium rounded-lg transition">Mine</button>
-            <button @click="filter.set('contested')" :class="filter === 'contested' ? 'text-emerald-600 bg-emerald-50' : 'text-gray-600 hover:bg-gray-100'" class="px-4 py-2 text-sm font-medium rounded-lg transition">Contested</button>
+            <button @click="filter.set('all')" x-class="filter === 'all' ? 'text-emerald-600 bg-emerald-50' : 'text-gray-600 hover:bg-gray-100'" class="px-4 py-2 text-sm font-medium rounded-lg transition">All</button>
+            <button @click="filter.set('mine')" x-class="filter === 'mine' ? 'text-emerald-600 bg-emerald-50' : 'text-gray-600 hover:bg-gray-100'" class="px-4 py-2 text-sm font-medium rounded-lg transition">Mine</button>
+            <button @click="filter.set('contested')" x-class="filter === 'contested' ? 'text-emerald-600 bg-emerald-50' : 'text-gray-600 hover:bg-gray-100'" class="px-4 py-2 text-sm font-medium rounded-lg transition">Contested</button>
           </div>
         </div>
 
         <div class="grid gap-6 md:grid-cols-2">
           <template :for="territory in filtered">
-            <StxLink :to="'/territory/' + territory.id" class="card block hover:shadow-md transition">
+            <StxLink x-to="'/territory/' + territory.id" class="card block hover:shadow-md transition">
               <div class="flex items-center justify-between mb-3">
                 <h3 class="font-bold dark:text-white" :text="territory.name"></h3>
-                <span class="px-2 py-0.5 text-xs rounded-full font-medium" :class="territory.user_id === currentUserId ? 'bg-emerald-100 text-emerald-700' : territory.status === 'contested' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'" :text="territory.user_id === currentUserId ? 'Yours' : territory.status === 'contested' ? 'Contested' : 'Enemy'"></span>
+                <span class="px-2 py-0.5 text-xs rounded-full font-medium" x-class="territory.user_id === currentUserId ? 'bg-emerald-100 text-emerald-700' : territory.status === 'contested' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'" :text="territory.user_id === currentUserId ? 'Yours' : territory.status === 'contested' ? 'Contested' : 'Enemy'"></span>
               </div>
               <div class="grid grid-cols-3 gap-2 text-center pt-3 border-t border-gray-100 dark:border-slate-700">
                 <div>
@@ -132,8 +132,8 @@
           <h3 class="font-bold text-lg dark:text-white mb-4">🏆 Territory Leaders</h3>
           <div class="space-y-2">
             <template :for="(entry, index) in leaderboard">
-              <div class="flex items-center gap-3 p-2 rounded-lg" :class="entry.user_id === currentUserId ? 'bg-emerald-50 dark:bg-emerald-900/10' : ''">
-                <span class="w-6 text-center font-bold" :class="index < 3 ? 'text-yellow-500' : 'text-gray-400'" :text="index + 1"></span>
+              <div class="flex items-center gap-3 p-2 rounded-lg" x-class="entry.user_id === currentUserId ? 'bg-emerald-50 dark:bg-emerald-900/10' : ''">
+                <span class="w-6 text-center font-bold" x-class="index < 3 ? 'text-yellow-500' : 'text-gray-400'" :text="index + 1"></span>
                 <div class="flex-1 min-w-0">
                   <p class="font-medium text-sm dark:text-white truncate" :text="entry.user_id === currentUserId ? 'You' : entry.userName"></p>
                   <p class="text-xs text-gray-500" :text="formatArea(entry.totalAreaOwned)"></p>

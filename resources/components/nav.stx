@@ -22,7 +22,7 @@
 
         <div class="hidden md:flex gap-1 items-center">
           <StxLink :for="link in navLinks" :key="link.to"
-            :to="link.to"
+            x-to="link.to"
             activeClass="nav-active"
             class="px-3 py-2 font-medium text-slate-500 text-sm dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors"
             :text="link.label" />
@@ -65,7 +65,7 @@
 
     <div :show="mobileOpen()" x-cloak class="md:hidden pb-4 space-y-1">
       <StxLink :for="link in navLinks" :key="link.to"
-        :to="link.to"
+        x-to="link.to"
         class="block px-3 py-2 text-slate-500 text-sm dark:text-slate-400 rounded"
         :text="link.label" />
       <StxLink to="/record" class="block px-3 py-2 font-semibold text-emerald-600 text-sm rounded">+ Record Activity</StxLink>

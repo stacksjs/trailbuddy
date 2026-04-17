@@ -92,22 +92,22 @@
 
   <div class="mx-auto px-4 py-6 max-w-lg">
     <!-- Activity type selector -->
-    <div :class="recording ? 'hidden' : 'mb-8'">
+    <div x-class="recording ? 'hidden' : 'mb-8'">
       <h1 class="mb-6 font-bold text-2xl text-center dark:text-white">Record Activity</h1>
       <div class="grid gap-3 grid-cols-2">
-        <button @click="activityType.set('Trail Run')" :class="activityType === 'Trail Run' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-2 items-center py-6 transition card">
+        <button @click="activityType.set('Trail Run')" x-class="activityType === 'Trail Run' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-2 items-center py-6 transition card">
           <span class="text-2xl">🏃</span>
           <span class="font-medium text-sm dark:text-white">Trail Run</span>
         </button>
-        <button @click="activityType.set('Hike')" :class="activityType === 'Hike' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-2 items-center py-6 transition card">
+        <button @click="activityType.set('Hike')" x-class="activityType === 'Hike' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-2 items-center py-6 transition card">
           <span class="text-2xl">🥾</span>
           <span class="font-medium text-sm dark:text-white">Hike</span>
         </button>
-        <button @click="activityType.set('Walk')" :class="activityType === 'Walk' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-2 items-center py-6 transition card">
+        <button @click="activityType.set('Walk')" x-class="activityType === 'Walk' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-2 items-center py-6 transition card">
           <span class="text-2xl">🚶</span>
           <span class="font-medium text-sm dark:text-white">Walk</span>
         </button>
-        <button @click="activityType.set('Bike')" :class="activityType === 'Bike' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-2 items-center py-6 transition card">
+        <button @click="activityType.set('Bike')" x-class="activityType === 'Bike' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-2 items-center py-6 transition card">
           <span class="text-2xl">🚴</span>
           <span class="font-medium text-sm dark:text-white">Bike</span>
         </button>
@@ -117,8 +117,8 @@
     <!-- GPS Map -->
     <div class="relative mb-6 rounded-2xl overflow-hidden">
       <div id="record-map" class="h-64 rounded-2xl"></div>
-      <div class="flex absolute right-3 top-3 z-[1000] gap-1.5 items-center px-2.5 py-1 font-medium text-xs rounded-full bg-white/90 backdrop-blur-sm shadow-sm" :class="gpsStatus === 'active' ? 'text-emerald-700' : gpsStatus === 'searching' ? 'text-yellow-700' : 'text-gray-600'">
-        <div class="h-2 w-2 rounded-full" :class="gpsStatus === 'active' ? 'bg-emerald-500 animate-pulse' : gpsStatus === 'searching' ? 'bg-yellow-500 animate-pulse' : 'bg-gray-400'"></div>
+      <div class="flex absolute right-3 top-3 z-[1000] gap-1.5 items-center px-2.5 py-1 font-medium text-xs rounded-full bg-white/90 backdrop-blur-sm shadow-sm" x-class="gpsStatus === 'active' ? 'text-emerald-700' : gpsStatus === 'searching' ? 'text-yellow-700' : 'text-gray-600'">
+        <div class="h-2 w-2 rounded-full" x-class="gpsStatus === 'active' ? 'bg-emerald-500 animate-pulse' : gpsStatus === 'searching' ? 'bg-yellow-500 animate-pulse' : 'bg-gray-400'"></div>
         <span :text="gpsStatus === 'active' ? 'GPS Active' : gpsStatus === 'searching' ? 'Searching...' : 'GPS Off'"></span>
       </div>
     </div>
@@ -147,9 +147,9 @@
 
     <!-- Controls -->
     <div class="flex gap-4 items-center justify-center">
-      <button @click="rec.start()" :class="recording ? 'hidden' : 'flex items-center justify-center h-20 w-20 text-white bg-emerald-600 hover:bg-emerald-700 rounded-full shadow-lg transition text-2xl'">▶</button>
-      <button @click="rec.pause()" :class="!recording ? 'hidden' : paused ? 'flex items-center justify-center h-20 w-20 bg-yellow-500 text-white hover:bg-yellow-600 rounded-full shadow-lg transition text-2xl' : 'flex items-center justify-center h-20 w-20 bg-emerald-600 text-white hover:bg-emerald-700 rounded-full shadow-lg transition text-2xl'" :text="paused ? '▶' : '⏸'"></button>
-      <button @click="rec.stop()" :class="recording ? 'flex items-center justify-center h-16 w-16 text-white bg-red-500 hover:bg-red-600 rounded-full shadow-lg transition text-xl' : 'hidden'">⏹</button>
+      <button @click="rec.start()" x-class="recording ? 'hidden' : 'flex items-center justify-center h-20 w-20 text-white bg-emerald-600 hover:bg-emerald-700 rounded-full shadow-lg transition text-2xl'">▶</button>
+      <button @click="rec.pause()" x-class="!recording ? 'hidden' : paused ? 'flex items-center justify-center h-20 w-20 bg-yellow-500 text-white hover:bg-yellow-600 rounded-full shadow-lg transition text-2xl' : 'flex items-center justify-center h-20 w-20 bg-emerald-600 text-white hover:bg-emerald-700 rounded-full shadow-lg transition text-2xl'" :text="paused ? '▶' : '⏸'"></button>
+      <button @click="rec.stop()" x-class="recording ? 'flex items-center justify-center h-16 w-16 text-white bg-red-500 hover:bg-red-600 rounded-full shadow-lg transition text-xl' : 'hidden'">⏹</button>
     </div>
 
     <p class="mt-4 text-center text-gray-500 text-sm dark:text-slate-400" :text="activityType"></p>

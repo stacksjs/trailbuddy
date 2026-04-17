@@ -41,14 +41,14 @@
       <div class="relative h-full flex items-end px-4 mx-auto max-w-7xl sm:px-6 lg:px-8 pb-8">
         <div class="flex-1">
           <div class="flex items-center gap-2 mb-3">
-            <span class="px-2.5 py-1 rounded-full text-xs font-semibold capitalize" :class="'difficulty-' + trail.difficulty" :text="trail.difficulty"></span>
+            <span class="px-2.5 py-1 rounded-full text-xs font-semibold capitalize" x-class="'difficulty-' + trail.difficulty" :text="trail.difficulty"></span>
             <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/20 text-white" :text="trail.distance + ' mi'"></span>
           </div>
           <h1 class="font-display text-3xl md:text-4xl font-bold text-white mb-2" :text="trail.name"></h1>
           <p class="text-white/70" :text="trail.location"></p>
         </div>
         <div class="flex gap-2">
-          <button @click="saved.set(!saved())" class="p-3 rounded-xl backdrop-blur-sm transition" :class="saved ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'">♥</button>
+          <button @click="saved.set(!saved())" class="p-3 rounded-xl backdrop-blur-sm transition" x-class="saved ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'">♥</button>
           <StxLink to="/record" class="px-5 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition">Start</StxLink>
         </div>
       </div>
@@ -119,8 +119,8 @@
           <!-- Reviews -->
           <div>
             <div class="flex gap-1 mb-4 border-b border-gray-200 dark:border-slate-700">
-              <button @click="reviewTab.set('reviews')" :class="reviewTab === 'reviews' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500'" class="px-4 py-3 text-sm font-medium border-b-2 transition" :text="'Reviews (' + reviews.length + ')'"></button>
-              <button @click="reviewTab.set('conditions')" :class="reviewTab === 'conditions' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500'" class="px-4 py-3 text-sm font-medium border-b-2 transition">Conditions</button>
+              <button @click="reviewTab.set('reviews')" x-class="reviewTab === 'reviews' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500'" class="px-4 py-3 text-sm font-medium border-b-2 transition" :text="'Reviews (' + reviews.length + ')'"></button>
+              <button @click="reviewTab.set('conditions')" x-class="reviewTab === 'conditions' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500'" class="px-4 py-3 text-sm font-medium border-b-2 transition">Conditions</button>
             </div>
 
             <div :if="reviewTab === 'reviews'" class="space-y-4">
@@ -153,7 +153,7 @@
           <div class="card">
             <h3 class="font-bold text-lg dark:text-white mb-4">Trail Info</h3>
             <div class="space-y-3">
-              <div class="flex justify-between"><span class="text-sm text-gray-500">Difficulty</span><span class="text-sm font-medium capitalize" :class="'difficulty-' + trail.difficulty" :text="trail.difficulty"></span></div>
+              <div class="flex justify-between"><span class="text-sm text-gray-500">Difficulty</span><span class="text-sm font-medium capitalize" x-class="'difficulty-' + trail.difficulty" :text="trail.difficulty"></span></div>
               <div class="flex justify-between"><span class="text-sm text-gray-500">Distance</span><span class="text-sm font-medium dark:text-white" :text="trail.distance + ' mi'"></span></div>
               <div class="flex justify-between"><span class="text-sm text-gray-500">Elevation</span><span class="text-sm font-medium dark:text-white" :text="trail.elevation.toLocaleString() + ' ft'"></span></div>
               <div class="flex justify-between"><span class="text-sm text-gray-500">Time</span><span class="text-sm font-medium dark:text-white" :text="trail.estimatedTime"></span></div>

@@ -26,7 +26,7 @@
       <h1 class="font-bold text-2xl dark:text-white">Explore Trails</h1>
       <input
         type="search"
-        :value="search"
+        x-value="search"
         @input="e => search.set(e.target.value)"
         placeholder="Search trails..."
         class="flex-1 px-4 py-2 sm:w-64 text-gray-900 text-sm dark:text-white bg-white dark:bg-slate-700 border border-gray-200 rounded-lg dark:border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500 transition"
@@ -35,20 +35,20 @@
 
     <!-- Filters -->
     <div class="flex overflow-x-auto gap-2 mb-6 pb-2">
-      <button @click="difficulty.set('all')" :class="difficulty === 'all' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">All Levels</button>
-      <button @click="difficulty.set('easy')" :class="difficulty === 'easy' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Easy</button>
-      <button @click="difficulty.set('moderate')" :class="difficulty === 'moderate' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Moderate</button>
-      <button @click="difficulty.set('hard')" :class="difficulty === 'hard' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Hard</button>
+      <button @click="difficulty.set('all')" x-class="difficulty === 'all' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">All Levels</button>
+      <button @click="difficulty.set('easy')" x-class="difficulty === 'easy' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Easy</button>
+      <button @click="difficulty.set('moderate')" x-class="difficulty === 'moderate' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Moderate</button>
+      <button @click="difficulty.set('hard')" x-class="difficulty === 'hard' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Hard</button>
     </div>
 
     <!-- Trail grid -->
     <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       <template :for="trail in filtered">
-        <StxLink :to="'/trail/' + trail.id" class="block overflow-hidden p-0 hover:shadow-lg transition card group">
+        <StxLink x-to="'/trail/' + trail.id" class="block overflow-hidden p-0 hover:shadow-lg transition card group">
           <div class="overflow-hidden relative h-48">
-            <img :src="trail.image || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&h=600&fit=crop'" :alt="trail.name" class="object-cover h-full w-full duration-300 transition-transform group-hover:scale-105" />
+            <img x-src="trail.image || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&h=600&fit=crop'" x-alt="trail.name" class="object-cover h-full w-full duration-300 transition-transform group-hover:scale-105" />
             <div class="absolute left-3 top-3">
-              <span :class="'px-2 py-1 capitalize font-semibold text-xs rounded-full difficulty-' + trail.difficulty" :text="trail.difficulty"></span>
+              <span x-class="'px-2 py-1 capitalize font-semibold text-xs rounded-full difficulty-' + trail.difficulty" :text="trail.difficulty"></span>
             </div>
           </div>
           <div class="p-4">

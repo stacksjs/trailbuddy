@@ -35,12 +35,12 @@
         </div>
 
         <div :if="featured" class="relative">
-          <StxLink :to="'/trail/' + featured.id" class="block bg-white rounded-2xl shadow-2xl overflow-hidden hover:scale-[1.02] transition-transform">
+          <StxLink x-to="'/trail/' + featured.id" class="block bg-white rounded-2xl shadow-2xl overflow-hidden hover:scale-[1.02] transition-transform">
             <div class="relative h-56 overflow-hidden">
-              <img :src="featured.image || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&h=600&fit=crop'" :alt="featured.name" class="w-full h-full object-cover" />
+              <img x-src="featured.image || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&h=600&fit=crop'" x-alt="featured.name" class="w-full h-full object-cover" />
               <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
               <div class="absolute top-4 left-4">
-                <span class="px-3 py-1 capitalize font-semibold text-xs rounded-full" :class="'difficulty-' + featured.difficulty" :text="featured.difficulty"></span>
+                <span class="px-3 py-1 capitalize font-semibold text-xs rounded-full" x-class="'difficulty-' + featured.difficulty" :text="featured.difficulty"></span>
               </div>
               <div class="absolute bottom-4 left-4 right-4 text-white">
                 <h3 class="font-bold text-xl mb-1" :text="featured.name"></h3>
@@ -87,20 +87,20 @@
         <p class="mt-2 text-gray-500 dark:text-slate-400">Discover the best-rated trails near you</p>
       </div>
       <div class="flex gap-2 overflow-x-auto">
-        <button @click="activeFilter.set('all')" :class="activeFilter === 'all' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">All</button>
-        <button @click="activeFilter.set('easy')" :class="activeFilter === 'easy' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Easy</button>
-        <button @click="activeFilter.set('moderate')" :class="activeFilter === 'moderate' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Moderate</button>
-        <button @click="activeFilter.set('hard')" :class="activeFilter === 'hard' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Hard</button>
+        <button @click="activeFilter.set('all')" x-class="activeFilter === 'all' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">All</button>
+        <button @click="activeFilter.set('easy')" x-class="activeFilter === 'easy' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Easy</button>
+        <button @click="activeFilter.set('moderate')" x-class="activeFilter === 'moderate' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Moderate</button>
+        <button @click="activeFilter.set('hard')" x-class="activeFilter === 'hard' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Hard</button>
       </div>
     </div>
 
     <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       <template :for="trail in filteredPopular">
-        <StxLink :to="'/trail/' + trail.id" class="block overflow-hidden p-0 card hover:shadow-lg transition group">
+        <StxLink x-to="'/trail/' + trail.id" class="block overflow-hidden p-0 card hover:shadow-lg transition group">
           <div class="relative h-48 overflow-hidden">
-            <img :src="trail.image || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&h=600&fit=crop'" :alt="trail.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            <img x-src="trail.image || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&h=600&fit=crop'" x-alt="trail.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
             <div class="absolute top-3 left-3">
-              <span class="px-2 py-1 capitalize font-semibold text-xs rounded-full" :class="'difficulty-' + trail.difficulty" :text="trail.difficulty"></span>
+              <span class="px-2 py-1 capitalize font-semibold text-xs rounded-full" x-class="'difficulty-' + trail.difficulty" :text="trail.difficulty"></span>
             </div>
           </div>
           <div class="p-4">
@@ -133,7 +133,7 @@
 
     <div class="grid gap-6 md:grid-cols-3">
       <template :for="activity in recent">
-        <StxLink :to="'/activity/' + activity.id" class="card block hover:shadow-md transition">
+        <StxLink x-to="'/activity/' + activity.id" class="card block hover:shadow-md transition">
           <div class="flex items-center gap-3 mb-3">
             <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 font-bold text-sm" :text="activity.userName.charAt(0)"></div>
             <div>

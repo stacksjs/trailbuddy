@@ -66,7 +66,7 @@
       </div>
 
       <h1 class="text-2xl font-bold dark:text-white mb-2" :text="activity.title"></h1>
-      <StxLink :if="activity.trail_id" :to="'/trail/' + activity.trail_id" class="text-sm text-emerald-600 hover:underline" :text="'→ ' + activity.trail_name"></StxLink>
+      <StxLink :if="activity.trail_id" x-to="'/trail/' + activity.trail_id" class="text-sm text-emerald-600 hover:underline" :text="'→ ' + activity.trail_name"></StxLink>
     </div>
 
     <!-- Map -->
@@ -119,7 +119,7 @@
     <!-- Kudos & Comments -->
     <div class="card mb-6">
       <div class="flex items-center gap-6">
-        <button @click="handlers.toggleKudos()" class="flex items-center gap-2 transition" :class="hasKudos ? 'text-red-500' : 'text-gray-500 hover:text-red-500'">
+        <button @click="handlers.toggleKudos()" class="flex items-center gap-2 transition" x-class="hasKudos ? 'text-red-500' : 'text-gray-500 hover:text-red-500'">
           <span>♥</span>
           <span class="font-medium" :text="activity.kudos_count + ' Kudos'"></span>
         </button>
@@ -156,7 +156,7 @@
         <div class="flex-1 flex gap-2">
           <input
             type="text"
-            :value="newComment"
+            x-value="newComment"
             @input="e => newComment.set(e.target.value)"
             @keydown.enter="handlers.submitComment()"
             placeholder="Write a comment..."

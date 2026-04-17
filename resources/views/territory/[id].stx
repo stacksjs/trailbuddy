@@ -44,13 +44,13 @@
         <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
             <div class="flex gap-3 items-center mb-3">
-              <span class="px-3 py-1 font-semibold text-sm rounded-full" :class="isMine ? 'bg-white/20 text-white' : 'bg-orange-500 text-white'" :text="isMine ? 'Your Territory' : 'Enemy Territory'"></span>
-              <span class="px-3 py-1 font-semibold text-sm rounded-full" :class="territory.status === 'contested' ? 'bg-red-500 text-white' : 'bg-emerald-300/30 text-white'" :text="territory.status === 'contested' ? 'Contested' : 'Secure'"></span>
+              <span class="px-3 py-1 font-semibold text-sm rounded-full" x-class="isMine ? 'bg-white/20 text-white' : 'bg-orange-500 text-white'" :text="isMine ? 'Your Territory' : 'Enemy Territory'"></span>
+              <span class="px-3 py-1 font-semibold text-sm rounded-full" x-class="territory.status === 'contested' ? 'bg-red-500 text-white' : 'bg-emerald-300/30 text-white'" :text="territory.status === 'contested' ? 'Contested' : 'Secure'"></span>
             </div>
             <h1 class="font-bold font-display text-3xl md:text-4xl text-white mb-2" :text="territory.name"></h1>
             <p class="text-lg text-white/70">Owned by <span class="font-semibold text-white" :text="isMine ? 'You' : (owner?.name || 'Unknown')"></span></p>
           </div>
-          <StxLink to="/record" class="px-6 py-3 font-semibold text-sm rounded-xl transition" :class="isMine ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-white text-orange-700 hover:bg-gray-100 shadow-lg'" :text="isMine ? 'Defend' : 'Conquer This'"></StxLink>
+          <StxLink to="/record" class="px-6 py-3 font-semibold text-sm rounded-xl transition" x-class="isMine ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-white text-orange-700 hover:bg-gray-100 shadow-lg'" :text="isMine ? 'Defend' : 'Conquer This'"></StxLink>
         </div>
       </div>
     </section>
@@ -86,7 +86,7 @@
             <div class="space-y-3">
               <template :for="event in history">
                 <div class="card flex items-center gap-4">
-                  <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-bold" :class="event.status === 'conquered' ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600' : 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600'" :text="event.attackerName.charAt(0)"></div>
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-bold" x-class="event.status === 'conquered' ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600' : 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600'" :text="event.attackerName.charAt(0)"></div>
                   <div class="flex-1">
                     <p class="text-sm font-semibold dark:text-white">
                       <span :text="event.attackerName"></span>
@@ -94,7 +94,7 @@
                     </p>
                     <p class="text-xs text-gray-500" :text="tb.timeAgo(event.created_at)"></p>
                   </div>
-                  <span class="text-xs px-2 py-1 rounded-full font-medium" :class="event.status === 'conquered' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'" :text="event.status === 'conquered' ? 'Conquered' : 'Defended'"></span>
+                  <span class="text-xs px-2 py-1 rounded-full font-medium" x-class="event.status === 'conquered' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'" :text="event.status === 'conquered' ? 'Conquered' : 'Defended'"></span>
                 </div>
               </template>
               <div :if="history.length === 0" class="text-center py-8 text-gray-400 text-sm">

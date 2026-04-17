@@ -56,19 +56,19 @@
 
     <!-- Filter tabs -->
     <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
-      <button @click="filter.set('all')" :class="filter === 'all' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">All</button>
-      <button @click="filter.set('unread')" :class="filter === 'unread' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Unread</button>
-      <button @click="filter.set('conquest')" :class="filter === 'conquest' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Conquests</button>
-      <button @click="filter.set('kudos')" :class="filter === 'kudos' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Kudos</button>
-      <button @click="filter.set('challenge')" :class="filter === 'challenge' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Challenges</button>
+      <button @click="filter.set('all')" x-class="filter === 'all' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">All</button>
+      <button @click="filter.set('unread')" x-class="filter === 'unread' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Unread</button>
+      <button @click="filter.set('conquest')" x-class="filter === 'conquest' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Conquests</button>
+      <button @click="filter.set('kudos')" x-class="filter === 'kudos' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Kudos</button>
+      <button @click="filter.set('challenge')" x-class="filter === 'challenge' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Challenges</button>
     </div>
 
     <!-- Notification list -->
     <div class="space-y-2">
       <template :for="notif in filtered">
-        <StxLink :to="notif.link || '#'" @click="tb.markNotificationRead(notif.id)" class="card flex items-start gap-4 transition block" :class="!notif.read ? 'bg-emerald-50/50 dark:bg-emerald-900/5 border-emerald-200 dark:border-emerald-800/30' : ''">
-          <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" :class="iconBg(notif.type)">
-            <span :class="iconColor(notif.type)" class="font-bold">●</span>
+        <StxLink x-to="notif.link || '#'" @click="tb.markNotificationRead(notif.id)" class="card flex items-start gap-4 transition block" x-class="!notif.read ? 'bg-emerald-50/50 dark:bg-emerald-900/5 border-emerald-200 dark:border-emerald-800/30' : ''">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" x-class="iconBg(notif.type)">
+            <span x-class="iconColor(notif.type)" class="font-bold">●</span>
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-sm font-semibold text-gray-900 dark:text-white" :text="notif.title"></p>

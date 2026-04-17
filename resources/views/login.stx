@@ -62,7 +62,7 @@
             <input
               type="email"
               id="email"
-              :value="email"
+              x-value="email"
               @input="e => email.set(e.target.value)"
               required
               class="px-4 py-3 w-full text-gray-900 dark:text-white bg-white dark:bg-slate-700 border border-gray-200 rounded-xl dark:border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500 transition"
@@ -76,7 +76,7 @@
               <input
                 :type="showPassword() ? 'text' : 'password'"
                 id="password"
-                :value="password"
+                x-value="password"
                 @input="e => password.set(e.target.value)"
                 required
                 class="pr-12 px-4 py-3 w-full text-gray-900 dark:text-white bg-white dark:bg-slate-700 border border-gray-200 rounded-xl dark:border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500 transition"
@@ -104,7 +104,7 @@
 
           <button
             type="submit"
-            :disabled="loading()"
+            x-disabled="loading()"
             class="px-4 py-3 w-full font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 transition"
           >
             <span :if="!loading">Sign In</span>

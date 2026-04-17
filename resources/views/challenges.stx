@@ -32,17 +32,17 @@
     </div>
 
     <div class="flex gap-1 mb-6 border-b border-gray-200 dark:border-slate-700">
-      <button @click="tab.set('active')" :class="tab === 'active' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-4 py-3 font-medium text-sm border-b-2 transition">Active</button>
-      <button @click="tab.set('sent')" :class="tab === 'sent' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-4 py-3 font-medium text-sm border-b-2 transition">Sent</button>
-      <button @click="tab.set('received')" :class="tab === 'received' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-4 py-3 font-medium text-sm border-b-2 transition">Received</button>
-      <button @click="tab.set('completed')" :class="tab === 'completed' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-4 py-3 font-medium text-sm border-b-2 transition">Completed</button>
+      <button @click="tab.set('active')" x-class="tab === 'active' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-4 py-3 font-medium text-sm border-b-2 transition">Active</button>
+      <button @click="tab.set('sent')" x-class="tab === 'sent' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-4 py-3 font-medium text-sm border-b-2 transition">Sent</button>
+      <button @click="tab.set('received')" x-class="tab === 'received' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-4 py-3 font-medium text-sm border-b-2 transition">Received</button>
+      <button @click="tab.set('completed')" x-class="tab === 'completed' ? 'border-orange-600 text-orange-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-4 py-3 font-medium text-sm border-b-2 transition">Completed</button>
     </div>
 
     <div class="space-y-4">
       <template :for="challenge in filtered">
         <div class="card">
           <div class="flex items-center justify-between mb-4">
-            <span class="px-2 py-0.5 font-semibold text-xs rounded-full" :class="challenge.status === 'active' ? 'bg-orange-100 text-orange-700' : challenge.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : challenge.winner_id === currentUserId ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'" :text="challenge.status === 'active' ? 'IN PROGRESS' : challenge.status === 'pending' ? 'PENDING' : challenge.winner_id === currentUserId ? 'WON' : 'LOST'"></span>
+            <span class="px-2 py-0.5 font-semibold text-xs rounded-full" x-class="challenge.status === 'active' ? 'bg-orange-100 text-orange-700' : challenge.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : challenge.winner_id === currentUserId ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'" :text="challenge.status === 'active' ? 'IN PROGRESS' : challenge.status === 'pending' ? 'PENDING' : challenge.winner_id === currentUserId ? 'WON' : 'LOST'"></span>
             <span class="text-gray-500 text-xs dark:text-slate-400" :text="tb.timeAgo(challenge.created_at)"></span>
           </div>
 
@@ -67,7 +67,7 @@
           <div class="mt-4 p-3 bg-gray-50 dark:bg-slate-700/50 rounded-xl flex items-center justify-between">
             <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300">
               Territory:
-              <StxLink :to="'/territory/' + challenge.territory_id" class="font-medium text-emerald-600 hover:underline" :text="challenge.territoryName"></StxLink>
+              <StxLink x-to="'/territory/' + challenge.territory_id" class="font-medium text-emerald-600 hover:underline" :text="challenge.territoryName"></StxLink>
             </div>
             <span class="text-xs text-gray-500 dark:text-slate-400" :text="(challenge.areaAtStake / 1000).toFixed(1) + ' km²'"></span>
           </div>

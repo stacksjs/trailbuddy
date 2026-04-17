@@ -65,27 +65,27 @@
         <h2 class="font-bold font-display text-2xl text-gray-900 dark:text-white mb-6">Battle Log</h2>
 
         <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
-          <button @click="filter.set('all')" :class="filter === 'all' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">All</button>
-          <button @click="filter.set('attacks')" :class="filter === 'attacks' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">My Attacks</button>
-          <button @click="filter.set('defenses')" :class="filter === 'defenses' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Defenses</button>
-          <button @click="filter.set('lost')" :class="filter === 'lost' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Lost</button>
+          <button @click="filter.set('all')" x-class="filter === 'all' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">All</button>
+          <button @click="filter.set('attacks')" x-class="filter === 'attacks' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">My Attacks</button>
+          <button @click="filter.set('defenses')" x-class="filter === 'defenses' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Defenses</button>
+          <button @click="filter.set('lost')" x-class="filter === 'lost' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Lost</button>
         </div>
 
         <div class="space-y-4">
           <template :for="conquest in filtered">
             <div class="card">
               <div class="flex gap-4 items-start">
-                <div class="flex items-center justify-center shrink-0 h-12 w-12 rounded-xl" :class="conquest.attacker_id === currentUserId ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600' : 'bg-red-100 dark:bg-red-900/20 text-red-600'">
+                <div class="flex items-center justify-center shrink-0 h-12 w-12 rounded-xl" x-class="conquest.attacker_id === currentUserId ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600' : 'bg-red-100 dark:bg-red-900/20 text-red-600'">
                   <span class="font-bold" :text="conquest.attacker_id === currentUserId ? '⚔' : '🛡'"></span>
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="flex gap-2 items-center mb-1">
-                    <span class="px-2 py-0.5 font-semibold text-xs rounded-full" :class="conquest.attacker_id === currentUserId ? 'bg-orange-100 text-orange-700' : conquest.status === 'defended' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'" :text="conquest.attacker_id === currentUserId ? 'ATTACK' : conquest.status === 'defended' ? 'DEFENDED' : 'CONQUERED'"></span>
+                    <span class="px-2 py-0.5 font-semibold text-xs rounded-full" x-class="conquest.attacker_id === currentUserId ? 'bg-orange-100 text-orange-700' : conquest.status === 'defended' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'" :text="conquest.attacker_id === currentUserId ? 'ATTACK' : conquest.status === 'defended' ? 'DEFENDED' : 'CONQUERED'"></span>
                     <span class="text-xs text-gray-500 dark:text-slate-400" :text="tb.timeAgo(conquest.created_at)"></span>
                   </div>
                   <p class="font-semibold text-gray-900 dark:text-white">
                     <span :text="conquest.attacker_id === currentUserId ? 'You conquered' : conquest.attackerName + ' attacked'"></span>
-                    <StxLink :to="'/territory/' + conquest.territory_id" class="text-emerald-600 hover:underline" :text="' ' + conquest.territoryName"></StxLink>
+                    <StxLink x-to="'/territory/' + conquest.territory_id" class="text-emerald-600 hover:underline" :text="' ' + conquest.territoryName"></StxLink>
                   </p>
                   <p class="text-sm text-gray-500 dark:text-slate-400 mt-1" :text="conquest.description"></p>
                 </div>
@@ -139,7 +139,7 @@
                   <p class="text-sm font-semibold text-gray-900 dark:text-white truncate" :text="conquest.attackerName"></p>
                   <p class="text-xs text-red-600" :text="'Targeting ' + conquest.territoryName"></p>
                 </div>
-                <StxLink :to="'/territory/' + conquest.territory_id" class="text-xs px-2 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">Defend</StxLink>
+                <StxLink x-to="'/territory/' + conquest.territory_id" class="text-xs px-2 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">Defend</StxLink>
               </div>
             </template>
             <div :if="underAttack.length === 0" class="text-center py-6 text-gray-400 dark:text-slate-500 text-sm">

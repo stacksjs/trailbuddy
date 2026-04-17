@@ -36,16 +36,16 @@
 
     <!-- Period tabs -->
     <div class="flex gap-2 mb-4">
-      <button @click="period.set('weekly')" :class="period === 'weekly' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition">This Week</button>
-      <button @click="period.set('monthly')" :class="period === 'monthly' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition">This Month</button>
-      <button @click="period.set('alltime')" :class="period === 'alltime' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition">All Time</button>
+      <button @click="period.set('weekly')" x-class="period === 'weekly' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition">This Week</button>
+      <button @click="period.set('monthly')" x-class="period === 'monthly' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition">This Month</button>
+      <button @click="period.set('alltime')" x-class="period === 'alltime' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition">All Time</button>
     </div>
 
     <!-- Metric tabs -->
     <div class="flex gap-2 mb-6">
-      <button @click="metric.set('distance')" :class="metric === 'distance' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-3 py-1.5 font-medium text-sm border-b-2 transition">Distance</button>
-      <button @click="metric.set('elevation')" :class="metric === 'elevation' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-3 py-1.5 font-medium text-sm border-b-2 transition">Elevation</button>
-      <button @click="metric.set('activities')" :class="metric === 'activities' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-3 py-1.5 font-medium text-sm border-b-2 transition">Activities</button>
+      <button @click="metric.set('distance')" x-class="metric === 'distance' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-3 py-1.5 font-medium text-sm border-b-2 transition">Distance</button>
+      <button @click="metric.set('elevation')" x-class="metric === 'elevation' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-3 py-1.5 font-medium text-sm border-b-2 transition">Elevation</button>
+      <button @click="metric.set('activities')" x-class="metric === 'activities' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-3 py-1.5 font-medium text-sm border-b-2 transition">Activities</button>
     </div>
 
     <!-- Top 3 podium -->
@@ -75,7 +75,7 @@
     <div class="space-y-2">
       <template :for="(leader, index) in leaders">
         <div class="flex gap-4 items-center py-3 card">
-          <span class="w-8 font-bold text-center text-sm" :class="index < 3 ? 'text-emerald-600' : 'text-gray-400 dark:text-slate-500'" :text="index + 1"></span>
+          <span class="w-8 font-bold text-center text-sm" x-class="index < 3 ? 'text-emerald-600' : 'text-gray-400 dark:text-slate-500'" :text="index + 1"></span>
           <div class="flex items-center justify-center shrink-0 h-10 w-10 font-bold text-gray-600 text-sm dark:text-slate-300 bg-gray-100 dark:bg-slate-700 rounded-full" :text="leader.userName.charAt(0)"></div>
           <div class="flex-1 min-w-0">
             <p class="font-semibold text-sm truncate dark:text-white" :text="leader.userName"></p>
