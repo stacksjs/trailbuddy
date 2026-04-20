@@ -2,22 +2,6 @@
 title: Middleware
 description: Learn how to create and use middleware in Stacks applications
 ---
-import { Middleware } from '@stacksjs/router'
-
-export default new Middleware({
-  name: 'Logger',
-  priority: 2,
-
-  handle(request) {
-    log.info(`[${request.method}] ${request.url}`)
-  },
-})
-
-```
-
-### Middleware with Async Operations
-
-```typescript
 
 // app/Middleware/Auth.ts
 import type { Request } from '@stacksjs/router'

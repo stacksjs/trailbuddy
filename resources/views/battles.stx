@@ -61,7 +61,9 @@
                       <p class="text-orange-600 text-xs">Attacking</p>
                     </div>
                   </div>
-                  <div class="shrink-0 w-8 h-8 bg-orange-500 rounded-full animate-pulse flex items-center justify-center text-white">⚡</div>
+                  <div class="shrink-0 w-8 h-8 bg-orange-500 rounded-full animate-pulse flex items-center justify-center text-white">
+                    <Icon name="zap" size="16" />
+                  </div>
                   <div class="flex flex-1 gap-2 items-center justify-end text-right">
                     <div>
                       <p class="font-semibold text-sm dark:text-white" :text="battle.defenderName"></p>
@@ -92,7 +94,8 @@
           <template :for="battle in filteredBattles">
             <div class="flex gap-4 items-center card">
               <div class="flex items-center justify-center shrink-0 h-10 w-10 rounded-full" x-class="battle.status === 'conquered' ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600' : 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600'">
-                <span class="text-sm font-bold" :text="battle.status === 'conquered' ? '⚔' : '🛡'"></span>
+                <Icon :if="battle.status === 'conquered'" name="swords" size="18" />
+                <Icon :if="battle.status !== 'conquered'" name="shield" size="18" />
               </div>
               <div class="flex-1 min-w-0">
                 <p class="text-sm text-gray-900 dark:text-white">

@@ -25,15 +25,15 @@
             x-to="link.to"
             activeClass="nav-active"
             class="px-3 py-2 font-medium text-slate-500 text-sm dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors"
-            :text="link.label" />
+            x-text="link.label" />
         </div>
       </div>
 
       <div class="hidden md:flex gap-3 items-center">
         <StxLink to="/record" class="px-3 py-1.5 font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors">+ Record</StxLink>
         <button @click="dark.toggle()" class="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors">
-          <span class="dark:hidden">🌙</span>
-          <span class="hidden dark:inline">☀️</span>
+          <Icon name="moon" size="18" class="dark:hidden" />
+          <Icon name="sun" size="18" class="hidden dark:inline" />
         </button>
         <div class="flex gap-1 items-center pl-2 border-l border-slate-200 dark:border-slate-700">
           <StxLink to="/notifications" class="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors relative">
@@ -59,7 +59,7 @@
       <StxLink :for="link in navLinks" :key="link.to"
         x-to="link.to"
         class="block px-3 py-2 text-slate-500 text-sm dark:text-slate-400 rounded"
-        :text="link.label" />
+        x-text="link.label" />
       <StxLink to="/record" class="block px-3 py-2 font-semibold text-emerald-600 text-sm rounded">+ Record Activity</StxLink>
       <StxLink to="/clubs" class="block px-3 py-2 text-slate-500 text-sm dark:text-slate-400 rounded">Clubs</StxLink>
       <StxLink to="/stats" class="block px-3 py-2 text-slate-500 text-sm dark:text-slate-400 rounded">Stats</StxLink>

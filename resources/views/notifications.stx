@@ -16,77 +16,135 @@
     const f = filter()
     if (f === 'all') return tb.notifications()
     if (f === 'unread') return tb.notifications().filter((n: any) => !n.read)
-    return tb.notifications().filter((n: any) =>
-      n.type === f || (f === 'conquest' && n.type.startsWith('conquest'))
-    )
+    if (f === 'conquest') return tb.notifications().filter((n: any) => n.type.startsWith('conquest'))
+    return tb.notifications().filter((n: any) => n.type === f)
   })
 
-  const iconBg = (type: string): string => {
-    if (type === 'kudos') return 'bg-red-100 dark:bg-red-900/20'
-    if (type === 'comment') return 'bg-blue-100 dark:bg-blue-900/20'
-    if (type === 'conquest_attack') return 'bg-orange-100 dark:bg-orange-900/20'
-    if (type === 'conquest_defend') return 'bg-emerald-100 dark:bg-emerald-900/20'
-    if (type === 'conquest_win') return 'bg-yellow-100 dark:bg-yellow-900/20'
-    if (type === 'challenge') return 'bg-purple-100 dark:bg-purple-900/20'
-    if (type === 'achievement') return 'bg-yellow-100 dark:bg-yellow-900/20'
-    if (type === 'club') return 'bg-indigo-100 dark:bg-indigo-900/20'
-    return 'bg-gray-100 dark:bg-slate-700'
+  const groupedByDay = derived(() => {
+    const now = Date.now()
+    const dayMs = 86400000
+    const buckets: { label: string, items: any[] }[] = [
+      { label: 'Today', items: [] },
+      { label: 'Yesterday', items: [] },
+      { label: 'Earlier', items: [] },
+    ]
+    for (const n of filtered()) {
+      const age = now - new Date(n.created_at).getTime()
+      if (age < dayMs) buckets[0].items.push(n)
+      else if (age < dayMs * 2) buckets[1].items.push(n)
+      else buckets[2].items.push(n)
+    }
+    return buckets.filter(b => b.items.length > 0)
+  })
+
+
+  const iconTheme = (type: string): string => {
+    if (type === 'kudos') return 'bg-red-100 dark:bg-red-900/20 text-red-500'
+    if (type === 'comment') return 'bg-blue-100 dark:bg-blue-900/20 text-blue-500'
+    if (type === 'conquest_attack') return 'bg-orange-100 dark:bg-orange-900/20 text-orange-500'
+    if (type === 'conquest_defend') return 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-500'
+    if (type === 'conquest_win' || type === 'achievement') return 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-500'
+    if (type === 'challenge') return 'bg-purple-100 dark:bg-purple-900/20 text-purple-500'
+    if (type === 'club') return 'bg-indigo-100 dark:bg-indigo-900/20 text-indigo-500'
+    return 'bg-gray-100 dark:bg-slate-700 text-gray-500'
   }
 
-  const iconColor = (type: string): string => {
-    if (type === 'kudos') return 'text-red-500'
-    if (type === 'comment') return 'text-blue-500'
-    if (type === 'conquest_attack') return 'text-orange-500'
-    if (type === 'conquest_defend') return 'text-emerald-500'
-    if (type === 'conquest_win' || type === 'achievement') return 'text-yellow-500'
-    if (type === 'challenge') return 'text-purple-500'
-    if (type === 'club') return 'text-indigo-500'
-    return 'text-gray-500'
+  const filterCount = (f: string): number => {
+    if (!tb) return 0
+    if (f === 'all') return tb.notifications().length
+    if (f === 'unread') return tb.notifications().filter((n: any) => !n.read).length
+    if (f === 'conquest') return tb.notifications().filter((n: any) => n.type.startsWith('conquest')).length
+    return tb.notifications().filter((n: any) => n.type === f).length
   }
 </script>
 
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
         <h1 class="text-2xl font-bold dark:text-white">Notifications</h1>
-        <span :if="unreadCount > 0" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-500 text-white" :text="unreadCount"></span>
+        <span :if="unreadCount > 0" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-500 text-white" x-text="unreadCount"></span>
       </div>
-      <button :if="unreadCount > 0" @click="tb.markAllNotificationsRead()" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition">Mark all read</button>
+      <button :if="unreadCount > 0" @click="tb.markAllNotificationsRead()" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition flex items-center gap-1.5">
+        <Icon name="check-check" size="16" />
+        Mark all read
+      </button>
     </div>
 
-    <!-- Filter tabs -->
-    <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
-      <button @click="filter.set('all')" x-class="filter === 'all' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">All</button>
-      <button @click="filter.set('unread')" x-class="filter === 'unread' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Unread</button>
-      <button @click="filter.set('conquest')" x-class="filter === 'conquest' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Conquests</button>
-      <button @click="filter.set('kudos')" x-class="filter === 'kudos' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Kudos</button>
-      <button @click="filter.set('challenge')" x-class="filter === 'challenge' ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400'" class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition">Challenges</button>
+    <!-- Filter tabs with counts -->
+    <div class="flex gap-2 mb-6 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+      <button @click="filter.set('all')" x-class="filter === 'all' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'" class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition flex items-center gap-1.5">
+        All
+        <span x-class="filter === 'all' ? 'bg-white/20' : 'bg-gray-200 dark:bg-slate-700'" class="px-1.5 py-0.5 text-xs rounded-full min-w-[1.5rem] text-center" x-text="filterCount('all')"></span>
+      </button>
+      <button @click="filter.set('unread')" x-class="filter === 'unread' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'" class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition flex items-center gap-1.5">
+        Unread
+        <span x-class="filter === 'unread' ? 'bg-white/20' : 'bg-gray-200 dark:bg-slate-700'" class="px-1.5 py-0.5 text-xs rounded-full min-w-[1.5rem] text-center" x-text="filterCount('unread')"></span>
+      </button>
+      <button @click="filter.set('conquest')" x-class="filter === 'conquest' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'" class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition flex items-center gap-1.5">
+        Conquests
+        <span x-class="filter === 'conquest' ? 'bg-white/20' : 'bg-gray-200 dark:bg-slate-700'" class="px-1.5 py-0.5 text-xs rounded-full min-w-[1.5rem] text-center" x-text="filterCount('conquest')"></span>
+      </button>
+      <button @click="filter.set('kudos')" x-class="filter === 'kudos' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'" class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition flex items-center gap-1.5">
+        Kudos
+        <span x-class="filter === 'kudos' ? 'bg-white/20' : 'bg-gray-200 dark:bg-slate-700'" class="px-1.5 py-0.5 text-xs rounded-full min-w-[1.5rem] text-center" x-text="filterCount('kudos')"></span>
+      </button>
+      <button @click="filter.set('challenge')" x-class="filter === 'challenge' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'" class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition flex items-center gap-1.5">
+        Challenges
+        <span x-class="filter === 'challenge' ? 'bg-white/20' : 'bg-gray-200 dark:bg-slate-700'" class="px-1.5 py-0.5 text-xs rounded-full min-w-[1.5rem] text-center" x-text="filterCount('challenge')"></span>
+      </button>
     </div>
 
-    <!-- Notification list -->
-    <div class="space-y-2">
-      <template :for="notif in filtered">
-        <StxLink x-to="notif.link || '#'" @click="tb.markNotificationRead(notif.id)" class="card flex items-start gap-4 transition block" x-class="!notif.read ? 'bg-emerald-50/50 dark:bg-emerald-900/5 border-emerald-200 dark:border-emerald-800/30' : ''">
-          <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" x-class="iconBg(notif.type)">
-            <span x-class="iconColor(notif.type)" class="font-bold">●</span>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-gray-900 dark:text-white" :text="notif.title"></p>
-            <p class="text-sm text-gray-600 dark:text-slate-400 mt-0.5" :text="notif.message"></p>
-            <p class="text-xs text-gray-400 dark:text-slate-500 mt-1" :text="tb.timeAgo(notif.created_at)"></p>
-          </div>
-          <div :if="!notif.read" class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0 mt-2"></div>
-        </StxLink>
-      </template>
+    <!-- Notification groups -->
+    <div :if="filtered.length > 0" class="space-y-8">
+      <template :for="group in groupedByDay">
+        <div>
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-500 mb-3 px-1" x-text="group.label"></h2>
+          <div class="space-y-2">
+            <template :for="notif in group.items">
+              <StxLink x-to="notif.link || '#'" @click="tb.markNotificationRead(notif.id)" class="group relative flex items-start gap-4 p-4 rounded-xl border transition-all block" x-class="!notif.read ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/40 hover:border-emerald-300 dark:hover:border-emerald-700/60' : 'bg-white dark:bg-slate-800/50 border-gray-200 dark:border-slate-700/50 hover:bg-gray-50 dark:hover:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600'">
+                <!-- Unread indicator (left bar) -->
+                <div :if="!notif.read" class="absolute left-0 top-4 bottom-4 w-1 rounded-r bg-emerald-500"></div>
 
-      <!-- Empty state -->
-      <div :if="filtered.length === 0" class="py-20 text-center">
-        <div class="w-20 h-20 mx-auto mb-6 bg-emerald-100 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center">
-          <Icon name="check-circle" size="40" class="text-emerald-400" />
+                <!-- Type icon -->
+                <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0" x-class="iconTheme(notif.type)">
+                  <Icon :if="notif.type === 'kudos'" name="heart" size="18" />
+                  <Icon :if="notif.type === 'comment'" name="message-circle" size="18" />
+                  <Icon :if="notif.type === 'conquest_attack'" name="swords" size="18" />
+                  <Icon :if="notif.type === 'conquest_defend'" name="shield" size="18" />
+                  <Icon :if="notif.type === 'conquest_win'" name="trophy" size="18" />
+                  <Icon :if="notif.type === 'challenge'" name="flag" size="18" />
+                  <Icon :if="notif.type === 'achievement'" name="award" size="18" />
+                  <Icon :if="notif.type === 'club'" name="users" size="18" />
+                </div>
+
+                <!-- Body -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-start justify-between gap-3">
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white leading-tight" x-text="notif.title"></p>
+                    <p class="text-xs text-gray-400 dark:text-slate-500 whitespace-nowrap shrink-0 mt-0.5" x-text="tb.timeAgo(notif.created_at)"></p>
+                  </div>
+                  <p class="text-sm text-gray-600 dark:text-slate-400 mt-1" x-text="notif.message"></p>
+                </div>
+
+                <!-- Chevron on hover -->
+                <div class="flex items-center text-gray-300 dark:text-slate-600 opacity-0 group-hover:opacity-100 transition -mr-1 shrink-0 self-center">
+                  <Icon name="chevron-right" size="18" />
+                </div>
+              </StxLink>
+            </template>
+          </div>
         </div>
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">You're all caught up!</h3>
-        <p class="text-gray-500 dark:text-slate-400 max-w-sm mx-auto">No new notifications.</p>
+      </template>
+    </div>
+
+    <!-- Empty state -->
+    <div :if="filtered.length === 0" class="py-20 text-center">
+      <div class="w-20 h-20 mx-auto mb-6 bg-emerald-100 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center">
+        <Icon name="check-circle" size="40" class="text-emerald-500" />
       </div>
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2" x-text="filter === 'unread' ? 'All caught up!' : filter === 'all' ? 'No notifications yet' : 'Nothing here'"></h3>
+      <p class="text-gray-500 dark:text-slate-400 max-w-sm mx-auto" x-text="filter === 'unread' ? 'You\'ve read everything. Nice work.' : filter === 'all' ? 'When people give kudos, challenge you, or conquer your territory, it\'ll show up here.' : 'Try a different filter above.'"></p>
     </div>
   </div>
 @endsection

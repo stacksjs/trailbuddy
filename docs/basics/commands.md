@@ -3,22 +3,6 @@ title: Commands
 description: Learn how to create and use CLI commands in Stacks applications
 ---
 
-export default function (cli: CLI) {
-  cli
-    .command('inspire', 'Inspire yourself with a random quote')
-    .action(() => {
-      const quote = quotes.random(1).first()
-      console.log(`\n"${quote}"\n`)
-      process.exit(ExitCode.Success)
-    })
-
-  return cli
-}
-
-```
-
-### Command with Options
-
 ```typescript
 
 // app/Commands/Greet.ts

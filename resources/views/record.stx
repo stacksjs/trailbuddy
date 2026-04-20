@@ -45,7 +45,7 @@
     toastTimer: null,
   }
 
-  const fmt = (secs: number): string => {
+  const fmtDuration = (secs: number): string => {
     const h = Math.floor(secs / 3600)
     const m = Math.floor((secs % 3600) / 60)
     const s = secs % 60
@@ -84,7 +84,7 @@
   }
 
   const flashConquest = (name: string) => {
-    conquestToast.set(`⚔️ Conquered ${name}!`)
+    conquestToast.set(`Conquered ${name}!`)
     if (refs.toastTimer) clearTimeout(refs.toastTimer)
     refs.toastTimer = setTimeout(() => conquestToast.set(null), 2800)
   }
@@ -185,14 +185,23 @@
 
   const startManual = () => {
     if (!refs.map) return
+    if (!navigator.geolocation) {
+      gpsStatus.set('stopped')
+      alert('Geolocation is not available on this device. Use Simulate Trail Run instead.')
+      return
+    }
     resetRun()
     mode.set('manual')
-    recording.set(true)
+    gpsStatus.set('searching')
     refs.routeCoords = []
     refs.routeLine = L.polyline([], { color: '#ef4444', weight: 5, opacity: 0.9 }).addTo(refs.map)
-    startTicker()
-    if (navigator.geolocation) {
-      gpsStatus.set('searching')
+
+    const beginTracking = (startLat: number, startLng: number) => {
+      recording.set(true)
+      gpsStatus.set('active')
+      addRoutePoint(startLat, startLng)
+      refs.map.setView([startLat, startLng], 17)
+      startTicker()
       refs.watchId = navigator.geolocation.watchPosition(
         (pos) => {
           gpsStatus.set('active')
@@ -203,6 +212,19 @@
         { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 },
       )
     }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => beginTracking(pos.coords.latitude, pos.coords.longitude),
+      (err) => {
+        gpsStatus.set('stopped')
+        refs.map.removeLayer(refs.routeLine)
+        refs.routeLine = null
+        alert(err.code === err.PERMISSION_DENIED
+          ? 'Location permission denied. Enable it in your browser settings to record a run.'
+          : 'Could not get your location. Try again in a moment.')
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 },
+    )
   }
 
   const togglePause = () => paused.set(!paused())
@@ -222,9 +244,9 @@
         title: `${activityType()} — ${new Date().toLocaleDateString()}`,
         activityType: activityType(),
         distance: Number(distance().toFixed(2)),
-        duration: fmt(elapsed()),
-        moving_time: fmt(elapsed()),
-        pace: distance() > 0.01 ? `${fmt(Math.round(elapsed() / distance()))}/mi` : '--',
+        duration: fmtDuration(elapsed()),
+        moving_time: fmtDuration(elapsed()),
+        pace: distance() > 0.01 ? `${fmtDuration(Math.round(elapsed() / distance()))}/mi` : '--',
         elevation_gain: elevation(),
         calories: Math.round(elapsed() / 60 * 10),
         heartRateAvg: null,
@@ -241,9 +263,17 @@
   onMount(() => {
     try {
       if (typeof L === 'undefined' || !tb) return
-      const el = document.getElementById('record-map')
+      const el = document.getElementById('record-map') as any
       if (!el) return
+      // Dispose any previous Leaflet instance attached to this element
+      // (happens on SPA re-navigation — refs is a fresh object each setup)
+      if (el._leaflet_map) {
+        try { el._leaflet_map.remove() } catch { /* noop */ }
+      }
+      el._leaflet_id = null
+      el.innerHTML = ''
       const map = L.map('record-map', { scrollWheelZoom: true, zoomControl: true })
+      el._leaflet_map = map
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap',
         maxZoom: 18,
@@ -301,6 +331,8 @@
             }).addTo(map).bindPopup('You are here')
             refs.hereMarker = here
             gpsStatus.set('active')
+            // Center on the user — territories are still visible as markers when panned
+            map.setView([pos.coords.latitude, pos.coords.longitude], 14)
           },
           () => gpsStatus.set('searching'),
           { enableHighAccuracy: true },
@@ -320,19 +352,19 @@
     <div x-class="recording ? 'hidden' : 'mb-6'">
       <div class="grid gap-2 grid-cols-4">
         <button @click="activityType.set('Trail Run')" x-class="activityType === 'Trail Run' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-1 items-center py-3 transition card">
-          <span class="text-xl">🏃</span>
+          <Icon name="footprints" size="20" class="text-emerald-600 dark:text-emerald-400" />
           <span class="font-medium text-xs dark:text-white">Trail Run</span>
         </button>
         <button @click="activityType.set('Hike')" x-class="activityType === 'Hike' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-1 items-center py-3 transition card">
-          <span class="text-xl">🥾</span>
+          <Icon name="mountain" size="20" class="text-emerald-600 dark:text-emerald-400" />
           <span class="font-medium text-xs dark:text-white">Hike</span>
         </button>
         <button @click="activityType.set('Walk')" x-class="activityType === 'Walk' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-1 items-center py-3 transition card">
-          <span class="text-xl">🚶</span>
+          <Icon name="person-standing" size="20" class="text-emerald-600 dark:text-emerald-400" />
           <span class="font-medium text-xs dark:text-white">Walk</span>
         </button>
         <button @click="activityType.set('Bike')" x-class="activityType === 'Bike' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-1 items-center py-3 transition card">
-          <span class="text-xl">🚴</span>
+          <Icon name="bike" size="20" class="text-emerald-600 dark:text-emerald-400" />
           <span class="font-medium text-xs dark:text-white">Bike</span>
         </button>
       </div>
@@ -345,7 +377,7 @@
       <!-- GPS badge -->
       <div class="flex absolute right-3 top-3 z-[1000] gap-1.5 items-center px-2.5 py-1 font-medium text-xs rounded-full bg-white/90 backdrop-blur-sm shadow-sm" x-class="gpsStatus === 'active' ? 'text-emerald-700' : gpsStatus === 'searching' ? 'text-yellow-700' : 'text-gray-600'">
         <div class="h-2 w-2 rounded-full" x-class="gpsStatus === 'active' ? 'bg-emerald-500 animate-pulse' : gpsStatus === 'searching' ? 'bg-yellow-500 animate-pulse' : 'bg-gray-400'"></div>
-        <span :text="gpsStatus === 'active' ? (mode === 'simulated' ? 'Simulating' : 'GPS Active') : gpsStatus === 'searching' ? 'Searching...' : 'GPS Off'"></span>
+        <span x-text="gpsStatus === 'active' ? (mode === 'simulated' ? 'Simulating' : 'GPS Active') : gpsStatus === 'searching' ? 'Searching...' : 'GPS Off'"></span>
       </div>
 
       <!-- Legend -->
@@ -358,30 +390,30 @@
       </div>
 
       <!-- Conquest toast -->
-      <div :if="conquestToast" class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] px-4 py-2 font-semibold text-white bg-emerald-600 rounded-full shadow-lg animate-pulse" :text="conquestToast"></div>
+      <div :if="conquestToast" class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] px-4 py-2 font-semibold text-white bg-emerald-600 rounded-full shadow-lg animate-pulse" x-text="conquestToast"></div>
     </div>
 
     <!-- Stats -->
     <div class="mb-6 card">
       <div class="mb-4 text-center">
-        <p class="font-bold font-mono text-5xl tracking-tight dark:text-white" :text="fmt(elapsed)"></p>
+        <p class="font-bold font-mono text-5xl tracking-tight dark:text-white" x-text="fmtDuration(elapsed)"></p>
         <p class="mt-1 metric-label">Duration</p>
       </div>
       <div class="grid gap-4 grid-cols-4">
         <div class="text-center">
-          <p class="font-bold text-2xl dark:text-white" :text="distance.toFixed(2)"></p>
+          <p class="font-bold text-2xl dark:text-white" x-text="distance.toFixed(2)"></p>
           <p class="metric-label">Miles</p>
         </div>
         <div class="text-center">
-          <p class="font-bold text-2xl dark:text-white" :text="distance > 0.01 ? fmt(Math.round(elapsed / distance)) : '--:--'"></p>
+          <p class="font-bold text-2xl dark:text-white" x-text="distance > 0.01 ? fmtDuration(Math.round(elapsed / distance)) : '--:--'"></p>
           <p class="metric-label">Pace/mi</p>
         </div>
         <div class="text-center">
-          <p class="font-bold text-2xl dark:text-white" :text="elevation.toLocaleString()"></p>
+          <p class="font-bold text-2xl dark:text-white" x-text="elevation.toLocaleString()"></p>
           <p class="metric-label">Elev (ft)</p>
         </div>
         <div class="text-center">
-          <p class="font-bold text-2xl text-emerald-600" :text="conqueredIds.length"></p>
+          <p class="font-bold text-2xl text-emerald-600" x-text="conqueredIds.length"></p>
           <p class="metric-label">Conquered</p>
         </div>
       </div>
@@ -396,7 +428,7 @@
       <div class="flex gap-2">
         <select @change="selectedTrailId.set(Number($event.target.value))" class="flex-1 px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg">
           <template :for="opt in trailOptions">
-            <option :value="opt.id" x-selected="opt.id === selectedTrailId" :text="opt.name + ' — ' + opt.location"></option>
+            <option x-value="opt.id" x-selected="opt.id === selectedTrailId" x-text="opt.name + ' — ' + opt.location"></option>
           </template>
         </select>
         <button @click="simulate()" class="px-4 py-2 font-semibold text-sm text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition whitespace-nowrap">▶ Simulate</button>
@@ -406,10 +438,10 @@
     <!-- Controls -->
     <div class="flex gap-4 items-center justify-center">
       <button @click="startManual()" x-class="recording ? 'hidden' : 'flex items-center justify-center h-20 w-20 text-white bg-emerald-600 hover:bg-emerald-700 rounded-full shadow-lg transition text-2xl'">▶</button>
-      <button @click="togglePause()" x-class="!recording ? 'hidden' : paused ? 'flex items-center justify-center h-20 w-20 bg-yellow-500 text-white hover:bg-yellow-600 rounded-full shadow-lg transition text-2xl' : 'flex items-center justify-center h-20 w-20 bg-emerald-600 text-white hover:bg-emerald-700 rounded-full shadow-lg transition text-2xl'" :text="paused ? '▶' : '⏸'"></button>
+      <button @click="togglePause()" x-class="!recording ? 'hidden' : paused ? 'flex items-center justify-center h-20 w-20 bg-yellow-500 text-white hover:bg-yellow-600 rounded-full shadow-lg transition text-2xl' : 'flex items-center justify-center h-20 w-20 bg-emerald-600 text-white hover:bg-emerald-700 rounded-full shadow-lg transition text-2xl'" x-text="paused ? '▶' : '⏸'"></button>
       <button @click="stop()" x-class="recording ? 'flex items-center justify-center h-16 w-16 text-white bg-red-500 hover:bg-red-600 rounded-full shadow-lg transition text-xl' : 'hidden'">⏹</button>
     </div>
 
-    <p class="mt-4 text-center text-gray-500 text-sm dark:text-slate-400" :text="recording ? (mode === 'simulated' ? 'Simulating: ' + activityType : 'Recording: ' + activityType) : 'Press ▶ for real GPS, or pick a trail above to simulate'"></p>
+    <p class="mt-4 text-center text-gray-500 text-sm dark:text-slate-400" x-text="recording ? (mode === 'simulated' ? 'Simulating: ' + activityType : 'Recording: ' + activityType) : 'Press ▶ for real GPS, or pick a trail above to simulate'"></p>
   </div>
 @endsection

@@ -2,23 +2,6 @@
 title: Models
 description: Learn how to define and use ORM models in Stacks applications
 ---
-
-### Basic Model Structure
-
-```typescript
-// app/Models/Post.ts
-import type { Model } from '@stacksjs/types'
-import { schema } from '@stacksjs/validation'
-
-export default {
-  name: 'Post',
-  table: 'posts',
-  primaryKey: 'id',
-  autoIncrement: true,
-
-  traits: {
-    useTimestamps: true,
-    useUuid: true,
   },
 
   attributes: {
@@ -55,6 +38,7 @@ export default {
     },
   },
 } satisfies Model
+
 ```
 
 ### Model Options
@@ -77,6 +61,7 @@ export default {
 ### Attribute Options
 
 ```typescript
+
 attributes: {
   email: {
     // Basic options
@@ -99,6 +84,7 @@ attributes: {
     factory: faker => faker.internet.email(),
   },
 }
+
 ```
 
 ### Validation Rules
@@ -106,6 +92,7 @@ attributes: {
 Use the `schema` validator for type-safe validation:
 
 ```typescript
+
 import { schema } from '@stacksjs/validation'
 
 attributes: {
@@ -155,6 +142,7 @@ attributes: {
     },
   },
 }
+
 ```
 
 ### Factory Definitions
@@ -162,6 +150,7 @@ attributes: {
 Define how test data is generated:
 
 ```typescript
+
 attributes: {
   name: {
     factory: faker => faker.person.fullName(),
@@ -183,6 +172,7 @@ attributes: {
     },
   },
 }
+
 ```
 
 ## Relationships
@@ -192,6 +182,7 @@ attributes: {
 Define a one-to-one relationship:
 
 ```typescript
+
 // app/Models/User.ts
 export default {
   name: 'User',
@@ -208,6 +199,7 @@ export default {
     },
   ],
 } satisfies Model
+
 ```
 
 ### Has Many
@@ -215,6 +207,7 @@ export default {
 Define a one-to-many relationship:
 
 ```typescript
+
 // app/Models/User.ts
 export default {
   name: 'User',
@@ -235,6 +228,7 @@ export default {
     },
   ],
 } satisfies Model
+
 ```
 
 ### Belongs To
@@ -242,6 +236,7 @@ export default {
 Define an inverse one-to-many relationship:
 
 ```typescript
+
 // app/Models/Post.ts
 export default {
   name: 'Post',
@@ -258,6 +253,7 @@ export default {
     },
   ],
 } satisfies Model
+
 ```
 
 ### Belongs To Many
@@ -265,6 +261,7 @@ export default {
 Define a many-to-many relationship:
 
 ```typescript
+
 // app/Models/Post.ts
 export default {
   name: 'Post',
@@ -282,6 +279,7 @@ export default {
     },
   ],
 } satisfies Model
+
 ```
 
 ### Has One Through
@@ -289,6 +287,7 @@ export default {
 Define a has-one-through relationship:
 
 ```typescript
+
 // app/Models/Country.ts
 export default {
   name: 'Country',
@@ -303,6 +302,7 @@ export default {
     },
   ],
 } satisfies Model
+
 ```
 
 ### Polymorphic Relationships (Morph)
@@ -310,6 +310,7 @@ export default {
 Define polymorphic relationships:
 
 ```typescript
+
 // app/Models/Comment.ts
 export default {
   name: 'Comment',
@@ -322,6 +323,7 @@ export default {
     id: 'imageable_id',
   },
 } satisfies Model
+
 ```
 
 ## Traits
@@ -329,6 +331,7 @@ export default {
 ### Available Traits
 
 ```typescript
+
 traits: {
   // Timestamps (created_at, updated_at)
   useTimestamps: true,
@@ -360,6 +363,7 @@ traits: {
     count: 50,
   },
 }
+
 ```
 
 ### API Trait Configuration
@@ -367,6 +371,7 @@ traits: {
 Generate RESTful API routes automatically:
 
 ```typescript
+
 traits: {
   useApi: {
     // Base URI for routes
@@ -388,6 +393,7 @@ traits: {
     middleware: ['auth', 'throttle:60,1'],
   },
 }
+
 ```
 
 This generates:
@@ -403,6 +409,7 @@ This generates:
 ### Basic Queries
 
 ```typescript
+
 import { Post } from '@stacksjs/orm'
 
 // Find by ID
@@ -419,11 +426,13 @@ const post = await Post.first()
 
 // Last record
 const post = await Post.last()
+
 ```
 
 ### Where Clauses
 
 ```typescript
+
 // Simple where
 const posts = await Post.where('status', 'published').get()
 
@@ -459,11 +468,13 @@ const posts = await Post.whereBetween('created_at', ['2024-01-01', '2024-12-31']
 
 // Where like
 const posts = await Post.whereLike('title', '%TypeScript%').get()
+
 ```
 
 ### Ordering and Limiting
 
 ```typescript
+
 // Order by
 const posts = await Post.orderBy('created_at', 'desc').get()
 
@@ -480,21 +491,25 @@ const posts = await Post.inRandomOrder().get()
 
 // Limit and offset
 const posts = await Post.take(10).skip(20).get()
+
 ```
 
 ### Selecting Columns
 
 ```typescript
+
 // Select specific columns
 const posts = await Post.select(['id', 'title', 'created_at']).get()
 
 // Distinct values
 const statuses = await Post.distinct('status').get()
+
 ```
 
 ### Aggregates
 
 ```typescript
+
 // Count
 const total = await Post.count()
 
@@ -509,11 +524,13 @@ const avgViews = await Post.avg('views')
 
 // Sum
 const totalViews = await Post.sum('views')
+
 ```
 
 ### Pagination
 
 ```typescript
+
 const result = await Post.paginate({
   page: 1,
   limit: 15,
@@ -529,16 +546,19 @@ const result = await Post.paginate({
 //   },
 //   next_cursor: number | null,
 // }
+
 ```
 
 ### Eager Loading
 
 ```typescript
+
 // Load relationships
 const posts = await Post.with(['author', 'comments']).get()
 
 // Nested relationships
 const posts = await Post.with(['author', 'comments.user']).get()
+
 ```
 
 ### Chunking
@@ -546,11 +566,13 @@ const posts = await Post.with(['author', 'comments.user']).get()
 Process large datasets efficiently:
 
 ```typescript
+
 await Post.chunk(100, async (posts) => {
   for (const post of posts) {
     await processPost(post)
   }
 })
+
 ```
 
 ## Creating and Updating
@@ -558,6 +580,7 @@ await Post.chunk(100, async (posts) => {
 ### Creating Records
 
 ```typescript
+
 // Create single record
 const post = await Post.create({
   title: 'Hello World',
@@ -582,11 +605,13 @@ const post = await Post.updateOrCreate(
   { email: 'user@example.com' },  // Search criteria
   { name: 'Updated Name' },        // Values to update/create with
 )
+
 ```
 
 ### Updating Records
 
 ```typescript
+
 // Update single record
 const post = await Post.find(1)
 await post.update({ title: 'Updated Title' })
@@ -597,17 +622,20 @@ await post.save()
 
 // Force update (bypass guarded)
 await post.forceUpdate({ admin_only_field: 'value' })
+
 ```
 
 ### Deleting Records
 
 ```typescript
+
 // Delete single record
 const post = await Post.find(1)
 await post.delete()
 
 // Delete by ID
 await Post.remove(1)
+
 ```
 
 ## Scopes
@@ -617,6 +645,7 @@ await Post.remove(1)
 Define reusable query constraints:
 
 ```typescript
+
 // In your model usage
 const publishedPosts = await Post
   .where('status', 'published')
@@ -631,11 +660,13 @@ async function getPublishedPosts() {
     .orderByDesc('published_at')
     .get()
 }
+
 ```
 
 ### Conditional Queries
 
 ```typescript
+
 const posts = await Post
   .when(request.has('category'), (query) => {
     return query.where('category_id', request.get('category'))
@@ -644,6 +675,7 @@ const posts = await Post
     return query.whereLike('title', `%${request.get('search')}%`)
   })
   .get()
+
 ```
 
 ## Events
@@ -653,9 +685,11 @@ const posts = await Post
 Enable model events with the `observe` trait:
 
 ```typescript
+
 traits: {
   observe: true,
 }
+
 ```
 
 This emits events on model changes:
@@ -667,6 +701,7 @@ This emits events on model changes:
 ### Listening to Events
 
 ```typescript
+
 import { events } from '@stacksjs/events'
 
 events.on('post:created', async (post) => {
@@ -681,6 +716,7 @@ events.on('post:updated', async (post) => {
 events.on('post:deleted', async (post) => {
   await cleanupRelatedData(post.id)
 })
+
 ```
 
 ## Soft Deletes
@@ -688,9 +724,11 @@ events.on('post:deleted', async (post) => {
 ### Enabling Soft Deletes
 
 ```typescript
+
 traits: {
   useSoftDeletes: true,
 }
+
 ```
 
 This adds a `deleted_at` column and modifies query behavior.
@@ -698,6 +736,7 @@ This adds a `deleted_at` column and modifies query behavior.
 ### Querying with Soft Deletes
 
 ```typescript
+
 // Normal queries exclude soft-deleted records
 const posts = await Post.all()
 
@@ -713,6 +752,7 @@ await post.restore()
 
 // Permanently delete
 await post.forceDelete()
+
 ```
 
 ## JSON Serialization
@@ -720,6 +760,7 @@ await post.forceDelete()
 ### Hiding Attributes
 
 ```typescript
+
 attributes: {
   password: {
     hidden: true,  // Never included in JSON
@@ -729,17 +770,20 @@ attributes: {
     },
   },
 }
+
 ```
 
 ### Converting to JSON
 
 ```typescript
+
 const post = await Post.find(1)
 
 // Get JSON representation
 const json = post.toJSON()
 
 // Includes all visible attributes and loaded relationships
+
 ```
 
 ## Edge Cases and Gotchas
@@ -749,6 +793,7 @@ const json = post.toJSON()
 Attributes must be marked as `fillable` for mass assignment:
 
 ```typescript
+
 // This works
 const post = await Post.create({
   title: 'Hello',      // fillable: true
@@ -764,6 +809,7 @@ const post = await Post.create({
 const post = await Post.forceCreate({
   admin_only: true,    // Works with forceCreate
 })
+
 ```
 
 ### Relationship Loading
@@ -771,6 +817,7 @@ const post = await Post.forceCreate({
 Always use `.with()` for eager loading to avoid N+1 queries:
 
 ```typescript
+
 // Bad: N+1 queries
 const posts = await Post.all()
 for (const post of posts) {
@@ -782,11 +829,13 @@ const posts = await Post.with(['author']).get()
 for (const post of posts) {
   console.log(post.author.name)  // Already loaded
 }
+
 ```
 
 ### Transaction Support
 
 ```typescript
+
 import { transaction } from '@stacksjs/database'
 
 await transaction(async (trx) => {
@@ -794,6 +843,7 @@ await transaction(async (trx) => {
   await Post.create({ title: 'Hello', author_id: user.id }, { transaction: trx })
   // Both operations commit or rollback together
 })
+
 ```
 
 ## API Reference

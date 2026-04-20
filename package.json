@@ -13,6 +13,9 @@
     "pretty-bytes": "^7.0.0",
     "stacks": "workspace:*"
   },
+  "devDependencies": {
+    "@stacksjs/ts-cloud-types": "^0.1.9"
+  },
   "bugs": {
     "url": "https://github.com/stacksjs/stacks/issues"
   },
@@ -41,13 +44,19 @@
     "clean": "./buddy clean",
     "upgrade": "./buddy upgrade",
     "dev": "bun ./storage/framework/core/buddy/src/cli.ts dev",
+    "dev:frontend": "bun --watch serve.ts",
     "development": "bun ./storage/framework/core/buddy/src/cli.ts dev",
     "build": "bun build.ts",
+    "build:frontend": "bun build.ts",
     "build:stacks": "./buddy build",
     "preview": "bun preview.ts",
     "start": "bun serve.ts",
     "prod": "./buddy build",
-    "deploy": "./buddy deploy",
+    "deploy": "cloud deploy --env production --skip-security-scan",
+    "deploy:staging": "cloud deploy --env staging --skip-security-scan",
+    "deploy:dry": "cloud deploy --env production --dry-run --skip-security-scan",
+    "deploy:staging:dry": "cloud deploy --env staging --dry-run --skip-security-scan",
+    "deploy:stacks": "./buddy deploy",
     "lint": "./buddy lint",
     "lint:fix": "./buddy lint:fix",
     "format": "./buddy format",

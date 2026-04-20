@@ -1,16 +1,6 @@
 ---
 title: Quick Start
 ---
-- Basic knowledge of TypeScript
-
-## Installation
-
-Create a new Stacks project using the following command:
-
-```bash
-bun create stacks my-app
-```
-
 This command will:
 
 1. Scaffold a new Stacks project in the `my-app` directory
@@ -20,7 +10,9 @@ This command will:
 Once complete, navigate to your new project:
 
 ```bash
+
 cd my-app
+
 ```
 
 ## Project Structure
@@ -28,6 +20,7 @@ cd my-app
 Your new Stacks project has the following structure:
 
 ```
+
 my-app/
 ├── app/
 │   ├── Actions/           # Business logic and API handlers
@@ -58,6 +51,7 @@ my-app/
 ├── .env                   # Environment variables
 ├── package.json           # Dependencies and scripts
 └── buddy                  # Stacks CLI
+
 ```
 
 ### Key Directories
@@ -77,6 +71,7 @@ my-app/
 Open `routes/api.ts` and add a simple route:
 
 ```typescript
+
 import { route, response } from '@stacksjs/router'
 
 // A simple GET route
@@ -90,6 +85,7 @@ route.get('/users/{id}', (request) => {
 
 // Using an Action handler
 route.post('/subscribe', 'Actions/SubscribeAction')
+
 ```
 
 ### Creating an Action
@@ -97,6 +93,7 @@ route.post('/subscribe', 'Actions/SubscribeAction')
 Actions are the backbone of your application logic. Create a new action in `app/Actions/SubscribeAction.ts`:
 
 ```typescript
+
 import { Action } from '@stacksjs/actions'
 import { response } from '@stacksjs/router'
 import { schema } from '@stacksjs/validation'
@@ -131,6 +128,7 @@ export default new Action({
     })
   },
 })
+
 ```
 
 ## Your First Component
@@ -140,6 +138,7 @@ Stacks uses `.stx` files for components, which combine HTML with minimal JavaScr
 Create a new component in `resources/components/WelcomeCard.stx`:
 
 ```html
+
 <script server>
 // Props with defaults
 const title = props.title || 'Welcome'
@@ -159,6 +158,7 @@ const showButton = props.showButton ?? true
     </button>
   @endif
 </div>
+
 ```
 
 ### Using Your Component
@@ -166,11 +166,13 @@ const showButton = props.showButton ?? true
 Use the component in any view or other component:
 
 ```html
+
 <WelcomeCard
   title="Hello, Developer!"
   description="Start building amazing things with Stacks."
   :showButton="true"
 />
+
 ```
 
 ## Running the Development Server
@@ -178,13 +180,17 @@ Use the component in any view or other component:
 Start your development server with:
 
 ```bash
+
 ./buddy dev
+
 ```
 
 Or use the npm script:
 
 ```bash
+
 bun run dev
+
 ```
 
 This will start:
@@ -196,23 +202,31 @@ This will start:
 ### Other Useful Commands
 
 ```bash
+
 # Run tests
+
 ./buddy test
 
 # Lint your code
+
 ./buddy lint
 
 # Format code
+
 ./buddy format
 
 # Generate types
+
 ./buddy generate
 
 # Build for production
+
 ./buddy build
 
 # Deploy to cloud
+
 ./buddy deploy
+
 ```
 
 ## Next Steps

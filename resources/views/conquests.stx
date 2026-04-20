@@ -76,7 +76,8 @@
             <div class="card">
               <div class="flex gap-4 items-start">
                 <div class="flex items-center justify-center shrink-0 h-12 w-12 rounded-xl" x-class="conquest.attacker_id === currentUserId ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600' : 'bg-red-100 dark:bg-red-900/20 text-red-600'">
-                  <span class="font-bold" :text="conquest.attacker_id === currentUserId ? '⚔' : '🛡'"></span>
+                  <Icon :if="conquest.attacker_id === currentUserId" name="swords" size="20" />
+                  <Icon :if="conquest.attacker_id !== currentUserId" name="shield" size="20" />
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="flex gap-2 items-center mb-1">
