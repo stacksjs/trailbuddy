@@ -8,7 +8,9 @@
   },
   "dependencies": {
     "@stacksjs/stx": "link:@stacksjs/stx",
+    "ofetch": "^1.4.1",
     "perfect-debounce": "^1.0.0",
+    "pretty-bytes": "^7.0.0",
     "stacks": "workspace:*"
   },
   "bugs": {
@@ -34,7 +36,7 @@
   },
   "private": true,
   "scripts": {
-    "build:reset": "rm -rf node_modules pantry.lock && pantry install && ./buddy generate:model-files && ./buddy lint:fix && cd storage/framework && bun run build && cd ../../",
+    "build:reset": "rm -rf node_modules && bun install && ./buddy generate:model-files && ./buddy lint:fix && cd storage/framework && bun run build && cd ../../",
     "buddy": "bun ./storage/framework/core/buddy/src/cli.ts",
     "stacks": "./buddy",
     "setup": "./bootstrap",
@@ -46,7 +48,6 @@
     "build": "bun build.ts",
     "build:stacks": "./buddy build",
     "preview": "bun preview.ts",
-    "serve": "bun --watch serve.ts",
     "start": "bun serve.ts",
     "prod": "./buddy build",
     "deploy": "./buddy deploy",

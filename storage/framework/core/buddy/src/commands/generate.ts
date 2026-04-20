@@ -6,7 +6,6 @@ import {
   generateIdeHelpers,
   generateLibEntries,
   generateOpenApiSpec,
-  generatePantryConfig,
   generateTypes,
   generateVsCodeCustomData,
   generateWebTypes,
@@ -26,7 +25,6 @@ export function generate(buddy: CLI): void {
     ideHelpers: 'Generate IDE helpers',
     componentMeta: 'Generate component meta information',
     coreSymlink: 'Generate symlink of the core framework to the project root',
-    pantry: 'Generate the pantry configuration file',
     openApi: 'Generate the OpenAPI specification',
     select: 'What are you trying to generate?',
     project: 'Target a specific project',
@@ -41,7 +39,6 @@ export function generate(buddy: CLI): void {
     .option('-c, --custom-data', descriptions.customData)
     .option('-i, --ide-helpers', descriptions.ideHelpers)
     .option('-c, --component-meta', descriptions.componentMeta)
-    .option('-p, --pantry', descriptions.pantry)
     .option('-o, --openapi', descriptions.openApi)
     .option('-p, --project [project]', descriptions.project, { default: false })
     .option('--core-symlink', descriptions.coreSymlink)
@@ -128,15 +125,6 @@ export function generate(buddy: CLI): void {
     .action(async (options: GeneratorOptions) => {
       log.debug('Running `buddy generate:component-meta` ...', options)
       await (generateComponentMeta as any)()
-    })
-
-  buddy
-    .command('generate:pantry-config', descriptions.pantry)
-    .option('-p, --project [project]', descriptions.project, { default: false })
-    .option('--verbose', descriptions.verbose, { default: false })
-    .action(async (options: GeneratorOptions) => {
-      log.debug('Running `buddy generate:pantry-config` ...', options)
-      await generatePantryConfig()
     })
 
   buddy

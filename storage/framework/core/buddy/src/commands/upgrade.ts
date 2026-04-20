@@ -13,7 +13,7 @@ export function upgrade(buddy: CLI): void {
     stable: 'Switch back to the latest stable release',
     force: 'Force re-download, bypassing cache and version checks',
     verbose: 'Enable verbose output',
-    dependencies: 'Upgrade your dependencies (pantry.yaml & package.json)',
+    dependencies: 'Upgrade your dependencies (package.json)',
     bun: 'Upgrade Bun to the latest version',
     shell: 'Upgrade the shell integration (currently only supports Oh My Zsh)',
     binary: 'Upgrade the `stacks` binary to the latest version',
