@@ -31,9 +31,6 @@
   },
   "homepage": "https://github.com/stacksjs/stacks#readme",
   "license": "MIT",
-  "patchedDependencies": {
-    "@stacksjs/bun-router@0.0.2": "patches/@stacksjs%2Fbun-router@0.0.2.patch"
-  },
   "private": true,
   "scripts": {
     "build:reset": "rm -rf node_modules && bun install && ./buddy generate:model-files && ./buddy lint:fix && cd storage/framework && bun run build && cd ../../",

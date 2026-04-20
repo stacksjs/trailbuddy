@@ -1,5 +1,11 @@
 [
   {
+    "id": "achievement",
+    "name": "Achievement",
+    "icon": "tablecells.fill",
+    "hasDedicatedPage": false
+  },
+  {
     "id": "author",
     "name": "Author",
     "icon": "person.text.rectangle.fill",
@@ -82,6 +88,12 @@
     "name": "Job",
     "icon": "briefcase.fill",
     "hasDedicatedPage": true
+  },
+  {
+    "id": "kudos",
+    "name": "Kudos",
+    "icon": "tablecells.fill",
+    "hasDedicatedPage": false
   },
   {
     "id": "license-key",
@@ -204,6 +216,12 @@
     "hasDedicatedPage": true
   },
   {
+    "id": "saved-trail",
+    "name": "SavedTrail",
+    "icon": "tablecells.fill",
+    "hasDedicatedPage": false
+  },
+  {
     "id": "shipping-method",
     "name": "ShippingMethod",
     "icon": "shippingbox.fill",
@@ -246,6 +264,30 @@
     "hasDedicatedPage": false
   },
   {
+    "id": "territory",
+    "name": "Territory",
+    "icon": "tablecells.fill",
+    "hasDedicatedPage": false
+  },
+  {
+    "id": "territory-history",
+    "name": "TerritoryHistory",
+    "icon": "tablecells.fill",
+    "hasDedicatedPage": false
+  },
+  {
+    "id": "territory-stats",
+    "name": "TerritoryStats",
+    "icon": "tablecells.fill",
+    "hasDedicatedPage": false
+  },
+  {
+    "id": "trail",
+    "name": "Trail",
+    "icon": "tablecells.fill",
+    "hasDedicatedPage": false
+  },
+  {
     "id": "transaction",
     "name": "Transaction",
     "icon": "arrow.left.arrow.right.circle.fill",
@@ -256,6 +298,18 @@
     "name": "User",
     "icon": "person.fill",
     "hasDedicatedPage": true
+  },
+  {
+    "id": "user-achievement",
+    "name": "UserAchievement",
+    "icon": "tablecells.fill",
+    "hasDedicatedPage": false
+  },
+  {
+    "id": "user-stats",
+    "name": "UserStats",
+    "icon": "tablecells.fill",
+    "hasDedicatedPage": false
   },
   {
     "id": "waitlist-product",
