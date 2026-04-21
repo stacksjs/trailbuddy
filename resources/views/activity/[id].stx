@@ -48,7 +48,7 @@ export async function getStaticPaths() {
       const el = document.getElementById('activity-map')
       if (!el) return
       const map = L.map('activity-map', { scrollWheelZoom: false })
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap', maxZoom: 18 }).addTo(map)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap', maxZoom: 18, detectRetina: true }).addTo(map)
       const polyline = L.polyline(route, { color: '#059669', weight: 4, opacity: 0.9 }).addTo(map)
       map.fitBounds(polyline.getBounds(), { padding: [30, 30] })
     }, 100)
@@ -113,7 +113,7 @@ export async function getStaticPaths() {
       <h2 class="font-bold text-lg dark:text-white mb-4">Splits</h2>
       <div class="space-y-2">
         <template :for="split in activity.splits">
-          <div class="grid grid-cols-3 items-center p-3 rounded-lg">
+          <div class="grid grid-cols-3 gap-2 items-center p-3 rounded-lg">
             <span class="text-sm font-medium dark:text-white" :text="'Mile ' + split.mile"></span>
             <span class="text-center text-sm font-semibold dark:text-white" :text="split.pace"></span>
             <span class="text-right text-sm text-gray-600 dark:text-slate-400" :text="split.elev + ' ft'"></span>

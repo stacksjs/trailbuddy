@@ -277,6 +277,7 @@
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap',
         maxZoom: 18,
+        detectRetina: true,
       }).addTo(map)
       refs.map = map
 
@@ -350,20 +351,20 @@
 
     <!-- Activity type selector -->
     <div x-class="recording ? 'hidden' : 'mb-6'">
-      <div class="grid gap-2 grid-cols-4">
-        <button @click="activityType.set('Trail Run')" x-class="activityType === 'Trail Run' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-1 items-center py-3 transition card">
+      <div class="grid gap-3 grid-cols-2 sm:grid-cols-4">
+        <button @click="activityType.set('Trail Run')" x-class="activityType === 'Trail Run' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-2 items-center py-4 transition card">
           <Icon name="footprints" size="20" class="text-emerald-600 dark:text-emerald-400" />
           <span class="font-medium text-xs dark:text-white">Trail Run</span>
         </button>
-        <button @click="activityType.set('Hike')" x-class="activityType === 'Hike' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-1 items-center py-3 transition card">
+        <button @click="activityType.set('Hike')" x-class="activityType === 'Hike' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-2 items-center py-4 transition card">
           <Icon name="mountain" size="20" class="text-emerald-600 dark:text-emerald-400" />
           <span class="font-medium text-xs dark:text-white">Hike</span>
         </button>
-        <button @click="activityType.set('Walk')" x-class="activityType === 'Walk' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-1 items-center py-3 transition card">
+        <button @click="activityType.set('Walk')" x-class="activityType === 'Walk' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-2 items-center py-4 transition card">
           <Icon name="person-standing" size="20" class="text-emerald-600 dark:text-emerald-400" />
           <span class="font-medium text-xs dark:text-white">Walk</span>
         </button>
-        <button @click="activityType.set('Bike')" x-class="activityType === 'Bike' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-1 items-center py-3 transition card">
+        <button @click="activityType.set('Bike')" x-class="activityType === 'Bike' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-2 items-center py-4 transition card">
           <Icon name="bike" size="20" class="text-emerald-600 dark:text-emerald-400" />
           <span class="font-medium text-xs dark:text-white">Bike</span>
         </button>
@@ -399,7 +400,7 @@
         <p class="font-bold font-mono text-5xl tracking-tight dark:text-white" x-text="fmtDuration(elapsed)"></p>
         <p class="mt-1 metric-label">Duration</p>
       </div>
-      <div class="grid gap-4 grid-cols-4">
+      <div class="grid gap-4 grid-cols-2 sm:grid-cols-4">
         <div class="text-center">
           <p class="font-bold text-2xl dark:text-white" x-text="distance.toFixed(2)"></p>
           <p class="metric-label">Miles</p>

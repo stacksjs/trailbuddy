@@ -43,25 +43,44 @@
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap',
         maxZoom: 18,
+        detectRetina: true,
       }).addTo(map)
       const bounds: [number, number][] = []
       tb.territories().forEach((t: any) => {
-        const poly = tb.territoryPolygons()[t.id]
-        if (!poly) return
+        const coords = tb.territoryPolygons()[t.id]
+        if (!coords) return
         const isYours = t.user_id === currentUserId()
         const color = isYours ? '#059669' : '#f59e0b'
-        L.polygon(poly, {
+        const polygon = L.polygon(coords, {
           color, fillColor: color, fillOpacity: isYours ? 0.4 : 0.2,
           weight: isYours ? 3 : 2, dashArray: t.status === 'contested' ? '8 4' : undefined,
-        }).addTo(map).bindPopup(`<b>${t.name}</b><br>Owner: ${isYours ? 'You' : 'User ' + t.user_id}<br>${formatArea(t.areaSize)}`)
-        bounds.push(...poly)
+        }).addTo(map)
+        polygon.on('click', () => {
+          map.flyToBounds(polygon.getBounds(), { padding: [40, 40], duration: 0.5 })
+        })
+        bounds.push(...coords)
       })
+      const routes = tb.trailRoutes()
       tb.trails().forEach((tr: any) => {
         if (!tr.lat || !tr.lng) return
         const fill = tr.difficulty === 'hard' ? '#dc2626' : tr.difficulty === 'moderate' ? '#f59e0b' : '#10b981'
-        L.circleMarker([tr.lat, tr.lng], {
+        // Trail route polyline (GPS path)
+        const coords = routes[tr.id]
+        if (coords && coords.length > 1) {
+          L.polyline(coords, { color: fill, weight: 3, opacity: 0.75 }).addTo(map)
+        }
+        const marker = L.circleMarker([tr.lat, tr.lng], {
           radius: 6, color: '#fff', weight: 2, fillColor: fill, fillOpacity: 0.95,
-        }).addTo(map).bindPopup(`<b>${tr.name}</b><br>${tr.location}<br>${tr.distance} mi • ${tr.difficulty}`)
+        }).addTo(map)
+        marker.on('click', () => {
+          const coords = routes[tr.id]
+          if (coords && coords.length > 1) {
+            map.flyToBounds(L.latLngBounds(coords), { padding: [40, 40], duration: 0.5 })
+          }
+          else {
+            map.flyTo([tr.lat, tr.lng], 14, { duration: 0.5 })
+          }
+        })
         bounds.push([tr.lat, tr.lng])
       })
       if (bounds.length) map.fitBounds(L.latLngBounds(bounds), { padding: [30, 30] })

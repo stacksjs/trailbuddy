@@ -40,7 +40,7 @@ export async function getStaticPaths() {
       }
       const map = L.map('trail-map', { scrollWheelZoom: false })
       el._leaflet_map = map
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap', maxZoom: 18 }).addTo(map)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap', maxZoom: 18, detectRetina: true }).addTo(map)
       const polyline = L.polyline(coords, { color: '#059669', weight: 4, opacity: 0.9 }).addTo(map)
       map.fitBounds(polyline.getBounds(), { padding: [30, 30] })
     }, 100)
