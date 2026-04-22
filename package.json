@@ -14,7 +14,8 @@
     "stacks": "workspace:*"
   },
   "devDependencies": {
-    "@stacksjs/ts-cloud-types": "^0.1.9"
+    "@stacksjs/ts-cloud-types": "^0.1.9",
+    "@types/leaflet": "^1.9.21"
   },
   "bugs": {
     "url": "https://github.com/stacksjs/stacks/issues"
