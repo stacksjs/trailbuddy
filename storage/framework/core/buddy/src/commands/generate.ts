@@ -10,6 +10,7 @@ import {
   generateVsCodeCustomData,
   generateWebTypes,
   invoke as startGenerationProcess,
+  watchTypes,
 } from '@stacksjs/actions'
 import { intro, log, outro } from '@stacksjs/cli'
 import { ExitCode } from '@stacksjs/types'
@@ -75,11 +76,15 @@ export function generate(buddy: CLI): void {
   buddy
     .command('generate:types', descriptions.types)
     .option('-p, --project [project]', descriptions.project, { default: false })
+    .option('-w, --watch', 'Re-run on changes to models/ and config/', { default: false })
     .option('--verbose', descriptions.verbose, { default: false })
     .alias('types:generate')
-    .action(async (options: GeneratorOptions) => {
+    .action(async (options: GeneratorOptions & { watch?: boolean }) => {
       log.debug('Running `buddy generate:types` ...', options)
       await generateTypes(options)
+      if (options.watch) {
+        await watchTypes(options)
+      }
     })
 
   buddy

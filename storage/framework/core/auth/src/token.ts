@@ -1,122 +1,33 @@
-import type { AuthToken } from '@stacksjs/types'
 export type { AuthToken } from '@stacksjs/types'
 import { Buffer } from 'node:buffer'
 import { createHmac, randomBytes } from 'node:crypto'
 import process from 'node:process'
-import { db, sql } from '@stacksjs/database'
-import { HttpError } from '@stacksjs/error-handling'
 
-/** Type-safe helper to brand a plain string as an AuthToken */
-function toAuthToken(value: string): AuthToken {
-  return value as AuthToken
-}
-
+/**
+ * `TokenManager` used to expose `createAccessToken` / `validateToken` /
+ * `rotateToken` / `revokeToken` static methods that hardcoded a 30-day
+ * `expires_at`, bypassed `config.auth.tokenExpiry`, and compared raw
+ * tokens against DB-stored hashes (i.e. broken). They had no callers —
+ * the real path lives on `Auth` (see authentication.ts) and respects
+ * the configured 1-hour expiry plus the refresh-token rotation
+ * landed for #1839. Removed entirely so the trap can't fire.
+ *
+ * `generateJWT` is the one piece worth keeping — `Auth.createTokenForUser`
+ * and `Auth.rotateToken` both use it to mint the JWT body.
+ */
 export class TokenManager {
-  static async createAccessToken(user: { id: number }): Promise<AuthToken> {
-    const token = randomBytes(40).toString('hex')
-
-    const result = await db.insertInto('oauth_access_tokens')
-      .values({
-        oauth_client_id: 1, // Fixed OAuth client ID
-        user_id: user.id,
-        token,
-        name: 'auth-token',
-        scopes: JSON.stringify(['read', 'write', 'admin']),
-        revoked: false,
-        expires_at: sql`${new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString()}`,
-        created_at: sql`${new Date().toISOString()}`,
-        updated_at: sql`${new Date().toISOString()}`,
-      })
-      .executeTakeFirst()
-
-    if (!result?.insertId)
-      throw new HttpError(500, 'Failed to create access token')
-
-    return toAuthToken(token)
-  }
-
-  static async validateToken(token: string): Promise<boolean> {
-    const accessToken = await db.selectFrom('oauth_access_tokens')
-      .where('token', '=', token)
-      .selectAll()
-      .executeTakeFirst()
-
-    if (!accessToken)
-      return false
-
-    // Check if token is expired
-    if (accessToken.expires_at && new Date(String(accessToken.expires_at)) < new Date()) {
-      // Automatically delete expired tokens
-      await db.deleteFrom('oauth_access_tokens')
-        .where('id', '=', accessToken.id)
-        .execute()
-      return false
-    }
-
-    // Check if token is revoked
-    if (accessToken.revoked)
-      return false
-
-    // Rotate token if it's been used for more than 24 hours
-    const lastUsed = accessToken.updated_at ? new Date(String(accessToken.updated_at)) : new Date()
-    const now = new Date()
-    const hoursSinceLastUse = (now.getTime() - lastUsed.getTime()) / (1000 * 60 * 60)
-
-    if (hoursSinceLastUse >= 24) {
-      await this.rotateToken(token)
-    }
-    else {
-      // Update last used timestamp
-      await db.updateTable('oauth_access_tokens')
-        .set({
-          updated_at: sql`${now.toISOString()}`,
-        })
-        .where('id', '=', accessToken.id)
-        .execute()
-    }
-
-    return true
-  }
-
-  static async rotateToken(oldToken: string): Promise<AuthToken | null> {
-    const accessToken = await db.selectFrom('oauth_access_tokens')
-      .where('token', '=', oldToken)
-      .selectAll()
-      .executeTakeFirst()
-
-    if (!accessToken)
-      return null
-
-    // Generate new token
-    const newToken = randomBytes(40).toString('hex')
-
-    // Update the token
-    await db.updateTable('oauth_access_tokens')
-      .set({
-        token: newToken,
-        updated_at: sql`${new Date().toISOString()}`,
-      })
-      .where('id', '=', accessToken.id)
-      .execute()
-
-    return toAuthToken(newToken)
-  }
-
-  static async revokeToken(token: string): Promise<void> {
-    await db.updateTable('oauth_access_tokens')
-      .set({
-        revoked: true,
-        updated_at: sql`${new Date().toISOString()}`,
-      })
-      .where('token', '=', token)
-      .execute()
-  }
-
   /**
    * Generate a JWT-like token with embedded metadata
-   * Contains user ID, timestamps, and random signature for security
+   * Contains user ID, timestamps, and random signature for security.
+   *
+   * @param userId - User ID to embed in the `sub` claim
+   * @param expiresInSeconds - JWT expiry; defaults to 1 hour to match the
+   *   short-lived access-token contract from `config.auth.tokenExpiry`.
+   *   The previous 30-day default was a non-recoverable bearer-token
+   *   model; callers should pass the resolved access-token TTL so the
+   *   JWT `exp` claim matches the DB row's `expires_at`.
    */
-  static generateJWT(userId: number): string {
+  static generateJWT(userId: number, expiresInSeconds: number = 60 * 60): string {
     const appKey = process.env.APP_KEY
     if (!appKey) {
       throw new Error('APP_KEY is not set. JWT tokens cannot be generated without a secure application key.')
@@ -127,10 +38,11 @@ export class TokenManager {
       typ: 'JWT',
     }
 
+    const nowSeconds = Math.floor(Date.now() / 1000)
     const payload = {
       sub: userId,
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 30), // 30 days
+      iat: nowSeconds,
+      exp: nowSeconds + expiresInSeconds,
       jti: randomBytes(16).toString('hex'),
     }
 
