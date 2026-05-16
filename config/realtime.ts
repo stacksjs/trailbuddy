@@ -13,7 +13,7 @@ import { env } from '@stacksjs/env'
  * - 'serverless': Uses API Gateway WebSocket + Lambda + DynamoDB
  */
 export default {
-  enabled: true,
+  enabled: false,
 
   // Deployment mode: 'server' (ts-broadcasting) or 'serverless' (API Gateway)
   mode: env.REALTIME_MODE || 'server',

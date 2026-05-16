@@ -21,6 +21,8 @@ import { env } from '@stacksjs/env'
  * definitions will be provided.
  */
 export default {
+  enabled: false,
+
   // Default queue driver: 'sync' | 'database' | 'redis' | 'sqs' | 'memory'
   default: env.QUEUE_DRIVER || 'sync',
 
