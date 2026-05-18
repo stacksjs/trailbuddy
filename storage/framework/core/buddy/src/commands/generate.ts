@@ -6,13 +6,14 @@ import {
   generateIdeHelpers,
   generateLibEntries,
   generateOpenApiSpec,
+  generatePantryConfig,
   generateTypes,
   generateVsCodeCustomData,
   generateWebTypes,
   invoke as startGenerationProcess,
   watchTypes,
 } from '@stacksjs/actions'
-import { intro, log, outro } from '@stacksjs/cli'
+import { intro, log, onUnknownSubcommand, outro } from "@stacksjs/cli"
 import { ExitCode } from '@stacksjs/types'
 
 export function generate(buddy: CLI): void {
@@ -26,6 +27,7 @@ export function generate(buddy: CLI): void {
     ideHelpers: 'Generate IDE helpers',
     componentMeta: 'Generate component meta information',
     coreSymlink: 'Generate symlink of the core framework to the project root',
+    pantry: 'Generate the pantry configuration file',
     openApi: 'Generate the OpenAPI specification',
     select: 'What are you trying to generate?',
     project: 'Target a specific project',
@@ -40,6 +42,7 @@ export function generate(buddy: CLI): void {
     .option('-c, --custom-data', descriptions.customData)
     .option('-i, --ide-helpers', descriptions.ideHelpers)
     .option('-c, --component-meta', descriptions.componentMeta)
+    .option('-p, --pantry', descriptions.pantry)
     .option('-o, --openapi', descriptions.openApi)
     .option('-p, --project [project]', descriptions.project, { default: false })
     .option('--core-symlink', descriptions.coreSymlink)
@@ -133,6 +136,15 @@ export function generate(buddy: CLI): void {
     })
 
   buddy
+    .command('generate:pantry-config', descriptions.pantry)
+    .option('-p, --project [project]', descriptions.project, { default: false })
+    .option('--verbose', descriptions.verbose, { default: false })
+    .action(async (options: GeneratorOptions) => {
+      log.debug('Running `buddy generate:pantry-config` ...', options)
+      await generatePantryConfig()
+    })
+
+  buddy
     .command('generate:openapi-spec', descriptions.openApi)
     .alias('generate:openapi')
     .option('-p, --project [project]', descriptions.project, { default: false })
@@ -149,9 +161,14 @@ export function generate(buddy: CLI): void {
       })
     })
 
-  buddy.command('generate:migrations', 'Generate Migrations').action((options: GeneratorOptions) => {
+  buddy.command('generate:migrations', 'Generate Migrations').action(async (options: GeneratorOptions) => {
     log.debug('Running `buddy generate:migrations` ...', options)
-    // generateMigrations()
+    const { generateMigrations } = await import('@stacksjs/database')
+    const result = await generateMigrations()
+    if ((result as any)?.isErr) {
+      log.error('generateMigrations failed', (result as any).error)
+      process.exit(ExitCode.FatalError)
+    }
   })
 
   buddy
@@ -161,10 +178,7 @@ export function generate(buddy: CLI): void {
       await generateCoreSymlink()
     })
 
-  buddy.on('generate:*', () => {
-    console.error('Invalid command: %s\nSee --help for a list of available commands.', buddy.args.join(' '))
-    process.exit(1)
-  })
+  onUnknownSubcommand(buddy, "generate")
 }
 
 // function hasNoOptions(options: GeneratorOptions) {

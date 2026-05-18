@@ -299,7 +299,9 @@ export class SocksClient {
           0x07: 'Command not supported',
           0x08: 'Address type not supported',
         }
-        const errorMsg = (errors as any)[status] || `Unknown error (${status})`
+        const errorMsg = status === undefined
+          ? 'No SOCKS5 status returned'
+          : (errors as any)[status] || `Unknown error (${status})`
         callback(new Error(`SOCKS5 connection failed: ${errorMsg}`))
         return
       }
@@ -312,7 +314,7 @@ export class SocksClient {
    * Check if string is a valid IPv4 address
    */
   private isIPv4(address: string): boolean {
-    const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/
+    const ipv4Regex = /^(?:\d{1,3}\.){3}\d{1,3}$/
     if (!ipv4Regex.test(address))
       return false
 
@@ -327,4 +329,3 @@ export class SocksClient {
     return address.includes(':') && address.split(':').length >= 3
   }
 }
-

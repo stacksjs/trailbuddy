@@ -1,7 +1,7 @@
 {
   "name": "@stacksjs/registry",
   "type": "module",
-  "version": "0.70.23",
+  "version": "0.70.45",
   "description": "The Stacks Registry.",
   "author": "Chris Breuer",
   "contributors": [
@@ -40,6 +40,6 @@
     "prepublishOnly": "bun run build"
   },
   "devDependencies": {
-    "better-dx": "^0.2.5"
+    "better-dx": "^0.2.12"
   }
 }

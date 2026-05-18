@@ -5,7 +5,9 @@ function italic(str: string): string {
 }
 import { path } from '@stacksjs/path'
 import { db } from '../../utils'
-import { hasMigrationBeenCreated } from '../index'
+// Import from `../helpers` (not `../index`) to avoid re-entering the
+// drivers barrel — see `../helpers.ts` for the cycle-deadlock rationale.
+import { hasMigrationBeenCreated } from '../helpers'
 
 // bun-query-builder utilities are used via db.unsafe() for raw SQL
 
@@ -142,7 +144,13 @@ export async function createTaggableTable(): Promise<void> {
 
   log.success(`Created migration: ${italic(migrationFileName)}`)
 
-  // Add small delay to ensure different timestamp for taggables migration
+  // Migration filenames are timestamp-prefixed. We chain trait migrations
+  // (tags → taggables, etc.) inside a single tick, which means
+  // `Date.now()` returns the same ms for both files, the second `Bun.write`
+  // overwrites the first, and the migrator only sees one of them. A 2ms
+  // sleep is the cheapest way to guarantee a strictly later timestamp on
+  // the next file. This runs once during scaffolding — never on the
+  // request path — so the cost is irrelevant.
   await new Promise(resolve => setTimeout(resolve, 2))
   await createTaggablesTable()
 }
@@ -197,7 +205,13 @@ export async function createPostgresTagsTable(): Promise<void> {
 
   log.success(`Created migration: ${italic(migrationFileName)}`)
 
-  // Add small delay to ensure different timestamp for taggables migration
+  // Migration filenames are timestamp-prefixed. We chain trait migrations
+  // (tags → taggables, etc.) inside a single tick, which means
+  // `Date.now()` returns the same ms for both files, the second `Bun.write`
+  // overwrites the first, and the migrator only sees one of them. A 2ms
+  // sleep is the cheapest way to guarantee a strictly later timestamp on
+  // the next file. This runs once during scaffolding — never on the
+  // request path — so the cost is irrelevant.
   await new Promise(resolve => setTimeout(resolve, 2))
   await createPostgresTaggablesTable()
 }
@@ -325,7 +339,7 @@ export async function createCommentablesTable(options: {
   votable?: boolean
   requiresAuth?: boolean
 } = {}): Promise<void> {
-  const hasBeenMigrated = await hasMigrationBeenCreated('commentables')
+  const hasBeenMigrated = await hasMigrationBeenCreated('comments')
 
   if (hasBeenMigrated)
     return
@@ -338,9 +352,16 @@ export async function createCommentablesTable(options: {
   migrationContent += `    .addColumn('id', 'integer', col => col.primaryKey().autoIncrement())\n`
   migrationContent += `    .addColumn('title', 'varchar(255)', col => col.notNull())\n`
   migrationContent += `    .addColumn('body', 'text', col => col.notNull())\n`
+  migrationContent += `    .addColumn('content', 'text')\n`
   migrationContent += `    .addColumn('status', 'varchar(50)', col => col.notNull().defaultTo('${options.requiresApproval ? 'pending' : 'approved'}'))\n`
+  migrationContent += `    .addColumn('author_name', 'varchar(100)')\n`
+  migrationContent += `    .addColumn('author_email', 'varchar(255)')\n`
+  migrationContent += `    .addColumn('post_title', 'varchar(255)')\n`
   migrationContent += `    .addColumn('commentables_id', 'integer', col => col.notNull())\n`
   migrationContent += `    .addColumn('commentables_type', 'varchar(255)', col => col.notNull())\n`
+  migrationContent += `    .addColumn('ip_address', 'varchar(45)')\n`
+  migrationContent += `    .addColumn('user_agent', 'varchar(500)')\n`
+  migrationContent += `    .addColumn('is_approved', 'integer', col => col.defaultTo(0))\n`
   migrationContent += `    .addColumn('approved_at', 'integer')\n`
   migrationContent += `    .addColumn('rejected_at', 'integer')\n`
 
@@ -374,7 +395,7 @@ export async function createCommentablesTable(options: {
 
 // PostgreSQL version
 export async function createPostgresCommentsTable(): Promise<void> {
-  const hasBeenMigrated = await hasMigrationBeenCreated('commentables')
+  const hasBeenMigrated = await hasMigrationBeenCreated('comments')
 
   if (hasBeenMigrated)
     return
@@ -387,9 +408,16 @@ export async function createPostgresCommentsTable(): Promise<void> {
   migrationContent += `    .addColumn('id', 'serial', col => col.primaryKey())\n`
   migrationContent += `    .addColumn('title', 'varchar(255)', col => col.notNull())\n`
   migrationContent += `    .addColumn('body', 'text', col => col.notNull())\n`
+  migrationContent += `    .addColumn('content', 'text')\n`
   migrationContent += `    .addColumn('commentables_id', 'integer', col => col.notNull())\n`
   migrationContent += `    .addColumn('commentables_type', 'varchar(255)', col => col.notNull())\n`
   migrationContent += `    .addColumn('status', 'varchar(50)', col => col.notNull().defaultTo('pending'))\n`
+  migrationContent += `    .addColumn('author_name', 'varchar(100)')\n`
+  migrationContent += `    .addColumn('author_email', 'varchar(255)')\n`
+  migrationContent += `    .addColumn('post_title', 'varchar(255)')\n`
+  migrationContent += `    .addColumn('ip_address', 'varchar(45)')\n`
+  migrationContent += `    .addColumn('user_agent', 'varchar(500)')\n`
+  migrationContent += `    .addColumn('is_approved', 'integer', col => col.defaultTo(0))\n`
   migrationContent += `    .addColumn('approved_at', 'integer')\n`
   migrationContent += `    .addColumn('rejected_at', 'integer')\n`
   migrationContent += `    .addColumn('created_at', 'timestamp', col => col.notNull().defaultTo(sql.raw('CURRENT_TIMESTAMP')))\n`

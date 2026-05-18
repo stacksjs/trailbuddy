@@ -1,4 +1,4 @@
-import type { JobOptions } from '@stacksjs/types'
+import type { JobOptions, RequestInstance } from '@stacksjs/types'
 
 interface ActionValidations {
   [key: string]: {
@@ -38,6 +38,7 @@ interface ActionOptions<TModel = string> {
 export class Action<TModel = string> {
   name?: string
   description?: string
+  apiResponse?: boolean
   rate?: ActionOptions['rate']
   tries?: ActionOptions['tries']
   backoff?: ActionOptions['backoff']
@@ -52,6 +53,7 @@ export class Action<TModel = string> {
   constructor({
     name,
     description,
+    apiResponse,
     validations,
     handle,
     rate,
@@ -65,6 +67,7 @@ export class Action<TModel = string> {
   }: ActionOptions<TModel>) {
     this.name = name
     this.description = description
+    this.apiResponse = apiResponse
     this.validations = validations
     this.rate = rate
     this.tries = tries

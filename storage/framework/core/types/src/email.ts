@@ -1,4 +1,12 @@
-import type { I18n } from 'vue-email'
+/**
+ * i18n bag passed to STX email templates at render time. Stacks emails
+ * are STX, not vue-email — keys/values are user-defined per template.
+ * The shape is intentionally open: each template declares its own
+ * placeholders and the renderer interpolates them as-is.
+ */
+export interface I18n {
+  [key: string]: unknown
+}
 
 export interface AutoResponderConfig {
   enabled: boolean
@@ -277,7 +285,7 @@ export interface EmailOptions {
   server: EmailServerConfig
   notifications?: EmailNotificationsConfig
 
-  default: 'ses' | 'sendgrid' | 'mailgun' | 'mailtrap' | 'smtp'
+  default: 'log' | 'ses' | 'sendgrid' | 'mailgun' | 'mailtrap' | 'smtp'
 }
 
 export type EmailConfig = Partial<EmailOptions>
@@ -342,6 +350,14 @@ export interface EmailMessage {
   text?: string
   /** Optional attachments */
   attachments?: EmailAttachment[]
+  /**
+   * Extra raw headers to inject into the outgoing envelope.
+   * Used by the newsletter package for `List-Unsubscribe` /
+   * `List-Unsubscribe-Post` (RFC 8058). Drivers that don't yet wire
+   * this through silently ignore — it never affects transactional
+   * sends.
+   */
+  headers?: Record<string, string>
   /** Optional callback after successful delivery */
   onSuccess?: () => Promise<{ message: string }> | { message: string }
   /** Optional callback after failed delivery */

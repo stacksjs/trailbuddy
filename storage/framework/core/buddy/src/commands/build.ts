@@ -1,9 +1,18 @@
 import type { BuildOptions, CLI } from '@stacksjs/types'
 import process from 'node:process'
-import { runAction } from '@stacksjs/actions'
-import { intro, log, outro } from '@stacksjs/cli'
+import { intro, log, onUnknownSubcommand, outro } from "@stacksjs/cli"
 import { Action } from '@stacksjs/enums'
 import { ExitCode } from '@stacksjs/types'
+
+// Lazy-load @stacksjs/actions — importing it at module level forces every
+// `buddy <anything>` invocation to resolve the actions barrel before
+// `--help` can render. Pulling it in only when a build subcommand
+// actually fires keeps `buddy --help` snappy.
+let _runAction: typeof import('@stacksjs/actions').runAction | undefined
+async function runAction(...args: Parameters<typeof import('@stacksjs/actions').runAction>): ReturnType<typeof import('@stacksjs/actions').runAction> {
+  if (!_runAction) _runAction = (await import('@stacksjs/actions')).runAction
+  return _runAction(...args)
+}
 
 export function build(buddy: CLI): void {
   const descriptions = {
@@ -156,6 +165,18 @@ export function build(buddy: CLI): void {
     })
 
   buddy
+    .command('build:frontend', descriptions.pages)
+    .alias('build:pages')
+    .alias('build:views')
+    .alias('prod:frontend')
+    .option('-p, --project [project]', descriptions.project, { default: false })
+    .option('--verbose', descriptions.verbose, { default: false })
+    .action(async (options: BuildOptions) => {
+      log.debug('Running `buddy build:frontend` ...', options)
+      await runAction(Action.BuildViews, options)
+    })
+
+  buddy
     .command('build:docs', 'Automagically build your documentation site.')
     .alias('prod:docs')
     .alias('build:documentation')
@@ -233,10 +254,7 @@ export function build(buddy: CLI): void {
       await outro('Stacks built successfully', { startTime, useSeconds: true })
     })
 
-  buddy.on('build:*', () => {
-    console.error('Invalid command: %s\nSee --help for a list of available commands.', buddy.args.join(' '))
-    process.exit(1)
-  })
+  onUnknownSubcommand(buddy, "build")
 }
 
 function hasNoOptions(options: BuildOptions) {

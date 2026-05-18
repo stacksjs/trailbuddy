@@ -1,4 +1,5 @@
-import { intro, outro } from '../build/src'
+import { dts } from 'bun-plugin-dtsx'
+import { frameworkExternal, intro, outro } from '../build/src'
 
 const { startTime } = await intro({
   dir: import.meta.dir,
@@ -12,17 +13,12 @@ const result = await Bun.build({
   // sourcemap: 'linked',
   minify: true,
 
-  external: [
-    '@stacksjs/config',
-    '@stacksjs/faker',
-    '@stacksjs/path',
-    '@stacksjs/cli',
-    '@stacksjs/logging',
-    '@stacksjs/query-builder',
-    '@stacksjs/storage',
-    '@stacksjs/strings',
-    '@stacksjs/utils',
-    'bun',
+  external: frameworkExternal(['bun']),
+  plugins: [
+    dts({
+      root: './src',
+      outdir: './dist',
+    }),
   ],
 })
 

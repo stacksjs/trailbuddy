@@ -6,6 +6,9 @@ import type {
   BinaryConfig,
   CacheConfig,
   CloudConfig,
+  CmsConfig,
+  CommerceConfig,
+  DashboardConfig,
   DatabaseConfig,
   DnsConfig,
   DocsConfig,
@@ -16,6 +19,8 @@ import type {
   HashingConfig,
   LibraryConfig,
   LoggingConfig,
+  MarketingConfig,
+  MonitoringConfig,
   NotificationConfig,
   PaymentConfig,
   Ports,
@@ -103,6 +108,29 @@ export interface StacksOptions {
   cloud: CloudConfig
 
   /**
+   * **CMS Options**
+   *
+   * Top-level feature gate for the CMS bundle (Post / Page / Author /
+   * Comment / Tag / Category models + content-edit dashboards).
+   */
+  cms: CmsConfig
+
+  /**
+   * **Commerce Options**
+   *
+   * Top-level feature gate for the commerce bundle plus storefront defaults.
+   */
+  commerce: CommerceConfig
+
+  /**
+   * **Dashboard Options**
+   *
+   * Top-level feature gate plus per-section visibility toggles for the
+   * `buddy dev --dashboard` sidebar.
+   */
+  dashboard: DashboardConfig
+
+  /**
    * **Database Options**
    *
    * This configuration defines all of your Database options. Because Stacks is fully-typed, you
@@ -182,6 +210,22 @@ export interface StacksOptions {
    * have any questions, feel free to reach out via Discord or GitHub Discussions.
    */
   logging: LoggingConfig
+
+  /**
+   * **Marketing Options**
+   *
+   * Top-level feature gate for the marketing bundle (`/api/email/subscribe`,
+   * `/api/contact`, Campaign / EmailList / SocialPost).
+   */
+  marketing: MarketingConfig
+
+  /**
+   * **Monitoring Options**
+   *
+   * Top-level feature gate for the monitoring bundle (Error model +
+   * error-tracking views and actions).
+   */
+  monitoring: MonitoringConfig
 
   /**
    * **Notification Options**

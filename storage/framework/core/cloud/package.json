@@ -1,7 +1,7 @@
 {
   "name": "@stacksjs/cloud",
   "type": "module",
-  "version": "0.70.23",
+  "version": "0.70.45",
   "description": "The Stacks cloud/serverless integration & implementation.",
   "author": "Chris Breuer",
   "contributors": [
@@ -28,8 +28,8 @@
   ],
   "exports": {
     ".": {
-      "bun": "./src/index.ts",
       "types": "./dist/index.d.ts",
+      "bun": "./src/index.ts",
       "import": "./dist/index.js"
     },
     "./*": {
@@ -49,12 +49,12 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@stacksjs/ts-cloud": "^0.1.14"
+    "@stacksjs/ts-cloud": "^0.2.15"
   },
   "devDependencies": {
     "@stacksjs/cli": "workspace:*",
     "@stacksjs/config": "workspace:*",
-    "better-dx": "^0.2.5",
+    "better-dx": "^0.2.12",
     "@stacksjs/dns": "workspace:*",
     "@stacksjs/env": "workspace:*",
     "@stacksjs/logging": "workspace:*",

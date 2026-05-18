@@ -1,7 +1,7 @@
 {
   "name": "@stacksjs/faker",
   "type": "module",
-  "version": "0.70.23",
+  "version": "0.70.45",
   "description": "Faker functions.",
   "author": "Chris Breuer",
   "contributors": [
@@ -27,8 +27,8 @@
   ],
   "exports": {
     ".": {
-      "bun": "./src/index.ts",
       "types": "./dist/index.d.ts",
+      "bun": "./src/index.ts",
       "import": "./dist/index.js"
     },
     "./*": {
@@ -51,7 +51,8 @@
   "devDependencies": {
     "@stacksjs/cli": "workspace:*",
     "@stacksjs/config": "workspace:*",
-    "better-dx": "^0.2.5",
-    "ts-mocker": "^0.1.7"
-  }
+    "better-dx": "^0.2.12",
+    "@stacksjs/ts-faker": "^0.1.7"
+  },
+  "sideEffects": false
 }

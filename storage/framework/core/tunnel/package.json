@@ -1,7 +1,7 @@
 {
   "name": "@stacksjs/tunnel",
   "type": "module",
-  "version": "0.70.23",
+  "version": "0.70.45",
   "description": "Local development tunnel.",
   "author": "Chris Breuer",
   "contributors": [
@@ -26,8 +26,8 @@
   ],
   "exports": {
     ".": {
-      "bun": "./src/index.ts",
       "types": "./dist/index.d.ts",
+      "bun": "./src/index.ts",
       "import": "./dist/index.js"
     },
     "./*": {
@@ -50,6 +50,6 @@
     "localtunnels": "^0.2.7"
   },
   "devDependencies": {
-    "better-dx": "^0.2.5"
+    "better-dx": "^0.2.12"
   }
 }

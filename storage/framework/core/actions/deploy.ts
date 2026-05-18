@@ -398,6 +398,7 @@ const server = Bun.serve({
       // For /assets/* URLs, also check resources/assets directory
       if (pathname.startsWith('/assets/')) {
         assetPaths.push('./resources' + pathname)
+        assetPaths.push('./storage/framework/defaults/resources' + pathname)
       }
 
       for (const assetPath of assetPaths) {
@@ -1709,7 +1710,7 @@ async function setupDnsAndSsl(options: {
     // 1. Request SSL certificate
     console.log(`  Requesting SSL certificate for ${domain}...`)
     const certResult = await acm.requestCertificate({
-      DomainName: sslDomains[0],
+      DomainName: sslDomains[0] ?? domain,
       SubjectAlternativeNames: sslDomains.length > 1 ? sslDomains.slice(1) : undefined,
       ValidationMethod: 'DNS',
     })

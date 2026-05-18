@@ -59,17 +59,47 @@ export async function loadRoutes(registry: RouteRegistry): Promise<void> {
 }
 
 /**
- * Load framework default routes from storage/framework/defaults/routes/
+ * Load framework default routes via `storage/framework/defaults/bootstrap.ts`.
+ *
+ * The bootstrap file is the single source of truth for which framework
+ * packages participate in route registration. It either imports each
+ * package (whose own entry calls `route.register(...)` on import — the
+ * service-provider pattern competing frameworks use to let packages
+ * self-wire at boot) or registers routes files directly via
+ * `route.register(...)`. Adding a new framework package = add a line
+ * to bootstrap.ts; the loader stays untouched.
+ *
+ * Resolved through @stacksjs/path so the same import works whether this
+ * package runs from the workspace or from `node_modules/@stacksjs/router/`.
  */
 async function loadFrameworkRoutes(): Promise<void> {
+  // Projects that don't use the bundled dashboard / commerce / monitoring
+  // surface area can opt out of framework default route registration
+  // entirely by setting `STACKS_SKIP_DEFAULT_ROUTES=1`. Without it, the
+  // bootstrap imports `defaults/routes/dashboard.ts` (and friends), each
+  // of which references actions that pull in models like `Product`,
+  // `Coupon`, `WaitlistRestaurant`, `Error` — and projects that don't
+  // ship those models flood their API boot with
+  // `[Router] Failed to import action ...` lines for every missing one.
+  //
+  // The per-route override pattern (declare the same path first in
+  // `routes/api.ts`) only scales when you want a handful of overrides;
+  // for projects that want none of the bundled domain at all this gate
+  // is the wholesale escape hatch. Pattern matches the existing
+  // `STACKS_DEV_DASHBOARD=1` opt-in on the dev-server side.
+  if (process.env.STACKS_SKIP_DEFAULT_ROUTES === '1') return
   try {
-    await import('../../../defaults/routes/dashboard')
+    const { frameworkPath } = await import('@stacksjs/path')
+    const bootstrapPath = frameworkPath('defaults/bootstrap.ts')
+    if (await Bun.file(bootstrapPath).exists()) {
+      await import(bootstrapPath)
+    }
   }
   catch (error) {
-    // Framework routes are optional — don't crash if they don't exist
+    // Framework bootstrap is optional — don't crash if it doesn't exist
     const message = error instanceof Error ? error.message : String(error)
     if (!message.includes('Cannot find module') && !message.includes('MODULE_NOT_FOUND')) {
-      console.error(`[Routes] Failed to load framework routes: ${message}`)
+      console.error(`[Routes] Failed to load framework bootstrap: ${message}`)
     }
   }
 }
@@ -77,16 +107,22 @@ async function loadFrameworkRoutes(): Promise<void> {
 /**
  * Import a route file from the routes directory
  */
-async function importRouteFile(path: string): Promise<void> {
+async function importRouteFile(routeName: string): Promise<void> {
   // Remove .ts extension if present
-  const cleanPath = path.replace(/\.ts$/, '')
+  const cleanPath = routeName.replace(/\.ts$/, '')
 
   // Prevent path traversal
   if (cleanPath.includes('..') || cleanPath.startsWith('/')) {
     throw new Error(`Invalid route path: ${cleanPath}`)
   }
 
-  await import(`../../../../../routes/${cleanPath}`)
+  // Resolve `routes/<name>` against the project root via @stacksjs/path so
+  // the import works whether this package is loaded from the workspace
+  // (`storage/framework/core/router/`) or from `node_modules/@stacksjs/router/`.
+  // The relative-path version `../../../../../routes/${cleanPath}` only
+  // resolved correctly under the workspace layout.
+  const { projectPath } = await import('@stacksjs/path')
+  await import(projectPath(`routes/${cleanPath}`))
 }
 
 /**

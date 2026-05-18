@@ -1,7 +1,7 @@
 {
   "name": "@stacksjs/build",
   "type": "module",
-  "version": "0.70.23",
+  "version": "0.70.45",
   "description": "The Stacks framework build tools and configurations.",
   "author": "Chris Breuer",
   "contributors": [
@@ -27,8 +27,8 @@
   ],
   "exports": {
     ".": {
-      "bun": "./src/index.ts",
       "types": "./dist/index.d.ts",
+      "bun": "./src/index.ts",
       "import": "./dist/index.js"
     },
     "./*": {
@@ -49,12 +49,11 @@
   },
   "dependencies": {
     "@babel/generator": "^7.29.1",
-    "@babel/traverse": "^7.29.0",
-    "better-dx": "^0.2.5"
+    "@babel/traverse": "^7.29.0"
   },
   "devDependencies": {
     "@stacksjs/cli": "workspace:*",
-    "better-dx": "^0.2.5",
+    "better-dx": "^0.2.12",
     "@stacksjs/path": "workspace:*",
     "@stacksjs/storage": "workspace:*"
   }

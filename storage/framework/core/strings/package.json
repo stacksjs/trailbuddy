@@ -1,7 +1,7 @@
 {
   "name": "@stacksjs/strings",
   "type": "module",
-  "version": "0.70.23",
+  "version": "0.70.45",
   "description": "The Stacks string utilities.",
   "author": "Chris Breuer",
   "contributors": [
@@ -38,8 +38,8 @@
   ],
   "exports": {
     ".": {
-      "bun": "./src/index.ts",
       "types": "./dist/index.d.ts",
+      "bun": "./src/index.ts",
       "import": "./dist/index.js"
     },
     "./*": {
@@ -61,7 +61,8 @@
   },
   "devDependencies": {
     "@stacksjs/alias": "workspace:*",
-    "better-dx": "^0.2.5",
+    "better-dx": "^0.2.12",
     "@stacksjs/types": "workspace:*"
-  }
+  },
+  "sideEffects": false
 }
