@@ -7,7 +7,7 @@
       "dependencies": {
         "@stacksjs/stx": "^0.2.11",
         "ofetch": "^1.4.1",
-        "perfect-debounce": "^1.0.0",
+        "perfect-debounce": "^2.1.0",
         "pretty-bytes": "^7.0.0",
         "stacks": "workspace:*",
       },
@@ -1919,7 +1919,7 @@
 
     "pend": ["pend@1.2.0", "", {}, "sha512-F3asv42UuXchdzt+xXqfW1OGlVBe+mxa2mqI0pg5yAHZPvFmY3Y6drSf/GQ1A86WgWEN9Kzh/WrgKa6iGcHXLg=="],
 
-    "perfect-debounce": ["perfect-debounce@1.0.0", "", {}, "sha512-xCy9V055GLEqoFaHoC1SoLIaLmWctgCUaBaWxDZ7/Zx4CTyX7cJQLJOok/orfjZAh9kEYpjJa4d0KcJmCbctZA=="],
+    "perfect-debounce": ["perfect-debounce@2.1.0", "", {}, "sha512-LjgdTytVFXeUgtHZr9WYViYSM/g8MkcTPYDlPa3cDqMirHjKiSZPYd6DoL7pK8AJQr+uWkQvCjHNdiMqsrJs+g=="],
 
     "pickier": ["pickier@0.1.29", "", { "dependencies": { "@stacksjs/clapp": "^0.2.3" }, "optionalDependencies": { "@stacksjs/ts-spell-check": "^0.1.0" }, "bin": { "pickier": "./dist/bin/cli.js" } }, "sha512-la+dEs8oXbln3ENa4z+l0nqGW1SskKFVjSQPyQnn0B7P0TnljRIAM6OCvBeKZhK3i7mzZmUyhsjbgjyeH6x2mg=="],
 
