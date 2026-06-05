@@ -12,6 +12,11 @@ import {
   runWhenMapReady,
   type LatLng,
 } from './useTrailMap'
+import {
+  persistRunAndProcess,
+  routeToGeoJson,
+  runResultMessage,
+} from '../assets/scripts/game-api'
 
 type ActivityType = 'Trail Run' | 'Hike' | 'Walk' | 'Bike'
 type RecordMode = 'idle' | 'simulated' | 'manual'
@@ -322,6 +327,35 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     paused.set(!paused())
   }
 
+  // Persist the run to the backend and run the territory engine (closed-loop
+  // claim + route-intersection conquest). Fire-and-forget; failures (e.g. the
+  // run wasn't a closed loop) are expected and surfaced only on success.
+  const persistRun = async (routeSnapshot: LatLng[], trailId: number | null): Promise<void> => {
+    if (!tb || routeSnapshot.length < 2) return
+    try {
+      const result = await persistRunAndProcess({
+        user_id: tb.currentUserId(),
+        trail_id: trailId,
+        activity_type: activityType(),
+        distance: Number(distance().toFixed(2)),
+        duration: fmtDuration(elapsed()),
+        pace: distance() > 0.01 ? `${fmtDuration(Math.round(elapsed() / distance()))}/mi` : null,
+        elevation: elevation(),
+        gpx_data: routeToGeoJson(routeSnapshot),
+        completed_at: new Date().toISOString(),
+      })
+      const message = runResultMessage(result)
+      if (message) {
+        conquestToast.set(message)
+        if (refs.toastTimer) clearTimeout(refs.toastTimer)
+        refs.toastTimer = setTimeout(() => conquestToast.set(null), 3600)
+      }
+    }
+    catch (err) {
+      console.error('persistRun failed:', err)
+    }
+  }
+
   function stop() {
     recording.set(false)
     paused.set(false)
@@ -329,6 +363,9 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     clearTimers()
     if (distance() > 0 && tb) {
       const trail = mode() === 'simulated' ? tb.findTrail(selectedTrailId()) : null
+      // Persist to the backend + run the territory engine using the recorded
+      // GPS track (snapshot before it's cleared on the next run).
+      void persistRun([...refs.routeCoords], trail?.id ?? null)
       const captures = conqueredIds().length
       const title = captures > 0
         ? `Capture Run — ${captures} zone${captures > 1 ? 's' : ''} taken`

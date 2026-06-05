@@ -86,9 +86,16 @@ async function callAction(action: any, body: Record<string, unknown>): Promise<{
 // --- reset game tables (idempotent re-run; leaves trails intact) ------------
 
 const db = new Database('database/stacks.sqlite')
-for (const t of ['territory_histories', 'territory_stats', 'territories', 'activities', 'users']) {
+const gameTables = ['territory_histories', 'territory_stats', 'territories', 'activities', 'users']
+for (const t of gameTables) {
   try { db.run(`DELETE FROM ${t}`) }
   catch { /* table may not exist */ }
+}
+// Reset AUTOINCREMENT so "You" lands on id 1 — the frontend hardwires
+// currentUserId: 1, so the seeded world must line up for the live UI.
+for (const t of gameTables) {
+  try { db.run(`DELETE FROM sqlite_sequence WHERE name = ?`, [t]) }
+  catch { /* sqlite_sequence may not exist yet */ }
 }
 db.close()
 console.error('[seed] tables reset, creating users…')
