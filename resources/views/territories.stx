@@ -1,6 +1,6 @@
 @extends('layouts/default')
 
-@section('title', 'Territory Game — TrailBuddy')
+@section('title', 'Territory Map — TrailBuddy')
 
 @section('content')
 <script client>
@@ -91,8 +91,12 @@
   <!-- Hero -->
   <section class="relative overflow-hidden pt-24 pb-16 bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700">
     <div class="relative px-4 mx-auto max-w-7xl sm:px-6 lg:px-8 text-center">
-      <h1 class="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">Conquer Your Territory</h1>
-      <p class="text-xl text-white/80 max-w-2xl mx-auto mb-8">Run loops to claim land. Run through others' territories to conquer them.</p>
+      <h1 class="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">Your Territory Map</h1>
+      <p class="text-xl text-white/80 max-w-2xl mx-auto mb-8">Green is yours. Orange is enemy turf — tap a zone, then hit Capture to run the lines that steal it.</p>
+      <StxLink to="/record" class="inline-flex items-center gap-2 px-6 py-3 font-bold text-emerald-800 bg-white hover:bg-gray-100 rounded-full shadow-lg transition">
+        <Icon name="zap" size="18" />
+        Launch capture run
+      </StxLink>
     </div>
   </section>
 

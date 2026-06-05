@@ -1,12 +1,12 @@
 @extends('layouts/default')
 
-@section('title', 'Record Activity — TrailBuddy')
+@section('title', 'Capture Run — TrailBuddy')
 
 @section('content')
 <script client>
   import { useRecorder } from '../composables/useRecorder'
 
-  useHead({ title: 'Record Activity — TrailBuddy' })
+  useHead({ title: 'Capture Run — TrailBuddy' })
 
   const tb = useStore('tb')
   const {
@@ -14,12 +14,16 @@
     paused,
     activityType,
     mode,
+    runMode,
     elapsed,
     distance,
     elevation,
     gpsStatus,
     selectedTrailId,
+    targetTerritoryId,
     conqueredIds,
+    captureProgress,
+    sessionXp,
     conquestToast,
     trailOptions,
     simulate,
@@ -28,106 +32,135 @@
     stop,
     fmtDuration,
   } = useRecorder({ mapElId: 'record-map', tb })
+
+  const attackable = derived(() => tb ? tb.attackableTerritories() : [])
+  const targetZone = derived(() => {
+    const id = targetTerritoryId()
+    return id && tb ? tb.findTerritory(id) : null
+  })
+
+  const activeCaptures = derived(() => {
+    const prog = captureProgress()
+    return Object.entries(prog)
+      .filter(([, pct]) => pct > 0 && pct < 100)
+      .map(([id, pct]) => ({ id: Number(id), pct, name: tb?.findTerritory(Number(id))?.name ?? 'Zone' }))
+  })
 </script>
 
-  <div class="mx-auto px-4 py-6 max-w-3xl">
-    <h1 class="mb-2 font-bold text-2xl text-center dark:text-white">Record &amp; Conquer</h1>
-    <p class="mb-6 text-center text-gray-500 text-sm dark:text-slate-400">Run through enemy territory to claim it.</p>
-
-    <!-- Activity type selector -->
-    <div x-class="recording ? 'hidden' : 'mb-6'">
-      <div class="grid gap-3 grid-cols-2 sm:grid-cols-4">
-        <button @click="activityType.set('Trail Run')" x-class="activityType === 'Trail Run' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-2 items-center py-4 transition card">
-          <Icon name="footprints" size="20" class="text-emerald-600 dark:text-emerald-400" />
-          <span class="font-medium text-xs dark:text-white">Trail Run</span>
-        </button>
-        <button @click="activityType.set('Hike')" x-class="activityType === 'Hike' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-2 items-center py-4 transition card">
-          <Icon name="mountain" size="20" class="text-emerald-600 dark:text-emerald-400" />
-          <span class="font-medium text-xs dark:text-white">Hike</span>
-        </button>
-        <button @click="activityType.set('Walk')" x-class="activityType === 'Walk' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-2 items-center py-4 transition card">
-          <Icon name="person-standing" size="20" class="text-emerald-600 dark:text-emerald-400" />
-          <span class="font-medium text-xs dark:text-white">Walk</span>
-        </button>
-        <button @click="activityType.set('Bike')" x-class="activityType === 'Bike' ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-white dark:bg-slate-800'" class="flex flex-col gap-2 items-center py-4 transition card">
-          <Icon name="bike" size="20" class="text-emerald-600 dark:text-emerald-400" />
-          <span class="font-medium text-xs dark:text-white">Bike</span>
-        </button>
+  <div class="mx-auto px-4 py-6 max-w-4xl">
+    <div class="flex flex-col gap-2 items-center mb-4 sm:flex-row sm:justify-between">
+      <div class="text-center sm:text-left">
+        <h1 class="font-bold text-2xl dark:text-white">Capture Run</h1>
+        <p class="text-gray-500 text-sm dark:text-slate-400">Run through enemy zones to paint them yours — Strava stats + turf wars</p>
+      </div>
+      <div class="flex gap-2 p-1 bg-gray-100 dark:bg-slate-800 rounded-lg">
+        <button @click="runMode.set('capture')" x-class="runMode === 'capture' ? 'bg-emerald-600 text-white shadow' : 'text-gray-600 dark:text-slate-400'" class="px-4 py-2 font-semibold text-xs rounded-md transition">Capture</button>
+        <button @click="runMode.set('free')" x-class="runMode === 'free' ? 'bg-emerald-600 text-white shadow' : 'text-gray-600 dark:text-slate-400'" class="px-4 py-2 font-semibold text-xs rounded-md transition">Free Run</button>
       </div>
     </div>
 
-    <!-- Map -->
-    <div class="relative mb-6 rounded-2xl overflow-hidden shadow-md">
-      <div id="record-map" class="h-[28rem]"></div>
+    <!-- Target zone (capture mode) -->
+    <div x-class="runMode === 'capture' && !recording ? 'mb-4 card border-2 border-orange-200 dark:border-orange-800/50' : 'hidden'">
+      <p class="mb-2 font-semibold text-sm dark:text-white">Target a zone to attack</p>
+      <div class="flex flex-wrap gap-2">
+        <button @click="targetTerritoryId.set(null)" x-class="!targetTerritoryId ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-gray-100 dark:bg-slate-700'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition">Any nearby</button>
+        <template :for="zone in attackable">
+          <button @click="targetTerritoryId.set(zone.id)" x-class="targetTerritoryId === zone.id ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-900/20' : 'bg-gray-100 dark:bg-slate-700'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition" x-text="zone.name"></button>
+        </template>
+      </div>
+      <p :if="targetZone" class="mt-2 text-orange-600 text-xs">Focus run: cross <span class="font-semibold" :text="targetZone.name"></span> to fill the capture meter</p>
+    </div>
 
-      <!-- GPS badge -->
+    <!-- Map -->
+    <div class="relative mb-4 rounded-2xl overflow-hidden shadow-md ring-1 ring-slate-200 dark:ring-slate-700">
+      <div id="record-map" class="h-[22rem] sm:h-[28rem]"></div>
+
       <div class="flex absolute right-3 top-3 z-[1000] gap-1.5 items-center px-2.5 py-1 font-medium text-xs rounded-full bg-white/90 backdrop-blur-sm shadow-sm" x-class="gpsStatus === 'active' ? 'text-emerald-700' : gpsStatus === 'searching' ? 'text-yellow-700' : 'text-gray-600'">
         <div class="h-2 w-2 rounded-full" x-class="gpsStatus === 'active' ? 'bg-emerald-500 animate-pulse' : gpsStatus === 'searching' ? 'bg-yellow-500 animate-pulse' : 'bg-gray-400'"></div>
         <span x-text="gpsStatus === 'active' ? (mode === 'simulated' ? 'Simulating' : 'GPS Active') : gpsStatus === 'searching' ? 'Searching...' : 'GPS Off'"></span>
       </div>
 
-      <!-- Legend -->
       <div class="absolute bottom-3 left-3 z-[1000] px-3 py-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm">
-        <div class="flex gap-3 items-center text-xs">
+        <div class="flex flex-wrap gap-3 items-center text-xs">
           <span class="flex gap-1 items-center"><span class="h-3 w-3 bg-emerald-500 rounded"></span>Yours</span>
           <span class="flex gap-1 items-center"><span class="h-3 w-3 bg-amber-500 rounded"></span>Enemy</span>
-          <span class="flex gap-1 items-center"><span class="h-2 w-2 bg-sky-500 rounded-full"></span>Trail</span>
+          <span class="flex gap-1 items-center"><span class="h-3 w-3 bg-purple-500 rounded"></span>Capturing</span>
+          <span class="flex gap-1 items-center"><span class="h-2 w-2 bg-sky-500 rounded-full"></span>Route</span>
         </div>
       </div>
 
-      <!-- Conquest toast -->
-      <div :if="conquestToast" class="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] px-4 py-2 font-semibold text-white bg-emerald-600 rounded-full shadow-lg animate-pulse" x-text="conquestToast"></div>
+      <div :if="conquestToast" class="capture-toast absolute top-3 left-1/2 -translate-x-1/2 z-[1000] px-5 py-2.5 font-bold text-white bg-emerald-600 rounded-full shadow-xl" x-text="conquestToast"></div>
     </div>
 
-    <!-- Stats -->
+    <!-- Live capture meters -->
+    <div :if="recording && activeCaptures.length > 0" class="mb-4 space-y-2">
+      <template :for="cap in activeCaptures">
+        <div class="card py-3">
+          <div class="flex justify-between mb-1 text-xs">
+            <span class="font-semibold dark:text-white" :text="'Capturing ' + cap.name"></span>
+            <span class="text-purple-600 font-bold" :text="cap.pct + '%'"></span>
+          </div>
+          <div class="capture-bar"><div class="capture-bar-fill" :style="'width:' + cap.pct + '%'"></div></div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Strava-style stats -->
     <div class="mb-6 card">
       <div class="mb-4 text-center">
-        <p class="font-bold font-mono text-5xl tracking-tight dark:text-white" x-text="fmtDuration(elapsed)"></p>
-        <p class="mt-1 metric-label">Duration</p>
+        <p class="font-bold font-mono text-5xl sm:text-6xl tracking-tight dark:text-white" x-text="fmtDuration(elapsed)"></p>
+        <p class="mt-1 metric-label">Elapsed</p>
       </div>
-      <div class="grid gap-4 grid-cols-2 sm:grid-cols-4">
-        <div class="text-center">
+      <div class="grid gap-4 grid-cols-2 sm:grid-cols-5">
+        <div class="strava-stat">
           <p class="font-bold text-2xl dark:text-white" x-text="distance.toFixed(2)"></p>
           <p class="metric-label">Miles</p>
         </div>
-        <div class="text-center">
+        <div class="strava-stat">
           <p class="font-bold text-2xl dark:text-white" x-text="distance > 0.01 ? fmtDuration(Math.round(elapsed / distance)) : '--:--'"></p>
-          <p class="metric-label">Pace/mi</p>
+          <p class="metric-label">Pace</p>
         </div>
-        <div class="text-center">
+        <div class="strava-stat">
           <p class="font-bold text-2xl dark:text-white" x-text="elevation.toLocaleString()"></p>
-          <p class="metric-label">Elev (ft)</p>
+          <p class="metric-label">Elev ft</p>
         </div>
-        <div class="text-center">
+        <div class="strava-stat">
           <p class="font-bold text-2xl text-emerald-600" x-text="conqueredIds.length"></p>
-          <p class="metric-label">Conquered</p>
+          <p class="metric-label">Captured</p>
+        </div>
+        <div class="strava-stat">
+          <p class="font-bold text-2xl text-purple-600" x-text="sessionXp"></p>
+          <p class="metric-label">XP</p>
         </div>
       </div>
     </div>
 
-    <!-- Simulate panel (hidden while recording) -->
+    <!-- Simulate -->
     <div x-class="recording ? 'hidden' : 'mb-6 card'">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="font-semibold text-sm dark:text-white">Simulate a Trail Run</h3>
-        <span class="text-xs text-gray-500">Preset route • no GPS needed</span>
+        <h3 class="font-semibold text-sm dark:text-white">Quick simulate</h3>
+        <span class="text-xs text-gray-500">Paint a trail route • no GPS</span>
       </div>
       <div class="flex gap-2">
         <select @change="selectedTrailId.set(Number($event.target.value))" class="flex-1 px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg">
           <template :for="opt in trailOptions">
-            <option x-value="opt.id" x-selected="opt.id === selectedTrailId" x-text="opt.name + ' — ' + opt.location"></option>
+            <option x-value="opt.id" x-selected="opt.id === selectedTrailId" x-text="opt.name"></option>
           </template>
         </select>
-        <button @click="simulate()" class="px-4 py-2 font-semibold text-sm text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition whitespace-nowrap">▶ Simulate</button>
+        <button @click="simulate()" class="px-4 py-2 font-semibold text-sm text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition whitespace-nowrap">Simulate capture</button>
       </div>
     </div>
 
     <!-- Controls -->
     <div class="flex gap-4 items-center justify-center">
-      <button @click="startManual()" x-class="recording ? 'hidden' : 'flex items-center justify-center h-20 w-20 text-white bg-emerald-600 hover:bg-emerald-700 rounded-full shadow-lg transition text-2xl'">▶</button>
-      <button @click="togglePause()" x-class="!recording ? 'hidden' : paused ? 'flex items-center justify-center h-20 w-20 bg-yellow-500 text-white hover:bg-yellow-600 rounded-full shadow-lg transition text-2xl' : 'flex items-center justify-center h-20 w-20 bg-emerald-600 text-white hover:bg-emerald-700 rounded-full shadow-lg transition text-2xl'" x-text="paused ? '▶' : '⏸'"></button>
-      <button @click="stop()" x-class="recording ? 'flex items-center justify-center h-16 w-16 text-white bg-red-500 hover:bg-red-600 rounded-full shadow-lg transition text-xl' : 'hidden'">⏹</button>
+      <button @click="startManual()" x-class="recording ? 'hidden' : 'record-btn-start'">▶</button>
+      <button @click="togglePause()" x-class="!recording ? 'hidden' : paused ? 'record-btn-resume' : 'record-btn-pause'" x-text="paused ? '▶' : '⏸'"></button>
+      <button @click="stop()" x-class="recording ? 'record-btn-stop' : 'hidden'">⏹</button>
     </div>
 
-    <p class="mt-4 text-center text-gray-500 text-sm dark:text-slate-400" x-text="recording ? (mode === 'simulated' ? 'Simulating: ' + activityType : 'Recording: ' + activityType) : 'Press ▶ for real GPS, or pick a trail above to simulate'"></p>
+    <p class="mt-4 text-center text-gray-500 text-sm dark:text-slate-400">
+      <span :if="!recording">Hit ▶ to start GPS capture, or simulate a trail route</span>
+      <span :if="recording" x-text="runMode === 'capture' ? 'Stay inside enemy zones — capture bar fills as you run' : 'Free run — no territory capture'"></span>
+    </p>
   </div>
 @endsection

@@ -18,8 +18,19 @@
 
   <div class="mx-auto px-4 py-6 sm:px-6 lg:px-8 max-w-3xl">
     <div class="flex items-center justify-between mb-6">
-      <h1 class="font-bold text-2xl dark:text-white">Activity Feed</h1>
-      <StxLink to="/record" class="px-4 py-2 font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition">+ Record Activity</StxLink>
+      <div>
+        <h1 class="font-bold text-2xl dark:text-white">Activity Feed</h1>
+        <p class="text-sm text-gray-500 dark:text-slate-400">Runs, kudos, and conquest highlights</p>
+      </div>
+      <StxLink to="/record" class="px-4 py-2 font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition">Capture run</StxLink>
+    </div>
+
+    <div :if="tb && tb.liveConquests().length > 0" class="mb-6 p-4 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800/40 rounded-xl">
+      <p class="flex gap-2 items-center mb-2 font-semibold text-sm text-orange-800 dark:text-orange-300">
+        <span class="h-2 w-2 bg-red-500 rounded-full animate-pulse"></span>
+        Live turf battles
+      </p>
+      <StxLink to="/battles" class="text-sm font-semibold text-emerald-600">See who's attacking →</StxLink>
     </div>
 
     <!-- Filter tabs -->
@@ -50,7 +61,8 @@
             <span class="text-gray-600 text-xs dark:text-slate-400 px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded-full" :text="activity.activityType"></span>
           </div>
 
-          <StxLink x-to="'/activity/' + activity.id" class="font-bold text-gray-900 text-lg dark:text-white hover:text-emerald-600 transition" :text="activity.title"></StxLink>
+          <StxLink x-to="'/activity/' + activity.id" class="font-bold text-gray-900 text-lg dark:text-white hover:text-emerald-600 transition block" :text="activity.title"></StxLink>
+          <p :if="activity.title.includes('Capture')" class="mt-1 text-xs text-purple-600 font-medium">Territory capture run</p>
 
           <div class="mt-3 rounded-xl overflow-hidden h-40 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center">
             <div class="text-center text-gray-400 dark:text-slate-500">

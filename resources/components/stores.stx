@@ -436,6 +436,9 @@
       conquestStats: seedConquestStats,
       trailRoutes,
       territoryPolygons,
+      /** GPS samples inside enemy polygons this session (territory id → count). */
+      captureSamples: {} as Record<number, number>,
+      sessionXp: 0,
     }),
 
     getters: {
@@ -506,6 +509,103 @@
         const days = Math.floor(hours / 24)
         if (days < 7) return `${days}d ago`
         return `${Math.floor(days / 7)}w ago`
+      },
+      /** Enemy zones you can capture on your next run (Interval-style turf war). */
+      attackableTerritories(): Territory[] {
+        return this.territories.filter((t: Territory) => t.user_id !== this.currentUserId)
+      },
+      myTerritories(): Territory[] {
+        return this.territories.filter((t: Territory) => t.user_id === this.currentUserId)
+      },
+      liveConquests(): Conquest[] {
+        return this.conquests.filter((c: Conquest) => c.status === 'active')
+      },
+      /**
+       * Interval-game capture: each GPS hit inside enemy polygon adds progress.
+       * Returns 0–100; at 100 the caller should invoke conquerTerritory.
+       */
+      applyCaptureSample(territoryId: number, samplesNeeded = 10): number {
+        const prev = this.captureSamples[territoryId] ?? 0
+        const next = Math.min(samplesNeeded, prev + 1)
+        this.captureSamples = { ...this.captureSamples, [territoryId]: next }
+        return Math.round((next / samplesNeeded) * 100)
+      },
+      resetCaptureSamples(): void {
+        this.captureSamples = {}
+        this.sessionXp = 0
+      },
+      conquerTerritory(territoryId: number, runDistance: number): boolean {
+        const territory = this.territories.find((t: Territory) => t.id === territoryId)
+        if (!territory || territory.user_id === this.currentUserId)
+          return false
+
+        const attacker = this.users.find((u: User) => u.id === this.currentUserId)
+        const defender = this.users.find((u: User) => u.id === territory.user_id)
+        if (!attacker)
+          return false
+
+        const prevOwner = defender?.name ?? 'Unknown'
+        territory.user_id = this.currentUserId
+        territory.conquestCount += 1
+        territory.status = 'secure'
+        territory.claimedAt = new Date().toISOString()
+
+        const nextId = Math.max(0, ...this.conquests.map((c: Conquest) => c.id)) + 1
+        this.conquests.unshift({
+          id: nextId,
+          territory_id: territoryId,
+          territoryName: territory.name,
+          attacker_id: attacker.id,
+          attackerName: attacker.name,
+          defender_id: defender?.id ?? 0,
+          defenderName: prevOwner,
+          status: 'conquered',
+          areaCaptured: territory.areaSize,
+          runDistance,
+          description: `Captured ${territory.name} after a ${runDistance.toFixed(1)} mi run through enemy turf.`,
+          created_at: new Date().toISOString(),
+        })
+
+        if (this.conquestStats.user_id === this.currentUserId) {
+          this.conquestStats.totalConquests += 1
+          this.conquestStats.totalAreaConquered += territory.areaSize
+          this.conquestStats.powerRating += 75
+          this.conquestStats.winRate = Math.min(
+            100,
+            Math.round((this.conquestStats.totalConquests / (this.conquestStats.totalConquests + this.conquestStats.territoriesLost + 1)) * 100),
+          )
+        }
+
+        const ach = this.achievements.find((a: Achievement) => a.name === 'Conqueror')
+        if (ach && ach.progress < ach.total)
+          ach.progress = Math.min(ach.total, this.conquestStats.totalConquests)
+
+        const empire = this.achievements.find((a: Achievement) => a.name === 'Empire Builder')
+        if (empire) {
+          const owned = this.myTerritories().length
+          empire.progress = owned
+          if (owned >= empire.total && !empire.unlockedAt)
+            empire.unlockedAt = new Date().toISOString()
+        }
+
+        const nextN = Math.max(0, ...this.notifications.map((n: Notification) => n.id)) + 1
+        this.notifications.unshift({
+          id: nextN,
+          type: 'conquest_win',
+          title: 'Territory Captured!',
+          message: `You took ${territory.name} from ${prevOwner}`,
+          link: `/territory/${territoryId}`,
+          read: false,
+          created_at: new Date().toISOString(),
+        })
+
+        const { [territoryId]: _removed, ...rest } = this.captureSamples
+        this.captureSamples = rest
+        return true
+      },
+      addSessionXp(amount: number): number {
+        this.sessionXp += amount
+        return this.sessionXp
       },
     },
 

@@ -33,7 +33,10 @@ interface TrailStore {
   territoryPolygons: () => Record<number, LatLng[]>
   trailRoutes: () => Record<number, LatLng[]>
   findTrail: (id: number) => Trail | undefined
-  conquerTerritory: (id: number, distance: number) => void
+  applyCaptureSample: (id: number, samplesNeeded?: number) => number
+  resetCaptureSamples: () => void
+  conquerTerritory: (id: number, distance: number) => boolean
+  addSessionXp: (amount: number) => number
   addActivity: (activity: Record<string, unknown>) => void
 }
 
@@ -44,7 +47,9 @@ interface RecorderOptions {
 
 const YOURS = '#059669'
 const ENEMY = '#f59e0b'
+const CAPTURING = '#a855f7'
 const SIM_ROUTE = '#0ea5e9'
+const CAPTURE_SAMPLES_NEEDED = 10
 
 function fmtDuration(secs: number): string {
   const h = Math.floor(secs / 3600)
@@ -88,6 +93,10 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
   const gpsStatus = state<GpsStatus>('searching')
   const selectedTrailId = state<number>(tb?.trails()[0]?.id ?? 0)
   const conqueredIds = state<number[]>([])
+  const captureProgress = state<Record<number, number>>({})
+  const sessionXp = state(0)
+  const runMode = state<'capture' | 'free'>('capture')
+  const targetTerritoryId = state<number | null>(null)
   const conquestToast = state<string | null>(null)
 
   const trailOptions = derived(() =>
@@ -118,35 +127,58 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     toastTimer: null,
   }
 
-  function paintTerritory(territoryId: number, mine: boolean) {
+  function paintTerritory(territoryId: number, mine: boolean, progress = 0) {
     const layer = refs.territoryLayers[territoryId]
     if (!layer) return
-    const color = mine ? YOURS : ENEMY
-    layer.setStyle({ color, fillColor: color, fillOpacity: mine ? 0.45 : 0.15 })
+    if (mine) {
+      layer.setStyle({ color: YOURS, fillColor: YOURS, fillOpacity: 0.45, weight: 3 })
+      return
+    }
+    const pct = progress / 100
+    const color = progress > 0 && progress < 100 ? CAPTURING : ENEMY
+    layer.setStyle({
+      color,
+      fillColor: color,
+      fillOpacity: 0.12 + pct * 0.38,
+      weight: targetTerritoryId() === territoryId ? 4 : 2,
+      dashArray: progress > 0 && progress < 100 ? '6 4' : undefined,
+    })
   }
 
-  function flashConquest(name: string) {
-    conquestToast.set(`Conquered ${name}!`)
+  function flashConquest(name: string, xp: number) {
+    conquestToast.set(`Captured ${name}! +${xp} XP`)
     if (refs.toastTimer) clearTimeout(refs.toastTimer)
-    refs.toastTimer = setTimeout(() => conquestToast.set(null), 2800)
+    refs.toastTimer = setTimeout(() => conquestToast.set(null), 3200)
   }
 
   function checkConquest(lat: number, lng: number) {
-    if (!tb) return
+    if (!tb || runMode() === 'free') return
     const uid = tb.currentUserId()
     const polys = tb.territoryPolygons()
     const territories = tb.territories()
     const already = conqueredIds()
+    const progressMap = { ...captureProgress() }
+
     for (const t of territories) {
       if (t.user_id === uid) continue
       if (already.includes(t.id)) continue
       const poly = polys[t.id]
       if (!poly) continue
-      if (pointInPolygon([lat, lng], poly)) {
-        tb.conquerTerritory(t.id, Number(distance().toFixed(2)))
-        conqueredIds.set([...conqueredIds(), t.id])
-        paintTerritory(t.id, true)
-        flashConquest(t.name)
+      if (!pointInPolygon([lat, lng], poly)) continue
+
+      const pct = tb.applyCaptureSample(t.id, CAPTURE_SAMPLES_NEEDED)
+      progressMap[t.id] = pct
+      captureProgress.set(progressMap)
+      paintTerritory(t.id, false, pct)
+
+      if (pct >= 100) {
+        const xp = 120 + Math.round(t.areaSize / 500)
+        if (tb.conquerTerritory(t.id, Number(distance().toFixed(2)))) {
+          conqueredIds.set([...conqueredIds(), t.id])
+          sessionXp.set(tb.addSessionXp(xp))
+          paintTerritory(t.id, true)
+          flashConquest(t.name, xp)
+        }
       }
     }
   }
@@ -178,8 +210,11 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     distance.set(0)
     elevation.set(0)
     conqueredIds.set([])
+    captureProgress.set({})
+    sessionXp.set(0)
     conquestToast.set(null)
     paused.set(false)
+    if (tb) tb.resetCaptureSamples()
     refs.routeCoords = []
     if (refs.routeLine && refs.map) {
       refs.map.removeLayer(refs.routeLine)
@@ -280,12 +315,16 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     clearTimers()
     if (distance() > 0 && tb) {
       const trail = mode() === 'simulated' ? tb.findTrail(selectedTrailId()) : null
+      const captures = conqueredIds().length
+      const title = captures > 0
+        ? `Capture Run — ${captures} zone${captures > 1 ? 's' : ''} taken`
+        : `${activityType()} — ${new Date().toLocaleDateString()}`
       tb.addActivity({
         user_id: tb.currentUserId(),
         userName: 'You',
         trail_id: trail?.id ?? null,
         trail_name: trail?.name ?? `${activityType()} Activity`,
-        title: `${activityType()} — ${new Date().toLocaleDateString()}`,
+        title,
         activityType: activityType(),
         distance: Number(distance().toFixed(2)),
         duration: fmtDuration(elapsed()),
@@ -339,8 +378,14 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
           color,
           fillColor: color,
           fillOpacity: mine ? 0.45 : 0.15,
-          weight: 2,
-        }).addTo(map).bindPopup(`<b>${t.name}</b><br>${mine ? 'Yours' : 'Enemy'} — ${(t.areaSize / 1000).toFixed(1)} km²<br>${t.conquestCount} conquests`)
+          weight: targetTerritoryId() === t.id ? 4 : 2,
+        }).addTo(map).bindPopup(
+          `<b>${t.name}</b><br>${mine ? 'Your turf' : 'Enemy turf — run through to capture'}<br>${(t.areaSize / 1000).toFixed(1)} km²`,
+        )
+        layer.on('click', () => {
+          if (!mine && !recording())
+            targetTerritoryId.set(t.id)
+        })
         refs.territoryLayers[t.id] = layer
         bounds.push(...poly)
       }
@@ -407,6 +452,10 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     gpsStatus,
     selectedTrailId,
     conqueredIds,
+    captureProgress,
+    sessionXp,
+    runMode,
+    targetTerritoryId,
     conquestToast,
     trailOptions,
     // actions
