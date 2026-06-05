@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS "territory_histories_territory_histories_uuid_unique" ON "territory_histories" ("uuid");

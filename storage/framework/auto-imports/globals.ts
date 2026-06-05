@@ -10,34 +10,41 @@ Object.assign(globalThis, autoImports)
 
 // TypeScript declarations
 declare global {
-  const _increment: typeof autoImports.increment
-  const _count: typeof autoImports.count
-  const _isDark: typeof autoImports.isDark
-  const _toggleDark: typeof autoImports.toggleDark
-  const _preferredDark: typeof autoImports.preferredDark
-  const _parseGpx: typeof autoImports.parseGpx
-  const _parseJsonCoordinates: typeof autoImports.parseJsonCoordinates
-  const _parseGpsData: typeof autoImports.parseGpsData
-  const _generateSampleLoopGpx: typeof autoImports.generateSampleLoopGpx
-  const _generateSampleLoopJson: typeof autoImports.generateSampleLoopJson
-  const _validateGpsDataForClaim: typeof autoImports.validateGpsDataForClaim
-  const _haversineDistance: typeof autoImports.haversineDistance
-  const _isClosedLoop: typeof autoImports.isClosedLoop
-  const _calculatePolygonArea: typeof autoImports.calculatePolygonArea
-  const _calculatePerimeter: typeof autoImports.calculatePerimeter
-  const _simplifyTrack: typeof autoImports.simplifyTrack
-  const _pointInPolygon: typeof autoImports.pointInPolygon
-  const _lineIntersectsPolygon: typeof autoImports.lineIntersectsPolygon
-  const _routeIntersectsPolygon: typeof autoImports.routeIntersectsPolygon
-  const _getBoundingBox: typeof autoImports.getBoundingBox
-  const _parseBoundingBox: typeof autoImports.parseBoundingBox
-  const _boundingBoxesOverlap: typeof autoImports.boundingBoxesOverlap
-  const _getCentroid: typeof autoImports.getCentroid
-  const _coordinatesToGeoJson: typeof autoImports.coordinatesToGeoJson
-  const _geoJsonToCoordinates: typeof autoImports.geoJsonToCoordinates
-  const _findLinePolygonIntersections: typeof autoImports.findLinePolygonIntersections
-  const _splitPolygonByRoute: typeof autoImports.splitPolygonByRoute
-  const _generateLoopCoordinates: typeof autoImports.generateLoopCoordinates
+  const increment: typeof autoImports.increment
+  const count: typeof autoImports.count
+  const isDark: typeof autoImports.isDark
+  const toggleDark: typeof autoImports.toggleDark
+  const preferredDark: typeof autoImports.preferredDark
+  const parseGpx: typeof autoImports.parseGpx
+  const parseJsonCoordinates: typeof autoImports.parseJsonCoordinates
+  const parseGpsData: typeof autoImports.parseGpsData
+  const generateSampleLoopGpx: typeof autoImports.generateSampleLoopGpx
+  const generateSampleLoopJson: typeof autoImports.generateSampleLoopJson
+  const validateGpsDataForClaim: typeof autoImports.validateGpsDataForClaim
+  const haversineDistance: typeof autoImports.haversineDistance
+  const isClosedLoop: typeof autoImports.isClosedLoop
+  const calculatePolygonArea: typeof autoImports.calculatePolygonArea
+  const calculatePerimeter: typeof autoImports.calculatePerimeter
+  const simplifyTrack: typeof autoImports.simplifyTrack
+  const pointInPolygon: typeof autoImports.pointInPolygon
+  const lineIntersectsPolygon: typeof autoImports.lineIntersectsPolygon
+  const routeIntersectsPolygon: typeof autoImports.routeIntersectsPolygon
+  const getBoundingBox: typeof autoImports.getBoundingBox
+  const parseBoundingBox: typeof autoImports.parseBoundingBox
+  const boundingBoxesOverlap: typeof autoImports.boundingBoxesOverlap
+  const getCentroid: typeof autoImports.getCentroid
+  const coordinatesToGeoJson: typeof autoImports.coordinatesToGeoJson
+  const geoJsonToCoordinates: typeof autoImports.geoJsonToCoordinates
+  const findLinePolygonIntersections: typeof autoImports.findLinePolygonIntersections
+  const splitPolygonByRoute: typeof autoImports.splitPolygonByRoute
+  const generateLoopCoordinates: typeof autoImports.generateLoopCoordinates
+  const normalizeElement: typeof autoImports.normalizeElement
+  const getTrailCentroid: typeof autoImports.getTrailCentroid
+  const generateTiles: typeof autoImports.generateTiles
+  const getRegion: typeof autoImports.getRegion
+  const regions: typeof autoImports.regions
+  const fetchTile: typeof autoImports.fetchTile
+  const deduplicateTrails: typeof autoImports.deduplicateTrails
 }
 
 export {}

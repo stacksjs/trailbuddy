@@ -11,6 +11,7 @@ export default defineModel({
 
   traits: {
     useAuth: true,
+    useUuid: true,
     useTimestamps: true,
     useApi: {
       uri: 'users',

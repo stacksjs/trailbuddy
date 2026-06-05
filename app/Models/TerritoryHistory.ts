@@ -1,9 +1,9 @@
-import type { Model } from '@stacksjs/types'
+import { defineModel } from '@stacksjs/orm'
 import { schema } from '@stacksjs/validation'
 
 const eventTypes = ['claimed', 'conquered', 'split', 'defended'] as const
 
-export default {
+export default defineModel({
   name: 'TerritoryHistory',
   table: 'territory_histories',
   primaryKey: 'id',
@@ -12,9 +12,6 @@ export default {
   traits: {
     useUuid: true,
     useTimestamps: true,
-    useSeeder: {
-      count: 100,
-    },
     useApi: {
       uri: 'territory-histories',
       routes: ['index', 'show'],
@@ -24,7 +21,31 @@ export default {
   belongsTo: ['Territory', 'User', 'Activity'],
 
   attributes: {
-    previousOwnerId: {
+    territory_id: {
+      order: 0,
+      fillable: true,
+      validation: {
+        rule: schema.number(),
+      },
+    },
+
+    user_id: {
+      order: 0,
+      fillable: true,
+      validation: {
+        rule: schema.number(),
+      },
+    },
+
+    activity_id: {
+      order: 0,
+      fillable: true,
+      validation: {
+        rule: schema.number(),
+      },
+    },
+
+    previous_owner_id: {
       order: 1,
       fillable: true,
       nullable: true,
@@ -34,7 +55,7 @@ export default {
       factory: (faker) => faker.datatype.boolean() ? faker.number.int({ min: 1, max: 100 }) : null,
     },
 
-    eventType: {
+    event_type: {
       order: 2,
       fillable: true,
       validation: {
@@ -46,7 +67,7 @@ export default {
       factory: (faker): typeof eventTypes[number] => faker.helpers.arrayElement([...eventTypes]),
     },
 
-    areaAtEvent: {
+    area_at_event: {
       order: 3,
       fillable: true,
       nullable: true,
@@ -56,7 +77,7 @@ export default {
       factory: (faker) => faker.number.float({ min: 1000, max: 500000, fractionDigits: 2 }),
     },
 
-    previousOwnershipDuration: {
+    previous_ownership_duration: {
       order: 4,
       fillable: true,
       nullable: true,
@@ -76,7 +97,7 @@ export default {
       factory: (faker) => faker.lorem.sentence(),
     },
 
-    newTerritoryId: {
+    new_territory_id: {
       order: 6,
       fillable: true,
       nullable: true,
@@ -86,4 +107,4 @@ export default {
       factory: () => null,
     },
   },
-} satisfies Model
+})

@@ -1,9 +1,9 @@
-import type { Model } from '@stacksjs/types'
+import { defineModel } from '@stacksjs/orm'
 import { schema } from '@stacksjs/validation'
 
 const statuses = ['active', 'contested'] as const
 
-export default {
+export default defineModel({
   name: 'Territory',
   table: 'territories',
   primaryKey: 'id',
@@ -18,9 +18,6 @@ export default {
       sortable: ['createdAt', 'areaSize', 'conquestCount'],
       filterable: ['status'],
     },
-    useSeeder: {
-      count: 30,
-    },
     useApi: {
       uri: 'territories',
       routes: ['index', 'show', 'update', 'destroy'],
@@ -31,7 +28,23 @@ export default {
   hasMany: ['TerritoryHistory'],
 
   attributes: {
-    parentTerritoryId: {
+    user_id: {
+      order: 0,
+      fillable: true,
+      validation: {
+        rule: schema.number(),
+      },
+    },
+
+    activity_id: {
+      order: 0,
+      fillable: true,
+      validation: {
+        rule: schema.number(),
+      },
+    },
+
+    parent_territory_id: {
       order: 1,
       fillable: true,
       nullable: true,
@@ -51,7 +64,7 @@ export default {
       factory: (faker) => `${faker.location.street()} Territory`,
     },
 
-    polygonData: {
+    polygon_data: {
       order: 3,
       fillable: true,
       validation: {
@@ -78,7 +91,7 @@ export default {
       },
     },
 
-    boundingBox: {
+    bounding_box: {
       order: 4,
       fillable: true,
       nullable: true,
@@ -93,7 +106,7 @@ export default {
       },
     },
 
-    centerLat: {
+    center_lat: {
       order: 5,
       fillable: true,
       validation: {
@@ -105,7 +118,7 @@ export default {
       factory: (faker) => faker.location.latitude(),
     },
 
-    centerLng: {
+    center_lng: {
       order: 6,
       fillable: true,
       validation: {
@@ -117,7 +130,7 @@ export default {
       factory: (faker) => faker.location.longitude(),
     },
 
-    areaSize: {
+    area_size: {
       order: 7,
       fillable: true,
       validation: {
@@ -151,7 +164,7 @@ export default {
       factory: (faker): typeof statuses[number] => faker.helpers.arrayElement([...statuses]),
     },
 
-    conquestCount: {
+    conquest_count: {
       order: 10,
       fillable: true,
       validation: {
@@ -160,7 +173,7 @@ export default {
       factory: (faker) => faker.number.int({ min: 0, max: 50 }),
     },
 
-    claimedAt: {
+    claimed_at: {
       order: 11,
       fillable: true,
       validation: {
@@ -176,4 +189,4 @@ export default {
   dashboard: {
     highlight: true,
   },
-} satisfies Model
+})

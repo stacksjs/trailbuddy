@@ -1,4 +1,8 @@
 // No imports needed - everything is auto-imported!
+//
+// NOTE: the ORM is snake_case end-to-end (rows + write payloads use column
+// names). Reads/write keys below use snake_case; the JSON response keeps
+// camelCase for API consumers.
 
 const MIN_TERRITORY_SIZE = 1000
 
@@ -25,11 +29,11 @@ export default new Action({
         return response.json({ success: false, error: 'Activity not found' }, 404)
       }
 
-      if (!activity.gpxData) {
+      if (!activity.gpx_data) {
         return response.json({ success: false, error: 'Activity has no GPS data' }, 400)
       }
 
-      const routeCoordinates = parseGpsData(activity.gpxData)
+      const routeCoordinates = parseGpsData(activity.gpx_data)
       if (routeCoordinates.length < 2) {
         return response.json({ success: false, error: 'Insufficient GPS data' }, 400)
       }
@@ -46,50 +50,50 @@ export default new Action({
       }> = []
 
       for (const territory of allTerritories) {
-        if (territory.userId === userId) continue
-        if (!territory.boundingBox || !boundingBoxesOverlap(routeBbox, territory.boundingBox)) continue
+        if (territory.user_id === userId) continue
+        if (!territory.bounding_box || !boundingBoxesOverlap(routeBbox, territory.bounding_box)) continue
 
-        const territoryPolygon = geoJsonToCoordinates(territory.polygonData)
+        const territoryPolygon = geoJsonToCoordinates(territory.polygon_data)
         if (!routeIntersectsPolygon(routeCoordinates, territoryPolygon)) continue
 
         const splitPolygons = splitPolygonByRoute(territoryPolygon, routeCoordinates)
 
         if (splitPolygons.length <= 1) {
-          const previousOwner = territory.userId
-          const previousClaimedAt = territory.claimedAt
+          const previousOwner = territory.user_id
+          const previousClaimedAt = territory.claimed_at
           const ownershipDuration = previousClaimedAt
             ? Math.floor((Date.now() - new Date(previousClaimedAt).getTime()) / 1000)
             : 0
 
-          await territory.update({
-            userId,
-            conquestCount: (territory.conquestCount || 0) + 1,
-            claimedAt: new Date().toISOString(),
+          await Territory.forceUpdate(territory.id, {
+            user_id: userId,
+            conquest_count: (territory.conquest_count || 0) + 1,
+            claimed_at: new Date().toISOString(),
           })
 
-          await TerritoryHistory.create({
-            territoryId: territory.id,
-            userId,
-            activityId,
-            previousOwnerId: previousOwner,
-            eventType: 'conquered',
-            areaAtEvent: territory.areaSize,
-            previousOwnershipDuration: ownershipDuration,
+          await TerritoryHistory.forceCreate({
+            territory_id: territory.id,
+            user_id: userId,
+            activity_id: activityId,
+            previous_owner_id: previousOwner,
+            event_type: 'conquered',
+            area_at_event: territory.area_size,
+            previous_ownership_duration: ownershipDuration,
             notes: 'Full territory conquest',
           })
 
           conqueredTerritories.push({
             originalId: territory.id,
             originalOwner: previousOwner,
-            conqueredArea: territory.areaSize,
+            conqueredArea: territory.area_size,
             remainingArea: 0,
           })
 
-          await updateConquestStats(userId, previousOwner, territory.areaSize, 0)
+          await updateConquestStats(userId, previousOwner, territory.area_size, 0)
         }
         else {
-          const previousOwner = territory.userId
-          const previousClaimedAt = territory.claimedAt
+          const previousOwner = territory.user_id
+          const previousClaimedAt = territory.claimed_at
           const ownershipDuration = previousClaimedAt
             ? Math.floor((Date.now() - new Date(previousClaimedAt).getTime()) / 1000)
             : 0
@@ -104,52 +108,52 @@ export default new Action({
 
           if (conqueredPolygon && conqueredPolygon.area >= MIN_TERRITORY_SIZE) {
             const keepCentroid = getCentroid(keepPolygon.polygon)
-            await territory.update({
-              polygonData: coordinatesToGeoJson(keepPolygon.polygon),
-              boundingBox: getBoundingBox(keepPolygon.polygon),
-              centerLat: keepCentroid.lat,
-              centerLng: keepCentroid.lng,
-              areaSize: keepPolygon.area,
+            await Territory.forceUpdate(territory.id, {
+              polygon_data: coordinatesToGeoJson(keepPolygon.polygon),
+              bounding_box: getBoundingBox(keepPolygon.polygon),
+              center_lat: keepCentroid.lat,
+              center_lng: keepCentroid.lng,
+              area_size: keepPolygon.area,
               perimeter: calculatePerimeter(keepPolygon.polygon),
             })
 
             const conqueredCentroid = getCentroid(conqueredPolygon.polygon)
-            const newTerritory = await Territory.create({
-              userId,
-              activityId,
-              parentTerritoryId: territory.id,
+            const newTerritory = await Territory.forceCreate({
+              user_id: userId,
+              activity_id: activityId,
+              parent_territory_id: territory.id,
               name: `${territory.name} (Conquered)`,
-              polygonData: coordinatesToGeoJson(conqueredPolygon.polygon),
-              boundingBox: getBoundingBox(conqueredPolygon.polygon),
-              centerLat: conqueredCentroid.lat,
-              centerLng: conqueredCentroid.lng,
-              areaSize: conqueredPolygon.area,
+              polygon_data: coordinatesToGeoJson(conqueredPolygon.polygon),
+              bounding_box: getBoundingBox(conqueredPolygon.polygon),
+              center_lat: conqueredCentroid.lat,
+              center_lng: conqueredCentroid.lng,
+              area_size: conqueredPolygon.area,
               perimeter: calculatePerimeter(conqueredPolygon.polygon),
               status: 'active',
-              conquestCount: 1,
-              claimedAt: new Date().toISOString(),
+              conquest_count: 1,
+              claimed_at: new Date().toISOString(),
             })
 
-            await TerritoryHistory.create({
-              territoryId: territory.id,
-              userId: previousOwner,
-              activityId,
-              previousOwnerId: previousOwner,
-              eventType: 'split',
-              areaAtEvent: keepPolygon.area,
-              previousOwnershipDuration: ownershipDuration,
-              newTerritoryId: newTerritory.id,
+            await TerritoryHistory.forceCreate({
+              territory_id: territory.id,
+              user_id: previousOwner,
+              activity_id: activityId,
+              previous_owner_id: previousOwner,
+              event_type: 'split',
+              area_at_event: keepPolygon.area,
+              previous_ownership_duration: ownershipDuration,
+              new_territory_id: newTerritory.id,
               notes: 'Territory split - retained portion',
             })
 
-            await TerritoryHistory.create({
-              territoryId: newTerritory.id,
-              userId,
-              activityId,
-              previousOwnerId: previousOwner,
-              eventType: 'conquered',
-              areaAtEvent: conqueredPolygon.area,
-              previousOwnershipDuration: ownershipDuration,
+            await TerritoryHistory.forceCreate({
+              territory_id: newTerritory.id,
+              user_id: userId,
+              activity_id: activityId,
+              previous_owner_id: previousOwner,
+              event_type: 'conquered',
+              area_at_event: conqueredPolygon.area,
+              previous_ownership_duration: ownershipDuration,
               notes: 'Partial territory conquest',
             })
 
@@ -188,42 +192,42 @@ async function updateConquestStats(
   conqueredArea: number,
   remainingArea: number,
 ) {
-  const conquerorStats = await TerritoryStats.where('userId', '=', conquerorId).first()
+  const conquerorStats = await TerritoryStats.where('user_id', '=', conquerorId).first()
   if (conquerorStats) {
-    await conquerorStats.update({
-      totalTerritoriesOwned: (conquerorStats.totalTerritoriesOwned || 0) + 1,
-      totalAreaOwned: (conquerorStats.totalAreaOwned || 0) + conqueredArea,
-      territoriesConquered: (conquerorStats.territoriesConquered || 0) + 1,
-      largestTerritoryArea: Math.max(conquerorStats.largestTerritoryArea || 0, conqueredArea),
+    await TerritoryStats.forceUpdate(conquerorStats.id, {
+      total_territories_owned: (conquerorStats.total_territories_owned || 0) + 1,
+      total_area_owned: (conquerorStats.total_area_owned || 0) + conqueredArea,
+      territories_conquered: (conquerorStats.territories_conquered || 0) + 1,
+      largest_territory_area: Math.max(conquerorStats.largest_territory_area || 0, conqueredArea),
     })
   }
   else {
-    await TerritoryStats.create({
-      userId: conquerorId,
-      totalTerritoriesOwned: 1,
-      totalAreaOwned: conqueredArea,
-      territoriesClaimed: 0,
-      territoriesConquered: 1,
-      territoriesLost: 0,
-      territoriesDefended: 0,
-      longestOwnershipDays: 0,
-      largestTerritoryArea: conqueredArea,
-      weeklyRank: 999,
-      allTimeRank: 999,
+    await TerritoryStats.forceCreate({
+      user_id: conquerorId,
+      total_territories_owned: 1,
+      total_area_owned: conqueredArea,
+      territories_claimed: 0,
+      territories_conquered: 1,
+      territories_lost: 0,
+      territories_defended: 0,
+      longest_ownership_days: 0,
+      largest_territory_area: conqueredArea,
+      weekly_rank: 999,
+      all_time_rank: 999,
     })
   }
 
-  const previousOwnerStats = await TerritoryStats.where('userId', '=', previousOwnerId).first()
+  const previousOwnerStats = await TerritoryStats.where('user_id', '=', previousOwnerId).first()
   if (previousOwnerStats) {
     const lostTerritory = remainingArea === 0 ? 1 : 0
     const newTotalOwned = remainingArea === 0
-      ? Math.max(0, (previousOwnerStats.totalTerritoriesOwned || 0) - 1)
-      : previousOwnerStats.totalTerritoriesOwned || 0
+      ? Math.max(0, (previousOwnerStats.total_territories_owned || 0) - 1)
+      : previousOwnerStats.total_territories_owned || 0
 
-    await previousOwnerStats.update({
-      totalTerritoriesOwned: newTotalOwned,
-      totalAreaOwned: Math.max(0, (previousOwnerStats.totalAreaOwned || 0) - conqueredArea),
-      territoriesLost: (previousOwnerStats.territoriesLost || 0) + lostTerritory,
+    await TerritoryStats.forceUpdate(previousOwnerStats.id, {
+      total_territories_owned: newTotalOwned,
+      total_area_owned: Math.max(0, (previousOwnerStats.total_area_owned || 0) - conqueredArea),
+      territories_lost: (previousOwnerStats.territories_lost || 0) + lostTerritory,
     })
   }
 }

@@ -1,4 +1,8 @@
 // No imports needed - everything is auto-imported!
+//
+// NOTE: the ORM is snake_case end-to-end (rows + write payloads use column
+// names like user_id / gpx_data / area_size). Reads and write keys below use
+// snake_case accordingly; the JSON response keeps camelCase for API consumers.
 
 const MIN_TERRITORY_SIZE = 1000
 const MAX_TERRITORY_SIZE = 5000000
@@ -26,15 +30,15 @@ export default new Action({
         return response.json({ success: false, error: 'Activity not found' }, 404)
       }
 
-      if (activity.userId !== userId) {
+      if (activity.user_id !== userId) {
         return response.json({ success: false, error: 'Activity does not belong to user' }, 403)
       }
 
-      if (!activity.gpxData) {
+      if (!activity.gpx_data) {
         return response.json({ success: false, error: 'Activity has no GPS data' }, 400)
       }
 
-      const validation = validateGpsDataForClaim(activity.gpxData)
+      const validation = validateGpsDataForClaim(activity.gpx_data)
       if (!validation.valid) {
         return response.json({ success: false, error: validation.error }, 400)
       }
@@ -70,52 +74,52 @@ export default new Action({
       const boundingBox = getBoundingBox(simplified)
       const polygonData = coordinatesToGeoJson(simplified)
 
-      const territory = await Territory.create({
-        userId,
-        activityId,
+      const territory = await Territory.forceCreate({
+        user_id: userId,
+        activity_id: activityId,
         name: `Territory #${Date.now()}`,
-        polygonData,
-        boundingBox,
-        centerLat: centroid.lat,
-        centerLng: centroid.lng,
-        areaSize: area,
+        polygon_data: polygonData,
+        bounding_box: boundingBox,
+        center_lat: centroid.lat,
+        center_lng: centroid.lng,
+        area_size: area,
         perimeter,
         status: 'active',
-        conquestCount: 0,
-        claimedAt: new Date().toISOString(),
+        conquest_count: 0,
+        claimed_at: new Date().toISOString(),
       })
 
-      await TerritoryHistory.create({
-        territoryId: territory.id,
-        userId,
-        activityId,
-        eventType: 'claimed',
-        areaAtEvent: area,
+      await TerritoryHistory.forceCreate({
+        territory_id: territory.id,
+        user_id: userId,
+        activity_id: activityId,
+        event_type: 'claimed',
+        area_at_event: area,
         notes: 'Initial claim',
       })
 
-      const stats = await TerritoryStats.where('userId', '=', userId).first()
+      const stats = await TerritoryStats.where('user_id', '=', userId).first()
       if (stats) {
-        await stats.update({
-          totalTerritoriesOwned: (stats.totalTerritoriesOwned || 0) + 1,
-          totalAreaOwned: (stats.totalAreaOwned || 0) + area,
-          territoriesClaimed: (stats.territoriesClaimed || 0) + 1,
-          largestTerritoryArea: Math.max(stats.largestTerritoryArea || 0, area),
+        await TerritoryStats.forceUpdate(stats.id, {
+          total_territories_owned: (stats.total_territories_owned || 0) + 1,
+          total_area_owned: (stats.total_area_owned || 0) + area,
+          territories_claimed: (stats.territories_claimed || 0) + 1,
+          largest_territory_area: Math.max(stats.largest_territory_area || 0, area),
         })
       }
       else {
-        await TerritoryStats.create({
-          userId,
-          totalTerritoriesOwned: 1,
-          totalAreaOwned: area,
-          territoriesClaimed: 1,
-          territoriesConquered: 0,
-          territoriesLost: 0,
-          territoriesDefended: 0,
-          longestOwnershipDays: 0,
-          largestTerritoryArea: area,
-          weeklyRank: 999,
-          allTimeRank: 999,
+        await TerritoryStats.forceCreate({
+          user_id: userId,
+          total_territories_owned: 1,
+          total_area_owned: area,
+          territories_claimed: 1,
+          territories_conquered: 0,
+          territories_lost: 0,
+          territories_defended: 0,
+          longest_ownership_days: 0,
+          largest_territory_area: area,
+          weekly_rank: 999,
+          all_time_rank: 999,
         })
       }
 
@@ -124,10 +128,10 @@ export default new Action({
         territory: {
           id: territory.id,
           name: territory.name,
-          areaSize: territory.areaSize,
+          areaSize: territory.area_size,
           perimeter: territory.perimeter,
-          centerLat: territory.centerLat,
-          centerLng: territory.centerLng,
+          centerLat: territory.center_lat,
+          centerLng: territory.center_lng,
         },
       })
     }

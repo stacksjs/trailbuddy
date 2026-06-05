@@ -1,7 +1,7 @@
-import type { Model } from '@stacksjs/types'
+import { defineModel } from '@stacksjs/orm'
 import { schema } from '@stacksjs/validation'
 
-export default {
+export default defineModel({
   name: 'SavedTrail',
   table: 'saved_trails',
   primaryKey: 'id',
@@ -47,4 +47,4 @@ export default {
       factory: (faker) => faker.datatype.boolean(),
     },
   },
-} satisfies Model
+})

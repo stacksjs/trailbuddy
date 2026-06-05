@@ -1,9 +1,9 @@
-import type { Model } from '@stacksjs/types'
+import { defineModel } from '@stacksjs/orm'
 import { schema } from '@stacksjs/validation'
 
 const difficulties = ['easy', 'moderate', 'hard'] as const
 
-export default {
+export default defineModel({
   name: 'Trail',
   table: 'trails',
   primaryKey: 'id',
@@ -17,9 +17,6 @@ export default {
       searchable: ['name', 'location', 'tags'],
       sortable: ['createdAt', 'rating', 'distance', 'elevation'],
       filterable: ['difficulty', 'rating'],
-    },
-    useSeeder: {
-      count: 20,
     },
     useApi: {
       uri: 'trails',
@@ -182,4 +179,4 @@ export default {
   dashboard: {
     highlight: true,
   },
-} satisfies Model
+})

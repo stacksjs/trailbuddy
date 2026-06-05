@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS "user_achievements_user_achievements_uuid_unique" ON "user_achievements" ("uuid");

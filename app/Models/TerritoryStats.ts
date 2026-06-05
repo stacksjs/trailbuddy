@@ -1,7 +1,7 @@
-import type { Model } from '@stacksjs/types'
+import { defineModel } from '@stacksjs/orm'
 import { schema } from '@stacksjs/validation'
 
-export default {
+export default defineModel({
   name: 'TerritoryStats',
   table: 'territory_stats',
   primaryKey: 'id',
@@ -10,9 +10,6 @@ export default {
   traits: {
     useUuid: true,
     useTimestamps: true,
-    useSeeder: {
-      count: 20,
-    },
     useApi: {
       uri: 'territory-stats',
       routes: ['index', 'show'],
@@ -22,8 +19,16 @@ export default {
   belongsTo: ['User'],
 
   attributes: {
+    user_id: {
+      order: 0,
+      fillable: true,
+      validation: {
+        rule: schema.number(),
+      },
+    },
+
     // Current number of territories owned
-    totalTerritoriesOwned: {
+    total_territories_owned: {
       order: 1,
       fillable: true,
       validation: {
@@ -33,7 +38,7 @@ export default {
     },
 
     // Total area owned in square meters
-    totalAreaOwned: {
+    total_area_owned: {
       order: 2,
       fillable: true,
       validation: {
@@ -43,7 +48,7 @@ export default {
     },
 
     // Lifetime territories claimed (including lost ones)
-    territoriesClaimed: {
+    territories_claimed: {
       order: 3,
       fillable: true,
       validation: {
@@ -53,7 +58,7 @@ export default {
     },
 
     // Lifetime territories conquered from others
-    territoriesConquered: {
+    territories_conquered: {
       order: 4,
       fillable: true,
       validation: {
@@ -63,7 +68,7 @@ export default {
     },
 
     // Lifetime territories lost to others
-    territoriesLost: {
+    territories_lost: {
       order: 5,
       fillable: true,
       validation: {
@@ -73,7 +78,7 @@ export default {
     },
 
     // Times user successfully defended
-    territoriesDefended: {
+    territories_defended: {
       order: 6,
       fillable: true,
       validation: {
@@ -83,7 +88,7 @@ export default {
     },
 
     // Longest time holding a single territory in days
-    longestOwnershipDays: {
+    longest_ownership_days: {
       order: 7,
       fillable: true,
       validation: {
@@ -93,7 +98,7 @@ export default {
     },
 
     // Largest territory ever owned in square meters
-    largestTerritoryArea: {
+    largest_territory_area: {
       order: 8,
       fillable: true,
       validation: {
@@ -103,7 +108,7 @@ export default {
     },
 
     // Current weekly leaderboard rank
-    weeklyRank: {
+    weekly_rank: {
       order: 9,
       fillable: true,
       nullable: true,
@@ -114,7 +119,7 @@ export default {
     },
 
     // All-time leaderboard rank
-    allTimeRank: {
+    all_time_rank: {
       order: 10,
       fillable: true,
       nullable: true,
@@ -124,4 +129,4 @@ export default {
       factory: (faker) => faker.number.int({ min: 1, max: 500 }),
     },
   },
-} satisfies Model
+})

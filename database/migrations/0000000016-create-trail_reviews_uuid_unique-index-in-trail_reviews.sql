@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS "trail_reviews_trail_reviews_uuid_unique" ON "trail_reviews" ("uuid");

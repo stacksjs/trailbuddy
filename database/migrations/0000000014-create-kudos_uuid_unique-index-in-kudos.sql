@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS "kudos_kudos_uuid_unique" ON "kudos" ("uuid");

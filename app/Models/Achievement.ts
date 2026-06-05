@@ -1,11 +1,11 @@
-import type { Model } from '@stacksjs/types'
+import { defineModel } from '@stacksjs/orm'
 import { schema } from '@stacksjs/validation'
 
 const categories = ['distance', 'elevation', 'streak', 'social', 'exploration', 'speed'] as const
 const targetUnits = ['trails', 'miles', 'feet', 'days', 'kudos', 'hours'] as const
 const badgeColors = ['gold', 'silver', 'bronze', 'emerald', 'ruby'] as const
 
-export default {
+export default defineModel({
   name: 'Achievement',
   table: 'achievements',
   primaryKey: 'id',
@@ -19,9 +19,6 @@ export default {
       searchable: ['name', 'description', 'category'],
       sortable: ['createdAt', 'name'],
       filterable: ['category'],
-    },
-    useSeeder: {
-      count: 15,
     },
     useApi: {
       uri: 'achievements',
@@ -134,4 +131,4 @@ export default {
   dashboard: {
     highlight: true,
   },
-} satisfies Model
+})

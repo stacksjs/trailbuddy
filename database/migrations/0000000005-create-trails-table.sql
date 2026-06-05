@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS "trails" (
+  "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+  "name" TEXT,
+  "location" TEXT,
+  "distance" INTEGER,
+  "elevation" INTEGER,
+  "difficulty" TEXT CHECK ("difficulty" IN ('easy', 'moderate', 'hard')),
+  "rating" INTEGER,
+  "review_count" INTEGER,
+  "estimated_time" TEXT,
+  "image" TEXT,
+  "tags" TEXT,
+  "latitude" INTEGER,
+  "longitude" INTEGER,
+  "description" TEXT,
+  "geometry" TEXT,
+  "created_at" TEXT not null default CURRENT_TIMESTAMP,
+  "updated_at" TEXT,
+  "uuid" TEXT
+);

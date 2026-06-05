@@ -1,9 +1,9 @@
-import type { Model } from '@stacksjs/types'
+import { defineModel } from '@stacksjs/orm'
 import { schema } from '@stacksjs/validation'
 
 const activityTypes = ['Trail Run', 'Hike', 'Walk', 'Bike'] as const
 
-export default {
+export default defineModel({
   name: 'Activity',
   table: 'activities',
   primaryKey: 'id',
@@ -18,9 +18,6 @@ export default {
       sortable: ['createdAt', 'distance', 'duration'],
       filterable: ['activityType', 'userId', 'trailId'],
     },
-    useSeeder: {
-      count: 50,
-    },
     useApi: {
       uri: 'activities',
       routes: ['index', 'store', 'show', 'update', 'destroy'],
@@ -30,7 +27,23 @@ export default {
   belongsTo: ['User', 'Trail'],
 
   attributes: {
-    activityType: {
+    user_id: {
+      order: 0,
+      fillable: true,
+      validation: {
+        rule: schema.number(),
+      },
+    },
+
+    trail_id: {
+      order: 0,
+      fillable: true,
+      validation: {
+        rule: schema.number(),
+      },
+    },
+
+    activity_type: {
       order: 1,
       fillable: true,
       validation: {
@@ -93,7 +106,7 @@ export default {
       factory: (faker) => faker.number.int({ min: 100, max: 3000 }),
     },
 
-    kudosCount: {
+    kudos_count: {
       order: 6,
       fillable: true,
       validation: {
@@ -111,7 +124,7 @@ export default {
       factory: (faker) => faker.lorem.sentence(),
     },
 
-    gpxData: {
+    gpx_data: {
       order: 8,
       fillable: true,
       validation: {
@@ -120,7 +133,7 @@ export default {
       factory: () => null,
     },
 
-    completedAt: {
+    completed_at: {
       order: 9,
       fillable: true,
       validation: {
@@ -133,4 +146,4 @@ export default {
   dashboard: {
     highlight: true,
   },
-} satisfies Model
+})

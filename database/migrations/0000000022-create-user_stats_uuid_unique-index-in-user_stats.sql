@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS "user_stats_user_stats_uuid_unique" ON "user_stats" ("uuid");

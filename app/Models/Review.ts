@@ -1,9 +1,9 @@
-import type { Model } from '@stacksjs/types'
+import { defineModel } from '@stacksjs/orm'
 import { schema } from '@stacksjs/validation'
 
 const conditions = ['excellent', 'good', 'fair', 'poor', 'muddy', 'icy'] as const
 
-export default {
+export default defineModel({
   name: 'Review',
   table: 'trail_reviews',
   primaryKey: 'id',
@@ -17,9 +17,6 @@ export default {
       searchable: ['title', 'content'],
       sortable: ['createdAt', 'rating', 'helpfulCount'],
       filterable: ['rating'],
-    },
-    useSeeder: {
-      count: 100,
     },
     useApi: {
       uri: 'trail-reviews',
@@ -119,4 +116,4 @@ export default {
   dashboard: {
     highlight: true,
   },
-} satisfies Model
+})

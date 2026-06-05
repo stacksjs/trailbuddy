@@ -1,1 +1,0 @@
-ALTER TABLE trails ADD COLUMN geometry TEXT;
