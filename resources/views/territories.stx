@@ -4,88 +4,21 @@
 
 @section('content')
 <script client>
+  import { useTerritoryExplorer } from '../composables/useTerritoryExplorer'
+
   useHead({ title: 'Territory Game — TrailBuddy' })
 
   const tb = useStore('tb')
-  const filter = state<'all' | 'mine' | 'contested'>('all')
+  const {
+    filter,
+    currentUserId,
+    filtered,
+    rankedLeaderboard,
+    formatArea,
+    mountTerritoryMap,
+  } = useTerritoryExplorer(tb)
 
-  const currentUserId = derived(() => tb?.currentUserId())
-
-  const filtered = derived(() => {
-    if (!tb) return []
-    const f = filter()
-    if (f === 'all') return tb.territories()
-    if (f === 'mine') return tb.territories().filter((t: any) => t.user_id === currentUserId())
-    return tb.territories().filter((t: any) => t.status === 'contested')
-  })
-
-  const leaderboard = derived(() => {
-    if (!tb) return []
-    return tb.users().map((u: any) => {
-      const owned = tb.territories().filter((t: any) => t.user_id === u.id)
-      return {
-        user_id: u.id,
-        userName: u.name,
-        totalTerritoriesOwned: owned.length,
-        totalAreaOwned: owned.reduce((sum: number, t: any) => sum + t.areaSize, 0),
-      }
-    }).sort((a: any, b: any) => b.totalAreaOwned - a.totalAreaOwned).slice(0, 10)
-  })
-
-  const formatArea = (area: number): string => `${(area / 1000).toFixed(1)} km²`
-
-  onMount(() => {
-    setTimeout(() => {
-      if (typeof L === 'undefined' || !tb) return
-      const el = document.getElementById('territories-map')
-      if (!el) return
-      const map = L.map('territories-map', { scrollWheelZoom: true })
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap',
-        maxZoom: 18,
-        detectRetina: true,
-      }).addTo(map)
-      const bounds: [number, number][] = []
-      tb.territories().forEach((t: any) => {
-        const coords = tb.territoryPolygons()[t.id]
-        if (!coords) return
-        const isYours = t.user_id === currentUserId()
-        const color = isYours ? '#059669' : '#f59e0b'
-        const polygon = L.polygon(coords, {
-          color, fillColor: color, fillOpacity: isYours ? 0.4 : 0.2,
-          weight: isYours ? 3 : 2, dashArray: t.status === 'contested' ? '8 4' : undefined,
-        }).addTo(map)
-        polygon.on('click', () => {
-          map.flyToBounds(polygon.getBounds(), { padding: [40, 40], duration: 0.5 })
-        })
-        bounds.push(...coords)
-      })
-      const routes = tb.trailRoutes()
-      tb.trails().forEach((tr: any) => {
-        if (!tr.lat || !tr.lng) return
-        const fill = tr.difficulty === 'hard' ? '#dc2626' : tr.difficulty === 'moderate' ? '#f59e0b' : '#10b981'
-        // Trail route polyline (GPS path)
-        const coords = routes[tr.id]
-        if (coords && coords.length > 1) {
-          L.polyline(coords, { color: fill, weight: 3, opacity: 0.75 }).addTo(map)
-        }
-        const marker = L.circleMarker([tr.lat, tr.lng], {
-          radius: 6, color: '#fff', weight: 2, fillColor: fill, fillOpacity: 0.95,
-        }).addTo(map)
-        marker.on('click', () => {
-          const coords = routes[tr.id]
-          if (coords && coords.length > 1) {
-            map.flyToBounds(L.latLngBounds(coords), { padding: [40, 40], duration: 0.5 })
-          }
-          else {
-            map.flyTo([tr.lat, tr.lng], 14, { duration: 0.5 })
-          }
-        })
-        bounds.push([tr.lat, tr.lng])
-      })
-      if (bounds.length) map.fitBounds(L.latLngBounds(bounds), { padding: [30, 30] })
-    }, 100)
-  })
+  onMount(() => mountTerritoryMap())
 </script>
 
   <!-- Hero -->
@@ -103,7 +36,7 @@
   <!-- Map -->
   <section class="-mt-8 mx-auto px-4 py-12 sm:px-6 lg:px-8 max-w-7xl">
     <div class="card p-0 overflow-hidden">
-      <div id="territories-map" class="h-96"></div>
+      <div id="territories-map" class="trail-map-panel ts-map-container"></div>
     </div>
   </section>
 
@@ -124,27 +57,27 @@
           <template :for="territory in filtered">
             <StxLink x-to="'/territory/' + territory.id" class="card block hover:shadow-md transition">
               <div class="flex items-center justify-between mb-3">
-                <h3 class="font-bold dark:text-white" x-text="territory.name"></h3>
-                <span class="px-2 py-0.5 text-xs rounded-full font-medium" x-class="territory.user_id === currentUserId ? 'bg-emerald-100 text-emerald-700' : territory.status === 'contested' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'" x-text="territory.user_id === currentUserId ? 'Yours' : territory.status === 'contested' ? 'Contested' : 'Enemy'"></span>
+                <h3 class="font-bold dark:text-white" :text="territory.name"></h3>
+                <span class="px-2 py-0.5 text-xs rounded-full font-medium" x-class="territory.user_id === currentUserId() ? 'bg-emerald-100 text-emerald-700' : territory.status === 'contested' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'" :text="territory.user_id === currentUserId() ? 'Yours' : territory.status === 'contested' ? 'Contested' : 'Enemy'"></span>
               </div>
               <div class="grid grid-cols-3 gap-2 text-center pt-3 border-t border-gray-100 dark:border-slate-700">
                 <div>
-                  <p class="font-bold text-sm text-emerald-600" x-text="formatArea(territory.areaSize)"></p>
+                  <p class="font-bold text-sm text-emerald-600" :text="formatArea(territory.areaSize)"></p>
                   <p class="metric-label">Size</p>
                 </div>
                 <div>
-                  <p class="font-bold text-sm dark:text-white" x-text="territory.conquestCount"></p>
+                  <p class="font-bold text-sm dark:text-white" :text="territory.conquestCount"></p>
                   <p class="metric-label">Conquests</p>
                 </div>
                 <div>
-                  <p class="font-bold text-sm dark:text-white" x-text="territory.defendCount"></p>
+                  <p class="font-bold text-sm dark:text-white" :text="territory.defendCount"></p>
                   <p class="metric-label">Defenses</p>
                 </div>
               </div>
             </StxLink>
           </template>
 
-          <div :if="filtered.length === 0" class="col-span-2 py-16 text-center">
+          <div :if="filtered().length === 0" class="col-span-2 py-16 text-center">
             <div class="w-20 h-20 mx-auto mb-6 bg-emerald-100 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center">
               <Icon name="map" size="40" class="text-emerald-400" />
             </div>
@@ -163,14 +96,14 @@
             Territory Leaders
           </h3>
           <div class="space-y-2">
-            <template :for="(entry, index) in leaderboard">
-              <div class="flex items-center gap-3 p-2 rounded-lg" x-class="entry.user_id === currentUserId ? 'bg-emerald-50 dark:bg-emerald-900/10' : ''">
-                <span class="w-6 text-center font-bold" x-class="index < 3 ? 'text-yellow-500' : 'text-gray-400'" x-text="index + 1"></span>
+            <template :for="entry in rankedLeaderboard">
+              <div class="flex items-center gap-3 p-2 rounded-lg" x-class="entry.user_id === currentUserId() ? 'bg-emerald-50 dark:bg-emerald-900/10' : ''">
+                <span class="w-6 text-center font-bold" x-class="entry.rank <= 3 ? 'text-yellow-500' : 'text-gray-400'" :text="entry.rank"></span>
                 <div class="flex-1 min-w-0">
-                  <p class="font-medium text-sm dark:text-white truncate" x-text="entry.user_id === currentUserId ? 'You' : entry.userName"></p>
-                  <p class="text-xs text-gray-500" x-text="formatArea(entry.totalAreaOwned)"></p>
+                  <p class="font-medium text-sm dark:text-white truncate" :text="entry.user_id === currentUserId() ? 'You' : entry.userName"></p>
+                  <p class="text-xs text-gray-500" :text="formatArea(entry.totalAreaOwned)"></p>
                 </div>
-                <span class="text-xs font-semibold text-gray-600 dark:text-slate-400" x-text="entry.totalTerritoriesOwned + ' owned'"></span>
+                <span class="text-xs font-semibold text-gray-600 dark:text-slate-400" :text="entry.totalTerritoriesOwned + ' owned'"></span>
               </div>
             </template>
           </div>

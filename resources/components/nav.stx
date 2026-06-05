@@ -1,10 +1,10 @@
 <script client>
   if (typeof navLinks === 'undefined') var navLinks = state([
     { to: '/feed', label: 'Feed' },
-    { to: '/territories', label: 'Map' },
+    { to: '/trails', label: 'Trails' },
+    { to: '/territories', label: 'Turf' },
     { to: '/battles', label: 'Battles' },
     { to: '/leaderboard', label: 'Rank' },
-    { to: '/trails', label: 'Trails' },
   ])
   const mobileOpen = state(false)
 </script>

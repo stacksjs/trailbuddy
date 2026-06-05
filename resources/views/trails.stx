@@ -4,11 +4,23 @@
 
 @section('content')
 <script client>
+  import { catalogError, catalogLoading, catalogSource } from '../composables/useTrailCatalog'
+  import {
+    createTrailMap,
+    drawTrailMarker,
+    drawTrailRoute,
+    runWhenMapReady,
+    trailDifficultyColor,
+    type TrailMapHandle,
+  } from '../composables/useTrailMap'
+
   useHead({ title: 'Explore Trails — TrailBuddy' })
 
   const tb = useStore('tb')
   const search = state('')
   const difficulty = state<'all' | 'easy' | 'moderate' | 'hard'>('all')
+  const selectedTrailId = state<number | null>(null)
+  let exploreMap: TrailMapHandle | null = null
 
   const filtered = derived(() => {
     if (!tb) return []
@@ -19,11 +31,72 @@
       && (d === 'all' || t.difficulty === d)
     )
   })
+
+  const trailCount = derived(() => tb ? tb.trails().length : 0)
+  const routeCount = derived(() => {
+    if (!tb) return 0
+    const routes = tb.trailRoutes()
+    return tb.trails().filter((t: any) => (routes[t.id]?.length ?? 0) > 1).length
+  })
+
+  async function refreshExploreMap() {
+    if (!tb) return
+    exploreMap?.destroy()
+    exploreMap = await createTrailMap('trails-explore-map', { scrollWheelZoom: true, zoom: 5 })
+    if (!exploreMap) return
+    const { map } = exploreMap
+    const bounds: [number, number][] = []
+    const routes = tb.trailRoutes()
+
+    for (const tr of filtered()) {
+      const coords = routes[tr.id]
+      const color = trailDifficultyColor(tr.difficulty)
+      if (coords && coords.length > 1) {
+        await drawTrailRoute(map, coords, { color, weight: 3, opacity: 0.8 })
+        bounds.push(...coords)
+      }
+      await drawTrailMarker(map, tr.lat, tr.lng, {
+        difficulty: tr.difficulty,
+        popupHtml: `<b>${tr.name}</b><br>${tr.location}<br>${tr.distance} mi · ${tr.difficulty}`,
+        onClick: () => selectedTrailId.set(tr.id),
+      })
+      bounds.push([tr.lat, tr.lng])
+    }
+
+    if (bounds.length)
+      exploreMap.fitPoints(bounds, [48, 48])
+  }
+
+  onMount(() => {
+    const cancelMap = runWhenMapReady('trails-explore-map', () => refreshExploreMap())
+    const stop = effect(() => {
+      filtered()
+      catalogLoading()
+      if (!catalogLoading())
+        refreshExploreMap()
+    })
+    return () => {
+      cancelMap()
+      stop()
+    }
+  })
+
+  onDestroy(() => {
+    exploreMap?.destroy()
+    exploreMap = null
+  })
 </script>
 
   <div class="mx-auto px-4 py-6 sm:px-6 lg:px-8 max-w-7xl">
-    <div class="flex flex-col gap-4 items-start justify-between sm:flex-row sm:items-center mb-6">
-      <h1 class="font-bold text-2xl dark:text-white">Explore Trails</h1>
+    <div class="flex flex-col gap-4 items-start justify-between sm:flex-row sm:items-center mb-4">
+      <div>
+        <h1 class="font-bold text-2xl dark:text-white">Explore Trails</h1>
+        <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">
+          <span :text="trailCount() + ' trails'"></span>
+          <span :if="routeCount() > 0"> · <span :text="routeCount() + ' with GPS paths'"></span></span>
+          <span :if="catalogSource() === 'api'" class="text-emerald-600 dark:text-emerald-400"> · live data</span>
+        </p>
+      </div>
       <input
         type="search"
         x-value="search"
@@ -33,18 +106,61 @@
       />
     </div>
 
-    <!-- Filters -->
-    <div class="flex overflow-x-auto gap-2 mb-6 pb-2">
+    <div :if="catalogLoading()" class="mb-4 text-sm text-emerald-600 dark:text-emerald-400">Loading trail database…</div>
+    <div :if="catalogError()" class="mb-4 text-sm text-amber-600 dark:text-amber-400" :text="'Using demo trails — ' + catalogError()"></div>
+
+    <!-- Split: trail list + map (Strava-style) -->
+    <div class="grid gap-6 mb-6 lg:grid-cols-5">
+      <div class="lg:col-span-2 space-y-3 max-h-[28rem] overflow-y-auto pr-1">
+        <div class="flex overflow-x-auto gap-2 pb-2 lg:hidden">
+          <button @click="difficulty.set('all')" x-class="difficulty === 'all' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-3 py-1.5 font-medium text-xs whitespace-nowrap rounded-lg transition">All</button>
+          <button @click="difficulty.set('easy')" x-class="difficulty === 'easy' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-3 py-1.5 font-medium text-xs whitespace-nowrap rounded-lg transition">Easy</button>
+          <button @click="difficulty.set('moderate')" x-class="difficulty === 'moderate' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-3 py-1.5 font-medium text-xs whitespace-nowrap rounded-lg transition">Moderate</button>
+          <button @click="difficulty.set('hard')" x-class="difficulty === 'hard' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-3 py-1.5 font-medium text-xs whitespace-nowrap rounded-lg transition">Hard</button>
+        </div>
+        <template :for="trail in filtered">
+          <StxLink
+            x-to="'/trail/' + trail.id"
+            @click="selectedTrailId.set(trail.id)"
+            x-class="selectedTrailId === trail.id ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : ''"
+            class="flex gap-3 items-center p-3 card hover:shadow-md transition"
+          >
+            <div class="shrink-0 overflow-hidden h-14 w-14 rounded-lg">
+              <img x-src="trail.image || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=200&h=200&fit=crop'" x-alt="trail.name" class="object-cover h-full w-full" />
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="font-semibold text-sm dark:text-white truncate" :text="trail.name"></p>
+              <p class="text-xs text-gray-500 dark:text-slate-400 truncate" :text="trail.location"></p>
+              <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                <span :text="trail.distance + ' mi'"></span>
+                <span class="mx-1">·</span>
+                <span x-class="'capitalize difficulty-' + trail.difficulty" :text="trail.difficulty"></span>
+              </p>
+            </div>
+          </StxLink>
+        </template>
+        <div :if="filtered().length === 0 && !catalogLoading()" class="py-8 text-center text-sm text-gray-500 dark:text-slate-400">
+          No trails match your filters.
+        </div>
+      </div>
+
+      <div class="lg:col-span-3 card p-0 overflow-hidden">
+        <div id="trails-explore-map" class="trail-map-panel ts-map-container"></div>
+      </div>
+    </div>
+
+    <!-- Filters (desktop) -->
+    <div class="hidden lg:flex overflow-x-auto gap-2 mb-6 pb-2">
       <button @click="difficulty.set('all')" x-class="difficulty === 'all' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">All Levels</button>
       <button @click="difficulty.set('easy')" x-class="difficulty === 'easy' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Easy</button>
       <button @click="difficulty.set('moderate')" x-class="difficulty === 'moderate' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Moderate</button>
       <button @click="difficulty.set('hard')" x-class="difficulty === 'hard' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Hard</button>
     </div>
 
-    <!-- Trail grid -->
+    <!-- Trail cards grid -->
     <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       <template :for="trail in filtered">
-        <StxLink x-to="'/trail/' + trail.id" class="block overflow-hidden p-0 hover:shadow-lg transition card group">
+        <StxLink x-to="'/trail/' + trail.id" class="block overflow-hidden p-0 hover:shadow-lg transition card group" @click="selectedTrailId.set(trail.id)">
           <div class="overflow-hidden relative h-48">
             <img x-src="trail.image || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&h=600&fit=crop'" x-alt="trail.name" class="object-cover h-full w-full duration-300 transition-transform group-hover:scale-105" />
             <div class="absolute left-3 top-3">
@@ -56,7 +172,7 @@
               <h3 class="font-bold text-gray-900 dark:text-white group-hover:text-emerald-600 transition" :text="trail.name"></h3>
               <div class="flex gap-1 items-center shrink-0 text-sm">
                 <Icon name="star" size="16" class="text-yellow-400" />
-                <span class="font-semibold" :text="trail.rating"></span>
+                <span class="font-semibold" :text="trail.rating || '—'"></span>
               </div>
             </div>
             <p class="mb-3 text-gray-500 text-sm dark:text-slate-400" :text="trail.location"></p>
@@ -70,13 +186,12 @@
       </template>
     </div>
 
-    <!-- Empty state -->
-    <div :if="filtered.length === 0" class="py-20 text-center">
+    <div :if="filtered().length === 0 && !catalogLoading()" class="py-20 text-center">
       <div class="w-20 h-20 mx-auto mb-6 bg-emerald-100 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center">
         <Icon name="mountain" size="40" class="text-emerald-400" />
       </div>
       <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No trails found</h3>
-      <p class="text-gray-500 dark:text-slate-400 max-w-sm mx-auto mb-6">We couldn't find any trails matching your criteria.</p>
+      <p class="text-gray-500 dark:text-slate-400 max-w-sm mx-auto mb-6">Run <code class="text-xs bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">./buddy scrape:trails</code> to import real OSM trails, or clear filters.</p>
       <button @click="search.set(''); difficulty.set('all')" class="px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Clear Filters</button>
     </div>
   </div>

@@ -128,6 +128,7 @@ export default function (cli: CLI) {
                 latitude: trail.latitude,
                 longitude: trail.longitude,
                 description: trail.description,
+                geometry: trail.geometry,
               })
               totalImported++
 

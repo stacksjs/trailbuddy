@@ -3,47 +3,62 @@
 @section('title', 'Trail Details — TrailBuddy')
 
 @section('content')
-<script server>
-export async function getStaticPaths() {
-  return { paths: Array.from({ length: 12 }, (_, i) => ({ params: { id: String(i + 1) } })) }
-}
-</script>
-
 <script client>
+  import { createTrailMap, drawTrailRoute, runWhenMapReady, type TrailMapHandle } from '../../composables/useTrailMap'
+
   useHead({ title: 'Trail Details — TrailBuddy' })
 
   const tb = useStore('tb')
   const saved = state(false)
   const reviewTab = state<'reviews' | 'conditions'>('reviews')
+  let detailMap: TrailMapHandle | null = null
 
-  const trailId = Number(
-    (typeof window !== 'undefined'
-      && ((window as any).stx?._rp?.id ?? (window as any).__stx_rp?.id))
-    ?? 1
-  )
+  const trailId = derived(() => {
+    const raw = typeof window !== 'undefined'
+      && ((window as any).stx?._rp?.id ?? (window as any).__stx_rp?.id)
+    const n = Number(raw)
+    return Number.isFinite(n) ? n : 0
+  })
 
-  const trail = derived(() => tb ? tb.trails().find((t: any) => t.id === trailId) ?? null : null)
-  const reviews = derived(() => tb ? tb.reviews().filter((r: any) => r.trail_id === trailId) : [])
-  const segments = derived(() => tb ? tb.segments().filter((s: any) => s.trail_id === trailId) : [])
+  const trail = derived(() => tb ? tb.trails().find((t: any) => t.id === trailId()) ?? null : null)
+  const reviews = derived(() => tb ? tb.reviews().filter((r: any) => r.trail_id === trailId()) : [])
+  const segments = derived(() => tb ? tb.segments().filter((s: any) => s.trail_id === trailId()) : [])
+
+  async function mountDetailMap() {
+    const t = trail()
+    if (!t || !tb) return
+    detailMap?.destroy()
+    detailMap = await createTrailMap('trail-map', {
+      center: [t.lat, t.lng],
+      zoom: 13,
+      scrollWheelZoom: false,
+    })
+    if (!detailMap) return
+    const coords = tb.trailRoutes()[t.id]
+    if (coords && coords.length > 1) {
+      await drawTrailRoute(detailMap.map, coords, { color: '#059669', weight: 4, opacity: 0.9 })
+      detailMap.fitPoints(coords, [30, 30])
+    }
+    else {
+      detailMap.map.setView([t.lat, t.lng], 14)
+    }
+  }
 
   onMount(() => {
-    setTimeout(() => {
-      if (typeof L === 'undefined' || !tb) return
-      const coords = tb.trailRoutes()[trailId]
-      if (!coords) return
-      const el = document.getElementById('trail-map') as any
-      if (!el) return
-      // Guard against double-init on SPA re-navigation
-      if (el._leaflet_id) {
-        try { el._leaflet_map?.remove() } catch { /* noop */ }
-        el._leaflet_id = null
-      }
-      const map = L.map('trail-map', { scrollWheelZoom: false })
-      el._leaflet_map = map
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap', maxZoom: 18, detectRetina: true }).addTo(map)
-      const polyline = L.polyline(coords, { color: '#059669', weight: 4, opacity: 0.9 }).addTo(map)
-      map.fitBounds(polyline.getBounds(), { padding: [30, 30] })
-    }, 100)
+    const cancelMap = runWhenMapReady('trail-map', mountDetailMap)
+    const stop = effect(() => {
+      trail()
+      void mountDetailMap()
+    })
+    return () => {
+      cancelMap()
+      stop()
+    }
+  })
+
+  onDestroy(() => {
+    detailMap?.destroy()
+    detailMap = null
   })
 </script>
 
@@ -88,7 +103,7 @@ export async function getStaticPaths() {
               <p class="metric-label">Est. Time</p>
             </div>
             <div class="card text-center">
-              <p class="text-2xl font-bold" x-text="trail.rating"></p>
+              <p class="text-2xl font-bold" x-text="trail.rating || '—'"></p>
               <p class="metric-label" x-text="trail.reviewCount + ' reviews'"></p>
             </div>
           </div>
@@ -106,7 +121,7 @@ export async function getStaticPaths() {
 
           <!-- Map -->
           <div class="card p-0 overflow-hidden">
-            <div id="trail-map" class="h-64"></div>
+            <div id="trail-map" class="trail-map-panel ts-map-container"></div>
           </div>
 
           <!-- Segments -->

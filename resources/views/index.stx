@@ -33,7 +33,7 @@
               <Icon name="play" size="18" />
               Start capture run
             </StxLink>
-            <StxLink to="/territories" class="px-8 py-3.5 text-center font-semibold text-white border-2 border-white/25 hover:bg-white/10 rounded-full transition">View your map</StxLink>
+            <StxLink to="/trails" class="px-8 py-3.5 text-center font-semibold text-white border-2 border-white/25 hover:bg-white/10 rounded-full transition">Explore trails</StxLink>
           </div>
         </div>
 

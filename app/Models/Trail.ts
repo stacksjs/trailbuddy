@@ -168,6 +168,15 @@ export default {
       },
       factory: (faker) => faker.lorem.paragraphs(2),
     },
+
+    geometry: {
+      order: 14,
+      fillable: true,
+      validation: {
+        rule: schema.string(),
+      },
+      factory: () => '',
+    },
   },
 
   dashboard: {

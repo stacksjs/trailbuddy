@@ -20,6 +20,8 @@ export interface NormalizedTrail {
   latitude: number
   longitude: number
   description: string
+  /** JSON [[lat,lng],...] for map polylines */
+  geometry: string
 }
 
 /**
@@ -190,6 +192,8 @@ export function normalizeElement(element: OverpassElement, regionDisplayName: st
   const description = tags.description
     || `${name} is a ${distanceKm} km ${difficulty} trail located in ${regionDisplayName}.`
 
+  const simplified = simplifyPath(coords, 120)
+
   return {
     name,
     location: regionDisplayName,
@@ -204,7 +208,23 @@ export function normalizeElement(element: OverpassElement, regionDisplayName: st
     latitude: Math.round(center.lat * 1000000) / 1000000,
     longitude: Math.round(center.lng * 1000000) / 1000000,
     description,
+    geometry: JSON.stringify(simplified.map(c => [c.lat, c.lng])),
   }
+}
+
+/** Reduce point count for storage while keeping trail shape. */
+function simplifyPath(coords: Coordinate[], maxPoints: number): Coordinate[] {
+  if (coords.length <= maxPoints)
+    return coords
+  const step = Math.ceil(coords.length / maxPoints)
+  const out: Coordinate[] = []
+  for (let i = 0; i < coords.length; i += step)
+    out.push(coords[i])
+  const last = coords[coords.length - 1]
+  const tail = out[out.length - 1]
+  if (!tail || tail.lat !== last.lat || tail.lng !== last.lng)
+    out.push(last)
+  return out
 }
 
 /**

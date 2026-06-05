@@ -1,9 +1,18 @@
-import type * as Leaflet from 'leaflet'
-import { derived, onDestroy, onMount, state } from 'stx'
+import { derived, onDestroy, state, useStore } from 'stx'
+import type { CircleMarker as CircleMarkerType } from 'ts-maps'
+import type { Polygon as PolygonType } from 'ts-maps'
+import type { Polyline as PolylineType } from 'ts-maps'
+import type { TsMap as TsMapType } from 'ts-maps'
+import {
+  createLiveRouteLine,
+  createTrailMap,
+  drawTerritoryPolygon,
+  drawTrailMarker,
+  ensureTsMaps,
+  runWhenMapReady,
+  type LatLng,
+} from './useTrailMap'
 
-declare const L: typeof Leaflet
-
-type LatLng = [number, number]
 type ActivityType = 'Trail Run' | 'Hike' | 'Walk' | 'Bike'
 type RecordMode = 'idle' | 'simulated' | 'manual'
 type GpsStatus = 'searching' | 'active' | 'stopped'
@@ -104,17 +113,19 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
   )
 
   const refs: {
-    map: Leaflet.Map | null
-    territoryLayers: Record<number, Leaflet.Polygon>
-    trailMarkers: Record<number, Leaflet.CircleMarker>
-    routeLine: Leaflet.Polyline | null
+    mapHandle: ReturnType<typeof createTrailMap> | null
+    map: TsMapType | null
+    territoryLayers: Record<number, PolygonType>
+    trailMarkers: Record<number, CircleMarkerType>
+    routeLine: PolylineType | null
     routeCoords: LatLng[]
-    hereMarker: Leaflet.CircleMarker | null
+    hereMarker: CircleMarkerType | null
     elapsedTimer: ReturnType<typeof setInterval> | null
     simTimer: ReturnType<typeof setInterval> | null
     watchId: number | null
     toastTimer: ReturnType<typeof setTimeout> | null
   } = {
+    mapHandle: null,
     map: null,
     territoryLayers: {},
     trailMarkers: {},
@@ -232,7 +243,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     }, 1000)
   }
 
-  function simulate() {
+  async function simulate() {
     if (!tb || !refs.map) return
     const id = selectedTrailId()
     const route = tb.trailRoutes()[id]
@@ -242,8 +253,11 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     recording.set(true)
     gpsStatus.set('active')
     refs.routeCoords = []
-    refs.routeLine = L.polyline([], { color: SIM_ROUTE, weight: 5, opacity: 0.9 }).addTo(refs.map)
-    refs.map.fitBounds(L.latLngBounds(route), { padding: [40, 40] })
+    refs.routeLine = await createLiveRouteLine(refs.map, SIM_ROUTE)
+    const { Polyline } = await ensureTsMaps()
+    const guide = new Polyline(route, { weight: 0, opacity: 0 }).addTo(refs.map)
+    refs.map.fitBounds(guide.getBounds(), { padding: [40, 40] })
+    refs.map.removeLayer(guide)
     let i = 0
     startTicker()
     refs.simTimer = setInterval(() => {
@@ -258,7 +272,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     }, 350)
   }
 
-  function startManual() {
+  async function startManual() {
     if (!refs.map) return
     if (!navigator.geolocation) {
       gpsStatus.set('stopped')
@@ -269,7 +283,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     mode.set('manual')
     gpsStatus.set('searching')
     refs.routeCoords = []
-    refs.routeLine = L.polyline([], { color: YOURS, weight: 5, opacity: 0.9 }).addTo(refs.map)
+    refs.routeLine = await createLiveRouteLine(refs.map, YOURS)
 
     const beginTracking = (startLat: number, startLng: number) => {
       recording.set(true)
@@ -343,83 +357,65 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     mode.set('idle')
   }
 
-  onMount(() => {
+  async function initRecordMap() {
     try {
-      if (typeof L === 'undefined' || !tb) return
-      const el = document.getElementById(mapElId) as (HTMLElement & { _leaflet_map?: Leaflet.Map, _leaflet_id?: number | null }) | null
-      if (!el) return
-      // Dispose any previous Leaflet instance attached to this element
-      // (happens on SPA re-navigation — refs is a fresh object each setup)
-      if (el._leaflet_map) {
-        try { el._leaflet_map.remove() }
-        catch { /* noop */ }
-      }
-      el._leaflet_id = null
-      el.innerHTML = ''
-      const map = L.map(mapElId, { scrollWheelZoom: true, zoomControl: true })
-      el._leaflet_map = map
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap',
-        maxZoom: 18,
-        detectRetina: true,
-      }).addTo(map)
-      refs.map = map
+      const store = tb ?? useStore('tb')
+      if (!store) return
+      refs.mapHandle = await createTrailMap(mapElId, { scrollWheelZoom: true })
+      if (!refs.mapHandle) return
+      refs.map = refs.mapHandle.map
 
-      const uid = tb.currentUserId()
-      const polys = tb.territoryPolygons()
+      const uid = store.currentUserId()
+      const polys = store.territoryPolygons()
       const bounds: LatLng[] = []
 
-      for (const t of tb.territories()) {
+      for (const t of store.territories()) {
         const poly = polys[t.id]
         if (!poly) continue
         const mine = t.user_id === uid
         const color = mine ? YOURS : ENEMY
-        const layer = L.polygon(poly, {
+        const layer = await drawTerritoryPolygon(refs.map, poly, {
           color,
-          fillColor: color,
           fillOpacity: mine ? 0.45 : 0.15,
           weight: targetTerritoryId() === t.id ? 4 : 2,
-        }).addTo(map).bindPopup(
-          `<b>${t.name}</b><br>${mine ? 'Your turf' : 'Enemy turf — run through to capture'}<br>${(t.areaSize / 1000).toFixed(1)} km²`,
-        )
-        layer.on('click', () => {
-          if (!mine && !recording())
-            targetTerritoryId.set(t.id)
+          popupHtml: `<b>${t.name}</b><br>${mine ? 'Your turf' : 'Enemy turf — run through to capture'}<br>${(t.areaSize / 1000).toFixed(1)} km²`,
+          onClick: () => {
+            if (!mine && !recording())
+              targetTerritoryId.set(t.id)
+          },
         })
         refs.territoryLayers[t.id] = layer
         bounds.push(...poly)
       }
 
-      for (const tr of tb.trails()) {
+      for (const tr of store.trails()) {
         if (!tr.lat || !tr.lng) continue
-        const marker = L.circleMarker([tr.lat, tr.lng], {
-          radius: 7,
-          color: '#ffffff',
-          weight: 2,
-          fillColor: tr.difficulty === 'hard' ? '#dc2626' : tr.difficulty === 'moderate' ? '#f59e0b' : '#10b981',
-          fillOpacity: 0.95,
-        }).addTo(map).bindPopup(`<b>${tr.name}</b><br>${tr.location}<br>${tr.distance} mi • ${tr.difficulty}`)
-        marker.on('click', () => selectedTrailId.set(tr.id))
+        const marker = await drawTrailMarker(refs.map, tr.lat, tr.lng, {
+          difficulty: tr.difficulty,
+          popupHtml: `<b>${tr.name}</b><br>${tr.location}<br>${tr.distance} mi • ${tr.difficulty}`,
+          onClick: () => selectedTrailId.set(tr.id),
+        })
         refs.trailMarkers[tr.id] = marker
         bounds.push([tr.lat, tr.lng])
       }
 
-      if (bounds.length) map.fitBounds(L.latLngBounds(bounds), { padding: [40, 40] })
-      else map.setView([37.7749, -122.4194], 5)
+      if (bounds.length) refs.mapHandle.fitPoints(bounds, [40, 40])
+      else refs.map.setView([37.7749, -122.4194], 5)
 
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const here = L.circleMarker([pos.coords.latitude, pos.coords.longitude], {
+          async (pos) => {
+            const { CircleMarker } = await ensureTsMaps()
+            const here = new CircleMarker([pos.coords.latitude, pos.coords.longitude], {
               radius: 8,
               color: '#ffffff',
               weight: 3,
               fillColor: '#3b82f6',
               fillOpacity: 1,
-            }).addTo(map).bindPopup('You are here')
+            }).addTo(refs.map!).bindPopup('You are here')
             refs.hereMarker = here
             gpsStatus.set('active')
-            map.setView([pos.coords.latitude, pos.coords.longitude], 14)
+            refs.map!.setView([pos.coords.latitude, pos.coords.longitude], 14)
           },
           () => gpsStatus.set('searching'),
           { enableHighAccuracy: true },
@@ -429,19 +425,17 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     catch (err) {
       console.error('record map init failed:', err)
     }
-  })
+  }
 
   onDestroy(() => {
     clearTimers()
     if (refs.toastTimer) clearTimeout(refs.toastTimer)
-    if (refs.map) {
-      try { refs.map.remove() }
-      catch { /* noop */ }
-    }
+    refs.mapHandle?.destroy()
+    refs.mapHandle = null
+    refs.map = null
   })
 
   return {
-    // state
     recording,
     paused,
     activityType,
@@ -451,19 +445,18 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     elevation,
     gpsStatus,
     selectedTrailId,
+    targetTerritoryId,
     conqueredIds,
     captureProgress,
     sessionXp,
     runMode,
-    targetTerritoryId,
     conquestToast,
     trailOptions,
-    // actions
     simulate,
     startManual,
     togglePause,
     stop,
-    // helpers
-    fmtDuration,
+    resetRun,
+    mountRecordMap: () => runWhenMapReady(mapElId, initRecordMap),
   }
 }

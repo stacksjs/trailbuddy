@@ -31,7 +31,10 @@
     togglePause,
     stop,
     fmtDuration,
+    mountRecordMap,
   } = useRecorder({ mapElId: 'record-map', tb })
+
+  onMount(() => mountRecordMap())
 
   const attackable = derived(() => tb ? tb.attackableTerritories() : [])
   const targetZone = derived(() => {
@@ -73,7 +76,7 @@
 
     <!-- Map -->
     <div class="relative mb-4 rounded-2xl overflow-hidden shadow-md ring-1 ring-slate-200 dark:ring-slate-700">
-      <div id="record-map" class="h-[22rem] sm:h-[28rem]"></div>
+      <div id="record-map" class="ts-map-container h-[22rem] sm:h-[28rem] w-full"></div>
 
       <div class="flex absolute right-3 top-3 z-[1000] gap-1.5 items-center px-2.5 py-1 font-medium text-xs rounded-full bg-white/90 backdrop-blur-sm shadow-sm" x-class="gpsStatus === 'active' ? 'text-emerald-700' : gpsStatus === 'searching' ? 'text-yellow-700' : 'text-gray-600'">
         <div class="h-2 w-2 rounded-full" x-class="gpsStatus === 'active' ? 'bg-emerald-500 animate-pulse' : gpsStatus === 'searching' ? 'bg-yellow-500 animate-pulse' : 'bg-gray-400'"></div>

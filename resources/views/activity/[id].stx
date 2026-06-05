@@ -3,13 +3,9 @@
 @section('title', 'Activity Details — TrailBuddy')
 
 @section('content')
-<script server>
-export async function getStaticPaths() {
-  return { paths: Array.from({ length: 16 }, (_, i) => ({ params: { id: String(i + 1) } })) }
-}
-</script>
-
 <script client>
+  import { createTrailMap, drawTrailRoute, runWhenMapReady, type TrailMapHandle } from '../../composables/useTrailMap'
+
   useHead({ title: 'Activity Details — TrailBuddy' })
 
   const tb = useStore('tb')
@@ -38,20 +34,26 @@ export async function getStaticPaths() {
     },
   }
 
-  onMount(() => {
-    setTimeout(() => {
-      if (typeof L === 'undefined' || !tb) return
-      const a = tb.findActivity(activityId)
-      if (!a || !a.trail_id) return
-      const route = tb.trailRoutes()[a.trail_id]
-      if (!route) return
-      const el = document.getElementById('activity-map')
-      if (!el) return
-      const map = L.map('activity-map', { scrollWheelZoom: false })
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap', maxZoom: 18, detectRetina: true }).addTo(map)
-      const polyline = L.polyline(route, { color: '#059669', weight: 4, opacity: 0.9 }).addTo(map)
-      map.fitBounds(polyline.getBounds(), { padding: [30, 30] })
-    }, 100)
+  let activityMap: TrailMapHandle | null = null
+
+  async function mountActivityMap() {
+    if (!tb) return
+    const a = tb.findActivity(activityId)
+    if (!a || !a.trail_id) return
+    const route = tb.trailRoutes()[a.trail_id]
+    if (!route || route.length < 2) return
+    activityMap?.destroy()
+    activityMap = await createTrailMap('activity-map', { scrollWheelZoom: false })
+    if (!activityMap) return
+    await drawTrailRoute(activityMap.map, route, { color: '#059669', weight: 4, opacity: 0.9 })
+    activityMap.fitPoints(route, [30, 30])
+  }
+
+  onMount(() => runWhenMapReady('activity-map', mountActivityMap))
+
+  onDestroy(() => {
+    activityMap?.destroy()
+    activityMap = null
   })
 </script>
 

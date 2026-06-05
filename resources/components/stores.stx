@@ -447,6 +447,13 @@
     },
 
     actions: {
+      /** Replace seed trails with API/OSM data when available. */
+      hydrateTrailsFromApi(trails: Trail[], routes: Record<number, [number, number][]>) {
+        if (!trails.length)
+          return
+        this.trails = trails
+        this.trailRoutes = { ...this.trailRoutes, ...routes }
+      },
       findTrail(id: number): Trail | undefined {
         return this.trails.find((t: Trail) => t.id === id)
       },
@@ -609,6 +616,6 @@
       },
     },
 
-    persist: true,
+    persist: { key: 'trailbuddy-tb-v2' },
   })
 </script>

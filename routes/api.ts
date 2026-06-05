@@ -374,6 +374,9 @@ route.group({ prefix: '/shipping' }, () => {
   route.delete('/license-keys/{id}', 'Actions/Commerce/Shipping/LicenseKeyDestroyAction')
 })
 
+// Trail catalog (explore map + OSM geometry)
+route.get('/trails', 'Actions/Trail/TrailIndexAction')
+
 // Territory Game routes - claim land by running loops, conquer others' territory
 route.group({ prefix: '/territories' }, () => {
   // Claim a new territory from an activity with a closed loop GPS track

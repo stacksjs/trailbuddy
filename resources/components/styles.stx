@@ -1,10 +1,18 @@
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <style>
-  /* Leaflet map overrides */
-  .leaflet-container { z-index: 1; font-family: inherit; }
-  .leaflet-control-attribution { font-size: 9px !important; }
+  /* ts-maps */
+  .ts-map-container,
+  .trail-map-panel {
+    z-index: 1;
+    font-family: inherit;
+    width: 100%;
+    min-height: 280px;
+  }
+  .trail-map-panel { height: 420px; }
+  .trail-map-panel-lg { height: min(55vh, 520px); }
+  .ts-map-container .map-attribution,
+  .ts-map-container [class*='attribution'] {
+    font-size: 9px !important;
+  }
   body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-size: 14px;
@@ -30,11 +38,6 @@
     background: linear-gradient(135deg, #065f46, #059669, #34d399);
   }
 
-  /* Difficulty badge colors */
-  .difficulty-easy { background: #d1fae5; color: #065f46; }
-  .difficulty-moderate { background: #fef3c7; color: #92400e; }
-  .difficulty-hard { background: #fee2e2; color: #991b1b; }
-
   /* Trail card hover */
   .trail-card { transition: all 0.3s ease; }
   .trail-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
@@ -46,31 +49,6 @@
     background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
     position: relative;
     overflow: hidden;
-  }
-
-  /* Component classes */
-  .card {
-    background-color: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.75rem;
-    padding: 1.25rem;
-  }
-
-  .dark .card {
-    background-color: #1e293b;
-    border-color: #334155;
-  }
-
-  .metric-label {
-    font-size: 0.675rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #64748b;
-    font-weight: 500;
-  }
-
-  .dark .metric-label {
-    color: #94a3b8;
   }
 
   html.dark {

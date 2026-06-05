@@ -1,6 +1,14 @@
 @include('styles')
 @include('theme')
+<link rel="stylesheet" href="/css/ts-maps.css" data-ts-maps-css>
 @include('stores')
+
+<script client>
+  import { useTrailCatalog } from '../composables/useTrailCatalog'
+  const tb = useStore('tb')
+  useTrailCatalog(tb)
+</script>
+
 @include('nav')
 
 <main class="flex-1">

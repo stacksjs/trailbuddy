@@ -3,13 +3,9 @@
 @section('title', 'Territory Details — TrailBuddy')
 
 @section('content')
-<script server>
-export async function getStaticPaths() {
-  return { paths: Array.from({ length: 10 }, (_, i) => ({ params: { id: String(i + 1) } })) }
-}
-</script>
-
 <script client>
+  import { createTrailMap, drawTerritoryPolygon, runWhenMapReady, type TrailMapHandle } from '../../composables/useTrailMap'
+
   useHead({ title: 'Territory Details — TrailBuddy' })
 
   const tb = useStore('tb')
@@ -29,18 +25,28 @@ export async function getStaticPaths() {
     return tb && t ? t.user_id === tb.currentUserId() : false
   })
 
-  onMount(() => {
-    setTimeout(() => {
-      if (typeof L === 'undefined' || !tb) return
-      const poly = tb.territoryPolygons()[territoryId]
-      if (!poly) return
-      const el = document.getElementById('territory-detail-map')
-      if (!el) return
-      const map = L.map('territory-detail-map', { scrollWheelZoom: false })
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap', maxZoom: 18, detectRetina: true }).addTo(map)
-      const polygon = L.polygon(poly, { color: '#059669', fillColor: '#34d399', fillOpacity: 0.3, weight: 3 }).addTo(map)
-      map.fitBounds(polygon.getBounds(), { padding: [30, 30] })
-    }, 100)
+  let detailMap: TrailMapHandle | null = null
+
+  async function mountTerritoryDetailMap() {
+    if (!tb) return
+    const poly = tb.territoryPolygons()[territoryId]
+    if (!poly) return
+    detailMap?.destroy()
+    detailMap = await createTrailMap('territory-detail-map', { scrollWheelZoom: false })
+    if (!detailMap) return
+    const polygon = await drawTerritoryPolygon(detailMap.map, poly, {
+      color: '#059669',
+      fillOpacity: 0.3,
+      weight: 3,
+    })
+    detailMap.map.fitBounds(polygon.getBounds(), { padding: [30, 30] })
+  }
+
+  onMount(() => runWhenMapReady('territory-detail-map', mountTerritoryDetailMap))
+
+  onDestroy(() => {
+    detailMap?.destroy()
+    detailMap = null
   })
 </script>
 

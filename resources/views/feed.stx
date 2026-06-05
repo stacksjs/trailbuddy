@@ -4,6 +4,8 @@
 
 @section('content')
 <script client>
+  import { routePreviewDataUri } from '../composables/useRoutePreview'
+
   useHead({ title: 'Activity Feed — TrailBuddy' })
 
   const tb = useStore('tb')
@@ -14,6 +16,12 @@
     const f = filter()
     return f === 'all' ? tb.activities() : tb.activities().filter((a: any) => a.activityType === f)
   })
+
+  function activityRoutePreview(activity: { trail_id?: number | null }): string | null {
+    if (!tb || !activity.trail_id) return null
+    const coords = tb.trailRoutes()[activity.trail_id]
+    return coords ? routePreviewDataUri(coords) : null
+  }
 </script>
 
   <div class="mx-auto px-4 py-6 sm:px-6 lg:px-8 max-w-3xl">
@@ -64,7 +72,8 @@
           <StxLink x-to="'/activity/' + activity.id" class="font-bold text-gray-900 text-lg dark:text-white hover:text-emerald-600 transition block" :text="activity.title"></StxLink>
           <p :if="activity.title.includes('Capture')" class="mt-1 text-xs text-purple-600 font-medium">Territory capture run</p>
 
-          <div class="mt-3 rounded-xl overflow-hidden h-40 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center">
+          <div :if="activityRoutePreview(activity)" class="route-preview mt-3" x-style="'background-image:url(' + activityRoutePreview(activity) + ')'"></div>
+          <div :else class="mt-3 rounded-xl overflow-hidden h-40 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center">
             <div class="text-center text-gray-400 dark:text-slate-500">
               <Icon name="map" size="32" class="mx-auto mb-1" />
               <p class="text-xs">Route Map</p>
