@@ -1,4 +1,7 @@
 // No imports needed - everything is auto-imported!
+//
+// NOTE: the ORM is snake_case (rows + where/orderBy columns use column names).
+// Reads below use snake_case; JSON output keeps camelCase for the UI.
 
 export default new Action({
   name: 'User Territories',
@@ -19,23 +22,23 @@ export default new Action({
       }
 
       const territories = await Territory
-        .where('userId', '=', userId)
+        .where('user_id', '=', userId)
         .where('status', '=', 'active')
-        .orderBy('areaSize', 'desc')
+        .orderBy('area_size', 'desc')
         .get()
 
-      const stats = await TerritoryStats.where('userId', '=', userId).first()
+      const stats = await TerritoryStats.where('user_id', '=', userId).first()
 
       const formattedTerritories = territories.map((t: any) => ({
         id: t.id,
         name: t.name,
-        areaSize: t.areaSize,
+        areaSize: t.area_size,
         perimeter: t.perimeter,
-        centerLat: t.centerLat,
-        centerLng: t.centerLng,
-        conquestCount: t.conquestCount,
-        claimedAt: t.claimedAt,
-        polygon: t.polygonData ? JSON.parse(t.polygonData) : null,
+        centerLat: t.center_lat,
+        centerLng: t.center_lng,
+        conquestCount: t.conquest_count,
+        claimedAt: t.claimed_at,
+        polygon: t.polygon_data ? JSON.parse(t.polygon_data) : null,
       }))
 
       return response.json({
@@ -48,16 +51,16 @@ export default new Action({
         territories: formattedTerritories,
         stats: stats
           ? {
-              totalTerritoriesOwned: stats.totalTerritoriesOwned || 0,
-              totalAreaOwned: stats.totalAreaOwned || 0,
-              territoriesClaimed: stats.territoriesClaimed || 0,
-              territoriesConquered: stats.territoriesConquered || 0,
-              territoriesLost: stats.territoriesLost || 0,
-              territoriesDefended: stats.territoriesDefended || 0,
-              longestOwnershipDays: stats.longestOwnershipDays || 0,
-              largestTerritoryArea: stats.largestTerritoryArea || 0,
-              weeklyRank: stats.weeklyRank || 0,
-              allTimeRank: stats.allTimeRank || 0,
+              totalTerritoriesOwned: stats.total_territories_owned || 0,
+              totalAreaOwned: stats.total_area_owned || 0,
+              territoriesClaimed: stats.territories_claimed || 0,
+              territoriesConquered: stats.territories_conquered || 0,
+              territoriesLost: stats.territories_lost || 0,
+              territoriesDefended: stats.territories_defended || 0,
+              longestOwnershipDays: stats.longest_ownership_days || 0,
+              largestTerritoryArea: stats.largest_territory_area || 0,
+              weeklyRank: stats.weekly_rank || 0,
+              allTimeRank: stats.all_time_rank || 0,
             }
           : null,
         meta: {

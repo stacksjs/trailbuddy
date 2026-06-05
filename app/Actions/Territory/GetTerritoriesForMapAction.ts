@@ -1,4 +1,7 @@
 // No imports needed - everything is auto-imported!
+//
+// NOTE: the ORM is snake_case (rows expose column names). Model reads below use
+// snake_case; the GeoJSON properties keep camelCase for the map/frontend.
 
 export default new Action({
   name: 'Get Territories For Map',
@@ -20,24 +23,24 @@ export default new Action({
       let filteredTerritories = territories
       if (minLat !== undefined && minLng !== undefined && maxLat !== undefined && maxLng !== undefined) {
         filteredTerritories = territories.filter((t: any) => {
-          if (!t.boundingBox) return false
-          const bbox = parseBoundingBox(t.boundingBox)
+          if (!t.bounding_box) return false
+          const bbox = parseBoundingBox(t.bounding_box)
           return !(bbox.maxLat < minLat || bbox.minLat > maxLat
             || bbox.maxLng < minLng || bbox.minLng > maxLng)
         })
       }
 
-      const userIds = [...new Set(filteredTerritories.map((t: any) => t.userId))]
+      const userIds = [...new Set(filteredTerritories.map((t: any) => t.user_id))]
       const users = await User.whereIn('id', userIds).get()
       const userMap = new Map(users.map((u: any) => [u.id, u]))
 
       const features = filteredTerritories.map((t: any) => {
-        const owner = userMap.get(t.userId)
-        const isOwned = currentUserId ? t.userId === currentUserId : false
+        const owner = userMap.get(t.user_id)
+        const isOwned = currentUserId ? t.user_id === currentUserId : false
 
         let geometry
         try {
-          geometry = JSON.parse(t.polygonData)
+          geometry = JSON.parse(t.polygon_data)
         }
         catch {
           geometry = null
@@ -48,16 +51,16 @@ export default new Action({
           properties: {
             id: t.id,
             name: t.name,
-            ownerId: t.userId,
+            ownerId: t.user_id,
             ownerName: owner?.name || 'Unknown',
             isOwned,
-            areaSize: t.areaSize,
+            areaSize: t.area_size,
             perimeter: t.perimeter,
-            conquestCount: t.conquestCount,
-            claimedAt: t.claimedAt,
+            conquestCount: t.conquest_count,
+            claimedAt: t.claimed_at,
             status: t.status,
-            centerLat: t.centerLat,
-            centerLng: t.centerLng,
+            centerLat: t.center_lat,
+            centerLng: t.center_lng,
           },
           geometry,
         }

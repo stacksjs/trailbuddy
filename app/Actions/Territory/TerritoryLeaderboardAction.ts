@@ -1,4 +1,7 @@
 // No imports needed - everything is auto-imported!
+//
+// NOTE: the ORM is snake_case (rows + sort columns use column names). Reads and
+// orderBy fields below use snake_case; JSON output keeps camelCase for the UI.
 
 export default new Action({
   name: 'Territory Leaderboard',
@@ -13,36 +16,36 @@ export default new Action({
       let sortField: string
       switch (type) {
         case 'count':
-          sortField = 'totalTerritoriesOwned'
+          sortField = 'total_territories_owned'
           break
         case 'conquests':
-          sortField = 'territoriesConquered'
+          sortField = 'territories_conquered'
           break
         case 'area':
         default:
-          sortField = 'totalAreaOwned'
+          sortField = 'total_area_owned'
       }
 
       const stats = await TerritoryStats.orderBy(sortField, 'desc').limit(limit).get()
-      const userIds = stats.map((s: any) => s.userId)
+      const userIds = stats.map((s: any) => s.user_id)
       const users = await User.whereIn('id', userIds).get()
       const userMap = new Map(users.map((u: any) => [u.id, u]))
 
       const leaderboard = stats.map((s: any, index: number) => {
-        const user = userMap.get(s.userId)
+        const user = userMap.get(s.user_id)
         return {
           rank: index + 1,
-          userId: s.userId,
+          userId: s.user_id,
           userName: user?.name || 'Unknown',
           userAvatar: user?.avatar || null,
-          totalTerritoriesOwned: s.totalTerritoriesOwned || 0,
-          totalAreaOwned: s.totalAreaOwned || 0,
-          territoriesClaimed: s.territoriesClaimed || 0,
-          territoriesConquered: s.territoriesConquered || 0,
-          territoriesLost: s.territoriesLost || 0,
-          territoriesDefended: s.territoriesDefended || 0,
-          longestOwnershipDays: s.longestOwnershipDays || 0,
-          largestTerritoryArea: s.largestTerritoryArea || 0,
+          totalTerritoriesOwned: s.total_territories_owned || 0,
+          totalAreaOwned: s.total_area_owned || 0,
+          territoriesClaimed: s.territories_claimed || 0,
+          territoriesConquered: s.territories_conquered || 0,
+          territoriesLost: s.territories_lost || 0,
+          territoriesDefended: s.territories_defended || 0,
+          longestOwnershipDays: s.longest_ownership_days || 0,
+          largestTerritoryArea: s.largest_territory_area || 0,
         }
       })
 
