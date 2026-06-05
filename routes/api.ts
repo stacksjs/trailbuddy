@@ -377,6 +377,11 @@ route.group({ prefix: '/shipping' }, () => {
 // Trail catalog (explore map + OSM geometry)
 route.get('/trails', 'Actions/Trail/TrailIndexAction')
 
+// Activities (recorded runs/hikes) — feed, detail, and persistence of a run
+route.get('/activities', 'Actions/Activity/ActivityIndexAction')
+route.post('/activities', 'Actions/Activity/ActivityStoreAction')
+route.get('/activities/{id}', 'Actions/Activity/ActivityShowAction')
+
 // Territory Game routes - claim land by running loops, conquer others' territory
 route.group({ prefix: '/territories' }, () => {
   // Claim a new territory from an activity with a closed loop GPS track
