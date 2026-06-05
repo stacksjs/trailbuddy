@@ -5,8 +5,10 @@
 
 <script client>
   import { useTrailCatalog } from '../composables/useTrailCatalog'
+  import { useTerritoryCatalog } from '../composables/useTerritoryCatalog'
   const tb = useStore('tb')
   useTrailCatalog(tb)
+  useTerritoryCatalog(tb)
 </script>
 
 @include('nav')

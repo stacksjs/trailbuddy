@@ -454,6 +454,23 @@
         this.trails = trails
         this.trailRoutes = { ...this.trailRoutes, ...routes }
       },
+      /** Replace seed territories with live data from /api/territories/map. */
+      hydrateTerritoriesFromApi(
+        territories: Territory[],
+        polygons: Record<number, [number, number][]>,
+        users: User[],
+      ) {
+        if (!territories.length)
+          return
+        this.territories = territories
+        this.territoryPolygons = polygons
+        // Merge any owners we don't already know about so names resolve.
+        const known = new Set(this.users.map((u: User) => u.id))
+        for (const u of users) {
+          if (!known.has(u.id))
+            this.users.push(u)
+        }
+      },
       findTrail(id: number): Trail | undefined {
         return this.trails.find((t: Trail) => t.id === id)
       },
