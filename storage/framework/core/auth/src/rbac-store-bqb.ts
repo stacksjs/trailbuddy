@@ -157,27 +157,43 @@ async function pivotSync(
   targetIds: number[],
 ): Promise<void> {
   // Replace-all semantics: drop existing rows for the owner, then bulk
-  // insert the new set. A transaction would be ideal here but the surface
-  // is cross-dialect and individual statements are idempotent enough — a
-  // failure mid-way leaves the table in a "no roles assigned" state, which
-  // `getUserRoles` will reflect on next call and the caller can retry.
-  await pivotDetachAll(table, ownerColumn, ownerId)
-  if (targetIds.length === 0)
-    return
-
-  // Dedupe so the same id passed twice in `syncUserRoles` doesn't trip the
-  // composite PK on the second row in a multi-row INSERT.
+  // insert the new set. Wrapped in a transaction so a crash between
+  // the DELETE and the INSERT (process killed mid-call, DB connection
+  // dropped, etc.) doesn't leave the user with zero roles/permissions
+  // — that's a privilege wipe (admin silently demoted to anonymous)
+  // not a sync-in-progress state. See stacksjs/stacks#1860 H-7.
+  //
+  // Dedupe so the same id passed twice in `syncUserRoles` doesn't trip
+  // the composite PK on the second row in a multi-row INSERT.
   const unique = Array.from(new Set(targetIds))
-  const rows = unique.map(id => ({ [ownerColumn]: ownerId, [targetColumn]: id }))
-  try {
-    await (db.insertInto(table) as any).values(rows).execute()
-  }
-  catch (err) {
-    // Concurrent sync race; fall back to one-by-one with idempotent attach.
-    swallowDuplicate(err)
-    for (const id of unique)
-      await pivotAttach(table, { [ownerColumn]: ownerId, [targetColumn]: id })
-  }
+
+  await db.transaction(async (rawTrx) => {
+    // bun-query-builder's transaction callback yields a `QueryBuilder<DB>`
+    // whose chained methods are typed optional. Mirror the shape of the
+    // top-level `db` proxy so the chains type-check identically.
+    const trx = rawTrx as unknown as typeof db
+    await (trx.deleteFrom(table) as any).where(ownerColumn, '=', ownerId).execute()
+    if (unique.length === 0) return
+
+    const rows = unique.map(id => ({ [ownerColumn]: ownerId, [targetColumn]: id }))
+    try {
+      await (trx.insertInto(table) as any).values(rows).execute()
+    }
+    catch (err) {
+      // Concurrent sync race; fall back to one-by-one with idempotent attach
+      // inside the same transaction so a partial-success still rolls back
+      // cleanly if a later iteration throws.
+      swallowDuplicate(err)
+      for (const id of unique) {
+        try {
+          await (trx.insertInto(table) as any).values({ [ownerColumn]: ownerId, [targetColumn]: id }).execute()
+        }
+        catch (innerErr) {
+          swallowDuplicate(innerErr)
+        }
+      }
+    }
+  })
 }
 
 export function createBqbRbacStore(): RbacStore {
@@ -272,14 +288,27 @@ export function createBqbRbacStore(): RbacStore {
       // as half-empty rows. `selectAllRelations` or aliased `selectAll`
       // would also work, but the explicit column list keeps the result
       // shape obvious.
+      //
+      // Two bqb API contracts to keep in mind:
+      //   1. `innerJoin(table, onLeft, op, onRight)` is FOUR-arg —
+      //      the `'='` is not optional. The prior 3-arg form silently
+      //      compiled to `ON onLeft onRight undefined`, which SQLite
+      //      rejects with `near "<table>": syntax error`.
+      //   2. `.select(['a','b'])` (array) accumulates a multi-column
+      //      SELECT in one call. Chained `.select('a').select('b')`
+      //      REPLACES the SELECT clause each time — only the last
+      //      column survives. Array form is the correct shape when
+      //      you want >1 column.
       const rows: Array<Record<string, unknown>> = await (db.selectFrom('roles') as any)
-        .innerJoin('user_roles', 'user_roles.role_id', 'roles.id')
-        .select('roles.id as id')
-        .select('roles.name as name')
-        .select('roles.guard_name as guard_name')
-        .select('roles.description as description')
-        .select('roles.created_at as created_at')
-        .select('roles.updated_at as updated_at')
+        .innerJoin('user_roles', 'user_roles.role_id', '=', 'roles.id')
+        .select([
+          'roles.id as id',
+          'roles.name as name',
+          'roles.guard_name as guard_name',
+          'roles.description as description',
+          'roles.created_at as created_at',
+          'roles.updated_at as updated_at',
+        ])
         .where('user_roles.user_id', '=', userId)
         .orderBy('roles.id', 'asc')
         .execute()
@@ -305,14 +334,18 @@ export function createBqbRbacStore(): RbacStore {
     // ─── User-Permission pivot ────────────────────────────────────────
 
     async getUserDirectPermissions(userId: number): Promise<PermissionRecord[]> {
+      // See `getUserRoles` above for the bqb API contracts on
+      // `innerJoin(..., '=', ...)` and array-form `.select([])`.
       const rows: Array<Record<string, unknown>> = await (db.selectFrom('permissions') as any)
-        .innerJoin('user_permissions', 'user_permissions.permission_id', 'permissions.id')
-        .select('permissions.id as id')
-        .select('permissions.name as name')
-        .select('permissions.guard_name as guard_name')
-        .select('permissions.description as description')
-        .select('permissions.created_at as created_at')
-        .select('permissions.updated_at as updated_at')
+        .innerJoin('user_permissions', 'user_permissions.permission_id', '=', 'permissions.id')
+        .select([
+          'permissions.id as id',
+          'permissions.name as name',
+          'permissions.guard_name as guard_name',
+          'permissions.description as description',
+          'permissions.created_at as created_at',
+          'permissions.updated_at as updated_at',
+        ])
         .where('user_permissions.user_id', '=', userId)
         .orderBy('permissions.id', 'asc')
         .execute()
@@ -338,14 +371,18 @@ export function createBqbRbacStore(): RbacStore {
     // ─── Role-Permission pivot ────────────────────────────────────────
 
     async getRolePermissions(roleId: number): Promise<PermissionRecord[]> {
+      // See `getUserRoles` above for the bqb API contracts on
+      // `innerJoin(..., '=', ...)` and array-form `.select([])`.
       const rows: Array<Record<string, unknown>> = await (db.selectFrom('permissions') as any)
-        .innerJoin('role_permissions', 'role_permissions.permission_id', 'permissions.id')
-        .select('permissions.id as id')
-        .select('permissions.name as name')
-        .select('permissions.guard_name as guard_name')
-        .select('permissions.description as description')
-        .select('permissions.created_at as created_at')
-        .select('permissions.updated_at as updated_at')
+        .innerJoin('role_permissions', 'role_permissions.permission_id', '=', 'permissions.id')
+        .select([
+          'permissions.id as id',
+          'permissions.name as name',
+          'permissions.guard_name as guard_name',
+          'permissions.description as description',
+          'permissions.created_at as created_at',
+          'permissions.updated_at as updated_at',
+        ])
         .where('role_permissions.role_id', '=', roleId)
         .orderBy('permissions.id', 'asc')
         .execute()

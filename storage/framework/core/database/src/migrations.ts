@@ -30,8 +30,9 @@ import {
   resetConnection,
   resetDatabase as qbResetDatabase,
   setConfig,
-} from 'bun-query-builder'
+} from '@stacksjs/query-builder'
 import { db } from './utils'
+import { acquireMigrationLock } from './migration-lock'
 
 // Use environment variables via @stacksjs/env for proper type coercion
 import { env as envVars } from '@stacksjs/env'
@@ -56,12 +57,32 @@ function getDriver(): string {
   return dbConfig.default || 'sqlite'
 }
 
+/**
+ * Narrow `DB_CONNECTION` to a SQL dialect the migration runner and
+ * bun-query-builder can actually execute against. Previously this
+ * silently fell back to `'sqlite'` for any unrecognized driver —
+ * including `'dynamodb'`, which was advertised in env types and config
+ * validators but has no working SQL path. Result: `DB_CONNECTION=dynamodb`
+ * would silently run SQLite migrations against a non-existent file
+ * (stacksjs/stacks#1876 D-4).
+ *
+ * Now: throw with a clear pointer. Apps that genuinely want DynamoDB
+ * should use the entity-style `dynamo.entity(...)` API directly
+ * instead of the SQL ORM/migration path.
+ */
 function getDialect(): 'sqlite' | 'mysql' | 'postgres' {
   const driver = getDriver()
-  if (driver === 'sqlite') return 'sqlite'
-  if (driver === 'mysql') return 'mysql'
-  if (driver === 'postgres') return 'postgres'
-  return 'sqlite'
+  if (driver === 'sqlite' || driver === 'mysql' || driver === 'postgres') return driver
+  if (driver === 'dynamodb') {
+    throw new Error(
+      '[database] DB_CONNECTION=dynamodb is not compatible with the SQL migration runner. '
+      + 'DynamoDB has no schema-migration concept — use the entity-style `dynamo.entity(...)` '
+      + 'API from @stacksjs/database directly. To run SQL migrations, set DB_CONNECTION to one of: sqlite, mysql, postgres.',
+    )
+  }
+  throw new Error(
+    `[database] Unknown DB_CONNECTION "${driver}". Allowed values: sqlite, mysql, postgres, dynamodb.`,
+  )
 }
 
 /**
@@ -73,6 +94,16 @@ function configureQueryBuilder(): void {
 
   setConfig({
     dialect,
+    // bun-query-builder defaults to `verbose: true`, which dumps an
+    // unconditional wall of `-- Comparing with stored snapshot`,
+    // `-- Found N script files`, `-- Migrations table ready` etc. to
+    // stdout on every `buddy migrate` (including no-op re-runs). Stacks
+    // surfaces its own progress via the buddy CLI's intro/outro pair,
+    // so silence the library chatter by default. Users can flip this
+    // back via `setConfig({ verbose: true })` from their own config or
+    // by exporting `STACKS_QB_VERBOSE=1` (intentionally not wired yet —
+    // add it if a real debugging need shows up).
+    verbose: false,
     database: {
       database: connectionConfig?.name || connectionConfig?.database || 'stacks',
       host: connectionConfig?.host || 'localhost',
@@ -99,11 +130,22 @@ function prepareMigrationModelsDir(): { modelsDir: string, skip: boolean } {
  * - Creating duplicate unique indexes on columns that already have UNIQUE constraints
  *   from inline table definitions (the index name differs but the constraint conflicts)
  *
- * Files that would become no-ops are deleted from disk and recorded in the
- * migrations tracking table so they're treated as "executed" — keeping the
- * migrations/ directory clean instead of cluttered with `SELECT 1` stubs.
+ * Two flavours of "no-op on SQLite" need different handling:
+ *
+ *   - **Skip-and-keep** (`skipMigration`): the file is portable — it would
+ *     run cleanly on MySQL/Postgres — but doesn't apply to SQLite. Record
+ *     it as executed in the migrations tracking table so it doesn't replay,
+ *     but **leave the file on disk** so a future `DB_CONNECTION` flip can
+ *     pick it up. This is the right path for FK constraint files and
+ *     unique-index files. (stacksjs/stacks#1916)
+ *
+ *   - **Drop-and-delete** (`deleteMigration`): the file is genuinely dead
+ *     — a duplicate CREATE TABLE created by `buddy generate:migrations`
+ *     regenerating against an already-modeled table, or a DROP COLUMN
+ *     migration whose target column never existed. Removing it keeps the
+ *     directory clean and prevents future runs from re-discovering it.
  */
-function preprocessSqliteMigrations(): void {
+export function preprocessSqliteMigrations(): void {
   const migrationsDir = join(process.cwd(), 'database', 'migrations')
   let files: string[]
   try {
@@ -116,7 +158,14 @@ function preprocessSqliteMigrations(): void {
   // Track which migrations we drop so we can mark them executed in the
   // migrations table (otherwise the next generate run regenerates them).
   const droppedMigrations: string[] = []
-  const dropMigration = (file: string, filePath: string, reason: string): void => {
+  const skipMigration = (file: string, reason: string): void => {
+    // Portable migration that doesn't apply to SQLite — file stays on
+    // disk so it can run if the consumer ever switches to MySQL/Postgres.
+    log.info(`Skipping migration on SQLite (${reason}): ${file}`)
+    droppedMigrations.push(file)
+  }
+  const deleteMigration = (file: string, filePath: string, reason: string): void => {
+    // Genuinely dead file — duplicate or unreachable. Safe to remove.
     log.info(`Dropping no-op migration (${reason}): ${file}`)
     try { unlinkSync(filePath) }
     catch { /* already gone */ }
@@ -173,22 +222,32 @@ function preprocessSqliteMigrations(): void {
 
     // Drop duplicate CREATE TABLE migrations — keep only the earliest one
     // for each table. This handles the case where buddy regenerates a
-    // create-table migration for a table that's already modeled.
+    // create-table migration for a table that's already modeled. These
+    // ARE genuinely dead — the table already exists, the file would
+    // either no-op or error, and we don't want them in a future
+    // MySQL/Postgres replay either. Safe to delete.
     const firstStatement = statements[0]
     const createTableMatch = firstStatement ? firstStatement.match(createTablePattern) : null
     if (createTableMatch && createTableMatch[1]) {
       const tableName = createTableMatch[1]
       const earliest = createTableEarliest.get(tableName)
       if (earliest && earliest !== file) {
-        dropMigration(file, filePath, `duplicate create-table for "${tableName}" (kept ${earliest})`)
+        deleteMigration(file, filePath, `duplicate create-table for "${tableName}" (kept ${earliest})`)
         continue
       }
     }
 
-    // Skip files that only contain ALTER TABLE ADD CONSTRAINT
+    // Skip files that only contain ALTER TABLE ADD CONSTRAINT.
+    //
+    // SQLite cannot execute this — FKs are inline on CREATE TABLE
+    // (stacksjs/bun-query-builder#1019). But the file is perfectly
+    // valid on MySQL/Postgres, so we KEEP IT ON DISK and just mark
+    // it as executed in the migrations table for SQLite. A later
+    // DB_CONNECTION flip can replay these files against the new
+    // backend. (stacksjs/stacks#1916)
     const allAddConstraint = statements.every(s => addConstraintPattern.test(s))
     if (allAddConstraint) {
-      dropMigration(file, filePath, 'SQLite does not support ALTER TABLE ADD CONSTRAINT')
+      skipMigration(file, 'SQLite does not support ALTER TABLE ADD CONSTRAINT')
       continue
     }
 
@@ -196,9 +255,13 @@ function preprocessSqliteMigrations(): void {
     // a UNIQUE constraint from table creation. IF NOT EXISTS only checks
     // by index name, not by column — so a second unique index with a
     // different name triggers SQLITE_CONSTRAINT_UNIQUE.
+    //
+    // Same skip-but-keep rule as FK constraints: MySQL/Postgres need
+    // the explicit `CREATE UNIQUE INDEX` (their indexes are separate
+    // objects, not inline). The file survives a driver switch.
     const allCreateUniqueIndex = statements.every(s => createUniqueIndexPattern.test(s))
     if (allCreateUniqueIndex) {
-      dropMigration(file, filePath, 'unique constraint already inline on table')
+      skipMigration(file, 'unique constraint already inline on table')
       continue
     }
 
@@ -255,7 +318,10 @@ function preprocessSqliteMigrations(): void {
 
       if (modified) {
         if (filteredStatements.length === 0) {
-          dropMigration(file, filePath, 'columns already absent from table')
+          // The entire DROP COLUMN file is unreachable — column already
+          // gone, table never existed. Safe to delete: a future
+          // driver-switch replay wouldn't find the column either.
+          deleteMigration(file, filePath, 'columns already absent from table')
         }
         else {
           writeFileSync(filePath, `${filteredStatements.join(';\n')};\n`)
@@ -377,12 +443,148 @@ async function ensureDatabaseExists(): Promise<void> {
 }
 
 /**
+ * Skip migrations owned by features whose `config.<feature>.enabled` is
+ * false (stacksjs/stacks#1854). Pre-flight pass that hides
+ * `database/migrations/<owned>.sql` → `<owned>.sql.disabled` for the
+ * duration of the run. Restored in a `finally` so a crash mid-migration
+ * still leaves the directory clean. Returns the list of paths that
+ * were hidden so the caller can log them.
+ *
+ * Lives here (not in `@stacksjs/buddy`) so the migration runner can
+ * import it without a dependency cycle. Stays a no-op when the
+ * feature manifest / config can't be resolved — defensive, since the
+ * runner is also called from non-CLI contexts (tests, programmatic
+ * migrations) where one or the other might not be initialised.
+ */
+async function hideDisabledFeatureMigrations(): Promise<Array<{ original: string, hidden: string, feature: string }>> {
+  const hidden: Array<{ original: string, hidden: string, feature: string }> = []
+  try {
+    const { FEATURE_NAMES, migrationFeature } = await import('@stacksjs/buddy')
+    const { feature: isFeatureEnabled } = await import('@stacksjs/config')
+    const fs = await import('node:fs/promises')
+
+    const migrationsDir = path.projectPath('database/migrations')
+    if (!existsSync(migrationsDir)) return hidden
+
+    const disabledFeatures = new Set(
+      (FEATURE_NAMES as readonly string[]).filter((f: string) => !(isFeatureEnabled as (name: string) => boolean)(f)),
+    )
+    if (disabledFeatures.size === 0) return hidden
+
+    const files = readdirSync(migrationsDir).filter(f => f.endsWith('.sql'))
+    for (const file of files) {
+      const owner = (migrationFeature as (filename: string) => string | null)(file)
+      if (!owner || !disabledFeatures.has(owner)) continue
+      const original = join(migrationsDir, file)
+      const hiddenPath = `${original}.disabled`
+      await fs.rename(original, hiddenPath)
+      hidden.push({ original, hidden: hiddenPath, feature: owner })
+    }
+
+    if (hidden.length > 0) {
+      const summary = Object.entries(
+        hidden.reduce<Record<string, number>>((acc, h) => {
+          acc[h.feature] = (acc[h.feature] ?? 0) + 1
+          return acc
+        }, {}),
+      )
+        .map(([f, n]) => `${f}: ${n}`)
+        .join(', ')
+      log.info(`[migration] Skipping ${hidden.length} migration(s) for disabled features (${summary}). Run \`./buddy <feature>:install\` to enable.`)
+    }
+  }
+  catch {
+    // `@stacksjs/buddy` / `@stacksjs/config` may not resolve cleanly in
+    // every embedding (notably bare tests). The gate is best-effort —
+    // a missing manifest doesn't block migrations from running.
+  }
+  return hidden
+}
+
+async function restoreHiddenMigrations(hidden: Array<{ original: string, hidden: string, feature: string }>): Promise<void> {
+  const fs = await import('node:fs/promises')
+  for (const { original, hidden: h } of hidden) {
+    try { await fs.rename(h, original) }
+    catch { /* best-effort restore; another invocation may have already swept */ }
+  }
+}
+
+/**
+ * Count how many migrations have been recorded as applied in the
+ * `migrations` table. Returns 0 when the table doesn't exist yet
+ * (fresh database, first ever migration) — bun-query-builder
+ * creates the table during the first `executeMigration` call.
+ *
+ * Used by {@link runDatabaseMigration} before + after the migration
+ * run so the caller can report `applied = afterCount - beforeCount`
+ * — distinguishes the "nothing to migrate" path from a real apply
+ * in the CLI outro (user-reported messaging gap).
+ */
+async function countAppliedMigrations(): Promise<number> {
+  try {
+    const row = await (db as any)
+      .selectFrom('migrations')
+      .select((eb: any) => eb.fn.count<number>('id').as('n'))
+      .executeTakeFirst()
+    if (!row) return 0
+    const n = Number(row.n ?? row.N ?? 0)
+    return Number.isFinite(n) ? n : 0
+  }
+  catch {
+    // Table doesn't exist yet — pre-first-migration state. Treat as
+    // zero so a fresh DB shows "applied N" on the first run rather
+    // than throwing here and pretending nothing happened.
+    return 0
+  }
+}
+
+/**
+ * Persist the last migration outcome for the CLI parent process to
+ * pick up. The migrate / migrate:fresh subprocesses run in a forked
+ * `bun` invocation and exit only with a status code, so the parent
+ * `buddy migrate` command has no in-process way to learn how many
+ * migrations actually ran. This marker file is the handoff.
+ *
+ * Buddy reads + deletes after the subprocess exits. Errors writing
+ * the marker are swallowed — the migration itself succeeded; failing
+ * to record the count just means the outro falls back to the
+ * generic "Migrated your <env> database." message.
+ */
+async function writeMigrateMarker(appliedCount: number): Promise<void> {
+  try {
+    const fs = await import('node:fs/promises')
+    const dir = path.projectPath('.stacks')
+    await fs.mkdir(dir, { recursive: true })
+    const file = `${dir}/last-migrate-result.json`
+    const body = JSON.stringify({
+      appliedCount,
+      completedAt: new Date().toISOString(),
+    })
+    await fs.writeFile(file, body, 'utf8')
+  }
+  catch {
+    // Don't fail the migration because we couldn't write a marker;
+    // the buddy CLI's outro will just use its generic fallback.
+  }
+}
+
+/**
  * Run database migrations
  */
 export async function runDatabaseMigration(): Promise<Result<string, Error>> {
   const startedAt = Date.now()
+  const hidden = await hideDisabledFeatureMigrations()
+  // Lock handle is acquired AFTER ensureDatabaseExists (PG/MySQL need
+  // the target DB to exist before we can connect to it for the
+  // advisory lock). SQLite is fine to lock immediately.
+  let lockHandle: { release: () => Promise<void> } | null = null
   try {
-    log.info('Migrating database...')
+    // Step-progress logs stay at debug. On a no-op run (the common case
+    // when the user re-issues `buddy migrate` against a clean DB) we
+    // want a clean intro→outro pair from the buddy CLI, not a wall of
+    // "Migrating database... / Database migration completed" lines
+    // that duplicate what the outro already prints with timing.
+    log.debug('Migrating database...')
 
     // Ensure the database exists before running migrations (PostgreSQL/MySQL)
     await ensureDatabaseExists()
@@ -390,19 +592,44 @@ export async function runDatabaseMigration(): Promise<Result<string, Error>> {
     // Configure bun-query-builder with stacks database settings
     configureQueryBuilder()
 
-    // Preprocess migrations for SQLite compatibility
-    if (getDialect() === 'sqlite') {
+    // Acquire the distributed migration lock (stacksjs/stacks#1876 D-1).
+    // Without this, two concurrent runners (parallel CI jobs, two app
+    // instances on boot) race the migrations table and corrupt state —
+    // both read the same "pending" list, both run the same SQL, both
+    // try to insert the same record. The lock is advisory on PG/MySQL
+    // (auto-released on disconnect) and file-based on SQLite (with a
+    // 60s staleness fallback so a crashed holder doesn't block forever).
+    const dialect = getDialect()
+    const lockDb = dialect === 'sqlite' ? null : createQueryBuilder()
+    lockHandle = await acquireMigrationLock(dialect, lockDb)
+
+    // Preprocess migrations for SQLite compatibility — runs *after*
+    // the lock is held so concurrent processes can't corrupt each
+    // other's disk state (stacksjs/stacks#1876 D-2).
+    if (dialect === 'sqlite') {
       preprocessSqliteMigrations()
     }
 
     const modelsDir = path.userModelsPath()
 
+    // Count applied-before so we can compute the delta after the
+    // migration run. Lets the buddy CLI distinguish "nothing to
+    // migrate" from "applied N" in the outro (user-reported
+    // messaging gap).
+    const appliedBefore = await countAppliedMigrations()
+
     // Execute existing migration files
     log.debug(`[migration] Running migrations from: ${modelsDir}`)
     await qbExecuteMigration(modelsDir)
 
-    log.success(`Database migration completed in ${Date.now() - startedAt}ms.`)
-    return ok('Database migration completed.')
+    const appliedAfter = await countAppliedMigrations()
+    const appliedCount = Math.max(0, appliedAfter - appliedBefore)
+    await writeMigrateMarker(appliedCount)
+
+    log.debug(`Database migration completed in ${Date.now() - startedAt}ms (applied ${appliedCount}).`)
+    return ok(appliedCount === 0
+      ? 'Nothing to migrate.'
+      : `Applied ${appliedCount} migration${appliedCount === 1 ? '' : 's'}.`)
   }
   catch (error) {
     // Surface enough context for the user to act on the failure: which
@@ -413,6 +640,19 @@ export async function runDatabaseMigration(): Promise<Result<string, Error>> {
     log.error(`[migration] Failed after ${Date.now() - startedAt}ms: ${detail}`)
     log.info('[migration] Run `./buddy migrate:fresh` to drop and recreate the schema if state is partial.')
     return err(handleError('Migration failed', error))
+  }
+  finally {
+    if (lockHandle) {
+      try {
+        await lockHandle.release()
+      }
+      catch {
+        // Best effort; advisory locks auto-release on disconnect and
+        // SQLite file locks have a staleness fallback. Don't shadow
+        // the original failure with a release error.
+      }
+    }
+    await restoreHiddenMigrations(hidden)
   }
 }
 
@@ -544,7 +784,11 @@ async function dropFrameworkTables(dialect: 'sqlite' | 'mysql' | 'postgres'): Pr
  */
 export async function generateMigrations(): Promise<Result<string, Error>> {
   try {
-    log.info('Generating migrations...')
+    // Step-progress at debug — buddy's intro/outro carries the user-
+    // visible signal. On a no-op generate we want zero lines between
+    // those two; on a real generate the per-file written count below
+    // is the meaningful breadcrumb.
+    log.debug('Generating migrations...')
 
     // Configure bun-query-builder with stacks database settings
     configureQueryBuilder()
@@ -552,7 +796,7 @@ export async function generateMigrations(): Promise<Result<string, Error>> {
     const dialect = getDialect()
     const { modelsDir, skip } = prepareMigrationModelsDir()
     if (skip) {
-      log.info('No app/Models directory found; using committed framework migrations')
+      log.debug('No app/Models directory found; using committed framework migrations')
       return ok('Migrations generated')
     }
 
@@ -561,13 +805,17 @@ export async function generateMigrations(): Promise<Result<string, Error>> {
 
     if (result.hasChanges) {
       const written = persistGeneratedMigrations(result.sqlStatements ?? [])
+      // Only announce when we actually wrote files. `hasChanges` can be
+      // true while `written === 0` if the qb diff restated statements
+      // already covered by committed migrations — that's a no-op from
+      // the user's perspective, so stay quiet.
       if (written > 0)
-        log.success(`Migrations generated (${written} file${written === 1 ? '' : 's'})`)
+        log.success(`Generated ${written} migration file${written === 1 ? '' : 's'}`)
       else
-        log.success('Migrations generated')
+        log.debug('Migration generation produced no new files (already up to date)')
     }
     else {
-      log.info('No changes detected')
+      log.debug('No changes detected')
     }
 
     return ok('Migrations generated')

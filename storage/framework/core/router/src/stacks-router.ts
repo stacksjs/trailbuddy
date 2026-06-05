@@ -6,15 +6,26 @@
  */
 
 import type { Server } from 'bun'
+import type { ActionValidations, ValidationResult } from '@stacksjs/actions'
 import type { ActionHandler, EnhancedRequest, Route, ServerOptions } from '@stacksjs/bun-router'
+import { Middleware } from './middleware'
+// Side-import the EnhancedRequest module augmentation so every `req._foo`
+// and `req.input(...)` access in this file type-checks without `as any`
+// (stacksjs/stacks#1863 T-3).
+import './request-augmentation'
 import process from 'node:process'
-import { log } from '@stacksjs/logging'
+import { Buffer } from 'node:buffer'
+import { timingSafeEqual } from 'node:crypto'
+import { log, report } from '@stacksjs/logging'
 import { path as p } from '@stacksjs/path'
 import { UploadedFile } from '@stacksjs/storage'
 import { applyRequestEnhancements, Router } from '@stacksjs/bun-router'
 import { runWithRequest } from './request-context'
 import { isApiRequest, JSON_CONTENT_TYPE } from './api-shape'
 import { clearTrackedQueries, createErrorResponse, createMiddlewareErrorResponse } from './error-handler'
+import { rateLimit as enforceRateLimit } from './rate-limit'
+import { applySecurityHeaders } from './security-headers'
+import { isCursorPaginator, isPaginator, isSimplePaginator } from '@stacksjs/orm'
 
 import type { StacksActionPath } from './action-paths'
 
@@ -69,6 +80,40 @@ interface ChainableRoute {
    * ```
    */
   skipCsrf: () => ChainableRoute
+  /**
+   * Force CSRF enforcement on this specific route, even if the underlying
+   * action declares `skipCsrf: true` (or `csrf: false`). Lets a single
+   * "browser-facing" route share an action with API/webhook routes that
+   * legitimately want the skip — without giving up CSRF on the browser-
+   * facing one. Wins over both the route-level `.skipCsrf()` and the
+   * action-level skip flag. See stacksjs/stacks#1870 R-9.
+   *
+   * @example
+   * ```ts
+   * route.post('/webhooks/stripe', 'Actions/StripeWebhookAction').skipCsrf()
+   * route.post('/admin/refund',    'Actions/StripeWebhookAction').requireCsrf()
+   * ```
+   */
+  requireCsrf: () => ChainableRoute
+  /**
+   * Declaratively rate-limit this route (stacksjs/stacks#1870 R-8).
+   * Wraps `rateLimit(routeKey, max).per(window)` so callers don't
+   * have to remember to invoke it inside every action's `handle()`.
+   * The bucket identity is the per-route default (auth user → token
+   * → IP → 'anon'); 429s carry the standard `Retry-After`.
+   *
+   * @example
+   * ```ts
+   * route.post('/login',  'Actions/LoginAction').rateLimit(5, 'minute')
+   * route.post('/search', 'Actions/SearchAction').rateLimit(30, 'minute')
+   * route.post('/upload', 'Actions/UploadAction').rateLimit(3, 900) // 3 per 15 min
+   * ```
+   *
+   * `window` accepts either a named period (`'second'`, `'minute'`,
+   * `'hour'`, `'day'`) or a positive number of seconds for custom
+   * windows.
+   */
+  rateLimit: (max: number, window: 'second' | 'minute' | 'hour' | 'day' | number) => ChainableRoute
 }
 
 /**
@@ -79,13 +124,187 @@ interface ChainableRoute {
 const csrfSkipRegistry = new Set<string>()
 
 /**
+ * Set of route keys that have explicitly opted IN to CSRF via
+ * `.requireCsrf()` — used to overrule an action-level `skipCsrf: true`
+ * on a per-route basis (stacksjs/stacks#1870 R-9). Wins over both the
+ * route's own skip set above and the action-level cache below.
+ */
+const csrfRequireRegistry = new Set<string>()
+
+/**
+ * Per-route rate-limit config registered via `.rateLimit(max, window)`
+ * on the chainable route builder (stacksjs/stacks#1870 R-8). The
+ * `createMiddlewareHandler` request entry point reads this once per
+ * call and invokes the shared `rateLimit()` primitive before the
+ * action body. Storing here (instead of as part of the action
+ * definition) lets two routes registered against the same action
+ * apply different limits, mirroring the `.skipCsrf()` /
+ * `.requireCsrf()` split.
+ */
+interface RouteRateLimitConfig {
+  max: number
+  windowSeconds: number
+}
+const routeRateLimitRegistry = new Map<string, RouteRateLimitConfig>()
+
+/**
+ * Resolve a chainable-form `window` arg (`'minute'` or `300`) to a
+ * positive integer of seconds. Throws on malformed input at
+ * registration time so the typo surfaces at boot, not on the first
+ * 429.
+ */
+function rateLimitWindowToSeconds(window: 'second' | 'minute' | 'hour' | 'day' | number): number {
+  if (typeof window === 'number') {
+    if (!Number.isFinite(window) || window <= 0) {
+      throw new Error(`[Router] .rateLimit(): window must be a positive number of seconds, got ${window}`)
+    }
+    return Math.floor(window)
+  }
+  switch (window) {
+    case 'second': return 1
+    case 'minute': return 60
+    case 'hour': return 3600
+    case 'day': return 86_400
+    default:
+      throw new Error(`[Router] .rateLimit(): unknown period '${String(window)}'`)
+  }
+}
+
+/**
+ * FIFO-bounded Map. Wraps `Map` with a hard size cap; on overflow,
+ * the oldest entry (Map insertion order) is evicted. Used for the
+ * router's small framework-internal caches whose size is normally
+ * bounded by action count, but which had no upper limit before —
+ * tests that instantiate many short-lived routers would leak entries
+ * across `createStacksRouter()` calls (stacksjs/stacks#1863 T-8).
+ *
+ * Insertion-order LRU is appropriate here because the access pattern
+ * is "set once at action-load time, then many reads" — refreshing on
+ * get would buy nothing since reads dominate.
+ */
+class BoundedMap<K, V> {
+  private map = new Map<K, V>()
+
+  constructor(private readonly max: number) {}
+
+  get(key: K): V | undefined {
+    return this.map.get(key)
+  }
+
+  has(key: K): boolean {
+    return this.map.has(key)
+  }
+
+  set(key: K, value: V): this {
+    // If we already have the key, refreshing its insertion order by
+    // delete+set means newer writes survive eviction longer.
+    if (this.map.has(key)) this.map.delete(key)
+    this.map.set(key, value)
+    if (this.map.size > this.max) {
+      const oldest = this.map.keys().next().value
+      if (oldest !== undefined) this.map.delete(oldest)
+    }
+    return this
+  }
+
+  delete(key: K): boolean {
+    return this.map.delete(key)
+  }
+
+  clear(): void {
+    this.map.clear()
+  }
+
+  get size(): number {
+    return this.map.size
+  }
+}
+
+/**
+ * Decide whether a request is authorized to read `/__routes` and
+ * `/__openapi.json`.
+ *
+ * - When `STACKS_EXPOSE_ROUTES` is unset, the endpoint is allowed only
+ *   outside production (`APP_ENV`/`NODE_ENV` !== `'production'`).
+ * - When set to `'1'`, behaves as above (legacy "just turn it on" flag
+ *   for dev convenience).
+ * - When set to any other string, that value is treated as a shared
+ *   secret. The request must echo it as `X-Stacks-Routes-Token`
+ *   (header) or `?token=` (query string), compared in constant time.
+ *   This branch works in any environment, prod included — without it,
+ *   the previous behaviour silently published the entire route table
+ *   to anyone who hit the URL in a `STACKS_EXPOSE_ROUTES=1`
+ *   production deployment (stacksjs/stacks#1859 R-4).
+ */
+function isExposeRoutesAuthorized(req: Request): boolean {
+  const flag = process.env.STACKS_EXPOSE_ROUTES ?? ''
+  if (!flag) {
+    const env = (process.env.APP_ENV ?? '').toLowerCase()
+    const isProd = env === 'production' || process.env.NODE_ENV === 'production'
+    return !isProd
+  }
+  if (flag === '1') {
+    const env = (process.env.APP_ENV ?? '').toLowerCase()
+    const isProd = env === 'production' || process.env.NODE_ENV === 'production'
+    return !isProd
+  }
+
+  // Token mode — flag is the required value; request must echo it.
+  const url = new URL(req.url)
+  const submitted = req.headers.get('x-stacks-routes-token')
+    || req.headers.get('X-Stacks-Routes-Token')
+    || url.searchParams.get('token')
+    || ''
+  if (typeof submitted !== 'string' || submitted.length === 0 || submitted.length !== flag.length) return false
+  try {
+    return timingSafeEqual(Buffer.from(submitted), Buffer.from(flag))
+  }
+  catch {
+    return false
+  }
+}
+
+/**
+ * Apply the configured CORS policy to an outgoing response. Pulled
+ * out as a helper so success-path and error-path responses both flow
+ * through the same single CORS injection point — error paths used to
+ * skip CORS entirely, which left browsers unable to read error bodies
+ * cross-origin and forced individual middleware (Throttle 429,
+ * Maintenance 503) to hand-roll `Access-Control-Allow-Origin: *`
+ * regardless of policy. See stacksjs/stacks#1859 H-3, R-3.
+ */
+async function applyCorsIfConfigured(req: EnhancedRequest, response: Response): Promise<Response> {
+  if (!req._corsConfig || !response) return response
+  try {
+    const { applyCorsHeaders } = await import(p.storagePath('framework/defaults/app/Middleware/Cors.ts'))
+    return (applyCorsHeaders as (req: Request, res: Response, cfg?: unknown) => Response)(
+      req as unknown as Request,
+      response,
+      req._corsConfig,
+    )
+  }
+  catch (err) {
+    log.warn('[router] CORS header injection failed', { error: err })
+    return response
+  }
+}
+
+/**
+ * Soft cap large enough to cover any realistic app's action count
+ * (Stacks framework defaults today register ~120 actions); higher
+ * gives us comfortable headroom for plugin authors without enabling
+ * unbounded growth in long-lived test processes.
+ */
+const ACTION_CACHE_MAX = 5000
+
+/**
  * Action-level CSRF opt-out cache, keyed by the resolved handler
  * import path. Populated lazily when an action with a string handler
  * is loaded — we read `action.skipCsrf` / `action.csrf` once at
  * load time and keep the answer here so the CSRF gate doesn't have to
  * re-import the module on every request.
  */
-const actionSkipsCsrfCache = new Map<string, boolean>()
+const actionSkipsCsrfCache = new BoundedMap<string, boolean>(ACTION_CACHE_MAX)
 
 /**
  * Map of routeKey → handler-identifier so the CSRF gate can look up
@@ -93,7 +312,7 @@ const actionSkipsCsrfCache = new Map<string, boolean>()
  * every request. Identifier is the original string handler path
  * (`'Actions/Foo'`); for function handlers the entry stays unset.
  */
-const routeHandlerKeyRegistry = new Map<string, string>()
+const routeHandlerKeyRegistry = new BoundedMap<string, string>(ACTION_CACHE_MAX)
 
 /** HTTP methods that mutate state and therefore need CSRF protection. */
 const CSRF_PROTECTED_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
@@ -268,6 +487,88 @@ export function listRegisteredRoutes(): Array<{ method: string, path: string, na
 /** Represents a middleware module with a handle method */
 interface MiddlewareHandler {
   handle: (req: EnhancedRequest) => Promise<void> | void
+  /**
+   * Optional execution priority. Lower numbers run earlier. Defaults to
+   * `DEFAULT_MIDDLEWARE_PRIORITY` (10) when unset — matches the
+   * `Middleware` class default in `./middleware.ts`. The chain is sorted
+   * by this field at request time so declared order can be authored
+   * for readability while execution order remains coherent (CORS
+   * before auth before throttle, etc.). See stacksjs/stacks#1863.
+   */
+  priority?: number
+}
+
+const DEFAULT_MIDDLEWARE_PRIORITY = 10
+
+/**
+ * One-time warning for middleware priorities that fail the bounds check
+ * (NaN, negative, or non-numeric). Tracked per name+value so a busy chain
+ * doesn't spam the log on every request.
+ */
+const _warnedInvalidPriorities = new Set<string>()
+function warnInvalidMiddlewarePriority(name: string, raw: unknown): void {
+  const key = `${name}:${String(raw)}`
+  if (_warnedInvalidPriorities.has(key)) return
+  _warnedInvalidPriorities.add(key)
+  log.warn(
+    `[Router] Middleware '${name}' declared an invalid priority (${String(raw)}). `
+    + `Priorities must be a finite non-negative number; falling back to default ${DEFAULT_MIDDLEWARE_PRIORITY}.`,
+  )
+}
+
+/**
+ * Adapt anything the `router.use(...)` API accepts into a shape bun-router's
+ * `globalMiddleware` array understands.
+ *
+ * The bun-router contract is `(req, next) => Promise<Response>` — middleware
+ * MUST call `next()` and return its Response, or the chain short-circuits to
+ * a default `200 OK` empty body. The Stacks {@link Middleware} class uses a
+ * simpler "return void to continue, throw a Response/HttpError to short-
+ * circuit" contract, which is incompatible at the wire level.
+ *
+ * Previously callers had to remember to invoke `.toRouterHandler()` manually,
+ * and forgetting silently broke every route in the chain. We now detect:
+ *
+ *  - real `Middleware` instances (via `instanceof`)
+ *  - duck-typed objects with a `handle()` method (e.g. a default-exported
+ *    plain object that mimics the Middleware shape — common in user code
+ *    before they reach for the class)
+ *
+ * and route both through the same `next()`-aware wrapper. Bare functions and
+ * string paths pass through unchanged.
+ *
+ * See stacksjs/stacks#1870 R-2.
+ */
+function adaptMiddlewareForBunRouter(
+  middleware: ActionHandler | Middleware | { handle: (req: EnhancedRequest) => void | Promise<void> },
+): ActionHandler {
+  if (middleware instanceof Middleware) {
+    return middleware.toRouterHandler() as unknown as ActionHandler
+  }
+  // Duck-typed handler object: `{ handle(req) { … } }` without the class.
+  // Function values DO have a `.handle` property only if explicitly assigned;
+  // the `typeof !== 'function'` guard keeps bare functions on the pass-through
+  // path so they hit bun-router's existing function branch.
+  if (
+    middleware
+    && typeof middleware === 'object'
+    && typeof (middleware as { handle?: unknown }).handle === 'function'
+    && typeof middleware !== 'function'
+  ) {
+    const handle = (middleware as { handle: (req: EnhancedRequest) => void | Promise<void> }).handle.bind(middleware)
+    const wrapper = async (req: EnhancedRequest, next: () => Promise<Response>): Promise<Response> => {
+      try {
+        await handle(req)
+      }
+      catch (thrown) {
+        if (thrown instanceof Response) return thrown
+        throw thrown
+      }
+      return next()
+    }
+    return wrapper as unknown as ActionHandler
+  }
+  return middleware as ActionHandler
 }
 
 /**
@@ -390,6 +691,13 @@ async function loadMiddleware(name: string): Promise<MiddlewareHandler | null> {
 export function clearMiddlewareCache(): void {
   middlewareCache.clear()
   middlewareAliasesPromise = null
+  // Action-level CSRF skip cache + route-handler key registry are
+  // populated lazily when actions load; they should be flushed in
+  // lockstep with the middleware cache so a hot-reloaded action that
+  // toggled its `skipCsrf` flag is re-read on the next request rather
+  // than serving from a stale answer (stacksjs/stacks#1863 T-8).
+  actionSkipsCsrfCache.clear()
+  routeHandlerKeyRegistry.clear()
 }
 
 /**
@@ -474,20 +782,40 @@ function createMiddlewareHandler(routeKey: string, handler: StacksHandler): Rout
   // Create the base handler with skipParsing=true since we'll do it ourselves
   const wrappedBase = wrapHandler(handler, true)
 
-  // Pre-resolve string handlers so action-level flags (skipCsrf, etc.)
-  // are populated in their respective caches before the middleware
-  // chain runs. Without this prefetch, the first request to a webhook
-  // would inject CSRF, fail, and only the SECOND request would see the
-  // populated cache and skip injection. Idempotent: subsequent
-  // resolutions are served from the import cache.
+  // Pre-resolve string handlers so action-level CSRF flags (skipCsrf) are
+  // cached before the middleware chain runs. Without this, the first
+  // request to a skipCsrf webhook would inject CSRF, fail, and only the
+  // SECOND request would see the populated cache and skip injection.
+  //
+  // This only matters for CSRF-protected methods — GET/HEAD/OPTIONS never
+  // get CSRF injected, so prefetching their actions would just front-load
+  // every action import (and its model graph) at registration time for no
+  // benefit. Measured ~90ms of dev-boot time across a route-heavy app;
+  // safe-method actions now resolve lazily on first request instead.
+  // Idempotent: subsequent resolutions are served from the import cache.
   let actionPrefetch: Promise<void> | null = null
   if (typeof handler === 'string') {
-    actionPrefetch = resolveStringHandler(handler).then(() => undefined).catch(() => undefined)
+    const method = routeKey.slice(0, routeKey.indexOf(':')).toUpperCase()
+    if (CSRF_PROTECTED_METHODS.has(method)) {
+      actionPrefetch = resolveStringHandler(handler).then(() => undefined).catch(() => undefined)
+    }
   }
 
   return async (req: EnhancedRequest) => {
-    // Parse body and enhance request first
-    await parseRequestBody(req)
+    // Parse body and enhance request first. parseRequestBody can throw
+    // an HttpError(400) on malformed JSON (stacksjs/stacks#1859 H-5) —
+    // route that to the standard error response path instead of letting
+    // it bubble out of the handler as an unhandled rejection.
+    try {
+      await parseRequestBody(req)
+    }
+    catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      return createMiddlewareErrorResponse(
+        error as Error & { statusCode?: number, status?: number },
+        req,
+      )
+    }
     const enhancedReq = enhanceRequest(req)
     if (actionPrefetch) await actionPrefetch
 
@@ -496,12 +824,33 @@ function createMiddlewareHandler(routeKey: string, handler: StacksHandler): Rout
     // applied later (inside the action wrapper) and wins by also setting
     // the same flag.
     if (routeApiResponseRegistry.has(routeKey)) {
-      ;(req as any)._forceJson = true
+      ;req._forceJson = true
     }
 
     // Run the entire request handling within the request context
     // This allows Auth and other services to access the current request
     return runWithRequest<Promise<Response>>(enhancedReq, async () => {
+      // Declarative per-route rate-limit (stacksjs/stacks#1870 R-8).
+      // Read once per request; routes that never called `.rateLimit()`
+      // skip the call entirely. The shared limiter cache inside
+      // `rate-limit.ts` keeps the bucket math coherent across requests
+      // for the same `routeKey:max:window` shape.
+      const rl = routeRateLimitRegistry.get(routeKey)
+      if (rl) {
+        try {
+          await enforceRateLimit(routeKey, rl.max).over(rl.windowSeconds)
+        }
+        catch (err) {
+          // rateLimit() throws HttpError(429) with Retry-After headers
+          // already attached. Route through the shared error responder
+          // so the 429 shape matches every other framework error.
+          return createMiddlewareErrorResponse(
+            err as Error & { statusCode?: number, status?: number, headers?: Record<string, string> },
+            req,
+          )
+        }
+      }
+
       const userMiddleware = routeMiddlewareRegistry.get(routeKey) || []
 
       // Default-on CSRF: every state-mutating method gets `csrf` injected
@@ -517,6 +866,7 @@ function createMiddlewareHandler(routeKey: string, handler: StacksHandler): Rout
       const middlewareEntries: string[] = [...userMiddleware]
       const alreadyHasCsrf = userMiddleware.some(m => m === 'csrf' || m.startsWith('csrf:'))
       const routeSkipped = csrfSkipRegistry.has(routeKey)
+      const routeRequired = csrfRequireRegistry.has(routeKey)
       // Check action-level cache: an action exporting `skipCsrf: true`
       // means we should NOT inject the middleware at all (rather than
       // injecting it and having it self-bail). Skipping at injection
@@ -524,7 +874,17 @@ function createMiddlewareHandler(routeKey: string, handler: StacksHandler): Rout
       // hot webhook paths.
       const handlerKey = routeHandlerKeyRegistry.get(routeKey)
       const actionSkipped = handlerKey ? actionSkipsCsrfCache.get(handlerKey) === true : false
-      if (CSRF_PROTECTED_METHODS.has(method) && !alreadyHasCsrf && !routeSkipped && !actionSkipped) {
+      // Decision order (stacksjs/stacks#1870 R-9):
+      //   1. `.requireCsrf()` on the route wins over EVERYTHING — used to
+      //      re-enable CSRF for a browser-facing route that shares an
+      //      action with API/webhook routes that legitimately skip.
+      //   2. Otherwise the union of the route- and action-level skip
+      //      flags decides — either one is enough to bypass.
+      const shouldInjectCsrf
+        = CSRF_PROTECTED_METHODS.has(method)
+        && !alreadyHasCsrf
+        && (routeRequired || (!routeSkipped && !actionSkipped))
+      if (shouldInjectCsrf) {
         // Prepend so CSRF runs before auth/etc. — a request that fails
         // CSRF should never reach the rest of the chain.
         middlewareEntries.unshift('csrf')
@@ -535,34 +895,75 @@ function createMiddlewareHandler(routeKey: string, handler: StacksHandler): Rout
         log.debug(`[middleware] Executing chain: [${middlewareEntries.join(', ')}] for ${method} ${urlPath}`)
       }
 
-      // Run middleware in order
-      const middlewareTimings: Array<{ name: string, ms: number }> = []
+      // Pre-resolve every entry to its handler + priority. Each
+      // Middleware instance declares an optional `priority` (lower
+      // runs earlier, default 10); without sorting, declared order
+      // alone decides execution — which contradicts the Cors header
+      // contract requiring CORS to precede auth/throttle so 4xx
+      // responses still carry the right headers. See
+      // stacksjs/stacks#1863, #1859 (H-1).
+      interface ResolvedMiddleware {
+        name: string
+        handler: MiddlewareHandler
+        priority: number
+      }
+      const resolved: ResolvedMiddleware[] = []
       for (const middlewareEntry of middlewareEntries) {
         const { name: middlewareName, params } = parseMiddlewareName(middlewareEntry)
 
-        // Store middleware params on request for middleware to access
+        // Store middleware params on request for middleware to access.
+        // Params are keyed by middleware name so this is order-independent.
         if (params) {
-          ;(enhancedReq as any)._middlewareParams = (enhancedReq as any)._middlewareParams || {}
-          ;(enhancedReq as any)._middlewareParams[middlewareName] = params
+          ;enhancedReq._middlewareParams = enhancedReq._middlewareParams || {}
+          ;enhancedReq._middlewareParams[middlewareName] = params
         }
 
         const middleware = await loadMiddleware(middlewareName)
-        if (middleware && typeof middleware.handle === 'function') {
-          // Per-middleware timing is appended to the request's
-          // Server-Timing trail so devtools (and Chrome's network panel)
-          // can show exactly which middleware spent how long. Cheap —
-          // hrtime delta per layer.
-          const mwStart = process.hrtime.bigint()
+        if (!middleware || typeof middleware.handle !== 'function') continue
+        // Bounds-check the priority. The chain is sorted by this number; a
+        // NaN sneaks past the comparator (NaN comparisons evaluate false) and
+        // misorders silently, while a negative value makes a middleware run
+        // ahead of CORS/Csrf/Logger and bypasses every observability hook
+        // those rely on. Clamp + warn-once so the misconfiguration is
+        // visible without breaking the chain. See stacksjs/stacks#1870 R-10.
+        const rawPriority = (middleware as { priority?: unknown }).priority
+        let priority = DEFAULT_MIDDLEWARE_PRIORITY
+        if (typeof rawPriority === 'number' && Number.isFinite(rawPriority) && rawPriority >= 0) {
+          priority = rawPriority
+        }
+        else if (rawPriority !== undefined) {
+          warnInvalidMiddlewarePriority(middlewareName, rawPriority)
+        }
+        resolved.push({ name: middlewareName, handler: middleware, priority })
+      }
+
+      // Stable sort — V8 + Bun guarantee Array.sort is stable since 2018,
+      // so same-priority entries preserve insertion order. This keeps
+      // declared sequencing within a priority band predictable.
+      resolved.sort((a, b) => a.priority - b.priority)
+
+      // Run middleware in priority order
+      const middlewareTimings: Array<{ name: string, ms: number }> = []
+      for (const { name: middlewareName, handler: middleware } of resolved) {
+        // Per-middleware timing is appended to the request's
+        // Server-Timing trail so devtools (and Chrome's network panel)
+        // can show exactly which middleware spent how long. Cheap —
+        // hrtime delta per layer.
+        const mwStart = process.hrtime.bigint()
+        let mwTimer: ReturnType<typeof setTimeout> | undefined
           try {
             // 30s middleware budget. A misbehaving middleware that hangs
             // (e.g. waits forever on a deadlocked external service) used
             // to lock the entire request handler indefinitely; the
             // timeout surfaces it as a 500 instead, freeing the worker
-            // to keep serving other requests.
+            // to keep serving other requests. The timer is cleared in the
+            // `finally` below — otherwise a settled race leaves a dangling
+            // 30s timer per middleware per request, and they pile up under
+            // load (memory + needless event-loop wakeups).
             const MIDDLEWARE_TIMEOUT_MS = 30_000
-            const timeoutPromise = new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error(`Middleware '${middlewareName}' exceeded ${MIDDLEWARE_TIMEOUT_MS}ms`)), MIDDLEWARE_TIMEOUT_MS),
-            )
+            const timeoutPromise = new Promise<never>((_, reject) => {
+              mwTimer = setTimeout(() => reject(new Error(`Middleware '${middlewareName}' exceeded ${MIDDLEWARE_TIMEOUT_MS}ms`)), MIDDLEWARE_TIMEOUT_MS)
+            })
             await Promise.race([middleware.handle(enhancedReq), timeoutPromise])
             const elapsedMs = Number(process.hrtime.bigint() - mwStart) / 1_000_000
             middlewareTimings.push({ name: middlewareName, ms: elapsedMs })
@@ -583,8 +984,8 @@ function createMiddlewareHandler(routeKey: string, handler: StacksHandler): Rout
             // status entirely.
             if (error instanceof Response) {
               try {
-                const reqId = (enhancedReq as any)._requestId as string | undefined
-                const startNs = (enhancedReq as any)._startNs as bigint | undefined
+                const reqId = enhancedReq._requestId as string | undefined
+                const startNs = enhancedReq._startNs as bigint | undefined
                 const total = startNs != null ? Number(process.hrtime.bigint() - startNs) / 1_000_000 : null
                 const parts = total != null ? [`total;dur=${total.toFixed(1)}`] : []
                 for (const t of middlewareTimings) {
@@ -595,7 +996,7 @@ function createMiddlewareHandler(routeKey: string, handler: StacksHandler): Rout
                 if (reqId) error.headers.set('X-Request-ID', reqId)
               }
               catch { /* immutable headers — leave the response alone */ }
-              return error
+              return await applyCorsIfConfigured(enhancedReq, error)
             }
             const err = error instanceof Error ? error : new Error(String(error))
             // Accept both `statusCode` (Express convention) and `status`
@@ -614,8 +1015,8 @@ function createMiddlewareHandler(routeKey: string, handler: StacksHandler): Rout
             // shape as the success path, so dashboards don't have to
             // special-case errored requests.
             try {
-              const reqId = (enhancedReq as any)._requestId as string | undefined
-              const startNs = (enhancedReq as any)._startNs as bigint | undefined
+              const reqId = enhancedReq._requestId as string | undefined
+              const startNs = enhancedReq._startNs as bigint | undefined
               const total = startNs != null ? Number(process.hrtime.bigint() - startNs) / 1_000_000 : null
               const parts = total != null ? [`total;dur=${total.toFixed(1)}`] : []
               for (const t of middlewareTimings) {
@@ -626,9 +1027,13 @@ function createMiddlewareHandler(routeKey: string, handler: StacksHandler): Rout
               if (reqId) errorResponse.headers.set('X-Request-ID', reqId)
             }
             catch { /* immutable headers — leave the response alone */ }
-            return errorResponse
+            return await applyCorsIfConfigured(enhancedReq, errorResponse)
           }
-        }
+          finally {
+            // Clear the budget timer so a resolved/rejected race doesn't
+            // leave a dangling 30s timer per middleware per request.
+            clearTimeout(mwTimer)
+          }
       }
 
       // Call the actual handler with the enhanced request.
@@ -640,35 +1045,46 @@ function createMiddlewareHandler(routeKey: string, handler: StacksHandler): Rout
       // Clear tracked queries after each request to prevent accumulation
       clearTrackedQueries()
 
+      // CSRF cookie seeding — on safe-method responses (GET/HEAD/OPTIONS),
+      // attach a fresh `X-CSRF-Token` cookie when none is present so SPAs
+      // and forms have a usable token to echo on the next unsafe request.
+      // Without this, the default-on CSRF middleware rejected every
+      // browser POST that lacked a Bearer-token bypass — the cookie was
+      // read but never written. See stacksjs/stacks#1859 (CSRF
+      // seeding INVESTIGATE → confirmed broken-by-default).
+      if (response) {
+        const safeMethod = req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS'
+        if (safeMethod) {
+          try {
+            const { seedCsrfCookieIfMissing } = await import(p.storagePath('framework/defaults/app/Middleware/Csrf.ts'))
+            response = (seedCsrfCookieIfMissing as (req: Request, res: Response) => Response)(
+              enhancedReq as unknown as Request,
+              response,
+            )
+          }
+          catch (err) {
+            log.warn('[router] CSRF cookie seeding failed', { error: err })
+          }
+        }
+      }
+
       // CORS — applied BEFORE the request_id/Server-Timing rebuild path
       // so a JSON-error rewrite carries the freshly-set CORS headers
       // forward, and BEFORE compression so the resulting `Vary` value
       // can include both `Origin` and `Accept-Encoding`. The `_corsConfig`
-      // marker is set by the `cors` middleware's `handle()`.
-      if ((enhancedReq as any)._corsConfig && response) {
-        try {
-          const { applyCorsHeaders } = await import(p.storagePath('framework/defaults/app/Middleware/Cors.ts'))
-          response = (applyCorsHeaders as (req: Request, res: Response, cfg?: unknown) => Response)(
-            enhancedReq as unknown as Request,
-            response,
-            (enhancedReq as any)._corsConfig,
-          )
-        }
-        catch (err) {
-          // CORS header injection failure must not drop the response.
-          // The browser will surface a CORS error, which is recoverable
-          // for the developer; a 500 here would not be.
-          log.warn('[router] CORS header injection failed', { error: err })
-        }
-      }
+      // marker is set by the `cors` middleware's `handle()`. Uses the
+      // same `applyCorsIfConfigured` helper as the error paths above
+      // so policy enforcement is consistent across all responses
+      // (stacksjs/stacks#1859 H-3).
+      if (response) response = await applyCorsIfConfigured(enhancedReq, response)
 
       // Echo X-Request-ID + Server-Timing on every response, AND stitch
       // the request_id into JSON error bodies so SPA error toasts can show
       // it (and bug reports can include it). For 4xx/5xx JSON responses
       // we rebuild the body once with `request_id` added; for 2xx/3xx we
       // only touch headers.
-      const reqId = (enhancedReq as any)._requestId as string | undefined
-      const startNs = (enhancedReq as any)._startNs as bigint | undefined
+      const reqId = enhancedReq._requestId as string | undefined
+      const startNs = enhancedReq._startNs as bigint | undefined
       const durMs = startNs != null ? Number(process.hrtime.bigint() - startNs) / 1_000_000 : null
 
       const setHeaders = (h: Headers) => {
@@ -683,6 +1099,7 @@ function createMiddlewareHandler(routeKey: string, handler: StacksHandler): Rout
           }
           h.set('Server-Timing', parts.join(', '))
         }
+        applySecurityHeaders(h)
       }
 
       if (response && typeof (response as any).headers?.set === 'function') {
@@ -734,7 +1151,7 @@ function createMiddlewareHandler(routeKey: string, handler: StacksHandler): Rout
       // set by the `compress` middleware's `handle()` when it's in this
       // route's chain. We import lazily so routes that don't use
       // compression don't pay the load cost.
-      if ((enhancedReq as any)._compress === true && response) {
+      if (enhancedReq._compress === true && response) {
         try {
           const { applyCompression } = await import(p.storagePath('framework/defaults/app/Middleware/Compress.ts'))
           return await (applyCompression as (req: Request, res: Response) => Promise<Response>)(enhancedReq as unknown as Request, response)
@@ -785,6 +1202,31 @@ function createChainableRoute(routeKey: string): ChainableRoute {
       // createMiddlewareHandler reads this set before adding `csrf`
       // to the effective middleware chain.
       csrfSkipRegistry.add(routeKey)
+      // Mutually exclusive with requireCsrf — last call wins so the
+      // chain stays predictable rather than silently combining state.
+      csrfRequireRegistry.delete(routeKey)
+      return chain
+    },
+
+    requireCsrf() {
+      // Mark this route key as forced-on — overrides both the route's
+      // own skip set and the action-level skip cache. See
+      // stacksjs/stacks#1870 R-9.
+      csrfRequireRegistry.add(routeKey)
+      csrfSkipRegistry.delete(routeKey)
+      return chain
+    },
+
+    rateLimit(max, window) {
+      // Resolve at registration time so a typo (e.g. .rateLimit(5, 'minutes'))
+      // throws on boot, not on the first 429. The check is read once per
+      // request in createMiddlewareHandler — registry lookup keeps the hot
+      // path branch-free for routes that didn't opt in.
+      if (!Number.isFinite(max) || max <= 0) {
+        throw new Error(`[Router] .rateLimit(): max must be a positive number, got ${String(max)}`)
+      }
+      const windowSeconds = rateLimitWindowToSeconds(window)
+      routeRateLimitRegistry.set(routeKey, { max: Math.floor(max), windowSeconds })
       return chain
     },
   }
@@ -942,10 +1384,10 @@ async function resolveStringHandler(handlerPath: string): Promise<RouteHandlerFn
 
     return async (req: EnhancedRequest) => {
       if (actionSkipsCsrf) {
-        ;(req as any)._skipCsrf = true
+        ;req._skipCsrf = true
       }
       if (actionForcesJson) {
-        ;(req as any)._forceJson = true
+        ;req._forceJson = true
       }
       try {
         // Validate action input if validations are defined. Always returns
@@ -954,26 +1396,51 @@ async function resolveStringHandler(handlerPath: string): Promise<RouteHandlerFn
         if (action.validations) {
           const validationResult = await validateActionInput(req, action.validations)
           if (!validationResult.valid) {
+            // Positional status (not `{ status: 422 }`) — bun-router's
+            // `Response.json` macro had a positional-only signature for a
+            // while (see stacksjs/stacks#1857 for the historical bite).
+            // The macro is dual-shape now, but defensive positional usage
+            // keeps the validation failure path working even if a project
+            // resolves to an older `@stacksjs/bun-router`.
             return Response.json(
               { error: 'Validation failed', errors: validationResult.errors },
-              { status: 422 },
+              422,
             )
           }
+        }
+
+        // Action lifecycle hooks (stacksjs/stacks#1870 R-5).
+        // `authorize` runs after validation so the handler can rely on
+        // a typed, validated payload when deciding access. A literal
+        // `false` short-circuits with a generic 403 (intentionally
+        // opaque to avoid info-disclosure); returning a Response lets
+        // the caller customise the status/body.
+        if (typeof action.authorize === 'function') {
+          const auth = await action.authorize(req)
+          if (auth instanceof Response) return auth
+          if (auth === false) {
+            return Response.json({ error: 'Forbidden' }, 403)
+          }
+        }
+
+        // `before` runs after authorize; returning a Response still
+        // short-circuits, returning void continues into `handle()`.
+        if (typeof action.before === 'function') {
+          const pre = await action.before(req)
+          if (pre instanceof Response) return pre
         }
 
         const result = await action.handle(req)
         return formatResult(result, req)
       }
       catch (handleError) {
-        // Print the full stack so action failures are diagnosable.
-        // The previous form passed the error as the second arg, which
-        // log.error treated as `LogErrorOptions` and dropped — every
-        // 500 from an action looked like an empty `[Router] Error in
-        // action.handle() for 'X':` line with no detail.
-        const errMsg = handleError instanceof Error
-          ? (handleError.stack || handleError.message)
-          : String(handleError)
-        log.error(`[Router] Error in action.handle() for '${handlerPath}': ${errMsg}`)
+        // Single chokepoint (stacksjs/stacks#1933) — normalizes the
+        // error (stack + cause), keeps thrown 4xx HttpErrors out of the
+        // error stream, and folds in the full stack. Replaces the old
+        // hand-rolled stack-concat workaround that existed because the
+        // logger's `LogErrorOptions | any` typing silently dropped the
+        // error (stacksjs/stacks#1932, now fixed).
+        report(handleError, { label: `[Router] action.handle() for '${handlerPath}'` })
         throw handleError
       }
     }
@@ -984,32 +1451,27 @@ async function resolveStringHandler(handlerPath: string): Promise<RouteHandlerFn
   }
 }
 
-/**
- * Validation result interface
- */
-interface ValidationResult {
-  valid: boolean
-  errors: Record<string, string[]>
-}
+// `ActionValidations` and `ValidationResult` are imported from
+// `@stacksjs/actions` — they're a single source of truth, owned by the
+// actions package. The previous local copies here drifted out of sync
+// during the #1865 typed-request work (stacksjs/stacks#1870 R-3).
 
 /**
- * Action validations interface
+ * Run an action's declarative `validations:` against the request.
+ *
+ * @internal Exported for regression coverage of path-param coercion
+ * (stacksjs/stacks#1865). Production callers should rely on the
+ * router's action-resolution path, which invokes this for you.
  */
-interface ActionValidations {
-  [key: string]: {
-    rule: { validate: (value: unknown) => { valid: boolean, errors?: Array<{ message: string }> } }
-    message?: string | Record<string, string>
-  }
-}
-
-/**
- * Validate action input against defined validations
- */
-async function validateActionInput(req: EnhancedRequest, validations: ActionValidations): Promise<ValidationResult> {
+export async function validateActionInput(req: EnhancedRequest, validations: ActionValidations): Promise<ValidationResult> {
   const errors: Record<string, string[]> = {}
 
-  // Get input data from request (query params, body, etc.)
-  const input = await getRequestInput(req)
+  // Pass `validations` so wire-stringified path/query values get coerced
+  // to the type the rule expects before they're tested. Without this,
+  // `schema.number()` on a path-param `id` 422s on every request because
+  // the URL delivers `"1"` not `1` and ts-validation's NumberValidator is
+  // a strict `typeof value === 'number'` check. See stacksjs/stacks#1865.
+  const input = await getRequestInput(req, validations)
 
   for (const [field, validation] of Object.entries(validations)) {
     const value = input[field]
@@ -1061,29 +1523,90 @@ async function validateActionInput(req: EnhancedRequest, validations: ActionVali
 }
 
 /**
- * Get all input data from request (body + query params)
- * Uses already-parsed body from parseRequestBody() when available
+ * Get all input data from request (body + query params + path params).
+ *
+ * When `validations` is supplied, any string-valued field whose rule
+ * expects a non-string primitive (number / boolean) is coerced before
+ * validation runs. Wire formats deliver path and query params as
+ * strings even when they "look like" numbers, and ts-validation's
+ * `NumberValidator`/`BooleanValidator` are strict `typeof` checks —
+ * without this coercion, `schema.number()` on a path-param id 422s on
+ * every request. Body fields are left untouched because the JSON
+ * parser already gave them their proper JS types
+ * (see stacksjs/stacks#1865).
  */
-async function getRequestInput(req: EnhancedRequest): Promise<Record<string, unknown>> {
+async function getRequestInput(
+  req: EnhancedRequest,
+  validations?: ActionValidations,
+): Promise<Record<string, unknown>> {
   const input: Record<string, unknown> = {}
 
-  // Get query parameters
+  // Get query parameters (always strings on the wire)
   const url = new URL(req.url)
   url.searchParams.forEach((value, key) => {
     input[key] = value
   })
 
-  // Get route params if available
-  if ((req as any).params) {
-    Object.assign(input, (req as any).params)
+  // Get route params if available (also strings — bun-router doesn't
+  // know the route-pattern type)
+  if (req.params) {
+    Object.assign(input, req.params)
   }
 
   // Use already-parsed body (from parseRequestBody) if available
-  if ((req as any).jsonBody && typeof (req as any).jsonBody === 'object') {
-    Object.assign(input, (req as any).jsonBody)
+  if (req.jsonBody && typeof req.jsonBody === 'object') {
+    Object.assign(input, req.jsonBody)
   }
-  else if ((req as any).formBody && typeof (req as any).formBody === 'object') {
-    Object.assign(input, (req as any).formBody)
+  else if (req.formBody && typeof req.formBody === 'object') {
+    Object.assign(input, req.formBody)
+  }
+
+  // Merge multipart files so file-shaped validations
+  // (`schema.file().image().maxBytes(...)`) see the `UploadedFile`
+  // instance under its field name. Body wins on collision — text
+  // fields and file uploads sharing a name is a pathological case the
+  // caller should disambiguate, and silently overwriting the body
+  // value with the file would be more surprising than the reverse.
+  // (stacksjs/stacks#1856)
+  if (typeof req.allFiles === 'function') {
+    try {
+      const files = req.allFiles() as Record<string, unknown>
+      for (const key of Object.keys(files ?? {})) {
+        if (!(key in input)) input[key] = files[key]
+      }
+    }
+    catch {
+      // allFiles() reads parsed multipart state — if parsing failed,
+      // skip file merge rather than fail the whole validation pass.
+    }
+  }
+
+  if (!validations)
+    return input
+
+  // Coerce string values when the rule expects a non-string primitive.
+  // Path/query params are always strings on the wire; body-sourced
+  // values were already typed by the JSON parser, so `typeof value !==
+  // 'string'` skips them naturally. Form-body fields are still strings
+  // (multipart wire format) — same code path covers them.
+  for (const [field, validation] of Object.entries(validations)) {
+    const value = input[field]
+    if (typeof value !== 'string') continue
+
+    const validatorName = (validation.rule as { name?: string })?.name
+    if (validatorName === 'number') {
+      // `Number.isFinite()` guard so malformed inputs (`"abc"`,
+      // `"NaN"`, `"Infinity"`) stay as strings — the validator then
+      // emits its natural "Must be a number" error rather than us
+      // swallowing the bad value as 0.
+      const n = Number(value)
+      if (Number.isFinite(n))
+        input[field] = n
+    }
+    else if (validatorName === 'boolean') {
+      if (value === 'true' || value === '1') input[field] = true
+      else if (value === 'false' || value === '0') input[field] = false
+    }
   }
 
   return input
@@ -1108,7 +1631,21 @@ function formatResult(result: unknown, req: EnhancedRequest): Response {
     return result
   }
 
-  const forceJson = (req as any)._forceJson === true
+  // Streaming returns: an action that yields a `ReadableStream` (or an
+  // async generator wrapped via `stream(...)`) gets piped straight back
+  // to the client. Use `application/octet-stream` as a neutral default;
+  // SSE / chunked-JSON callers should reach for the `stream(...)` helper
+  // which sets the right Content-Type. The router preserves the stream
+  // verbatim — no buffering, no Content-Length precomputation — so
+  // backpressure and cancellation propagate end-to-end.
+  // See stacksjs/stacks#1870 R-4.
+  if (result instanceof ReadableStream) {
+    return new Response(result, {
+      headers: { 'Content-Type': 'application/octet-stream' },
+    })
+  }
+
+  const forceJson = req._forceJson === true
   const apiShaped = forceJson || isApiRequest(req as unknown as Request)
 
   // Null / undefined → 204 No Content for API requests; empty 200 for the
@@ -1124,6 +1661,15 @@ function formatResult(result: unknown, req: EnhancedRequest): Response {
   // there's no reasonable HTML representation of `{id: 1}`, and userland
   // that wants HTML should return a `new Response(html, …)` directly.
   if (typeof result === 'object') {
+    // Paginator auto-serialize (stacksjs/stacks#1908 P4). When the
+    // action returns a canonical Paginator / SimplePaginator /
+    // CursorPaginator, emit `Link: <prev>; rel="prev", <next>; rel="next"`
+    // alongside the JSON body — HATEOAS for REST clients + crawlers
+    // who'd otherwise have to dig through the body to find next/prev.
+    const linkHeader = buildPaginatorLinkHeader(result)
+    if (linkHeader) {
+      return Response.json(result, { headers: { Link: linkHeader } })
+    }
     return Response.json(result)
   }
 
@@ -1138,21 +1684,130 @@ function formatResult(result: unknown, req: EnhancedRequest): Response {
   })
 }
 
+/**
+ * Build the RFC 5988 `Link` header from a paginator return value, or
+ * return `null` when the value isn't paginator-shaped (so the caller
+ * skips the header entirely). stacksjs/stacks#1908 P4.
+ *
+ * Both `prev_page_url` and `next_page_url` are surfaced when present —
+ * matches what REST clients (jsonapi.org consumers, HAL, openapi-fetch)
+ * expect from a paginated collection.
+ */
+function buildPaginatorLinkHeader(value: unknown): string | null {
+  if (!isPaginator(value) && !isSimplePaginator(value) && !isCursorPaginator(value))
+    return null
+  const v = value as { prev_page_url?: string | null, next_page_url?: string | null, first_page_url?: string, last_page_url?: string }
+  const parts: string[] = []
+  if (v.prev_page_url) parts.push(`<${v.prev_page_url}>; rel="prev"`)
+  if (v.next_page_url) parts.push(`<${v.next_page_url}>; rel="next"`)
+  if (v.first_page_url) parts.push(`<${v.first_page_url}>; rel="first"`)
+  if (v.last_page_url) parts.push(`<${v.last_page_url}>; rel="last"`)
+  return parts.length > 0 ? parts.join(', ') : null
+}
+
+/**
+ * Helper for streaming responses — wraps a `ReadableStream` or async
+ * generator with the right headers for the chosen content type.
+ *
+ * Common shapes:
+ *
+ *   ```ts
+ *   // Server-Sent Events
+ *   return stream(async function* () {
+ *     for await (const evt of source) yield `data: ${JSON.stringify(evt)}\n\n`
+ *   }, { type: 'sse' })
+ *
+ *   // Chunked JSON (NDJSON) — one JSON object per line
+ *   return stream(async function* () {
+ *     for await (const row of rows) yield `${JSON.stringify(row)}\n`
+ *   }, { type: 'ndjson' })
+ *
+ *   // Raw bytes — caller supplies a ReadableStream of Uint8Array chunks
+ *   return stream(myReadable, { contentType: 'application/octet-stream' })
+ *   ```
+ *
+ * The wrapper sets `Cache-Control: no-cache` and `Connection: keep-alive`
+ * for SSE — the two headers a sane proxy / browser pair won't ignore — and
+ * leaves backpressure / cancellation to the underlying stream.
+ *
+ * See stacksjs/stacks#1870 R-4.
+ */
+export interface StreamOptions {
+  /**
+   * Preset for common stream shapes. `'sse'` sets
+   * `text/event-stream` + no-cache + keep-alive. `'ndjson'` sets
+   * `application/x-ndjson`. Falls back to `contentType` (or
+   * `application/octet-stream`) when omitted.
+   */
+  type?: 'sse' | 'ndjson'
+  /** Explicit Content-Type, ignored when `type` is set. */
+  contentType?: string
+  /** Extra headers merged after the preset. Last wins. */
+  headers?: HeadersInit
+  /** HTTP status, defaults to 200. */
+  status?: number
+}
+
+export function stream(
+  source: ReadableStream | AsyncIterable<string | Uint8Array>,
+  options: StreamOptions = {},
+): Response {
+  const baseHeaders: Record<string, string> = {}
+  if (options.type === 'sse') {
+    baseHeaders['Content-Type'] = 'text/event-stream; charset=utf-8'
+    baseHeaders['Cache-Control'] = 'no-cache'
+    baseHeaders['Connection'] = 'keep-alive'
+  }
+  else if (options.type === 'ndjson') {
+    baseHeaders['Content-Type'] = 'application/x-ndjson; charset=utf-8'
+  }
+  else {
+    baseHeaders['Content-Type'] = options.contentType ?? 'application/octet-stream'
+  }
+
+  // Async-iterable (incl. generator) → ReadableStream. Generators don't
+  // expose backpressure natively, so chunks are pulled one at a time —
+  // good for low-throughput SSE; for high-throughput byte streams the
+  // caller should hand us a real ReadableStream.
+  const body: ReadableStream = source instanceof ReadableStream
+    ? source
+    : new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const chunk of source) {
+              controller.enqueue(typeof chunk === 'string' ? new TextEncoder().encode(chunk) : chunk)
+            }
+            controller.close()
+          }
+          catch (err) {
+            controller.error(err)
+          }
+        },
+      })
+
+  const merged = new Headers(baseHeaders)
+  if (options.headers) {
+    const extra = new Headers(options.headers)
+    extra.forEach((value, key) => merged.set(key, value))
+  }
+  return new Response(body, { status: options.status ?? 200, headers: merged })
+}
+
 // Decorate the incoming request with the helpers the framework's middleware
 // and actions assume are always available. Names follow Laravel's convention
 // because that's the API surface Stacks userland expects.
-function enhanceRequest(req: EnhancedRequest): EnhancedRequest {
-  applyRequestEnhancements(req as unknown as Request, (req as any).params || {})
+export function enhanceRequest(req: EnhancedRequest): EnhancedRequest {
+  applyRequestEnhancements(req as unknown as Request, req.params || {})
 
   // Parse query string if not present
-  let query = (req as any).query
+  let query = req.query
   if (!query) {
     const url = new URL(req.url)
     query = {} as Record<string, string>
     url.searchParams.forEach((value, key) => {
       query[key] = value
     })
-    ;(req as any).query = query
+    ;req.query = query
   }
 
   // Cached input data — computed once on first access
@@ -1169,22 +1824,22 @@ function enhanceRequest(req: EnhancedRequest): EnhancedRequest {
     }
 
     // JSON body
-    if ((req as any).jsonBody && typeof (req as any).jsonBody === 'object') {
-      for (const [key, value] of Object.entries((req as any).jsonBody)) {
+    if (req.jsonBody && typeof req.jsonBody === 'object') {
+      for (const [key, value] of Object.entries(req.jsonBody)) {
         input[key] = value
       }
     }
 
     // Form body
-    if ((req as any).formBody && typeof (req as any).formBody === 'object') {
-      for (const [key, value] of Object.entries((req as any).formBody)) {
+    if (req.formBody && typeof req.formBody === 'object') {
+      for (const [key, value] of Object.entries(req.formBody)) {
         input[key] = value
       }
     }
 
     // Route params
-    if ((req as any).params && typeof (req as any).params === 'object') {
-      for (const [key, value] of Object.entries((req as any).params)) {
+    if (req.params && typeof req.params === 'object') {
+      for (const [key, value] of Object.entries(req.params)) {
         input[key] = value
       }
     }
@@ -1194,21 +1849,21 @@ function enhanceRequest(req: EnhancedRequest): EnhancedRequest {
   }
 
   // Add Laravel-style methods
-  ;(req as any).get = <T = any>(key: string, defaultValue?: T): T => {
+  ;req.get = <T = any>(key: string, defaultValue?: T): T => {
     const input = getAllInput()
     const value = input[key]
     return (value !== undefined ? value : defaultValue) as T
   }
 
-  ;(req as any).input = <T = any>(key: string, defaultValue?: T): T => {
+  ;req.input = <T = any>(key: string, defaultValue?: T): T => {
     const input = getAllInput()
     const value = input[key]
     return (value !== undefined ? value : defaultValue) as T
   }
 
-  ;(req as any).all = (): Record<string, unknown> => getAllInput()
+  ;req.all = (): Record<string, unknown> => getAllInput()
 
-  ;(req as any).only = <T extends Record<string, unknown>>(keys: string[]): T => {
+  ;req.only = <T extends Record<string, unknown>>(keys: string[]): T => {
     const input = getAllInput()
     const result = {} as T
     for (const key of keys) {
@@ -1219,7 +1874,7 @@ function enhanceRequest(req: EnhancedRequest): EnhancedRequest {
     return result
   }
 
-  ;(req as any).except = <T extends Record<string, unknown>>(keys: string[]): T => {
+  ;req.except = <T extends Record<string, unknown>>(keys: string[]): T => {
     const input = getAllInput()
     const result = { ...input } as T
     for (const key of keys) {
@@ -1228,7 +1883,7 @@ function enhanceRequest(req: EnhancedRequest): EnhancedRequest {
     return result
   }
 
-  ;(req as any).has = (key: string | string[]): boolean => {
+  ;req.has = (key: string | string[]): boolean => {
     const input = getAllInput()
     if (Array.isArray(key)) {
       return key.every(k => k in input && input[k] !== undefined)
@@ -1236,12 +1891,12 @@ function enhanceRequest(req: EnhancedRequest): EnhancedRequest {
     return key in input && input[key] !== undefined
   }
 
-  ;(req as any).hasAny = (keys: string[]): boolean => {
+  ;req.hasAny = (keys: string[]): boolean => {
     const input = getAllInput()
     return keys.some(k => k in input && input[k] !== undefined)
   }
 
-  ;(req as any).filled = (key: string | string[]): boolean => {
+  ;req.filled = (key: string | string[]): boolean => {
     const input = getAllInput()
     const isFilled = (k: string): boolean => {
       const value = input[k]
@@ -1253,7 +1908,7 @@ function enhanceRequest(req: EnhancedRequest): EnhancedRequest {
     return isFilled(key)
   }
 
-  ;(req as any).missing = (key: string | string[]): boolean => {
+  ;req.missing = (key: string | string[]): boolean => {
     const input = getAllInput()
     if (Array.isArray(key)) {
       return key.every(k => !(k in input) || input[k] === undefined)
@@ -1261,7 +1916,7 @@ function enhanceRequest(req: EnhancedRequest): EnhancedRequest {
     return !(key in input) || input[key] === undefined
   }
 
-  ;(req as any).string = (key: string, defaultValue: string = ''): string => {
+  ;req.string = (key: string, defaultValue: string = ''): string => {
     const input = getAllInput()
     const value = input[key]
     return value !== undefined && value !== null ? String(value) : defaultValue
@@ -1272,7 +1927,7 @@ function enhanceRequest(req: EnhancedRequest): EnhancedRequest {
   // (e.g. pagination size gets set to the leading digits of a typo'd query
   // param). We require the entire string to be a valid number — any trailing
   // garbage falls through to `defaultValue`.
-  ;(req as any).integer = (key: string, defaultValue: number = 0): number => {
+  ;req.integer = (key: string, defaultValue: number = 0): number => {
     const input = getAllInput()
     const value = input[key]
     if (value === undefined || value === null || value === '') return defaultValue
@@ -1283,7 +1938,7 @@ function enhanceRequest(req: EnhancedRequest): EnhancedRequest {
     return Number.isFinite(parsed) ? parsed : defaultValue
   }
 
-  ;(req as any).float = (key: string, defaultValue: number = 0): number => {
+  ;req.float = (key: string, defaultValue: number = 0): number => {
     const input = getAllInput()
     const value = input[key]
     if (value === undefined || value === null || value === '') return defaultValue
@@ -1294,7 +1949,7 @@ function enhanceRequest(req: EnhancedRequest): EnhancedRequest {
     return Number.isFinite(parsed) ? parsed : defaultValue
   }
 
-  ;(req as any).boolean = (key: string, defaultValue: boolean = false): boolean => {
+  ;req.boolean = (key: string, defaultValue: boolean = false): boolean => {
     const input = getAllInput()
     const value = input[key]
     if (value === undefined || value === null) return defaultValue
@@ -1304,7 +1959,7 @@ function enhanceRequest(req: EnhancedRequest): EnhancedRequest {
     return defaultValue
   }
 
-  ;(req as any).array = <T = unknown>(key: string): T[] => {
+  ;req.array = <T = unknown>(key: string): T[] => {
     const input = getAllInput()
     const value = input[key]
     if (Array.isArray(value)) return value as T[]
@@ -1312,29 +1967,29 @@ function enhanceRequest(req: EnhancedRequest): EnhancedRequest {
   }
 
   // File handling methods - returns UploadedFile with store/storeAs methods
-  ;(req as any).file = (key: string): UploadedFile | null => {
-    const files = (req as any).files || {}
+  ;req.file = (key: string): UploadedFile | null => {
+    const files = req.files || {}
     const file = files[key]
     if (!file) return null
     const rawFile = Array.isArray(file) ? file[0] : file
     return rawFile ? new UploadedFile(rawFile) : null
   }
 
-  ;(req as any).getFiles = (key: string): UploadedFile[] => {
-    const files = (req as any).files || {}
+  ;req.getFiles = (key: string): UploadedFile[] => {
+    const files = req.files || {}
     const file = files[key]
     if (!file) return []
     const fileArray = Array.isArray(file) ? file : [file]
     return fileArray.map(f => new UploadedFile(f))
   }
 
-  ;(req as any).hasFile = (key: string): boolean => {
-    const files = (req as any).files || {}
+  ;req.hasFile = (key: string): boolean => {
+    const files = req.files || {}
     return key in files && files[key] !== undefined
   }
 
-  ;(req as any).allFiles = (): Record<string, UploadedFile | UploadedFile[]> => {
-    const files = (req as any).files || {}
+  ;req.allFiles = (): Record<string, UploadedFile | UploadedFile[]> => {
+    const files = req.files || {}
     const result: Record<string, UploadedFile | UploadedFile[]> = {}
     for (const [key, value] of Object.entries(files)) {
       if (Array.isArray(value)) {
@@ -1347,14 +2002,14 @@ function enhanceRequest(req: EnhancedRequest): EnhancedRequest {
   }
 
   // Auth method - returns the authenticated user set by middleware
-  ;(req as any).user = async (): Promise<any> => {
+  ;req.user = async (): Promise<any> => {
     // Return user set by auth middleware (e.g., BearerToken middleware)
-    return (req as any)._authenticatedUser
+    return req._authenticatedUser
   }
 
   // Get the current access token instance
-  ;(req as any).userToken = async (): Promise<any> => {
-    return (req as any)._currentAccessToken
+  ;req.userToken = async (): Promise<any> => {
+    return req._currentAccessToken
   }
 
   // Check if the current token has an ability.
@@ -1364,9 +2019,9 @@ function enhanceRequest(req: EnhancedRequest): EnhancedRequest {
   // with a truthy `abilities[Symbol.iterator]` — a malformed token
   // produced by a partially-completed auth race could grant wildcard
   // permissions because of how `?.includes` resolves on non-arrays.
-  ;(req as any).tokenCan = async (ability: string): Promise<boolean> => {
+  ;req.tokenCan = async (ability: string): Promise<boolean> => {
     if (typeof ability !== 'string' || ability.length === 0) return false
-    const token = (req as any)._currentAccessToken
+    const token = req._currentAccessToken
     if (!token || typeof token !== 'object') return false
     if (!Array.isArray(token.abilities)) return false
     if (token.abilities.includes('*')) return true
@@ -1374,8 +2029,36 @@ function enhanceRequest(req: EnhancedRequest): EnhancedRequest {
   }
 
   // Check if the current token does NOT have an ability
-  ;(req as any).tokenCant = async (ability: string): Promise<boolean> => {
-    return !(await (req as any).tokenCan(ability))
+  ;req.tokenCant = async (ability: string): Promise<boolean> => {
+    return !(await req.tokenCan(ability))
+  }
+
+  // Gate / Policy macros (stacksjs/stacks#1874 F-9). Lazy-import
+  // `@stacksjs/auth` to dodge the router←auth cycle declared in
+  // `auth/package.json`. Resolve the user from `_authenticatedUser`
+  // (stamped by the Auth middleware) — passing `null` when missing so
+  // gates that explicitly handle the unauthenticated case still get a
+  // chance to allow (e.g. public-read policies).
+  ;req.can = async (ability: string, ...args: unknown[]): Promise<boolean> => {
+    if (typeof ability !== 'string' || ability.length === 0) return false
+    const { Gate } = await import('@stacksjs/auth')
+    const user = (req._authenticatedUser as Parameters<typeof Gate.allows>[1]) ?? null
+    return Gate.allows(ability, user, ...args)
+  }
+
+  ;req.cannot = async (ability: string, ...args: unknown[]): Promise<boolean> => {
+    return !(await req.can(ability, ...args))
+  }
+
+  // Throw-on-deny variant (Laravel's `$this->authorize(...)`). Reuses
+  // the same Gate path so policy `before()` / `after()` hooks fire
+  // consistently regardless of which macro the caller picks. Throws
+  // `AuthorizationException` (status 403) on deny — handlers can let
+  // it bubble to the global error handler or catch and reshape.
+  ;req.authorize = async (ability: string, ...args: unknown[]): Promise<void> => {
+    const { Gate } = await import('@stacksjs/auth')
+    const user = (req._authenticatedUser as Parameters<typeof Gate.authorize>[1]) ?? null
+    await Gate.authorize(ability, user, ...args)
   }
 
   return req
@@ -1400,7 +2083,10 @@ function wrapHandler(handler: StacksHandler, skipParsing = false): RouteHandlerF
         return await resolvedHandler(req)
       }
       catch (error) {
-        log.error(`[Router] Error handling request for '${handlerPath}':`, error)
+        // Single chokepoint (stacksjs/stacks#1933): 5xx + non-HTTP
+        // throws log at error with full stack; thrown 4xx HttpErrors
+        // are kept out of the error stream.
+        report(error, { label: `[Router] ${handlerPath}` })
         // Return Ignition-style error page in development, JSON in production
         return await createErrorResponse(
           error instanceof Error ? error : new Error(String(error)),
@@ -1428,8 +2114,8 @@ function wrapHandler(handler: StacksHandler, skipParsing = false): RouteHandlerF
  */
 async function parseRequestBody(req: EnhancedRequest): Promise<void> {
   // Skip if body was already parsed (avoid double-parsing)
-  if ((req as any)._bodyParsed) return
-  ;(req as any)._bodyParsed = true
+  if (req._bodyParsed) return
+  ;req._bodyParsed = true
 
   const contentType = req.headers.get('content-type') || ''
 
@@ -1439,10 +2125,29 @@ async function parseRequestBody(req: EnhancedRequest): Promise<void> {
       // Empty body on a JSON-typed POST is common (clients sending only
       // query/path params). Land as `{}` so `request.get('x')` returns
       // undefined instead of throwing, and validation reports the missing
-      // field cleanly. Malformed JSON also collapses to `{}` for the same
-      // reason — the validator owns the "you sent garbage" diagnostic.
-      const body = await req.clone().json().catch(() => ({}))
-      ;(req as any).jsonBody = body && typeof body === 'object' ? body : {}
+      // field cleanly. **Malformed** JSON used to collapse to `{}` too,
+      // which let bad-shape bodies bypass action validation when the
+      // action didn't declare schemas for every field (e.g. truncated
+      // JSON sent by an attacker). Now: a parse error throws a 400 so
+      // the middleware chain returns a proper "Invalid JSON body"
+      // response. Empty body is still allowed (Content-Length: 0 →
+      // empty string → no parse attempt). See stacksjs/stacks#1859 H-5.
+      const cloned = req.clone()
+      const raw = await cloned.text()
+      if (raw.length === 0) {
+        ;req.jsonBody = {}
+      }
+      else {
+        try {
+          const body = JSON.parse(raw)
+          ;req.jsonBody = body && typeof body === 'object' ? body : {}
+        }
+        catch (parseErr) {
+          const message = parseErr instanceof Error ? parseErr.message : 'Invalid JSON'
+          const { HttpError } = await import('@stacksjs/error-handling')
+          throw new HttpError(400, `Invalid JSON body: ${message}`)
+        }
+      }
     }
     else if (contentType.includes('application/x-www-form-urlencoded')) {
       const text = await req.clone().text()
@@ -1451,7 +2156,7 @@ async function parseRequestBody(req: EnhancedRequest): Promise<void> {
       params.forEach((value, key) => {
         formBody[key] = value
       })
-      ;(req as any).formBody = formBody
+      ;req.formBody = formBody
     }
     else if (contentType.includes('multipart/form-data')) {
       const formData = await req.clone().formData()
@@ -1477,11 +2182,20 @@ async function parseRequestBody(req: EnhancedRequest): Promise<void> {
         }
       })
 
-      ;(req as any).formBody = formBody
-      ;(req as any).files = files
+      ;req.formBody = formBody
+      ;req.files = files
     }
   }
   catch (e) {
+    // HttpError thrown by the malformed-JSON path is an intentional
+    // signal — let it propagate so the handler wrapper can turn it
+    // into a 400 response. Everything else is best-effort body
+    // parsing (e.g. multipart with weird shape) where falling
+    // through to a `{}` body keeps the request alive for the
+    // action / validator to surface a clearer error.
+    const status = (e as { status?: number, statusCode?: number })?.status
+      ?? (e as { status?: number, statusCode?: number })?.statusCode
+    if (typeof status === 'number') throw e
     log.debug('[stacks-router] Body parsing failed:', e)
   }
 }
@@ -1762,19 +2476,25 @@ export function createStacksRouter(config: StacksRouterConfig = {}): StacksRoute
           checks,
           timestamp: Date.now(),
         }
-        return Response.json(body, { status: healthy ? 200 : 503 })
+        return Response.json(body, healthy ? 200 : 503)
       })
       // Internal route-introspection endpoint. Powers `buddy dev` route
       // listing on startup and future `buddy route:list` consumers.
-      // Locked to dev/staging via the `STACKS_EXPOSE_ROUTES` env so
-      // production deployments don't unintentionally publish their
-      // route surface to the outside world.
-      bunRouter.get('/__routes', () => {
-        const env = (process.env.APP_ENV ?? '').toLowerCase()
-        const isProd = env === 'production' || process.env.NODE_ENV === 'production'
-        if (isProd && process.env.STACKS_EXPOSE_ROUTES !== '1') {
-          return Response.json({ error: 'disabled in production' }, { status: 404 })
-        }
+      //
+      // Access semantics for `STACKS_EXPOSE_ROUTES` env:
+      //   - unset / empty   → endpoint is 404 outside dev
+      //   - "1"             → endpoint is open in non-prod, 404 in prod
+      //   - any other value → that value is a required token; the request
+      //                       must echo it as `X-Stacks-Routes-Token`
+      //                       (header) OR `?token=` query param. Works in
+      //                       any environment, prod included.
+      //
+      // The token mode closes stacksjs/stacks#1859 R-4: the previous
+      // implementation accepted `STACKS_EXPOSE_ROUTES=1` in prod with
+      // no auth gate, publishing the full route table + action paths
+      // to anyone who learned the URL.
+      bunRouter.get('/__routes', (req: Request) => {
+        if (!isExposeRoutesAuthorized(req)) return Response.json({ error: 'disabled' }, 404)
         return Response.json(listRegisteredRoutes())
       })
 
@@ -1791,7 +2511,7 @@ export function createStacksRouter(config: StacksRouterConfig = {}): StacksRoute
         // decodeURIComponent because the signer URL-encodes the path
         // (slashes, spaces, etc.) when minting the URL — the JWT
         // claim is the raw path, so we must decode here to compare.
-        const params = (req as any).params as Record<string, string> | undefined
+        const params = req.params as Record<string, string> | undefined
         const rawPath = params?.path
           ? decodeURIComponent(params.path)
           : decodeURIComponent(url.pathname.replace(/^\/__storage\//, ''))
@@ -1843,12 +2563,8 @@ export function createStacksRouter(config: StacksRouterConfig = {}): StacksRoute
       // /__routes because exposing the full schema is implicitly
       // exposing the route table. SwaggerUI/Insomnia/Postman can point
       // straight at this URL in dev for instant docs.
-      bunRouter.get('/__openapi.json', async () => {
-        const env = (process.env.APP_ENV ?? '').toLowerCase()
-        const isProd = env === 'production' || process.env.NODE_ENV === 'production'
-        if (isProd && process.env.STACKS_EXPOSE_ROUTES !== '1') {
-          return Response.json({ error: 'disabled in production' }, { status: 404 })
-        }
+      bunRouter.get('/__openapi.json', async (req: Request) => {
+        if (!isExposeRoutesAuthorized(req)) return Response.json({ error: 'disabled' }, 404)
         try {
           const { generateOpenApi } = await import('@stacksjs/api')
           const spec = await (generateOpenApi as () => Promise<unknown>)()
@@ -1857,7 +2573,7 @@ export function createStacksRouter(config: StacksRouterConfig = {}): StacksRoute
         catch (err) {
           return Response.json(
             { error: 'OpenAPI generation failed', message: err instanceof Error ? err.message : String(err) },
-            { status: 500 },
+            500,
           )
         }
       })
@@ -1865,10 +2581,21 @@ export function createStacksRouter(config: StacksRouterConfig = {}): StacksRoute
     },
 
     // Use middleware
-    use(middleware: ActionHandler) {
+    //
+    // Accepts:
+    // - a bun-router `ActionHandler` (string/path/function/class) — pushed as-is
+    // - a `Middleware` instance — auto-wrapped via `.toRouterHandler()` so the
+    //   void/throw contract is honored. Without this wrap, returning `undefined`
+    //   from `Middleware.handle()` is interpreted by bun-router's
+    //   `buildMiddlewareChain` as a final 200 OK with empty body, and every
+    //   downstream route silently breaks. See stacksjs/stacks#1870 R-2.
+    // - any other handler-shaped object with a `handle()` method — also wrapped,
+    //   under the same contract.
+    use(middleware: ActionHandler | Middleware | { handle: (req: EnhancedRequest) => void | Promise<void> }) {
       // bunRouter.use() is async, so we need to call it properly
       // For synchronous chaining, we push directly to globalMiddleware
-      bunRouter.globalMiddleware.push(middleware as any)
+      const adapted = adaptMiddlewareForBunRouter(middleware)
+      bunRouter.globalMiddleware.push(adapted as any)
       return stacksRouter
     },
 

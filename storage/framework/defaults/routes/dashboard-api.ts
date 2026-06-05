@@ -32,6 +32,30 @@ route.group({ prefix: '/api/dashboard', apiResponse: true }, () => {
   // Only useful when `ci.alerts.enabled` is on — otherwise no samples
   // have been recorded.
   route.get('/ci/runner-history', 'Actions/Dashboard/Ci/RunnerHistoryAction')
+
+  // RBAC management surface (stacksjs/stacks#1845).
+  //
+  // No auth/role middleware at the group level — the wider
+  // `/api/dashboard` group is unauthenticated by design for the dev
+  // dashboard's localhost use case (see the file-level comment).
+  // The page itself wraps content in `useRole().isAdmin()` so the
+  // surface stays gated client-side. Deployments that expose the
+  // dashboard beyond localhost should tighten with
+  // `.middleware('auth').middleware('role:admin')` here.
+  route.get('/rbac/roles', 'Actions/Dashboard/Rbac/RolesIndexAction')
+  route.post('/rbac/roles', 'Actions/Dashboard/Rbac/RoleStoreAction')
+  route.delete('/rbac/roles/{name}', 'Actions/Dashboard/Rbac/RoleDestroyAction')
+
+  route.get('/rbac/permissions', 'Actions/Dashboard/Rbac/PermissionsIndexAction')
+  route.post('/rbac/permissions', 'Actions/Dashboard/Rbac/PermissionStoreAction')
+  route.delete('/rbac/permissions/{name}', 'Actions/Dashboard/Rbac/PermissionDestroyAction')
+
+  route.get('/rbac/users', 'Actions/Dashboard/Rbac/UsersListAction')
+  route.get('/rbac/users/{id}/roles', 'Actions/Dashboard/Rbac/UserRolesShowAction')
+  route.post('/rbac/users/{id}/roles', 'Actions/Dashboard/Rbac/UserRolesSyncAction')
+
+  route.get('/rbac/roles/{name}/permissions', 'Actions/Dashboard/Rbac/RolePermissionsShowAction')
+  route.post('/rbac/roles/{name}/permissions', 'Actions/Dashboard/Rbac/RolePermissionsSyncAction')
   // RBAC identity endpoint (stacksjs/stacks#1843). Returns the
   // authenticated user + their role names so the dashboard's `useRole()`
   // composable can gate dev-mode surfaces. Tolerates unauthenticated
@@ -112,4 +136,21 @@ route.group({ prefix: '/api/dashboard', apiResponse: true }, () => {
   // wider `/api/dashboard/users` (Data section consumer) — the
   // picker only needs id/name/email.
   route.get('/kanban/users', 'Actions/Dashboard/Kanban/UsersListAction')
+
+  // Commerce dashboard stats. Same Action that backs the auth'd
+  // `/api/commerce/dashboard` — exposed here without the auth gate so
+  // the dev-mode dashboard surface in `views/dashboard/commerce/dashboard/`
+  // can load it directly. The page itself stays admin-gated via
+  // `useRole().isAdmin()` (stacksjs/stacks#1838).
+  route.get('/commerce/stats', 'Actions/Dashboard/Commerce/CommerceDashboardAction')
+
+  // Models overview. Walks `app/Models/` + framework default models,
+  // counts rows for each, returns grouped JSON for the
+  // `views/dashboard/models/index.stx` page (stacksjs/stacks#1838).
+  route.get('/models', 'Actions/Dashboard/Models/ModelsIndexAction')
+
+  // Per-model row view — first 50 rows + column list, for the
+  // dynamic `views/dashboard/models/[model].stx` page. ORM path
+  // first, raw SQLite fallback if no model file matches the slug.
+  route.get('/models/{slug}', 'Actions/Dashboard/Models/ModelShowAction')
 })

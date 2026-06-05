@@ -24,14 +24,32 @@ export interface EmailVerificationResult {
 }
 
 /**
+ * Resolve the HMAC signing key from `config.app.key`. The previous
+ * implementation silently fell back to the literal `'stacks-default-key'`
+ * if `APP_KEY` was unset — anyone reading the source could forge
+ * verification tokens against any install that hadn't generated its
+ * own key yet. This throws instead so the boot fails loud and the
+ * deployer knows to run `./buddy key:generate` (stacksjs/stacks#1861 A-1).
+ */
+function getVerificationKey(): string {
+  const appKey = config.app.key
+  if (typeof appKey !== 'string' || appKey.length === 0) {
+    throw new Error(
+      '[auth] config.app.key is not set — email-verification HMAC requires a real APP_KEY. '
+      + 'Run `./buddy key:generate` to provision one, or set the APP_KEY env var before booting the app.',
+    )
+  }
+  return appKey
+}
+
+/**
  * Generate an HMAC-based verification token.
  * Uses the user ID and a random nonce so that each token is unique.
  */
 function generateVerificationToken(userId: number): { token: string, hash: string } {
   const nonce = randomBytes(32).toString('hex')
-  const appKey = config.app.key || 'stacks-default-key'
   const payload = `${userId}:${nonce}`
-  const hash = createHmac('sha256', appKey).update(payload).digest('hex')
+  const hash = createHmac('sha256', getVerificationKey()).update(payload).digest('hex')
   return { token: nonce, hash }
 }
 
@@ -39,9 +57,8 @@ function generateVerificationToken(userId: number): { token: string, hash: strin
  * Verify a token matches the stored hash
  */
 function verifyToken(userId: number, token: string, storedHash: string): boolean {
-  const appKey = config.app.key || 'stacks-default-key'
   const payload = `${userId}:${token}`
-  const hash = createHmac('sha256', appKey).update(payload).digest('hex')
+  const hash = createHmac('sha256', getVerificationKey()).update(payload).digest('hex')
   const a = Buffer.from(hash)
   const b = Buffer.from(storedHash)
   if (a.length !== b.length)
@@ -62,6 +79,22 @@ function getExpiryMinutes(): number {
     }
   }
   return 60
+}
+
+/**
+ * Build the verification URL. Configurable via
+ * `config.auth.emailVerification.url` — a template with `{id}` / `{token}`
+ * placeholders — so apps whose verify page lives on a custom route can
+ * reuse this whole flow instead of hand-rolling the send. Falls back to
+ * the framework convention. Absolute templates are used as-is; path
+ * templates are prefixed with the app URL. (Mirrors the password-reset
+ * URL treatment — stacksjs/stacks#1944.)
+ */
+function getVerificationUrl(userId: number, token: string): string {
+  const base = config.app.url ? `https://${config.app.url}` : `http://localhost:${process.env.PORT || '3000'}`
+  const tpl = config.auth.emailVerification?.url ?? '/verify-email/{id}/{token}'
+  const filled = tpl.replace('{id}', String(userId)).replace('{token}', token)
+  return /^https?:\/\//.test(filled) ? filled : `${base}${filled.startsWith('/') ? '' : '/'}${filled}`
 }
 
 /**
@@ -96,9 +129,8 @@ export async function sendVerificationEmail(user: { id: number, email: string, n
     })
     .executeTakeFirst()
 
-  // Build verification URL
-  const appUrl = config.app.url ? `https://${config.app.url}` : `http://localhost:${process.env.PORT || '3000'}`
-  const verificationUrl = `${appUrl}/verify-email/${user.id}/${token}`
+  // Build verification URL (configurable — see getVerificationUrl)
+  const verificationUrl = getVerificationUrl(user.id, token)
   const appName = config.app.name || 'Stacks'
 
   try {

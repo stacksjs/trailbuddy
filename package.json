@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "@stacksjs/stx": "^0.2.66",
-    "stacks": "workspace:*"
+    "stacks": "workspace:*",
+    "ts-rate-limiter": "0.4.2"
   },
   "devDependencies": {
     "@stacksjs/ts-cloud-types": "^0.1.9",

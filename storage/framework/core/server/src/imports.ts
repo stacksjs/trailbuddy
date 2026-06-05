@@ -386,7 +386,7 @@ export async function injectGlobalAutoImports(): Promise<void> {
     ['@stacksjs/cli', ['quotes']],
     ['@stacksjs/notifications', ['notify', 'useNotification', 'useEmail', 'useSMS', 'useChat', 'useDatabase']],
     ['@stacksjs/realtime', ['emit', 'emitToUser', 'emitToUsers', 'createChannel', 'dispatchBroadcast']],
-    ['@stacksjs/i18n', ['I18n', 'setLocale', 'getLocale']],
+    ['@stacksjs/i18n', ['I18n', 't', 'tc', 'te', 'setLocale', 'getLocale']],
     // `state`/`derived`/`effect` are stx signal helpers that userland
     // resource files (resources/functions/counter.ts, dark.ts, etc.)
     // call at module top-level. Without these injected globally,
@@ -409,7 +409,12 @@ export async function injectGlobalAutoImports(): Promise<void> {
     ])
   }
 
-  for (const [pkg, names] of primitiveModules) {
+  // Import every primitive concurrently. They're independent packages that
+  // export distinct global names, so the order they resolve in doesn't matter —
+  // only that all of them land on globalThis before the user barrel loads (the
+  // await below). Parallelizing overlaps their module I/O instead of paying for
+  // each import end-to-end in sequence.
+  await Promise.all(primitiveModules.map(async ([pkg, names]) => {
     try {
       const mod = await importWithTimeout(pkg)
       for (const name of names) {
@@ -420,6 +425,15 @@ export async function injectGlobalAutoImports(): Promise<void> {
     catch (err) {
       errors.push(err as Error)
     }
+  }))
+
+  // Project `locales/*.yml` — used by STX `{{ t('key') }}` and actions.
+  try {
+    const { ensureLocalesLoaded } = await import('@stacksjs/i18n')
+    await ensureLocalesLoaded()
+  }
+  catch (err) {
+    errors.push(err as Error)
   }
 
   // Now that every framework primitive is fully evaluated and globalThis-ed,
