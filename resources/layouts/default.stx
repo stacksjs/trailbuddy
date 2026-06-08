@@ -6,9 +6,11 @@
 <script client>
   import { useTrailCatalog } from '../composables/useTrailCatalog'
   import { useTerritoryCatalog } from '../composables/useTerritoryCatalog'
+  import { useActivityCatalog } from '../composables/useActivityCatalog'
   const tb = useStore('tb')
   useTrailCatalog(tb)
   useTerritoryCatalog(tb)
+  useActivityCatalog(tb)
 </script>
 
 @include('nav')

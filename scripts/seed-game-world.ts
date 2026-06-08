@@ -173,6 +173,48 @@ if (conquest.json?.territories?.length) {
   }
 }
 
+// --- feed activities -------------------------------------------------------
+// A spread of plain (no-GPS) activities across users/trails/types/dates so the
+// feed renders a populated, realistic timeline from the DB (not seed).
+
+const TYPES = ['Trail Run', 'Hike', 'Walk', 'Bike']
+const DAY = 24 * 60 * 60 * 1000
+const feedPlan = [
+  { u: 0, t: 0, type: 'Trail Run', dist: 5.6, dur: '52:18', pace: '9:20/mi', elev: 1250, days: 0 },
+  { u: 1, t: 1, type: 'Hike', dist: 8.4, dur: '5:12:30', pace: '37:00/mi', elev: 2847, days: 0 },
+  { u: 0, t: 2, type: 'Trail Run', dist: 2.8, dur: '26:45', pace: '9:33/mi', elev: 280, days: 1 },
+  { u: 2, t: 3, type: 'Trail Run', dist: 7.9, dur: '1:08:34', pace: '8:41/mi', elev: 2100, days: 1 },
+  { u: 1, t: 4, type: 'Walk', dist: 3.2, dur: '58:20', pace: '18:13/mi', elev: 420, days: 2 },
+  { u: 0, t: 0, type: 'Trail Run', dist: 4.8, dur: '42:05', pace: '8:46/mi', elev: 780, days: 2 },
+  { u: 2, t: 1, type: 'Hike', dist: 12.4, dur: '7:45:00', pace: '37:30/mi', elev: 4200, days: 3 },
+  { u: 1, t: 2, type: 'Bike', dist: 11.6, dur: '48:30', pace: '14.4 mph', elev: 1100, days: 3 },
+  { u: 0, t: 3, type: 'Trail Run', dist: 3.6, dur: '30:12', pace: '8:23/mi', elev: 480, days: 4 },
+  { u: 2, t: 4, type: 'Hike', dist: 5.8, dur: '2:45:00', pace: '28:27/mi', elev: 1100, days: 5 },
+  { u: 1, t: 0, type: 'Trail Run', dist: 9.6, dur: '1:15:20', pace: '7:51/mi', elev: 1560, days: 6 },
+  { u: 0, t: 2, type: 'Walk', dist: 4.2, dur: '1:12:00', pace: '17:08/mi', elev: 350, days: 7 },
+]
+const NOW = Date.now()
+let feedCount = 0
+for (const p of feedPlan) {
+  const owner = users[p.u]
+  const trail = trails[p.t]
+  const completed = new Date(NOW - p.days * DAY - feedCount * 1500 * 1000).toISOString()
+  await Activity.forceCreate({
+    user_id: owner.id,
+    trail_id: trail?.id ?? null,
+    activity_type: TYPES.includes(p.type) ? p.type : 'Trail Run',
+    distance: p.dist,
+    duration: p.dur,
+    pace: p.pace,
+    elevation: p.elev,
+    kudos_count: 0,
+    gpx_data: null,
+    completed_at: completed,
+  })
+  feedCount++
+}
+console.log(`✅ feed activities: ${feedCount} across ${users.length} users`)
+
 // --- final state -----------------------------------------------------------
 
 const db2 = new Database('database/stacks.sqlite', { readonly: true })

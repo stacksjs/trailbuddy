@@ -1,7 +1,15 @@
 // No imports needed - everything is auto-imported!
 //
-// Lists activities for the feed / profile. Optional ?user_id filter. The ORM is
-// snake_case; the response is mapped to camelCase for the frontend.
+// Lists activities for the feed / profile. Optional ?user_id filter. Joins the
+// owner's name and the trail name so the feed can render without extra lookups.
+// The ORM is snake_case; the response is camelCase for the frontend.
+
+function titleFor(activityType: string, trailName: string | null, completedAt: string | null): string {
+  if (trailName)
+    return `${activityType} at ${trailName}`
+  const when = completedAt ? new Date(completedAt).toLocaleDateString() : ''
+  return when ? `${activityType} — ${when}` : `${activityType}`
+}
 
 export default new Action({
   name: 'Activity Index',
@@ -16,22 +24,38 @@ export default new Action({
       const query = userId
         ? Activity.where('user_id', '=', userId)
         : Activity.query()
-      const rows = await query.orderBy('created_at', 'desc').limit(limit).get()
+      const rows = (await query.orderBy('completed_at', 'desc').limit(limit).get()) ?? []
 
-      const activities = (rows ?? []).map((a: any) => ({
-        id: a.id,
-        userId: a.user_id,
-        trailId: a.trail_id,
-        activityType: a.activity_type,
-        distance: a.distance,
-        duration: a.duration,
-        pace: a.pace,
-        elevation: a.elevation,
-        kudosCount: a.kudos_count ?? 0,
-        notes: a.notes,
-        completedAt: a.completed_at,
-        createdAt: a.created_at,
-      }))
+      // Batch-load owners + trails so the feed gets names without N+1 lookups.
+      const userIds = [...new Set(rows.map((a: any) => a.user_id).filter(Boolean))]
+      const trailIds = [...new Set(rows.map((a: any) => a.trail_id).filter(Boolean))]
+      const users = userIds.length ? await User.whereIn('id', userIds).get() : []
+      const trails = trailIds.length ? await Trail.whereIn('id', trailIds).get() : []
+      const userName = new Map(users.map((u: any) => [u.id, u.name]))
+      const trailName = new Map(trails.map((t: any) => [t.id, t.name]))
+
+      const activities = rows.map((a: any) => {
+        const tName = a.trail_id ? (trailName.get(a.trail_id) ?? null) : null
+        return {
+          id: a.id,
+          userId: a.user_id,
+          userName: userName.get(a.user_id) ?? 'Unknown',
+          trailId: a.trail_id,
+          trailName: tName,
+          title: titleFor(a.activity_type, tName, a.completed_at),
+          activityType: a.activity_type,
+          distance: a.distance,
+          duration: a.duration,
+          movingTime: a.duration,
+          pace: a.pace,
+          elevationGain: a.elevation ?? 0,
+          calories: Math.round((a.distance ?? 0) * 95),
+          kudosCount: a.kudos_count ?? 0,
+          notes: a.notes,
+          completedAt: a.completed_at,
+          createdAt: a.created_at,
+        }
+      })
 
       return response.json({ activities, meta: { total: activities.length } })
     }

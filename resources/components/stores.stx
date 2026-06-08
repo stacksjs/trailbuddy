@@ -471,6 +471,12 @@
             this.users.push(u)
         }
       },
+      /** Replace seed activities with live data from /api/activities. */
+      hydrateActivitiesFromApi(activities: Activity[]) {
+        if (!activities.length)
+          return
+        this.activities = activities
+      },
       findTrail(id: number): Trail | undefined {
         return this.trails.find((t: Trail) => t.id === id)
       },
