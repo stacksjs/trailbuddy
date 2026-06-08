@@ -17,18 +17,38 @@
   const period = state<'weekly' | 'monthly' | 'alltime'>('weekly')
   const metric = state<'distance' | 'elevation' | 'activities'>('distance')
 
+  function periodCutoff(p: string): number {
+    if (p === 'weekly') return Date.now() - 7 * 86400000
+    if (p === 'monthly') return Date.now() - 30 * 86400000
+    return 0
+  }
+
   const leaders = derived<LeaderEntry[]>(() => {
     if (!tb) return []
-    return tb.users().map((u: any) => {
-      const userActs = tb.activities().filter((a: any) => a.user_id === u.id)
+    const cutoff = periodCutoff(period())
+    const m = metric()
+    const list = tb.users().map((u: any) => {
+      const userActs = tb.activities().filter((a: any) =>
+        a.user_id === u.id && new Date(a.created_at).getTime() >= cutoff)
       return {
         userName: u.name,
         totalDistance: userActs.reduce((sum: number, a: any) => sum + (a.distance || 0), 0),
         totalElevation: userActs.reduce((sum: number, a: any) => sum + (a.elevation_gain || 0), 0),
-        trailsCompleted: new Set(userActs.map((a: any) => a.trail_id)).size,
+        trailsCompleted: userActs.length,
       }
-    }).sort((a: LeaderEntry, b: LeaderEntry) => b.totalDistance - a.totalDistance)
+    })
+    const key = m === 'elevation' ? 'totalElevation' : m === 'activities' ? 'trailsCompleted' : 'totalDistance'
+    return list.sort((a: LeaderEntry, b: LeaderEntry) => (b as any)[key] - (a as any)[key])
   })
+
+  /** Format an entry's value for the currently-selected metric. */
+  function metricText(entry: LeaderEntry | undefined): string {
+    if (!entry) return ''
+    const m = metric()
+    if (m === 'elevation') return entry.totalElevation.toLocaleString() + ' ft'
+    if (m === 'activities') return entry.trailsCompleted + ' activities'
+    return entry.totalDistance.toFixed(1) + ' mi'
+  }
 </script>
 
   <div class="mx-auto px-4 py-6 sm:px-6 lg:px-8 max-w-3xl">
@@ -54,20 +74,20 @@
         <div class="flex items-center justify-center mb-2 mx-auto h-14 w-14 font-bold text-gray-600 text-xl dark:text-slate-300 bg-gray-200 dark:bg-slate-700 rounded-full" :text="(leaders[1]?.userName || 'U').charAt(0)"></div>
         <p class="font-semibold text-sm truncate dark:text-white" :text="leaders[1]?.userName || 'Athlete'"></p>
         <p class="mt-1 font-bold text-gray-400 text-lg">2nd</p>
-        <p class="font-semibold text-emerald-600 text-sm" :text="(leaders[1]?.totalDistance || 0).toFixed(1) + ' mi'"></p>
+        <p class="font-semibold text-emerald-600 text-sm" :text="metricText(leaders[1])"></p>
       </div>
       <div class="ring-2 ring-yellow-400 pt-4 text-center card">
         <div class="mb-1 text-2xl">👑</div>
         <div class="flex items-center justify-center mb-2 mx-auto h-16 w-16 font-bold text-2xl text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 rounded-full" :text="(leaders[0]?.userName || 'U').charAt(0)"></div>
         <p class="font-bold text-sm truncate dark:text-white" :text="leaders[0]?.userName || 'Athlete'"></p>
         <p class="mt-1 font-bold text-lg text-yellow-500">1st</p>
-        <p class="font-semibold text-emerald-600 text-sm" :text="(leaders[0]?.totalDistance || 0).toFixed(1) + ' mi'"></p>
+        <p class="font-semibold text-emerald-600 text-sm" :text="metricText(leaders[0])"></p>
       </div>
       <div class="pt-8 text-center card">
         <div class="flex items-center justify-center mb-2 mx-auto h-14 w-14 font-bold text-orange-600 text-xl bg-orange-100 dark:bg-orange-900/30 rounded-full" :text="(leaders[2]?.userName || 'U').charAt(0)"></div>
         <p class="font-semibold text-sm truncate dark:text-white" :text="leaders[2]?.userName || 'Athlete'"></p>
         <p class="mt-1 font-bold text-lg text-orange-400">3rd</p>
-        <p class="font-semibold text-emerald-600 text-sm" :text="(leaders[2]?.totalDistance || 0).toFixed(1) + ' mi'"></p>
+        <p class="font-semibold text-emerald-600 text-sm" :text="metricText(leaders[2])"></p>
       </div>
     </div>
 
@@ -82,7 +102,7 @@
             <p class="text-gray-500 text-xs dark:text-slate-400" :text="leader.trailsCompleted + ' trails completed'"></p>
           </div>
           <div class="shrink-0 text-right">
-            <p class="font-bold text-emerald-600 text-sm" :text="leader.totalDistance.toFixed(1) + ' mi'"></p>
+            <p class="font-bold text-emerald-600 text-sm" :text="metricText(leader)"></p>
             <p class="text-gray-400 text-xs dark:text-slate-500" :text="leader.totalElevation.toLocaleString() + ' ft'"></p>
           </div>
         </div>
