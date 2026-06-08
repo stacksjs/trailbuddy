@@ -67,6 +67,22 @@ export async function createActivity(payload: {
   return json?.activity ?? null
 }
 
+export interface KudosResult {
+  success: boolean
+  kudosed?: boolean
+  kudosCount?: number
+}
+
+/** Toggle the user's kudos on an activity; returns the authoritative count. */
+export async function toggleKudos(activityId: number, userId: number): Promise<KudosResult> {
+  const res = await fetch(`/api/activities/${activityId}/kudos`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ user_id: userId }),
+  })
+  return res.json()
+}
+
 /** Claim a new territory from a completed closed-loop activity. */
 export async function claimTerritory(activityId: number, userId: number): Promise<ClaimResult> {
   const res = await fetch('/api/territories/claim', {

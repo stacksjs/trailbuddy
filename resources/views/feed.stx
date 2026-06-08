@@ -5,11 +5,30 @@
 @section('content')
 <script client>
   import { routePreviewDataUri } from '../composables/useRoutePreview'
+  import { toggleKudos } from '../assets/scripts/game-api'
 
   useHead({ title: 'Activity Feed — TrailBuddy' })
 
   const tb = useStore('tb')
   const filter = state<'all' | 'Trail Run' | 'Hike' | 'Walk' | 'Bike'>('all')
+  const kudosed = state<Record<number, boolean>>({})
+
+  async function onKudos(activity: { id: number, kudos_count: number }) {
+    if (!tb) return
+    const wasKudosed = kudosed()[activity.id] ?? false
+    // Optimistic toggle for a snappy UI.
+    kudosed.set({ ...kudosed(), [activity.id]: !wasKudosed })
+    tb.setActivityKudos(activity.id, Math.max(0, activity.kudos_count + (wasKudosed ? -1 : 1)))
+    const res = await toggleKudos(activity.id, tb.currentUserId())
+    if (res && res.success) {
+      kudosed.set({ ...kudosed(), [activity.id]: !!res.kudosed })
+      if (typeof res.kudosCount === 'number') tb.setActivityKudos(activity.id, res.kudosCount)
+    }
+    else {
+      kudosed.set({ ...kudosed(), [activity.id]: wasKudosed })
+      tb.setActivityKudos(activity.id, activity.kudos_count)
+    }
+  }
 
   const filtered = derived(() => {
     if (!tb) return []
@@ -100,7 +119,7 @@
           </div>
 
           <div class="flex gap-6 items-center mt-4 pt-4 border-gray-100 border-t dark:border-slate-700">
-            <button class="flex items-center gap-1 text-gray-500 dark:text-slate-400 hover:text-red-500 transition text-sm">
+            <button @click="onKudos(activity)" x-class="kudosed[activity.id] ? 'text-red-500' : 'text-gray-500 dark:text-slate-400 hover:text-red-500'" class="flex items-center gap-1 transition text-sm">
               <Icon name="heart" size="20" />
               <span :text="activity.kudos_count + ' Kudos'"></span>
             </button>

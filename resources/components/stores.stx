@@ -510,6 +510,11 @@
         const a = this.activities.find((x: Activity) => x.id === activityId)
         if (a) a.kudos_count = Math.max(0, a.kudos_count + delta)
       },
+      /** Set the authoritative kudos count returned by the backend. */
+      setActivityKudos(activityId: number, count: number) {
+        const a = this.activities.find((x: Activity) => x.id === activityId)
+        if (a) a.kudos_count = count
+      },
       addComment(activityId: number, text: string) {
         const a = this.activities.find((x: Activity) => x.id === activityId)
         const user = this.users.find((u: User) => u.id === this.currentUserId)
