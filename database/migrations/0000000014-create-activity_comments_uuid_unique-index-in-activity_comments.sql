@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS "activity_comments_activity_comments_uuid_unique" ON "activity_comments" ("uuid");

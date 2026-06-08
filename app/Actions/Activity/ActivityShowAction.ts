@@ -21,6 +21,22 @@ export default new Action({
       // gpx_data is a GeoJSON LineString / JSON coords string; parse to [{lat,lng}].
       const route = a.gpx_data ? parseGpsData(a.gpx_data) : []
 
+      // Comments + their author names.
+      const commentRows = await ActivityComment
+        .where('activity_id', '=', id)
+        .orderBy('created_at', 'asc')
+        .get()
+      const commenterIds = [...new Set((commentRows ?? []).map((c: any) => c.user_id).filter(Boolean))]
+      const commenters = commenterIds.length ? await User.whereIn('id', commenterIds).get() : []
+      const commenterName = new Map(commenters.map((u: any) => [u.id, u.name]))
+      const comments = (commentRows ?? []).map((c: any) => ({
+        id: c.id,
+        userId: c.user_id,
+        userName: commenterName.get(c.user_id) ?? 'Unknown',
+        body: c.body,
+        createdAt: c.created_at,
+      }))
+
       return response.json({
         success: true,
         activity: {
@@ -37,6 +53,7 @@ export default new Action({
           completedAt: a.completed_at,
           createdAt: a.created_at,
           route,
+          comments,
         },
       })
     }

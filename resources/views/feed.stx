@@ -123,10 +123,10 @@
               <Icon name="heart" size="20" />
               <span :text="activity.kudos_count + ' Kudos'"></span>
             </button>
-            <button class="flex items-center gap-1 text-gray-500 dark:text-slate-400 hover:text-emerald-500 transition text-sm">
+            <StxLink x-to="'/activity/' + activity.id" class="flex items-center gap-1 text-gray-500 dark:text-slate-400 hover:text-emerald-500 transition text-sm">
               <Icon name="message-circle" size="20" />
               Comment
-            </button>
+            </StxLink>
           </div>
         </div>
       </template>

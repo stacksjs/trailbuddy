@@ -382,6 +382,7 @@ route.get('/activities', 'Actions/Activity/ActivityIndexAction')
 route.post('/activities', 'Actions/Activity/ActivityStoreAction')
 route.get('/activities/{id}', 'Actions/Activity/ActivityShowAction')
 route.post('/activities/{id}/kudos', 'Actions/Activity/KudosToggleAction')
+route.post('/activities/{id}/comments', 'Actions/Activity/ActivityCommentStoreAction')
 
 // Territory Game routes - claim land by running loops, conquer others' territory
 route.group({ prefix: '/territories' }, () => {

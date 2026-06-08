@@ -67,6 +67,36 @@ export async function createActivity(payload: {
   return json?.activity ?? null
 }
 
+export interface ActivityComment {
+  id: number
+  userId: number
+  userName: string
+  body: string
+  createdAt: string
+}
+
+/** Fetch a single activity (incl. parsed route + comments). */
+export async function fetchActivityDetail(activityId: number): Promise<any | null> {
+  const res = await fetch(`/api/activities/${activityId}`)
+  if (!res.ok)
+    return null
+  const json = await res.json()
+  return json?.activity ?? null
+}
+
+/** Post a comment on an activity; returns the created comment. */
+export async function postComment(activityId: number, userId: number, body: string): Promise<ActivityComment | null> {
+  const res = await fetch(`/api/activities/${activityId}/comments`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ user_id: userId, body }),
+  })
+  if (!res.ok)
+    return null
+  const json = await res.json()
+  return json?.comment ?? null
+}
+
 export interface KudosResult {
   success: boolean
   kudosed?: boolean
