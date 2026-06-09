@@ -17,6 +17,7 @@ import {
   routeToGeoJson,
   runResultMessage,
 } from '../assets/scripts/game-api'
+import { loadTerritories } from './useTerritoryCatalog'
 
 type ActivityType = 'Trail Run' | 'Hike' | 'Walk' | 'Bike'
 type RecordMode = 'idle' | 'simulated' | 'manual'
@@ -161,41 +162,41 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     })
   }
 
-  function flashConquest(name: string, xp: number) {
-    conquestToast.set(`Captured ${name}! +${xp} XP`)
-    if (refs.toastTimer) clearTimeout(refs.toastTimer)
-    refs.toastTimer = setTimeout(() => conquestToast.set(null), 3200)
+  // Repaint existing territory layers to match current store ownership (after a
+  // backend re-hydration). New/split territories appear on the next full map
+  // load (the territories page); here we reflect ownership flips of what's drawn.
+  function repaintTerritories() {
+    if (!tb) return
+    const uid = tb.currentUserId()
+    for (const t of tb.territories())
+      paintTerritory(t.id, t.user_id === uid)
   }
 
+
+  // Live, VISUAL-ONLY feedback while running through enemy territory. The
+  // authoritative capture is decided by the backend on stop (closed-loop claim
+  // + route-intersection split), then the map is re-hydrated from the API
+  // (#943). We no longer flip ownership client-side, which used a different
+  // rule (10 proximity pings) and disagreed with the persisted result.
   function checkConquest(lat: number, lng: number) {
     if (!tb || runMode() === 'free') return
     const uid = tb.currentUserId()
     const polys = tb.territoryPolygons()
     const territories = tb.territories()
-    const already = conqueredIds()
     const progressMap = { ...captureProgress() }
 
     for (const t of territories) {
       if (t.user_id === uid) continue
-      if (already.includes(t.id)) continue
       const poly = polys[t.id]
       if (!poly) continue
       if (!pointInPolygon([lat, lng], poly)) continue
 
-      const pct = tb.applyCaptureSample(t.id, CAPTURE_SAMPLES_NEEDED)
+      // Fill the meter as a "you're on enemy turf" cue (capped just under full
+      // so the UI doesn't promise a capture the engine hasn't confirmed).
+      const pct = Math.min(90, tb.applyCaptureSample(t.id, CAPTURE_SAMPLES_NEEDED))
       progressMap[t.id] = pct
       captureProgress.set(progressMap)
       paintTerritory(t.id, false, pct)
-
-      if (pct >= 100) {
-        const xp = 120 + Math.round(t.areaSize / 500)
-        if (tb.conquerTerritory(t.id, Number(distance().toFixed(2)))) {
-          conqueredIds.set([...conqueredIds(), t.id])
-          sessionXp.set(tb.addSessionXp(xp))
-          paintTerritory(t.id, true)
-          flashConquest(t.name, xp)
-        }
-      }
     }
   }
 
@@ -349,6 +350,12 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
         conquestToast.set(message)
         if (refs.toastTimer) clearTimeout(refs.toastTimer)
         refs.toastTimer = setTimeout(() => conquestToast.set(null), 3600)
+      }
+      // Re-hydrate territories from the backend so the map reflects the real
+      // claim/conquest outcome (single source of truth), then repaint.
+      if ((result.claim && result.claim.success) || (result.conquest && (result.conquest.conqueredCount ?? 0) > 0)) {
+        await loadTerritories(tb)
+        repaintTerritories()
       }
     }
     catch (err) {
