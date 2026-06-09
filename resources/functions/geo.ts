@@ -392,94 +392,123 @@ function lineIntersection(
  *
  * @returns Array of resulting polygons after the split
  */
+/**
+ * Segment intersection that also returns the parametric positions: `t` along
+ * a1→a2 (the route segment) and `u` along b1→b2 (the polygon edge). Used to
+ * order crossings along the route and to place them on the polygon boundary.
+ */
+function segmentIntersection(
+  a1: Coordinate, a2: Coordinate, b1: Coordinate, b2: Coordinate,
+): { point: Coordinate, t: number, u: number } | null {
+  const x1 = a1.lng, y1 = a1.lat, x2 = a2.lng, y2 = a2.lat
+  const x3 = b1.lng, y3 = b1.lat, x4 = b2.lng, y4 = b2.lat
+  const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+  if (Math.abs(denom) < 1e-12)
+    return null
+  const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom
+  const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom
+  if (t < 0 || t > 1 || u < 0 || u > 1)
+    return null
+  return { point: { lng: x1 + t * (x2 - x1), lat: y1 + t * (y2 - y1) }, t, u }
+}
+
+/**
+ * Split a polygon with a route that cuts across it. Single-cut model: the cut
+ * runs from where the route FIRST crosses the boundary (entry) to where it LAST
+ * crosses (exit), using the real route path between them as the dividing chain,
+ * then reconstructs the two pieces by walking the boundary either way around.
+ *
+ * Correct for convex AND concave polygons, and for routes with >2 crossings
+ * (the weaving subpath between entry and exit becomes the cut). Returns
+ * `[polygon]` unchanged when there's no clean cut (fewer than 2 crossings, or a
+ * degenerate result). A self-intersecting route is out of scope and will fall
+ * back to `[polygon]` if it yields a degenerate piece.
+ */
 export function splitPolygonByRoute(
   polygon: Coordinate[],
   route: Coordinate[],
 ): Coordinate[][] {
-  // Find entry and exit points where the route crosses the polygon boundary
-  const crossings: Array<{ point: Coordinate, index: number, routeIndex: number }> = []
+  // Normalize to an open ring of n distinct vertices (drop a closing duplicate).
+  const ring = [...polygon]
+  while (ring.length > 1) {
+    const f = ring[0]
+    const l = ring[ring.length - 1]
+    if (f.lat === l.lat && f.lng === l.lng)
+      ring.pop()
+    else
+      break
+  }
+  const n = ring.length
+  if (n < 3 || route.length < 2)
+    return [polygon]
 
+  // All crossings of the route with the polygon boundary. `pos` = edgeIndex + u
+  // (a scalar boundary position); `routeOrder` = routeSegmentIndex + t.
+  const crossings: Array<{ point: Coordinate, pos: number, routeOrder: number }> = []
   for (let i = 0; i < route.length - 1; i++) {
-    for (let j = 0; j < polygon.length - 1; j++) {
-      const intersection = lineIntersection(route[i], route[i + 1], polygon[j], polygon[j + 1])
-      if (intersection) {
-        crossings.push({ point: intersection, index: j, routeIndex: i })
-      }
+    for (let j = 0; j < n; j++) {
+      const hit = segmentIntersection(route[i], route[i + 1], ring[j], ring[(j + 1) % n])
+      if (hit)
+        crossings.push({ point: hit.point, pos: j + hit.u, routeOrder: i + hit.t })
     }
   }
-
-  // If less than 2 crossings, can't split properly
-  if (crossings.length < 2) {
+  if (crossings.length < 2)
     return [polygon]
-  }
 
-  // Sort crossings by their position on the polygon boundary
-  crossings.sort((a, b) => a.index - b.index)
-
-  // Get entry and exit points
+  crossings.sort((a, b) => a.routeOrder - b.routeOrder)
   const entry = crossings[0]
   const exit = crossings[crossings.length - 1]
-
-  // Build two polygons:
-  // 1. Portion with the route (conquered)
-  // 2. Remaining portion (kept by original owner)
-
-  const conquered: Coordinate[] = []
-  const remaining: Coordinate[] = []
-
-  // Add entry point to both
-  conquered.push(entry.point)
-  remaining.push(entry.point)
-
-  // Add route points between entry and exit to conquered polygon
-  const routeStart = entry.routeIndex + 1
-  const routeEnd = exit.routeIndex + 1
-  for (let i = routeStart; i < routeEnd; i++) {
-    if (pointInPolygon(route[i], polygon)) {
-      conquered.push(route[i])
-    }
-  }
-  conquered.push(exit.point)
-
-  // Add polygon points from exit to entry to conquered (short path)
-  for (let i = exit.index + 1; i <= polygon.length - 1 && i <= entry.index + polygon.length; i++) {
-    const idx = i % (polygon.length - 1)
-    if (idx <= entry.index) {
-      conquered.push(polygon[idx])
-    }
-  }
-
-  // Add polygon points from entry to exit to remaining (long path)
-  for (let i = entry.index + 1; i <= exit.index; i++) {
-    remaining.push(polygon[i])
-  }
-  remaining.push(exit.point)
-
-  // Close the polygons
-  if (conquered.length > 0 && (conquered[0].lat !== conquered[conquered.length - 1].lat ||
-      conquered[0].lng !== conquered[conquered.length - 1].lng)) {
-    conquered.push(conquered[0])
-  }
-  if (remaining.length > 0 && (remaining[0].lat !== remaining[remaining.length - 1].lat ||
-      remaining[0].lng !== remaining[remaining.length - 1].lng)) {
-    remaining.push(remaining[0])
-  }
-
-  // Only return polygons with sufficient area (> 100 sq meters)
-  const result: Coordinate[][] = []
-  if (calculatePolygonArea(conquered) >= 100) {
-    result.push(conquered)
-  }
-  if (calculatePolygonArea(remaining) >= 100) {
-    result.push(remaining)
-  }
-
-  // If split failed, return original
-  if (result.length === 0) {
+  if (Math.abs(entry.routeOrder - exit.routeOrder) < 1e-9)
     return [polygon]
-  }
 
-  return result
+  // Cut chain: entry point -> the real route vertices spanned -> exit point.
+  const cut: Coordinate[] = [entry.point]
+  const lo = Math.floor(entry.routeOrder) + 1
+  const hi = Math.floor(exit.routeOrder)
+  for (let i = lo; i <= hi; i++)
+    cut.push(route[i])
+  cut.push(exit.point)
+
+  // Partition the boundary vertices into the two arcs between exit and entry.
+  const dist = (p: number, from: number): number => ((p - from) % n + n) % n
+  const arcA: Array<{ k: number, d: number }> = [] // exit -> entry, increasing
+  const arcB: Array<{ k: number, d: number }> = [] // entry -> exit, increasing
+  const spanEntryFromExit = dist(entry.pos, exit.pos)
+  for (let k = 0; k < n; k++) {
+    const dFromExit = dist(k, exit.pos)
+    if (dFromExit > 1e-9 && dFromExit < spanEntryFromExit)
+      arcA.push({ k, d: dFromExit })
+    else
+      arcB.push({ k, d: dist(k, entry.pos) })
+  }
+  arcA.sort((a, b) => a.d - b.d)
+  arcB.sort((a, b) => a.d - b.d)
+
+  // polyA = cut(entry->exit) then boundary exit->entry one way.
+  // polyB = cut(entry->exit) then the other boundary arc (reversed so it runs
+  // exit->entry).
+  const polyA = [...cut, ...arcA.map(x => ring[x.k])]
+  const polyB = [...cut, ...arcB.map(x => ring[x.k]).reverse()]
+
+  const close = (p: Coordinate[]): Coordinate[] => {
+    if (p.length > 0) {
+      const f = p[0]
+      const l = p[p.length - 1]
+      if (f.lat !== l.lat || f.lng !== l.lng)
+        p.push(f)
+    }
+    return p
+  }
+  close(polyA)
+  close(polyB)
+
+  const result: Coordinate[][] = []
+  if (polyA.length >= 4 && calculatePolygonArea(polyA) >= 100)
+    result.push(polyA)
+  if (polyB.length >= 4 && calculatePolygonArea(polyB) >= 100)
+    result.push(polyB)
+
+  return result.length >= 1 ? result : [polygon]
 }
 
 /**
