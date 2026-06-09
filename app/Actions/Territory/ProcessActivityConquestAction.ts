@@ -13,7 +13,9 @@ export default new Action({
 
   async handle(request) {
     const activityId = request.get<number>('activity_id')
-    const userId = request.get<number>('user_id')
+    // Acting user from the authenticated session (route is behind `auth`); body
+    // fallback is for the in-process seed harness only.
+    const userId = (await Auth.user().catch(() => null))?.id ?? request.get<number>('user_id')
 
     if (!activityId) {
       return response.json({ success: false, error: 'Activity ID is required' }, 400)

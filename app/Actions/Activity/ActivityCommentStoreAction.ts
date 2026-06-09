@@ -10,7 +10,9 @@ export default new Action({
 
   async handle(request) {
     const activityId = request.get<number>('id') ?? request.get<number>('activity_id')
-    const userId = request.get<number>('user_id')
+    // Author from the authenticated session (route is behind `auth`); body
+    // fallback is for the in-process harness only.
+    const userId = (await Auth.user().catch(() => null))?.id ?? request.get<number>('user_id')
     const body = (request.get<string>('body') ?? '').trim()
 
     if (!activityId)

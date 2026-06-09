@@ -12,7 +12,10 @@ export default new Action({
 
   async handle(request) {
     const activityId = request.get<number>('id') ?? request.get<number>('activity_id')
-    const giverId = request.get<number>('user_id') ?? request.get<number>('giver_id')
+    // Giver from the authenticated session (route is behind `auth`); body
+    // fallback is for the in-process harness only.
+    const giverId = (await Auth.user().catch(() => null))?.id
+      ?? request.get<number>('user_id') ?? request.get<number>('giver_id')
 
     if (!activityId)
       return response.json({ success: false, error: 'Activity ID is required' }, 400)

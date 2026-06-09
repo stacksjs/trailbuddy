@@ -7,10 +7,14 @@
   import { useTrailCatalog } from '../composables/useTrailCatalog'
   import { useTerritoryCatalog } from '../composables/useTerritoryCatalog'
   import { useActivityCatalog } from '../composables/useActivityCatalog'
+  import { ensureSession } from '../assets/scripts/game-api'
   const tb = useStore('tb')
   useTrailCatalog(tb)
   useTerritoryCatalog(tb)
   useActivityCatalog(tb)
+  // Establish the demo athlete's session early so authenticated writes
+  // (record/kudos/comment/claim) are instant. Idempotent + non-blocking.
+  ensureSession()
 </script>
 
 @include('nav')

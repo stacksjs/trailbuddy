@@ -13,7 +13,9 @@ export default new Action({
   method: 'POST',
 
   async handle(request) {
-    const userId = request.get<number>('user_id')
+    // Owner from the authenticated session (route is behind `auth`); body
+    // fallback is for the in-process seed harness only.
+    const userId = (await Auth.user().catch(() => null))?.id ?? request.get<number>('user_id')
     const activityType = request.get<string>('activity_type') || 'Trail Run'
     const distance = request.get<number>('distance')
     const duration = request.get<string>('duration')

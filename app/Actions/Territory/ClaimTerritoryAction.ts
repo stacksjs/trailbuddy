@@ -14,7 +14,10 @@ export default new Action({
 
   async handle(request) {
     const activityId = request.get<number>('activity_id')
-    const userId = request.get<number>('user_id')
+    // Acting user comes from the authenticated session (route is behind `auth`).
+    // The body fallback only fires for in-process callers (the seed harness),
+    // never over HTTP — so a client can't claim as another user.
+    const userId = (await Auth.user().catch(() => null))?.id ?? request.get<number>('user_id')
 
     if (!activityId) {
       return response.json({ success: false, error: 'Activity ID is required' }, 400)

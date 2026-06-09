@@ -28,12 +28,61 @@ export interface ConquestResult {
   territories?: Array<{ originalId: number, conqueredArea: number, remainingArea: number, newTerritoryId?: number }>
 }
 
+// The browser auth client (@stacksjs/browser) stores the bearer token under
+// `auth_token`; reuse the same key so our calls authenticate the same session.
+const TOKEN_KEY = 'auth_token'
+
+// Seeded demo athlete ("You" = user id 1). The write endpoints require auth
+// (#939), so we transparently sign this user in if there's no session yet —
+// keeps the demo frictionless while the backend still derives the acting user
+// from the token (never the request body).
+const DEMO_EMAIL = 'you@trailbuddy.test'
+const DEMO_PASSWORD = 'password123'
+
 function authHeaders(): Record<string, string> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null
   if (token)
     headers.Authorization = `Bearer ${token}`
   return headers
+}
+
+let sessionPromise: Promise<void> | null = null
+
+/**
+ * Ensure there's an authenticated session before a write. Idempotent: returns
+ * immediately if a token already exists, otherwise signs in the seeded demo
+ * user once (deduped across concurrent callers).
+ */
+export function ensureSession(): Promise<void> {
+  if (typeof localStorage === 'undefined')
+    return Promise.resolve()
+  if (localStorage.getItem(TOKEN_KEY))
+    return Promise.resolve()
+  if (sessionPromise)
+    return sessionPromise
+  sessionPromise = (async () => {
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        const token = (data?.data ?? data)?.token
+        if (token)
+          localStorage.setItem(TOKEN_KEY, token)
+      }
+    }
+    catch {
+      // Offline / API down — writes will simply 401 and no-op.
+    }
+    finally {
+      sessionPromise = null
+    }
+  })()
+  return sessionPromise
 }
 
 /** Convert recorded [lat, lng] points to a GeoJSON LineString string the engine parses. */
@@ -56,6 +105,7 @@ export async function createActivity(payload: {
   gpx_data?: string | null
   completed_at?: string
 }): Promise<CreatedActivity | null> {
+  await ensureSession()
   const res = await fetch('/api/activities', {
     method: 'POST',
     headers: authHeaders(),
@@ -86,6 +136,7 @@ export async function fetchActivityDetail(activityId: number): Promise<any | nul
 
 /** Post a comment on an activity; returns the created comment. */
 export async function postComment(activityId: number, userId: number, body: string): Promise<ActivityComment | null> {
+  await ensureSession()
   const res = await fetch(`/api/activities/${activityId}/comments`, {
     method: 'POST',
     headers: authHeaders(),
@@ -105,6 +156,7 @@ export interface KudosResult {
 
 /** Toggle the user's kudos on an activity; returns the authoritative count. */
 export async function toggleKudos(activityId: number, userId: number): Promise<KudosResult> {
+  await ensureSession()
   const res = await fetch(`/api/activities/${activityId}/kudos`, {
     method: 'POST',
     headers: authHeaders(),
@@ -115,6 +167,7 @@ export async function toggleKudos(activityId: number, userId: number): Promise<K
 
 /** Claim a new territory from a completed closed-loop activity. */
 export async function claimTerritory(activityId: number, userId: number): Promise<ClaimResult> {
+  await ensureSession()
   const res = await fetch('/api/territories/claim', {
     method: 'POST',
     headers: authHeaders(),
@@ -125,6 +178,7 @@ export async function claimTerritory(activityId: number, userId: number): Promis
 
 /** Process conquests for an activity that ran through enemy territory. */
 export async function processConquest(activityId: number, userId: number): Promise<ConquestResult> {
+  await ensureSession()
   const res = await fetch('/api/territories/process-conquest', {
     method: 'POST',
     headers: authHeaders(),

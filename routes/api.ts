@@ -377,25 +377,24 @@ route.group({ prefix: '/shipping' }, () => {
 // Trail catalog (explore map + OSM geometry)
 route.get('/trails', 'Actions/Trail/TrailIndexAction')
 
-// Activities (recorded runs/hikes) — feed, detail, and persistence of a run
+// Public reads — feed, activity detail, territory map/leaderboard/profile.
 route.get('/activities', 'Actions/Activity/ActivityIndexAction')
-route.post('/activities', 'Actions/Activity/ActivityStoreAction')
 route.get('/activities/{id}', 'Actions/Activity/ActivityShowAction')
-route.post('/activities/{id}/kudos', 'Actions/Activity/KudosToggleAction')
-route.post('/activities/{id}/comments', 'Actions/Activity/ActivityCommentStoreAction')
+route.get('/territories/map', 'Actions/Territory/GetTerritoriesForMapAction')
+route.get('/territories/leaderboard', 'Actions/Territory/TerritoryLeaderboardAction')
+route.get('/territories/user/{userId}', 'Actions/Territory/UserTerritoriesAction')
 
-// Territory Game routes - claim land by running loops, conquer others' territory
-route.group({ prefix: '/territories' }, () => {
-  // Claim a new territory from an activity with a closed loop GPS track
-  route.post('/claim', 'Actions/Territory/ClaimTerritoryAction')
-  // Process activity to check for territory conquests
-  route.post('/process-conquest', 'Actions/Territory/ProcessActivityConquestAction')
-  // Get territories within a bounding box for map display
-  route.get('/map', 'Actions/Territory/GetTerritoriesForMapAction')
-  // Get territory leaderboard (by area, count, or conquests)
-  route.get('/leaderboard', 'Actions/Territory/TerritoryLeaderboardAction')
-  // Get all territories owned by a user
-  route.get('/user/{userId}', 'Actions/Territory/UserTerritoriesAction')
+// Writes that act on behalf of a user MUST be authenticated — the acting
+// user is derived from the session (Auth.user()), never from the request body,
+// so a caller can't record/kudos/claim/conquer as someone else (#939).
+route.group({ middleware: 'auth' }, () => {
+  // Activities
+  route.post('/activities', 'Actions/Activity/ActivityStoreAction')
+  route.post('/activities/{id}/kudos', 'Actions/Activity/KudosToggleAction')
+  route.post('/activities/{id}/comments', 'Actions/Activity/ActivityCommentStoreAction')
+  // Territory game — claim land by running closed loops, conquer others' turf
+  route.post('/territories/claim', 'Actions/Territory/ClaimTerritoryAction')
+  route.post('/territories/process-conquest', 'Actions/Territory/ProcessActivityConquestAction')
 })
 
 // Authenticated user routes
