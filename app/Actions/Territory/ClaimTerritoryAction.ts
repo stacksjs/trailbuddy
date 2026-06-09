@@ -48,6 +48,12 @@ export default new Action({
 
       const coordinates = validation.coordinates!
 
+      // Anti-cheat: reject fabricated tracks (teleport jumps / too short).
+      const realism = validateTrackRealism(coordinates)
+      if (!realism.valid) {
+        return response.json({ success: false, error: realism.error, code: 'invalid_track' }, 400)
+      }
+
       if (!isClosedLoop(coordinates)) {
         return response.json({
           success: false,

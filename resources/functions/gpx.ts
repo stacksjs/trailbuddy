@@ -228,3 +228,40 @@ export function validateGpsDataForClaim(
 
   return { valid: true, coordinates }
 }
+
+/**
+ * Basic anti-cheat sanity check on a GPS track (no timestamps available, so a
+ * true velocity check isn't possible — that needs per-point times from the
+ * recorder). Catches gross fabrication: a teleport-sized jump between
+ * consecutive points, or an implausibly short total route.
+ */
+export function validateTrackRealism(
+  coordinates: Coordinate[],
+  opts: { maxJumpMeters?: number, minTotalMeters?: number } = {},
+): { valid: boolean, error?: string } {
+  const maxJumpMeters = opts.maxJumpMeters ?? 2000
+  const minTotalMeters = opts.minTotalMeters ?? 100
+  if (!coordinates || coordinates.length < 2)
+    return { valid: false, error: 'Not enough GPS points' }
+
+  const R = 6371000
+  const haversine = (a: Coordinate, b: Coordinate): number => {
+    const dLat = (b.lat - a.lat) * Math.PI / 180
+    const dLng = (b.lng - a.lng) * Math.PI / 180
+    const x = Math.sin(dLat / 2) ** 2
+      + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2
+    return 2 * R * Math.asin(Math.sqrt(x))
+  }
+
+  let total = 0
+  for (let i = 1; i < coordinates.length; i++) {
+    const d = haversine(coordinates[i - 1], coordinates[i])
+    if (d > maxJumpMeters)
+      return { valid: false, error: `Unrealistic GPS jump of ${(d / 1000).toFixed(1)}km between consecutive points` }
+    total += d
+  }
+  if (total < minTotalMeters)
+    return { valid: false, error: `Route too short: ${total.toFixed(0)}m` }
+
+  return { valid: true }
+}

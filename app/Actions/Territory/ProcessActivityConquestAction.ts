@@ -40,6 +40,12 @@ export default new Action({
         return response.json({ success: false, error: 'Insufficient GPS data' }, 400)
       }
 
+      // Anti-cheat: reject fabricated tracks (teleport jumps / too short).
+      const realism = validateTrackRealism(routeCoordinates)
+      if (!realism.valid) {
+        return response.json({ success: false, error: realism.error, code: 'invalid_track' }, 400)
+      }
+
       const routeBbox = getBoundingBox(routeCoordinates)
       const allTerritories = await Territory.where('status', '=', 'active').get()
 
