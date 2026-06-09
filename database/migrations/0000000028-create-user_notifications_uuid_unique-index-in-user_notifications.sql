@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS "user_notifications_user_notifications_uuid_unique" ON "user_notifications" ("uuid");

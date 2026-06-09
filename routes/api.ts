@@ -399,6 +399,9 @@ route.group({ middleware: 'auth' }, () => {
   route.post('/territories/process-conquest', 'Actions/Territory/ProcessActivityConquestAction')
   // Social graph — follow/unfollow another athlete
   route.post('/users/{id}/follow', 'Actions/Social/FollowToggleAction')
+  // Notifications (recipient = session user)
+  route.get('/notifications', 'Actions/Social/NotificationIndexAction')
+  route.post('/notifications/read', 'Actions/Social/NotificationReadAction')
 })
 
 // Authenticated user routes

@@ -86,7 +86,10 @@ async function callAction(action: any, body: Record<string, unknown>): Promise<{
 // --- reset game tables (idempotent re-run; leaves trails intact) ------------
 
 const db = new Database('database/stacks.sqlite')
-const gameTables = ['territory_histories', 'territory_stats', 'territories', 'activities', 'users']
+const gameTables = [
+  'user_notifications', 'activity_comments', 'kudos', 'follows',
+  'territory_histories', 'territory_stats', 'territories', 'activities', 'users',
+]
 for (const t of gameTables) {
   try { db.run(`DELETE FROM ${t}`) }
   catch { /* table may not exist */ }
@@ -230,6 +233,30 @@ for (const [follower, following] of followPlan) {
   await Follow.forceCreate({ follower_id: follower, following_id: following })
 }
 console.log(`✅ follows: ${followPlan.length} edges`)
+
+// --- notifications ---------------------------------------------------------
+// A few notifications for "You" so the page shows DB-backed data on first load.
+
+const UserNotification = g.UserNotification
+const firstActivity = (await Activity.where('user_id', '=', users[0].id).first())
+const notifPlan = [
+  { actor: users[1], type: 'kudos', body: 'Rival Runner gave kudos to your activity', link: firstActivity ? `/activity/${firstActivity.id}` : '/feed', read: false },
+  { actor: users[2], type: 'comment', body: 'Trail Explorer commented on your activity', link: firstActivity ? `/activity/${firstActivity.id}` : '/feed', read: false },
+  { actor: users[1], type: 'follow', body: 'Rival Runner started following you', link: `/athlete/${users[1].id}`, read: false },
+  { actor: users[2], type: 'follow', body: 'Trail Explorer started following you', link: `/athlete/${users[2].id}`, read: true },
+]
+for (const n of notifPlan) {
+  await UserNotification.forceCreate({
+    recipient_id: users[0].id,
+    actor_id: n.actor.id,
+    actor_name: n.actor.name,
+    type: n.type,
+    body: n.body,
+    link: n.link,
+    read: n.read,
+  })
+}
+console.log(`✅ notifications: ${notifPlan.length} for ${users[0].name}`)
 
 // --- final state -----------------------------------------------------------
 

@@ -35,6 +35,19 @@ export default new Action({
 
       const user = await User.find(userId)
 
+      // Notify the activity owner (skip commenting on your own activity).
+      if (activity.user_id && activity.user_id !== userId) {
+        await UserNotification.forceCreate({
+          recipient_id: activity.user_id,
+          actor_id: userId,
+          actor_name: user?.name ?? 'Someone',
+          type: 'comment',
+          body: `${user?.name ?? 'Someone'} commented on your activity`,
+          link: `/activity/${activityId}`,
+          read: false,
+        })
+      }
+
       return response.json({
         success: true,
         comment: {

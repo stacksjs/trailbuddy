@@ -44,6 +44,19 @@ export default new Action({
           activity_id: activityId,
         })
         kudosed = true
+        // Notify the activity owner (skip self-kudos).
+        if (activity.user_id && activity.user_id !== giverId) {
+          const giver = await User.find(giverId)
+          await UserNotification.forceCreate({
+            recipient_id: activity.user_id,
+            actor_id: giverId,
+            actor_name: giver?.name ?? 'Someone',
+            type: 'kudos',
+            body: `${giver?.name ?? 'Someone'} gave kudos to your activity`,
+            link: `/activity/${activityId}`,
+            read: false,
+          })
+        }
       }
 
       // Recompute the denormalized counter from the source of truth.

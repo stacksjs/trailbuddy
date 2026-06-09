@@ -4,12 +4,26 @@
 
 @section('content')
 <script client>
+  import { markNotificationsRead } from '../assets/scripts/game-api'
+
   useHead({ title: 'Notifications — TrailBuddy' })
 
   const tb = useStore('tb')
   const filter = state<'all' | 'unread' | 'conquest' | 'kudos' | 'challenge'>('all')
 
   const unreadCount = derived(() => tb ? tb.unreadCount() : 0)
+
+  function markAll() {
+    if (!tb) return
+    tb.markAllNotificationsRead() // optimistic
+    markNotificationsRead() // persist
+  }
+
+  function markOne(id: number) {
+    if (!tb) return
+    tb.markNotificationRead(id)
+    markNotificationsRead(id)
+  }
 
   const filtered = derived(() => {
     if (!tb) return []
@@ -65,7 +79,7 @@
         <h1 class="text-2xl font-bold dark:text-white">Notifications</h1>
         <span :if="unreadCount > 0" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-500 text-white" x-text="unreadCount"></span>
       </div>
-      <button :if="unreadCount > 0" @click="tb.markAllNotificationsRead()" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition flex items-center gap-1.5">
+      <button :if="unreadCount > 0" @click="markAll()" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition flex items-center gap-1.5">
         <Icon name="check-check" size="16" />
         Mark all read
       </button>
@@ -102,7 +116,7 @@
           <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-500 mb-3 px-1" x-text="group.label"></h2>
           <div class="space-y-2">
             <template :for="notif in group.items">
-              <StxLink x-to="notif.link || '#'" @click="tb.markNotificationRead(notif.id)" class="group relative flex items-start gap-4 p-4 rounded-xl border transition-all block" x-class="!notif.read ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/40 hover:border-emerald-300 dark:hover:border-emerald-700/60' : 'bg-white dark:bg-slate-800/50 border-gray-200 dark:border-slate-700/50 hover:bg-gray-50 dark:hover:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600'">
+              <StxLink x-to="notif.link || '#'" @click="markOne(notif.id)" class="group relative flex items-start gap-4 p-4 rounded-xl border transition-all block" x-class="!notif.read ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/40 hover:border-emerald-300 dark:hover:border-emerald-700/60' : 'bg-white dark:bg-slate-800/50 border-gray-200 dark:border-slate-700/50 hover:bg-gray-50 dark:hover:bg-slate-800 hover:border-gray-300 dark:hover:border-slate-600'">
                 <!-- Unread indicator (left bar) -->
                 <div :if="!notif.read" class="absolute left-0 top-4 bottom-4 w-1 rounded-r bg-emerald-500"></div>
 

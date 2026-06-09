@@ -521,6 +521,10 @@
       hydrateFollowing(ids: number[]) {
         this.following = ids
       },
+      /** Replace notifications with live data from /api/notifications. */
+      hydrateNotifications(list: Notification[]) {
+        this.notifications = list
+      },
       /** Reflect a follow/unfollow toggle in the local following list. */
       setFollowing(userId: number, isFollowing: boolean) {
         const has = this.following.includes(userId)

@@ -172,6 +172,27 @@ export interface FollowsResult {
   followingIds: number[]
 }
 
+/** Fetch the current user's notifications (auth). */
+export async function fetchNotifications(): Promise<{ notifications: any[], unreadCount: number } | null> {
+  await ensureSession()
+  const res = await fetch('/api/notifications', { headers: authHeaders() })
+  if (!res.ok)
+    return null
+  const json = await res.json()
+  return json?.success ? json : null
+}
+
+/** Mark notifications read (all, or a single id). */
+export async function markNotificationsRead(id?: number): Promise<boolean> {
+  await ensureSession()
+  const res = await fetch('/api/notifications/read', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(id ? { id } : {}),
+  })
+  return res.ok
+}
+
 /** Fetch a public athlete profile (identity, stats, social counts, recent activities). */
 export async function fetchAthlete(userId: number): Promise<any | null> {
   const res = await fetch(`/api/users/${userId}`)

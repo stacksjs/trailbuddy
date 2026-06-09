@@ -11,6 +11,7 @@ export { default as UserAchievement } from '../../../app/Models/UserAchievement'
 export { default as Territory } from '../../../app/Models/Territory'
 export { default as Follow } from '../../../app/Models/Follow'
 export { default as UserStats } from '../../../app/Models/UserStats'
+export { default as UserNotification } from '../../../app/Models/UserNotification'
 export { default as User } from '../../../app/Models/User'
 export { default as TerritoryStats } from '../../../app/Models/TerritoryStats'
 // Skipped 'Tag' — owned by a disabled feature bundle. Run `./buddy <feature>:install` to enable.
