@@ -7,6 +7,7 @@
   useHead({ title: 'Leaderboard — TrailBuddy' })
 
   interface LeaderEntry {
+    userId: number
     userName: string
     totalDistance: number
     totalElevation: number
@@ -31,6 +32,7 @@
       const userActs = tb.activities().filter((a: any) =>
         a.user_id === u.id && new Date(a.created_at).getTime() >= cutoff)
       return {
+        userId: u.id,
         userName: u.name,
         totalDistance: userActs.reduce((sum: number, a: any) => sum + (a.distance || 0), 0),
         totalElevation: userActs.reduce((sum: number, a: any) => sum + (a.elevation_gain || 0), 0),
@@ -98,7 +100,7 @@
           <span class="w-8 font-bold text-center text-sm" x-class="index < 3 ? 'text-emerald-600' : 'text-gray-400 dark:text-slate-500'" :text="index + 1"></span>
           <div class="flex items-center justify-center shrink-0 h-10 w-10 font-bold text-gray-600 text-sm dark:text-slate-300 bg-gray-100 dark:bg-slate-700 rounded-full" :text="leader.userName.charAt(0)"></div>
           <div class="flex-1 min-w-0">
-            <p class="font-semibold text-sm truncate dark:text-white" :text="leader.userName"></p>
+            <StxLink x-to="'/athlete/' + leader.userId" class="font-semibold text-sm truncate dark:text-white hover:text-emerald-600 transition block" :text="leader.userName"></StxLink>
             <p class="text-gray-500 text-xs dark:text-slate-400" :text="leader.trailsCompleted + ' trails completed'"></p>
           </div>
           <div class="shrink-0 text-right">

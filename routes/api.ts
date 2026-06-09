@@ -384,6 +384,7 @@ route.get('/territories/map', 'Actions/Territory/GetTerritoriesForMapAction')
 route.get('/territories/leaderboard', 'Actions/Territory/TerritoryLeaderboardAction')
 route.get('/territories/user/{userId}', 'Actions/Territory/UserTerritoriesAction')
 route.get('/users/{id}/follows', 'Actions/Social/UserFollowsAction')
+route.get('/users/{id}', 'Actions/Social/AthleteShowAction')
 
 // Writes that act on behalf of a user MUST be authenticated — the acting
 // user is derived from the session (Auth.user()), never from the request body,

@@ -100,7 +100,7 @@
             <div class="flex gap-3 items-center">
               <div class="flex items-center justify-center h-10 w-10 font-bold text-emerald-600 text-sm bg-emerald-100 dark:bg-emerald-900/30 rounded-full" :text="activity.userName.charAt(0)"></div>
               <div>
-                <p class="font-semibold text-sm dark:text-white" :text="activity.userName"></p>
+                <StxLink x-to="'/athlete/' + activity.user_id" class="font-semibold text-sm dark:text-white hover:text-emerald-600 transition" :text="activity.userName"></StxLink>
                 <p class="text-gray-500 text-xs dark:text-slate-400">
                   <span :text="activity.activityType"></span>
                   <span class="mx-1">·</span>

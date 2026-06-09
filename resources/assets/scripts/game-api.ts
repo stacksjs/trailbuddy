@@ -172,6 +172,15 @@ export interface FollowsResult {
   followingIds: number[]
 }
 
+/** Fetch a public athlete profile (identity, stats, social counts, recent activities). */
+export async function fetchAthlete(userId: number): Promise<any | null> {
+  const res = await fetch(`/api/users/${userId}`)
+  if (!res.ok)
+    return null
+  const json = await res.json()
+  return json?.success ? json : null
+}
+
 /** Fetch a user's social graph (counts + id lists). Public read. */
 export async function fetchFollows(userId: number): Promise<FollowsResult | null> {
   const res = await fetch(`/api/users/${userId}/follows`)
