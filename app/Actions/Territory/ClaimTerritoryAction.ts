@@ -72,6 +72,21 @@ export default new Action({
         }, 400)
       }
 
+      // Reject claims that overlap existing territory — a loop run over occupied
+      // land is handled by conquest (route-intersection split), not by stacking
+      // a second overlapping territory on top (which produced undefined state).
+      const activeTerritories = await Territory.where('status', '=', 'active').get()
+      for (const t of (activeTerritories ?? [])) {
+        if (!t.polygon_data) continue
+        if (polygonsOverlap(simplified, geoJsonToCoordinates(t.polygon_data))) {
+          return response.json({
+            success: false,
+            error: 'Territory overlaps existing land — run through it to conquer instead',
+            code: 'overlap',
+          }, 409)
+        }
+      }
+
       const perimeter = calculatePerimeter(simplified)
       const centroid = getCentroid(simplified)
       const boundingBox = getBoundingBox(simplified)

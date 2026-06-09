@@ -274,6 +274,20 @@ export function boundingBoxesOverlap(bbox1: string, bbox2: string): boolean {
 }
 
 /**
+ * Whether two polygons overlap (share interior area). Bounding-box quick-reject
+ * first, then check intersection in both directions — `routeIntersectsPolygon`
+ * catches a vertex inside the other polygon OR an edge crossing, so running it
+ * both ways also covers full containment (one polygon entirely inside the other).
+ */
+export function polygonsOverlap(a: Coordinate[], b: Coordinate[]): boolean {
+  if (a.length < 3 || b.length < 3)
+    return false
+  if (!boundingBoxesOverlap(getBoundingBox(a), getBoundingBox(b)))
+    return false
+  return routeIntersectsPolygon(a, b) || routeIntersectsPolygon(b, a)
+}
+
+/**
  * Calculate centroid of a polygon
  */
 export function getCentroid(coordinates: Coordinate[]): Coordinate {
