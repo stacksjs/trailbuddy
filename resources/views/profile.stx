@@ -4,16 +4,29 @@
 
 @section('content')
 <script client>
+  import { fetchFollows } from '../assets/scripts/game-api'
+
   useHead({ title: 'Profile — TrailBuddy' })
 
   const tb = useStore('tb')
   const activeTab = state<'activities' | 'achievements' | 'saved'>('activities')
+  const followerCount = state(0)
 
   const currentUser = derived(() => tb?.currentUser())
   const userStats = derived(() => tb?.userStats())
   const currentUserId = derived(() => tb?.currentUserId())
+  const followingCount = derived(() => tb ? tb.following().length : 0)
   const myActivities = derived(() => tb ? tb.activities().filter((a: any) => a.user_id === tb.currentUserId()) : [])
   const achievements = derived(() => tb ? tb.achievements() : [])
+
+  onMount(async () => {
+    if (!tb) return
+    const data = await fetchFollows(tb.currentUserId())
+    if (data) {
+      followerCount.set(data.followerCount)
+      tb.hydrateFollowing(data.followingIds) // keep store in sync
+    }
+  })
 </script>
 
   <div class="mx-auto px-4 py-6 sm:px-6 lg:px-8 max-w-4xl">
@@ -40,6 +53,14 @@
             <div class="text-center">
               <p class="text-lg font-bold text-emerald-600" :text="userStats?.currentStreak || 0"></p>
               <p class="metric-label">Streak</p>
+            </div>
+            <div class="text-center">
+              <p class="text-lg font-bold text-emerald-600" :text="followerCount"></p>
+              <p class="metric-label">Followers</p>
+            </div>
+            <div class="text-center">
+              <p class="text-lg font-bold text-emerald-600" :text="followingCount"></p>
+              <p class="metric-label">Following</p>
             </div>
           </div>
         </div>

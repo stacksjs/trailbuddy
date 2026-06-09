@@ -215,6 +215,22 @@ for (const p of feedPlan) {
 }
 console.log(`✅ feed activities: ${feedCount} across ${users.length} users`)
 
+// --- follow graph ----------------------------------------------------------
+// You(1) follows Rival + Explorer; both follow You back; Explorer follows Rival.
+
+const Follow = g.Follow
+const followPlan: Array<[number, number]> = [
+  [users[0].id, users[1].id], // You -> Rival
+  [users[0].id, users[2].id], // You -> Explorer
+  [users[1].id, users[0].id], // Rival -> You
+  [users[2].id, users[0].id], // Explorer -> You
+  [users[2].id, users[1].id], // Explorer -> Rival
+]
+for (const [follower, following] of followPlan) {
+  await Follow.forceCreate({ follower_id: follower, following_id: following })
+}
+console.log(`✅ follows: ${followPlan.length} edges`)
+
 // --- final state -----------------------------------------------------------
 
 const db2 = new Database('database/stacks.sqlite', { readonly: true })

@@ -165,6 +165,33 @@ export async function toggleKudos(activityId: number, userId: number): Promise<K
   return res.json()
 }
 
+export interface FollowsResult {
+  followerCount: number
+  followingCount: number
+  followerIds: number[]
+  followingIds: number[]
+}
+
+/** Fetch a user's social graph (counts + id lists). Public read. */
+export async function fetchFollows(userId: number): Promise<FollowsResult | null> {
+  const res = await fetch(`/api/users/${userId}/follows`)
+  if (!res.ok)
+    return null
+  const json = await res.json()
+  return json?.success ? json : null
+}
+
+/** Follow/unfollow a user; returns the new state + the target's follower count. */
+export async function toggleFollow(targetId: number): Promise<{ success: boolean, following?: boolean, followerCount?: number }> {
+  await ensureSession()
+  const res = await fetch(`/api/users/${targetId}/follow`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({}),
+  })
+  return res.json()
+}
+
 /** Claim a new territory from a completed closed-loop activity. */
 export async function claimTerritory(activityId: number, userId: number): Promise<ClaimResult> {
   await ensureSession()

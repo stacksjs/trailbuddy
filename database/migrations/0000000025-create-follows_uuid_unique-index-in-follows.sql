@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS "follows_follows_uuid_unique" ON "follows" ("uuid");

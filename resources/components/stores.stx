@@ -439,6 +439,8 @@
       /** GPS samples inside enemy polygons this session (territory id → count). */
       captureSamples: {} as Record<number, number>,
       sessionXp: 0,
+      /** User ids the current user follows (hydrated from /api/users/{id}/follows). */
+      following: [] as number[],
     }),
 
     getters: {
@@ -514,6 +516,19 @@
       setActivityKudos(activityId: number, count: number) {
         const a = this.activities.find((x: Activity) => x.id === activityId)
         if (a) a.kudos_count = count
+      },
+      /** Replace the current user's following list (from the API). */
+      hydrateFollowing(ids: number[]) {
+        this.following = ids
+      },
+      /** Reflect a follow/unfollow toggle in the local following list. */
+      setFollowing(userId: number, isFollowing: boolean) {
+        const has = this.following.includes(userId)
+        if (isFollowing && !has) this.following.push(userId)
+        else if (!isFollowing && has) this.following = this.following.filter((id: number) => id !== userId)
+      },
+      isFollowing(userId: number): boolean {
+        return this.following.includes(userId)
       },
       addComment(activityId: number, text: string) {
         const a = this.activities.find((x: Activity) => x.id === activityId)

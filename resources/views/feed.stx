@@ -5,13 +5,23 @@
 @section('content')
 <script client>
   import { routePreviewDataUri } from '../composables/useRoutePreview'
-  import { toggleKudos } from '../assets/scripts/game-api'
+  import { toggleFollow, toggleKudos } from '../assets/scripts/game-api'
 
   useHead({ title: 'Activity Feed — TrailBuddy' })
 
   const tb = useStore('tb')
   const filter = state<'all' | 'Trail Run' | 'Hike' | 'Walk' | 'Bike'>('all')
+  const scope = state<'all' | 'following'>('all')
   const kudosed = state<Record<number, boolean>>({})
+
+  async function onFollow(userId: number) {
+    if (!tb || userId === tb.currentUserId()) return
+    const wasFollowing = tb.isFollowing(userId)
+    tb.setFollowing(userId, !wasFollowing) // optimistic
+    const res = await toggleFollow(userId)
+    if (res && res.success) tb.setFollowing(userId, !!res.following)
+    else tb.setFollowing(userId, wasFollowing) // rollback
+  }
 
   async function onKudos(activity: { id: number, kudos_count: number }) {
     if (!tb) return
@@ -33,7 +43,14 @@
   const filtered = derived(() => {
     if (!tb) return []
     const f = filter()
-    return f === 'all' ? tb.activities() : tb.activities().filter((a: any) => a.activityType === f)
+    const s = scope()
+    const me = tb.currentUserId()
+    let list = tb.activities()
+    if (s === 'following')
+      list = list.filter((a: any) => a.user_id === me || tb.isFollowing(a.user_id))
+    if (f !== 'all')
+      list = list.filter((a: any) => a.activityType === f)
+    return list
   })
 
   function activityRoutePreview(activity: { trail_id?: number | null }): string | null {
@@ -58,6 +75,12 @@
         Live turf battles
       </p>
       <StxLink to="/battles" class="text-sm font-semibold text-emerald-600">See who's attacking →</StxLink>
+    </div>
+
+    <!-- Scope: Following vs Everyone -->
+    <div class="flex gap-2 mb-4">
+      <button @click="scope.set('all')" x-class="scope === 'all' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-3 py-1.5 font-semibold text-sm border-b-2 transition">Everyone</button>
+      <button @click="scope.set('following')" x-class="scope === 'following' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-3 py-1.5 font-semibold text-sm border-b-2 transition">Following</button>
     </div>
 
     <!-- Filter tabs -->
@@ -85,6 +108,12 @@
                 </p>
               </div>
             </div>
+            <button
+              :if="activity.user_id !== tb.currentUserId()"
+              @click="onFollow(activity.user_id)"
+              x-class="tb.isFollowing(activity.user_id) ? 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'"
+              class="px-3 py-1.5 font-semibold text-xs rounded-lg transition"
+              :text="tb.isFollowing(activity.user_id) ? 'Following' : 'Follow'"></button>
             <span class="text-gray-600 text-xs dark:text-slate-400 px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded-full" :text="activity.activityType"></span>
           </div>
 

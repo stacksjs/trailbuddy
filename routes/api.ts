@@ -377,12 +377,13 @@ route.group({ prefix: '/shipping' }, () => {
 // Trail catalog (explore map + OSM geometry)
 route.get('/trails', 'Actions/Trail/TrailIndexAction')
 
-// Public reads — feed, activity detail, territory map/leaderboard/profile.
+// Public reads — feed, activity detail, territory map/leaderboard/profile, follows.
 route.get('/activities', 'Actions/Activity/ActivityIndexAction')
 route.get('/activities/{id}', 'Actions/Activity/ActivityShowAction')
 route.get('/territories/map', 'Actions/Territory/GetTerritoriesForMapAction')
 route.get('/territories/leaderboard', 'Actions/Territory/TerritoryLeaderboardAction')
 route.get('/territories/user/{userId}', 'Actions/Territory/UserTerritoriesAction')
+route.get('/users/{id}/follows', 'Actions/Social/UserFollowsAction')
 
 // Writes that act on behalf of a user MUST be authenticated — the acting
 // user is derived from the session (Auth.user()), never from the request body,
@@ -395,6 +396,8 @@ route.group({ middleware: 'auth' }, () => {
   // Territory game — claim land by running closed loops, conquer others' turf
   route.post('/territories/claim', 'Actions/Territory/ClaimTerritoryAction')
   route.post('/territories/process-conquest', 'Actions/Territory/ProcessActivityConquestAction')
+  // Social graph — follow/unfollow another athlete
+  route.post('/users/{id}/follow', 'Actions/Social/FollowToggleAction')
 })
 
 // Authenticated user routes
