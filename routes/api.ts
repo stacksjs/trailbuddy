@@ -397,6 +397,7 @@ route.group({ middleware: 'auth' }, () => {
   // Territory game — claim land by running closed loops, conquer others' turf
   route.post('/territories/claim', 'Actions/Territory/ClaimTerritoryAction')
   route.post('/territories/process-conquest', 'Actions/Territory/ProcessActivityConquestAction')
+  route.post('/territories/recompute-ranks', 'Actions/Territory/ComputeTerritoryRanksAction')
   // Social graph — follow/unfollow another athlete
   route.post('/users/{id}/follow', 'Actions/Social/FollowToggleAction')
   // Notifications (recipient = session user)

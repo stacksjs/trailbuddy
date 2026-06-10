@@ -1,8 +1,8 @@
-// No imports needed - everything is auto-imported!
-//
 // NOTE: the ORM is snake_case end-to-end (rows + write payloads use column
 // names like user_id / gpx_data / area_size). Reads and write keys below use
 // snake_case accordingly; the JSON response keeps camelCase for API consumers.
+
+import { recomputeTerritoryRanks } from './ComputeTerritoryRanksAction'
 
 const MIN_TERRITORY_SIZE = 1000
 const MAX_TERRITORY_SIZE = 5000000
@@ -142,10 +142,15 @@ export default new Action({
           territories_defended: 0,
           longest_ownership_days: 0,
           largest_territory_area: area,
-          weekly_rank: 999,
-          all_time_rank: 999,
+          // Unranked until the recompute below assigns real ranks (#944).
+          weekly_rank: null,
+          all_time_rank: null,
         })
       }
+
+      // Holdings changed — refresh persisted leaderboard ranks (#944).
+      await recomputeTerritoryRanks().catch((err: unknown) =>
+        console.error('Rank recompute after claim failed:', err))
 
       return response.json({
         success: true,

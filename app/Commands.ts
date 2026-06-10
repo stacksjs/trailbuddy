@@ -31,4 +31,8 @@ export default {
     file: 'ScrapeTrails',
     enabled: true,
   },
+  'territory:ranks': {
+    file: 'ComputeTerritoryRanks',
+    enabled: true,
+  },
 } satisfies CommandRegistry

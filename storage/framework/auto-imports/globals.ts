@@ -10,6 +10,7 @@ Object.assign(globalThis, autoImports)
 
 // TypeScript declarations
 declare global {
+  const computeTerritoryRankAssignments: typeof autoImports.computeTerritoryRankAssignments
   const increment: typeof autoImports.increment
   const count: typeof autoImports.count
   const isDark: typeof autoImports.isDark
@@ -21,6 +22,7 @@ declare global {
   const generateSampleLoopGpx: typeof autoImports.generateSampleLoopGpx
   const generateSampleLoopJson: typeof autoImports.generateSampleLoopJson
   const validateGpsDataForClaim: typeof autoImports.validateGpsDataForClaim
+  const validateTrackRealism: typeof autoImports.validateTrackRealism
   const haversineDistance: typeof autoImports.haversineDistance
   const isClosedLoop: typeof autoImports.isClosedLoop
   const calculatePolygonArea: typeof autoImports.calculatePolygonArea
@@ -32,6 +34,7 @@ declare global {
   const getBoundingBox: typeof autoImports.getBoundingBox
   const parseBoundingBox: typeof autoImports.parseBoundingBox
   const boundingBoxesOverlap: typeof autoImports.boundingBoxesOverlap
+  const polygonsOverlap: typeof autoImports.polygonsOverlap
   const getCentroid: typeof autoImports.getCentroid
   const coordinatesToGeoJson: typeof autoImports.coordinatesToGeoJson
   const geoJsonToCoordinates: typeof autoImports.geoJsonToCoordinates

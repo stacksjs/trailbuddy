@@ -36,6 +36,8 @@
 //    count — a closed-loop activity legitimately claims first, then gets a
 //    conquest pass.)
 
+import { recomputeTerritoryRanks } from './ComputeTerritoryRanksAction'
+
 const MIN_TERRITORY_SIZE = 1000
 
 const BATTLE_EVENTS = ['conquered', 'split', 'contested', 'defended']
@@ -320,6 +322,12 @@ export default new Action({
         }
       }
 
+      // Holdings changed — refresh persisted leaderboard ranks (#944).
+      if (conqueredTerritories.length) {
+        await recomputeTerritoryRanks().catch((err: unknown) =>
+          console.error('Rank recompute after conquest failed:', err))
+      }
+
       return response.json({
         success: true,
         conqueredCount: conqueredTerritories.length,
@@ -370,8 +378,9 @@ async function updateConquestStats(update: {
       territories_defended: 0,
       longest_ownership_days: 0,
       largest_territory_area: areaGained,
-      weekly_rank: 999,
-      all_time_rank: 999,
+      // Unranked until the post-battle recompute assigns real ranks (#944).
+      weekly_rank: null,
+      all_time_rank: null,
     })
   }
 
@@ -412,8 +421,9 @@ async function incrementDefenseStats(userId: number) {
       territories_defended: 1,
       longest_ownership_days: 0,
       largest_territory_area: 0,
-      weekly_rank: 999,
-      all_time_rank: 999,
+      // Unranked until the post-battle recompute assigns real ranks (#944).
+      weekly_rank: null,
+      all_time_rank: null,
     })
   }
 }
