@@ -3,6 +3,18 @@
 // Returns a single activity with its parsed GPS route (for the activity detail
 // page / map). The ORM is snake_case; the response is mapped to camelCase.
 
+function parseSplits(raw: string | null): Array<{ mile: number, pace: string, elev: number }> {
+  if (!raw)
+    return []
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  }
+  catch {
+    return []
+  }
+}
+
 export default new Action({
   name: 'Activity Show',
   description: 'Get a single activity, including its GPS route',
@@ -46,8 +58,10 @@ export default new Action({
           activityType: a.activity_type,
           distance: a.distance,
           duration: a.duration,
+          movingTime: a.moving_time ?? a.duration,
           pace: a.pace,
           elevation: a.elevation,
+          splits: parseSplits(a.splits),
           kudosCount: a.kudos_count ?? 0,
           notes: a.notes,
           completedAt: a.completed_at,

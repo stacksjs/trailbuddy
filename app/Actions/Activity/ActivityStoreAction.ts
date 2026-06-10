@@ -29,6 +29,15 @@ export default new Action({
     if (!ACTIVITY_TYPES.includes(activityType))
       return response.json({ success: false, error: `Invalid activity type: ${activityType}` }, 400)
 
+    // Splits arrive as an array of { mile, pace, elev } (or a pre-encoded JSON
+    // string); store as JSON text. Cap the count to keep payloads sane.
+    const rawSplits = request.get<unknown>('splits')
+    let splitsJson: string | null = null
+    if (Array.isArray(rawSplits) && rawSplits.length > 0)
+      splitsJson = JSON.stringify(rawSplits.slice(0, 200))
+    else if (typeof rawSplits === 'string' && rawSplits.startsWith('['))
+      splitsJson = rawSplits
+
     try {
       const activity = await Activity.create({
         user_id: userId,
@@ -36,11 +45,13 @@ export default new Action({
         activity_type: activityType,
         distance,
         duration,
+        moving_time: request.get<string>('moving_time') ?? null,
         pace: request.get<string>('pace') ?? null,
         elevation: request.get<number>('elevation') ?? 0,
         kudos_count: 0,
         notes: request.get<string>('notes') ?? null,
         gpx_data: request.get<string>('gpx_data') ?? null,
+        splits: splitsJson,
         completed_at: request.get<string>('completed_at') ?? new Date().toISOString(),
       })
 
@@ -53,6 +64,7 @@ export default new Action({
           activityType: activity.activity_type,
           distance: activity.distance,
           duration: activity.duration,
+          movingTime: activity.moving_time,
           pace: activity.pace,
           elevation: activity.elevation,
           completedAt: activity.completed_at,

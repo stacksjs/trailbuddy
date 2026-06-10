@@ -13,6 +13,10 @@ declare global {
   const computeTerritoryRankAssignments: typeof autoImports.computeTerritoryRankAssignments
   const increment: typeof autoImports.increment
   const count: typeof autoImports.count
+  const totalElevationGainFt: typeof autoImports.totalElevationGainFt
+  const computeSplitsFromSamples: typeof autoImports.computeSplitsFromSamples
+  const ELEVATION_NOISE_FLOOR_FT: typeof autoImports.ELEVATION_NOISE_FLOOR_FT
+  const METERS_TO_FEET: typeof autoImports.METERS_TO_FEET
   const isDark: typeof autoImports.isDark
   const toggleDark: typeof autoImports.toggleDark
   const preferredDark: typeof autoImports.preferredDark

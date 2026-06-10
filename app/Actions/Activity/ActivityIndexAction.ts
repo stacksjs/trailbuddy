@@ -4,6 +4,18 @@
 // owner's name and the trail name so the feed can render without extra lookups.
 // The ORM is snake_case; the response is camelCase for the frontend.
 
+function parseSplits(raw: string | null): Array<{ mile: number, pace: string, elev: number }> {
+  if (!raw)
+    return []
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  }
+  catch {
+    return []
+  }
+}
+
 function titleFor(activityType: string, trailName: string | null, completedAt: string | null): string {
   if (trailName)
     return `${activityType} at ${trailName}`
@@ -46,9 +58,10 @@ export default new Action({
           activityType: a.activity_type,
           distance: a.distance,
           duration: a.duration,
-          movingTime: a.duration,
+          movingTime: a.moving_time ?? a.duration,
           pace: a.pace,
           elevationGain: a.elevation ?? 0,
+          splits: parseSplits(a.splits),
           calories: Math.round((a.distance ?? 0) * 95),
           kudosCount: a.kudos_count ?? 0,
           notes: a.notes,

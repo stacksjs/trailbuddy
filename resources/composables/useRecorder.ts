@@ -17,6 +17,13 @@ import {
   routeToGeoJson,
   runResultMessage,
 } from '../assets/scripts/game-api'
+import {
+  computeSplitsFromSamples,
+  ELEVATION_NOISE_FLOOR_FT,
+  METERS_TO_FEET,
+  type MileSplit,
+  type RecorderSample,
+} from '../functions/splits'
 import { loadTerritories } from './useTerritoryCatalog'
 
 type ActivityType = 'Trail Run' | 'Hike' | 'Walk' | 'Bike'
@@ -29,6 +36,7 @@ interface Trail {
   location: string
   difficulty: 'easy' | 'moderate' | 'hard'
   distance: number
+  elevation: number
   lat: number
   lng: number
 }
@@ -125,6 +133,10 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     trailMarkers: Record<number, CircleMarkerType>
     routeLine: PolylineType | null
     routeCoords: LatLng[]
+    /** Timestamped samples (alt + moving time) for splits/elevation (#952/#953). */
+    samples: RecorderSample[]
+    /** Wall-clock start of the run — elapsed time includes pauses (#960). */
+    startedAtMs: number | null
     hereMarker: CircleMarkerType | null
     elapsedTimer: ReturnType<typeof setInterval> | null
     simTimer: ReturnType<typeof setInterval> | null
@@ -137,6 +149,8 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     trailMarkers: {},
     routeLine: null,
     routeCoords: [],
+    samples: [],
+    startedAtMs: null,
     hereMarker: null,
     elapsedTimer: null,
     simTimer: null,
@@ -200,14 +214,29 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     }
   }
 
-  function addRoutePoint(lat: number, lng: number) {
+  // altitudeM comes from the GPS (metres, often null on desktop) or, for
+  // simulated runs, from the trail's published elevation profile. While paused
+  // nothing accrues — no distance, no samples, no capture progress (#960).
+  function addRoutePoint(lat: number, lng: number, altitudeM: number | null = null) {
     if (!refs.routeLine || !refs.map) return
+    if (paused() || !recording()) return
     const coords = refs.routeCoords
     if (coords.length > 0) {
       const prev = coords[coords.length - 1]
       distance.set(distance() + haversine(prev, [lat, lng]))
     }
     coords.push([lat, lng])
+
+    // Elevation gain: positive altitude deltas above the GPS noise floor (#953).
+    const eleFt = altitudeM != null ? altitudeM * METERS_TO_FEET : null
+    const prevSample = refs.samples[refs.samples.length - 1]
+    if (eleFt != null && prevSample?.eleFt != null) {
+      const d = eleFt - prevSample.eleFt
+      if (d >= ELEVATION_NOISE_FLOOR_FT)
+        elevation.set(Math.round(elevation() + d))
+    }
+    refs.samples.push({ lat, lng, t: Date.now(), eleFt, movingS: elapsed() })
+
     refs.routeLine.setLatLngs(coords)
     checkConquest(lat, lng)
   }
@@ -233,6 +262,8 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     paused.set(false)
     if (tb) tb.resetCaptureSamples()
     refs.routeCoords = []
+    refs.samples = []
+    refs.startedAtMs = null
     if (refs.routeLine && refs.map) {
       refs.map.removeLayer(refs.routeLine)
       refs.routeLine = null
@@ -259,11 +290,18 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     recording.set(true)
     gpsStatus.set('active')
     refs.routeCoords = []
+    refs.startedAtMs = Date.now()
     refs.routeLine = await createLiveRouteLine(refs.map, SIM_ROUTE)
     const { Polyline } = await ensureTsMaps()
     const guide = new Polyline(route, { weight: 0, opacity: 0 }).addTo(refs.map)
     refs.map.fitBounds(guide.getBounds(), { padding: [40, 40] })
     refs.map.removeLayer(guide)
+
+    // Simulated elevation comes from the trail's published total gain,
+    // distributed monotonically along the route — deterministic, no random
+    // values (#953). Converted to metres so addRoutePoint's single GPS-style
+    // accumulation path applies to both modes.
+    const totalGainFt = tb.findTrail(id)?.elevation ?? 0
     let i = 0
     startTicker()
     refs.simTimer = setInterval(() => {
@@ -273,8 +311,8 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
         return
       }
       const [lat, lng] = route[i++]
-      addRoutePoint(lat, lng)
-      elevation.set(elevation() + Math.round(Math.random() * 12))
+      const syntheticAltM = (totalGainFt * (i / route.length)) / METERS_TO_FEET
+      addRoutePoint(lat, lng, syntheticAltM)
     }, 350)
   }
 
@@ -291,16 +329,17 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     refs.routeCoords = []
     refs.routeLine = await createLiveRouteLine(refs.map, YOURS)
 
-    const beginTracking = (startLat: number, startLng: number) => {
+    const beginTracking = (startLat: number, startLng: number, startAltM: number | null) => {
       recording.set(true)
       gpsStatus.set('active')
-      addRoutePoint(startLat, startLng)
+      refs.startedAtMs = Date.now()
+      addRoutePoint(startLat, startLng, startAltM)
       refs.map!.setView([startLat, startLng], 17)
       startTicker()
       refs.watchId = navigator.geolocation.watchPosition(
         (pos) => {
           gpsStatus.set('active')
-          addRoutePoint(pos.coords.latitude, pos.coords.longitude)
+          addRoutePoint(pos.coords.latitude, pos.coords.longitude, pos.coords.altitude)
           refs.map!.panTo([pos.coords.latitude, pos.coords.longitude])
         },
         () => gpsStatus.set('searching'),
@@ -309,7 +348,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     }
 
     navigator.geolocation.getCurrentPosition(
-      pos => beginTracking(pos.coords.latitude, pos.coords.longitude),
+      pos => beginTracking(pos.coords.latitude, pos.coords.longitude, pos.coords.altitude),
       (err) => {
         gpsStatus.set('stopped')
         if (refs.routeLine && refs.map) {
@@ -328,10 +367,17 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     paused.set(!paused())
   }
 
+  interface RunMetrics {
+    durationStr: string
+    movingTimeStr: string
+    paceStr: string | null
+    splits: MileSplit[]
+  }
+
   // Persist the run to the backend and run the territory engine (closed-loop
   // claim + route-intersection conquest). Fire-and-forget; failures (e.g. the
   // run wasn't a closed loop) are expected and surfaced only on success.
-  const persistRun = async (routeSnapshot: LatLng[], trailId: number | null): Promise<void> => {
+  const persistRun = async (routeSnapshot: LatLng[], trailId: number | null, metrics: RunMetrics): Promise<void> => {
     if (!tb || routeSnapshot.length < 2) return
     try {
       const result = await persistRunAndProcess({
@@ -339,10 +385,12 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
         trail_id: trailId,
         activity_type: activityType(),
         distance: Number(distance().toFixed(2)),
-        duration: fmtDuration(elapsed()),
-        pace: distance() > 0.01 ? `${fmtDuration(Math.round(elapsed() / distance()))}/mi` : null,
+        duration: metrics.durationStr,
+        moving_time: metrics.movingTimeStr,
+        pace: metrics.paceStr,
         elevation: elevation(),
         gpx_data: routeToGeoJson(routeSnapshot),
+        splits: metrics.splits,
         completed_at: new Date().toISOString(),
       })
       const message = runResultMessage(result)
@@ -370,9 +418,24 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     clearTimers()
     if (distance() > 0 && tb) {
       const trail = mode() === 'simulated' ? tb.findTrail(selectedTrailId()) : null
+
+      // Moving time is the pause-aware ticker; elapsed is wall-clock (#960).
+      // Pace derives from moving time, splits from the timestamped samples.
+      const movingS = elapsed()
+      const wallS = refs.startedAtMs
+        ? Math.max(movingS, Math.round((Date.now() - refs.startedAtMs) / 1000))
+        : movingS
+      const splits = computeSplitsFromSamples(refs.samples)
+      const paceStr = distance() > 0.01 ? `${fmtDuration(Math.round(movingS / distance()))}/mi` : null
+
       // Persist to the backend + run the territory engine using the recorded
       // GPS track (snapshot before it's cleared on the next run).
-      void persistRun([...refs.routeCoords], trail?.id ?? null)
+      void persistRun([...refs.routeCoords], trail?.id ?? null, {
+        durationStr: fmtDuration(wallS),
+        movingTimeStr: fmtDuration(movingS),
+        paceStr,
+        splits,
+      })
       const captures = conqueredIds().length
       const title = captures > 0
         ? `Capture Run — ${captures} zone${captures > 1 ? 's' : ''} taken`
@@ -385,15 +448,15 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
         title,
         activityType: activityType(),
         distance: Number(distance().toFixed(2)),
-        duration: fmtDuration(elapsed()),
-        moving_time: fmtDuration(elapsed()),
-        pace: distance() > 0.01 ? `${fmtDuration(Math.round(elapsed() / distance()))}/mi` : '--',
+        duration: fmtDuration(wallS),
+        moving_time: fmtDuration(movingS),
+        pace: paceStr ?? '--',
         elevation_gain: elevation(),
-        calories: Math.round(elapsed() / 60 * 10),
+        calories: Math.round(movingS / 60 * 10),
         heartRateAvg: null,
         heartRateMax: null,
         cadence: null,
-        splits: [],
+        splits,
         kudos_count: 0,
         comments: [],
       })

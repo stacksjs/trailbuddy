@@ -84,6 +84,18 @@ export default defineModel({
       },
     },
 
+    // Time actually moving (elapsed minus paused intervals, #960). `duration`
+    // above is wall-clock elapsed; pace derives from moving time.
+    moving_time: {
+      order: 4,
+      fillable: true,
+      nullable: true,
+      validation: {
+        rule: schema.string(),
+      },
+      factory: () => null,
+    },
+
     pace: {
       order: 4,
       fillable: true,
@@ -127,6 +139,18 @@ export default defineModel({
     gpx_data: {
       order: 8,
       fillable: true,
+      validation: {
+        rule: schema.string(),
+      },
+      factory: () => null,
+    },
+
+    // Per-mile splits computed from the GPS samples (#952), stored as a JSON
+    // array of { mile, pace, elev }.
+    splits: {
+      order: 8,
+      fillable: true,
+      nullable: true,
       validation: {
         rule: schema.string(),
       },

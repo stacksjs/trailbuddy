@@ -26,6 +26,7 @@ interface ApiActivity {
   elevationGain: number
   calories: number
   kudosCount: number
+  splits?: Array<{ mile: number, pace: string, elev: number }>
   completedAt: string | null
   createdAt: string | null
 }
@@ -66,7 +67,7 @@ export function useActivityCatalog(tb: ActivityStoreLike | null) {
         heartRateAvg: null,
         heartRateMax: null,
         cadence: null,
-        splits: [],
+        splits: Array.isArray(a.splits) ? a.splits : [],
         kudos_count: a.kudosCount ?? 0,
         comments: [],
         created_at: a.createdAt ?? a.completedAt ?? new Date().toISOString(),

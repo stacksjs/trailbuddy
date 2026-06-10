@@ -3,6 +3,8 @@
 export { computeTerritoryRankAssignments } from '../../../resources/functions/ranks'
 export type { TerritoryRankStatsRow, TerritoryGainEvent, TerritoryRankAssignment } from '../../../resources/functions/ranks'
 export { increment, count } from '../../../resources/functions/counter'
+export { totalElevationGainFt, computeSplitsFromSamples, ELEVATION_NOISE_FLOOR_FT, METERS_TO_FEET } from '../../../resources/functions/splits'
+export type { RecorderSample, MileSplit } from '../../../resources/functions/splits'
 export { isDark, toggleDark, preferredDark } from '../../../resources/functions/dark'
 export { parseGpx, parseJsonCoordinates, parseGpsData, generateSampleLoopGpx, generateSampleLoopJson, validateGpsDataForClaim, validateTrackRealism } from '../../../resources/functions/gpx'
 export { territoryFreshnessMs, computeTerritoryDecay, DECAY_STALE_DAYS, DECAY_EXPIRE_DAYS } from '../../../resources/functions/decay'

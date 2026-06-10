@@ -111,8 +111,9 @@
         <p class="metric-label">Miles</p>
       </div>
       <div class="card text-center">
-        <p class="text-xl font-bold dark:text-white" :text="activity.duration"></p>
-        <p class="metric-label">Duration</p>
+        <p class="text-xl font-bold dark:text-white" :text="activity.moving_time || activity.duration"></p>
+        <p class="metric-label">Moving Time</p>
+        <p :if="activity.moving_time && activity.moving_time !== activity.duration" class="text-xs text-gray-400 mt-1" :text="'Elapsed ' + activity.duration"></p>
       </div>
       <div class="card text-center">
         <p class="text-xl font-bold dark:text-white" :text="activity.pace"></p>

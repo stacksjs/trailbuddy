@@ -97,18 +97,25 @@ export function routeToGeoJson(points: Array<[number, number]>): string {
   })
 }
 
-/** Persist a recorded run as an Activity. Returns the created activity (with id). */
-export async function createActivity(payload: {
+export interface ActivityPayload {
   user_id: number
   trail_id?: number | null
   activity_type: string
   distance: number
+  /** Wall-clock elapsed time (includes pauses). */
   duration: string
+  /** Pause-aware moving time — what pace is computed from (#960). */
+  moving_time?: string | null
   pace?: string | null
   elevation?: number
   gpx_data?: string | null
+  /** Per-mile splits computed from the GPS samples (#952). */
+  splits?: Array<{ mile: number, pace: string, elev: number }>
   completed_at?: string
-}): Promise<CreatedActivity | null> {
+}
+
+/** Persist a recorded run as an Activity. Returns the created activity (with id). */
+export async function createActivity(payload: ActivityPayload): Promise<CreatedActivity | null> {
   await ensureSession()
   const res = await fetch('/api/activities', {
     method: 'POST',
@@ -258,17 +265,7 @@ export interface RunResult {
  * Persist a recorded run and run the territory engine end-to-end: create the
  * Activity, then attempt a closed-loop claim and a route-intersection conquest.
  */
-export async function persistRunAndProcess(payload: {
-  user_id: number
-  trail_id?: number | null
-  activity_type: string
-  distance: number
-  duration: string
-  pace?: string | null
-  elevation?: number
-  gpx_data?: string | null
-  completed_at?: string
-}): Promise<RunResult> {
+export async function persistRunAndProcess(payload: ActivityPayload): Promise<RunResult> {
   const activity = await createActivity(payload)
   if (!activity)
     return { activityId: null }
