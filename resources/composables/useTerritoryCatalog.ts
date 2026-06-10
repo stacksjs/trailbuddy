@@ -68,7 +68,7 @@ export async function loadTerritories(tb: TerritoryStoreLike | null): Promise<bo
         conquestCount: p.conquestCount ?? 0,
         defendCount: 0,
         totalRunners: 0,
-        status: p.status === 'contested' ? 'contested' : 'secure',
+        status: p.status === 'contested' ? 'contested' : 'active',
         claimedAt: p.claimedAt ?? new Date().toISOString(),
         lat: p.centerLat ?? 0,
         lng: p.centerLng ?? 0,

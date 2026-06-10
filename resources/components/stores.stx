@@ -70,7 +70,9 @@
     conquestCount: number
     defendCount: number
     totalRunners: number
-    status: 'secure' | 'contested'
+    // Same vocabulary as the backend Territory.status enum; "Secure" is a
+    // display label for 'active', never a stored value.
+    status: 'active' | 'contested'
     claimedAt: string
     lat: number
     lng: number
@@ -252,16 +254,16 @@
   ]
 
   const seedTerritories: Territory[] = [
-    { id: 1, name: 'Cascade Ridge Zone', user_id: 1, areaSize: 45000, conquestCount: 3, defendCount: 5, totalRunners: 12, status: 'secure', claimedAt: ago(14), lat: 37.74, lng: -119.56 },
-    { id: 2, name: 'Riverside Flats', user_id: 2, areaSize: 28000, conquestCount: 1, defendCount: 2, totalRunners: 8, status: 'secure', claimedAt: ago(21), lat: 35.65, lng: -83.51 },
+    { id: 1, name: 'Cascade Ridge Zone', user_id: 1, areaSize: 45000, conquestCount: 3, defendCount: 5, totalRunners: 12, status: 'active', claimedAt: ago(14), lat: 37.74, lng: -119.56 },
+    { id: 2, name: 'Riverside Flats', user_id: 2, areaSize: 28000, conquestCount: 1, defendCount: 2, totalRunners: 8, status: 'active', claimedAt: ago(21), lat: 35.65, lng: -83.51 },
     { id: 3, name: 'Desert Crown', user_id: 3, areaSize: 72000, conquestCount: 6, defendCount: 8, totalRunners: 22, status: 'contested', claimedAt: ago(7), lat: 33.87, lng: -115.90 },
-    { id: 4, name: 'Redwood Sanctuary', user_id: 1, areaSize: 35000, conquestCount: 2, defendCount: 4, totalRunners: 15, status: 'secure', claimedAt: ago(30), lat: 37.90, lng: -122.58 },
+    { id: 4, name: 'Redwood Sanctuary', user_id: 1, areaSize: 35000, conquestCount: 2, defendCount: 4, totalRunners: 15, status: 'active', claimedAt: ago(30), lat: 37.90, lng: -122.58 },
     { id: 5, name: 'Thunder Mesa', user_id: 5, areaSize: 58000, conquestCount: 9, defendCount: 3, totalRunners: 28, status: 'contested', claimedAt: ago(3), lat: 34.87, lng: -111.76 },
-    { id: 6, name: 'Bluff Runner\'s Edge', user_id: 3, areaSize: 41000, conquestCount: 4, defendCount: 6, totalRunners: 18, status: 'secure', claimedAt: ago(10), lat: 36.27, lng: -121.81 },
-    { id: 7, name: 'Pine Valley North', user_id: 4, areaSize: 22000, conquestCount: 1, defendCount: 1, totalRunners: 6, status: 'secure', claimedAt: ago(28), lat: 32.94, lng: -116.56 },
+    { id: 6, name: 'Bluff Runner\'s Edge', user_id: 3, areaSize: 41000, conquestCount: 4, defendCount: 6, totalRunners: 18, status: 'active', claimedAt: ago(10), lat: 36.27, lng: -121.81 },
+    { id: 7, name: 'Pine Valley North', user_id: 4, areaSize: 22000, conquestCount: 1, defendCount: 1, totalRunners: 6, status: 'active', claimedAt: ago(28), lat: 32.94, lng: -116.56 },
     { id: 8, name: 'Summit Kingdom', user_id: 5, areaSize: 95000, conquestCount: 12, defendCount: 7, totalRunners: 35, status: 'contested', claimedAt: ago(5), lat: 40.34, lng: -105.68 },
-    { id: 9, name: 'Lakeshore Domain', user_id: 6, areaSize: 31000, conquestCount: 2, defendCount: 3, totalRunners: 10, status: 'secure', claimedAt: ago(18), lat: 48.53, lng: -113.98 },
-    { id: 10, name: 'Meadow Empire', user_id: 1, areaSize: 48000, conquestCount: 5, defendCount: 6, totalRunners: 20, status: 'secure', claimedAt: ago(12), lat: 46.79, lng: -121.74 },
+    { id: 9, name: 'Lakeshore Domain', user_id: 6, areaSize: 31000, conquestCount: 2, defendCount: 3, totalRunners: 10, status: 'active', claimedAt: ago(18), lat: 48.53, lng: -113.98 },
+    { id: 10, name: 'Meadow Empire', user_id: 1, areaSize: 48000, conquestCount: 5, defendCount: 6, totalRunners: 20, status: 'active', claimedAt: ago(12), lat: 46.79, lng: -121.74 },
   ]
 
   const seedConquests: Conquest[] = [
@@ -601,7 +603,7 @@
         const prevOwner = defender?.name ?? 'Unknown'
         territory.user_id = this.currentUserId
         territory.conquestCount += 1
-        territory.status = 'secure'
+        territory.status = 'active'
         territory.claimedAt = new Date().toISOString()
 
         const nextId = Math.max(0, ...this.conquests.map((c: Conquest) => c.id)) + 1
@@ -663,6 +665,8 @@
       },
     },
 
-    persist: { key: 'trailbuddy-tb-v2' },
+    // v3: territory status vocabulary changed 'secure' -> 'active' (#942);
+    // older persisted snapshots would resurrect the dead enum value.
+    persist: { key: 'trailbuddy-tb-v3' },
   })
 </script>
