@@ -1,7 +1,9 @@
 import { defineModel } from '@stacksjs/orm'
 import { schema } from '@stacksjs/validation'
 
-const statuses = ['active', 'contested'] as const
+// 'contested' = under attack or decaying (defendable by the owner running
+// through it); 'expired' = lost to inactivity — off the map, land reclaimable.
+const statuses = ['active', 'contested', 'expired'] as const
 
 export default defineModel({
   name: 'Territory',
@@ -183,6 +185,19 @@ export default defineModel({
         },
       },
       factory: (faker) => faker.date.recent({ days: 30 }).toISOString(),
+    },
+
+    // Last time the OWNER did something with this territory (claim, conquest,
+    // defense, or just running through it). Drives decay (#950): stale
+    // territories become contested, then expire.
+    last_activity_at: {
+      order: 12,
+      fillable: true,
+      nullable: true,
+      validation: {
+        rule: schema.string(),
+      },
+      factory: (faker) => faker.date.recent({ days: 14 }).toISOString(),
     },
   },
 

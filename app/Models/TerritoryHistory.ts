@@ -3,7 +3,8 @@ import { schema } from '@stacksjs/validation'
 
 // 'contested' = an attack that wasn't enough to take land (graze / sliver cut);
 // it flips the territory to status 'contested' until defended or conquered.
-const eventTypes = ['claimed', 'conquered', 'split', 'defended', 'contested'] as const
+// 'expired' = the territory decayed away after prolonged owner inactivity (#950).
+const eventTypes = ['claimed', 'conquered', 'split', 'defended', 'contested', 'expired'] as const
 
 export default defineModel({
   name: 'TerritoryHistory',

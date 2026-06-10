@@ -398,6 +398,7 @@ route.group({ middleware: 'auth' }, () => {
   route.post('/territories/claim', 'Actions/Territory/ClaimTerritoryAction')
   route.post('/territories/process-conquest', 'Actions/Territory/ProcessActivityConquestAction')
   route.post('/territories/recompute-ranks', 'Actions/Territory/ComputeTerritoryRanksAction')
+  route.post('/territories/decay-sweep', 'Actions/Territory/DecayTerritoriesAction')
   // Social graph — follow/unfollow another athlete
   route.post('/users/{id}/follow', 'Actions/Social/FollowToggleAction')
   // Notifications (recipient = session user)

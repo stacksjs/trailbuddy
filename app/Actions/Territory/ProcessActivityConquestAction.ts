@@ -37,6 +37,7 @@
 //    conquest pass.)
 
 import { recomputeTerritoryRanks } from './ComputeTerritoryRanksAction'
+import { runTerritoryDecaySweep } from './DecayTerritoriesAction'
 
 const MIN_TERRITORY_SIZE = 1000
 
@@ -101,6 +102,12 @@ export default new Action({
         })
       }
 
+      // Every recorded run ticks the world clock: apply decay (#950) before
+      // resolving this run's battles, so long-stale land is already contested
+      // (or expired off the board) when the route hits it.
+      await runTerritoryDecaySweep().catch((err: unknown) =>
+        console.error('Decay sweep before conquest failed:', err))
+
       const actor = await User.find(userId)
       const actorName = actor?.name ?? 'A rival runner'
 
@@ -126,11 +133,18 @@ export default new Action({
           const territoryPolygon = geoJsonToCoordinates(territory.polygon_data)
           if (!routeIntersectsPolygon(routeCoordinates, territoryPolygon)) continue
 
-          // --- DEFENSE: the owner patrolling their own contested land -------
+          // --- OWN LAND: patrol refresh, or defense if contested ------------
           if (territory.user_id === userId) {
-            if (territory.status !== 'contested') continue
+            if (territory.status !== 'contested') {
+              // Running through your own active land keeps it from decaying.
+              await Territory.forceUpdate(territory.id, { last_activity_at: new Date().toISOString() })
+              continue
+            }
 
-            await Territory.forceUpdate(territory.id, { status: 'active' })
+            await Territory.forceUpdate(territory.id, {
+              status: 'active',
+              last_activity_at: new Date().toISOString(),
+            })
             await TerritoryHistory.forceCreate({
               territory_id: territory.id,
               user_id: userId,
@@ -187,6 +201,7 @@ export default new Action({
               status: 'active',
               conquest_count: (territory.conquest_count || 0) + 1,
               claimed_at: new Date().toISOString(),
+              last_activity_at: new Date().toISOString(),
             })
 
             await TerritoryHistory.forceCreate({
@@ -248,6 +263,7 @@ export default new Action({
               status: 'active',
               conquest_count: 1,
               claimed_at: new Date().toISOString(),
+              last_activity_at: new Date().toISOString(),
             })
 
             // Retained-portion row: ownership did NOT change on this piece, so

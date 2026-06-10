@@ -21,9 +21,12 @@ export default new Action({
         return response.json({ success: false, error: 'User not found' }, 404)
       }
 
+      // Contested territories still belong to the user (and they especially
+      // need to see them — they're under attack/decaying); only expired
+      // territories drop out of the list.
       const territories = await Territory
         .where('user_id', '=', userId)
-        .where('status', '=', 'active')
+        .whereIn('status', ['active', 'contested'])
         .orderBy('area_size', 'desc')
         .get()
 
@@ -38,6 +41,7 @@ export default new Action({
         centerLng: t.center_lng,
         conquestCount: t.conquest_count,
         claimedAt: t.claimed_at,
+        status: t.status,
         polygon: t.polygon_data ? JSON.parse(t.polygon_data) : null,
       }))
 

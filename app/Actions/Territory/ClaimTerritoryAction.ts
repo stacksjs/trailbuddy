@@ -81,7 +81,8 @@ export default new Action({
       // Reject claims that overlap existing territory — a loop run over occupied
       // land is handled by conquest (route-intersection split), not by stacking
       // a second overlapping territory on top (which produced undefined state).
-      const activeTerritories = await Territory.where('status', '=', 'active').get()
+      // Contested land is still owned land; only 'expired' land is reclaimable.
+      const activeTerritories = await Territory.whereIn('status', ['active', 'contested']).get()
       for (const t of (activeTerritories ?? [])) {
         if (!t.polygon_data) continue
         if (polygonsOverlap(simplified, geoJsonToCoordinates(t.polygon_data))) {
@@ -111,6 +112,7 @@ export default new Action({
         status: 'active',
         conquest_count: 0,
         claimed_at: new Date().toISOString(),
+        last_activity_at: new Date().toISOString(),
       })
 
       await TerritoryHistory.forceCreate({

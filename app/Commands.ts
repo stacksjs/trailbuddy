@@ -35,4 +35,8 @@ export default {
     file: 'ComputeTerritoryRanks',
     enabled: true,
   },
+  'territory:decay': {
+    file: 'DecayTerritories',
+    enabled: true,
+  },
 } satisfies CommandRegistry

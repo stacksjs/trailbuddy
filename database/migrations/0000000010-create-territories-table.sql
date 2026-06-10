@@ -10,9 +10,10 @@ CREATE TABLE IF NOT EXISTS "territories" (
   "center_lng" INTEGER,
   "area_size" INTEGER,
   "perimeter" INTEGER,
-  "status" TEXT CHECK ("status" IN ('active', 'contested')),
+  "status" TEXT CHECK ("status" IN ('active', 'contested', 'expired')),
   "conquest_count" INTEGER,
   "claimed_at" TEXT,
+  "last_activity_at" TEXT,
   "created_at" TEXT not null default CURRENT_TIMESTAMP,
   "updated_at" TEXT,
   "uuid" TEXT

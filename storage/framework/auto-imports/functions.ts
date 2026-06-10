@@ -5,6 +5,8 @@ export type { TerritoryRankStatsRow, TerritoryGainEvent, TerritoryRankAssignment
 export { increment, count } from '../../../resources/functions/counter'
 export { isDark, toggleDark, preferredDark } from '../../../resources/functions/dark'
 export { parseGpx, parseJsonCoordinates, parseGpsData, generateSampleLoopGpx, generateSampleLoopJson, validateGpsDataForClaim, validateTrackRealism } from '../../../resources/functions/gpx'
+export { territoryFreshnessMs, computeTerritoryDecay, DECAY_STALE_DAYS, DECAY_EXPIRE_DAYS } from '../../../resources/functions/decay'
+export type { DecayTerritoryRow, DecayPlan } from '../../../resources/functions/decay'
 export { haversineDistance, isClosedLoop, calculatePolygonArea, calculatePerimeter, simplifyTrack, pointInPolygon, lineIntersectsPolygon, routeIntersectsPolygon, getBoundingBox, parseBoundingBox, boundingBoxesOverlap, polygonsOverlap, getCentroid, coordinatesToGeoJson, geoJsonToCoordinates, findLinePolygonIntersections, splitPolygonByRoute, generateLoopCoordinates } from '../../../resources/functions/geo'
 export type { Coordinate, GeoJsonPolygon } from '../../../resources/functions/geo'
 export { normalizeElement, getTrailCentroid } from '../../../resources/functions/scraper/trail-normalizer'
