@@ -4,6 +4,20 @@
 // names). Reads/write keys below use snake_case; the JSON response keeps
 // camelCase for API consumers.
 //
+// Battle state machine (#941) — an enemy route that intersects a territory
+// is an ATTACK, resolved by how the route cuts the polygon:
+//   - clean cut, territory < 2×MIN_TERRITORY_SIZE  → FULL TAKEOVER
+//     (a minimum-scale territory can't be subdivided — finishing blow)
+//   - clean cut, carved piece ≥ MIN_TERRITORY_SIZE → SPLIT CONQUEST
+//     (owner keeps the larger piece; both pieces end 'active')
+//   - clean cut, carved piece < MIN_TERRITORY_SIZE → CONTESTED (sliver graze)
+//   - intersects but no clean cut (in-and-out)     → CONTESTED
+// 'contested' marks land under attack until resolved:
+//   - the owner re-running through it DEFENDS it: status back to 'active', a
+//     'defended' history row, territories_defended++; or
+//   - a successful conquest takes/splits it (pieces end 'active').
+// Every transition notifies the territory owner (UserNotification).
+//
 // Accounting semantics (#951):
 //  - `total_territories_owned` / `total_area_owned` are CURRENT holdings;
 //    `territories_claimed/conquered/lost` are lifetime counters. Losing part
@@ -16,15 +30,19 @@
 //    each territory is processed in isolation (per-territory try/catch) so a
 //    failure on one can't corrupt the others. The ORM exposes no transaction
 //    API to actions; write ordering is the pragmatic equivalent.
-//  - Re-POSTing the same activity is a no-op: conquest events are recorded
-//    in territory_histories keyed by activity_id, and an activity that
-//    already produced conquest events is not processed again.
+//  - Re-POSTing the same activity is a no-op: battle events are recorded in
+//    territory_histories keyed by activity_id, and an activity that already
+//    produced battle events is not processed again. ('claimed' rows don't
+//    count — a closed-loop activity legitimately claims first, then gets a
+//    conquest pass.)
 
 const MIN_TERRITORY_SIZE = 1000
 
+const BATTLE_EVENTS = ['conquered', 'split', 'contested', 'defended']
+
 export default new Action({
   name: 'Process Activity Conquest',
-  description: 'Check if an activity conquers any territories and process partial conquest',
+  description: 'Resolve an activity against all territories: conquest, split, contest, or defense',
   method: 'POST',
 
   async handle(request) {
@@ -47,7 +65,7 @@ export default new Action({
         return response.json({ success: false, error: 'Activity not found' }, 404)
       }
 
-      // You can only conquer with your own runs (mirrors ClaimTerritoryAction).
+      // You can only fight with your own runs (mirrors ClaimTerritoryAction).
       if (activity.user_id !== userId) {
         return response.json({ success: false, error: 'Activity does not belong to user' }, 403)
       }
@@ -67,20 +85,25 @@ export default new Action({
         return response.json({ success: false, error: realism.error, code: 'invalid_track' }, 400)
       }
 
-      // Idempotency: if this activity already produced conquest events (e.g. a
-      // client retry of the same POST), don't conquer twice.
+      // Idempotency: if this activity already produced battle events (e.g. a
+      // client retry of the same POST), don't fight twice.
       const priorEvents = (await TerritoryHistory.where('activity_id', '=', activityId).get()) ?? []
-      if (priorEvents.some((h: any) => h.event_type === 'conquered' || h.event_type === 'split')) {
+      if (priorEvents.some((h: any) => BATTLE_EVENTS.includes(h.event_type))) {
         return response.json({
           success: true,
           conqueredCount: 0,
           territories: [],
+          contested: [],
+          defended: [],
           alreadyProcessed: true,
         })
       }
 
+      const actor = await User.find(userId)
+      const actorName = actor?.name ?? 'A rival runner'
+
       const routeBbox = getBoundingBox(routeCoordinates)
-      const allTerritories = await Territory.where('status', '=', 'active').get()
+      const allTerritories = await Territory.whereIn('status', ['active', 'contested']).get()
 
       const conqueredTerritories: Array<{
         originalId: number
@@ -89,9 +112,10 @@ export default new Action({
         remainingArea: number
         newTerritoryId?: number
       }> = []
+      const contestedTerritories: Array<{ id: number, name: string }> = []
+      const defendedTerritories: Array<{ id: number, name: string }> = []
 
       for (const territory of allTerritories) {
-        if (territory.user_id === userId) continue
         if (!territory.bounding_box || !boundingBoxesOverlap(routeBbox, territory.bounding_box)) continue
 
         // Each territory is processed in isolation: a geometry/write failure on
@@ -100,6 +124,27 @@ export default new Action({
           const territoryPolygon = geoJsonToCoordinates(territory.polygon_data)
           if (!routeIntersectsPolygon(routeCoordinates, territoryPolygon)) continue
 
+          // --- DEFENSE: the owner patrolling their own contested land -------
+          if (territory.user_id === userId) {
+            if (territory.status !== 'contested') continue
+
+            await Territory.forceUpdate(territory.id, { status: 'active' })
+            await TerritoryHistory.forceCreate({
+              territory_id: territory.id,
+              user_id: userId,
+              activity_id: activityId,
+              event_type: 'defended',
+              area_at_event: territory.area_size,
+              notes: 'Territory defended — owner ran through contested land',
+            })
+            await incrementDefenseStats(userId)
+
+            defendedTerritories.push({ id: territory.id, name: territory.name })
+            await notify(userId, actor, 'conquest_defend', `You defended ${territory.name}!`, `/territory/${territory.id}`)
+            continue
+          }
+
+          // --- ATTACK -------------------------------------------------------
           const splitPolygons = splitPolygonByRoute(territoryPolygon, routeCoordinates)
 
           const previousOwner = territory.user_id
@@ -108,9 +153,33 @@ export default new Action({
             ? Math.floor((Date.now() - new Date(previousClaimedAt).getTime()) / 1000)
             : 0
 
-          if (splitPolygons.length <= 1) {
-            // No clean cut — full takeover. The new owner's territory is
-            // 'active' regardless of any prior state.
+          // Classify the attack (see the state machine in the header).
+          let keepPolygon: { polygon: any, area: number } | undefined
+          let conqueredPolygon: { polygon: any, area: number } | undefined
+          let outcome: 'takeover' | 'split' | 'contest'
+
+          if (splitPolygons.length < 2) {
+            outcome = 'contest'
+          }
+          else {
+            const polygonAreas = splitPolygons.map(p => ({
+              polygon: p,
+              area: calculatePolygonArea(p),
+            }))
+            // Game rule: the owner keeps the larger piece; the attacker carves
+            // off the smaller one. A through-run can't steal the better half.
+            polygonAreas.sort((a, b) => b.area - a.area)
+            ;[keepPolygon, conqueredPolygon] = polygonAreas
+
+            if ((territory.area_size || 0) < MIN_TERRITORY_SIZE * 2)
+              outcome = 'takeover'
+            else if (conqueredPolygon && conqueredPolygon.area >= MIN_TERRITORY_SIZE)
+              outcome = 'split'
+            else
+              outcome = 'contest'
+          }
+
+          if (outcome === 'takeover') {
             await Territory.forceUpdate(territory.id, {
               user_id: userId,
               status: 'active',
@@ -126,7 +195,7 @@ export default new Action({
               event_type: 'conquered',
               area_at_event: territory.area_size,
               previous_ownership_duration: ownershipDuration,
-              notes: 'Full territory conquest',
+              notes: 'Full territory conquest — finishing blow',
             })
 
             conqueredTerritories.push({
@@ -144,21 +213,10 @@ export default new Action({
               wholeTerritory: true,
               ownershipDurationSeconds: ownershipDuration,
             })
+
+            await notify(previousOwner, actor, 'conquest_attack', `${actorName} conquered ${territory.name}!`, `/territory/${territory.id}`)
           }
-          else {
-            const polygonAreas = splitPolygons.map(p => ({
-              polygon: p,
-              area: calculatePolygonArea(p),
-            }))
-
-            // Game rule: the owner keeps the larger piece; the attacker carves
-            // off the smaller one. A through-run can't steal the better half.
-            polygonAreas.sort((a, b) => b.area - a.area)
-            const [keepPolygon, conqueredPolygon] = polygonAreas
-
-            // Below-threshold slice: too small to become a territory, no effect.
-            if (!conqueredPolygon || conqueredPolygon.area < MIN_TERRITORY_SIZE) continue
-
+          else if (outcome === 'split' && keepPolygon && conqueredPolygon) {
             const keepCentroid = getCentroid(keepPolygon.polygon)
             await Territory.forceUpdate(territory.id, {
               polygon_data: coordinatesToGeoJson(keepPolygon.polygon),
@@ -167,8 +225,10 @@ export default new Action({
               center_lng: keepCentroid.lng,
               area_size: keepPolygon.area,
               perimeter: calculatePerimeter(keepPolygon.polygon),
-              // The original territory was (partially) conquered too.
+              // The original territory was (partially) conquered too, and a
+              // successful conquest resolves any open contest on it.
               conquest_count: (territory.conquest_count || 0) + 1,
+              status: 'active',
             })
 
             const conqueredCentroid = getCentroid(conqueredPolygon.polygon)
@@ -231,10 +291,32 @@ export default new Action({
               wholeTerritory: false,
               ownershipDurationSeconds: ownershipDuration,
             })
+
+            await notify(previousOwner, actor, 'conquest_attack', `${actorName} conquered ${Math.round(conqueredPolygon.area).toLocaleString()} m² of ${territory.name}!`, `/territory/${territory.id}`)
+          }
+          else {
+            // CONTEST: the attack registered but wasn't enough to take land.
+            // An already-contested territory stays contested (no duplicate
+            // event spam for repeated grazes).
+            if (territory.status === 'contested') continue
+
+            await Territory.forceUpdate(territory.id, { status: 'contested' })
+            await TerritoryHistory.forceCreate({
+              territory_id: territory.id,
+              user_id: userId,
+              activity_id: activityId,
+              previous_owner_id: null,
+              event_type: 'contested',
+              area_at_event: territory.area_size,
+              notes: 'Attack grazed the territory — not enough to take land',
+            })
+
+            contestedTerritories.push({ id: territory.id, name: territory.name })
+            await notify(previousOwner, actor, 'conquest_attack', `${actorName} is attacking ${territory.name}! Run through it to defend.`, `/territory/${territory.id}`)
           }
         }
         catch (error) {
-          console.error(`Error processing conquest for territory #${territory.id}:`, error)
+          console.error(`Error processing battle for territory #${territory.id}:`, error)
         }
       }
 
@@ -242,6 +324,8 @@ export default new Action({
         success: true,
         conqueredCount: conqueredTerritories.length,
         territories: conqueredTerritories,
+        contested: contestedTerritories,
+        defended: defendedTerritories,
       })
     }
     catch (error) {
@@ -307,5 +391,47 @@ async function updateConquestStats(update: {
         ? { longest_ownership_days: Math.max(previousOwnerStats.longest_ownership_days || 0, ownershipDays) }
         : {}),
     })
+  }
+}
+
+async function incrementDefenseStats(userId: number) {
+  const stats = await TerritoryStats.where('user_id', '=', userId).first()
+  if (stats) {
+    await TerritoryStats.forceUpdate(stats.id, {
+      territories_defended: (stats.territories_defended || 0) + 1,
+    })
+  }
+  else {
+    await TerritoryStats.forceCreate({
+      user_id: userId,
+      total_territories_owned: 0,
+      total_area_owned: 0,
+      territories_claimed: 0,
+      territories_conquered: 0,
+      territories_lost: 0,
+      territories_defended: 1,
+      longest_ownership_days: 0,
+      largest_territory_area: 0,
+      weekly_rank: 999,
+      all_time_rank: 999,
+    })
+  }
+}
+
+/** Best-effort notification — never lets a notify failure break the battle. */
+async function notify(recipientId: number, actor: any, type: string, body: string, link: string) {
+  try {
+    await UserNotification.forceCreate({
+      recipient_id: recipientId,
+      actor_id: actor?.id ?? recipientId,
+      actor_name: actor?.name ?? 'Someone',
+      type,
+      body,
+      link,
+      read: false,
+    })
+  }
+  catch (error) {
+    console.error('Failed to write battle notification:', error)
   }
 }

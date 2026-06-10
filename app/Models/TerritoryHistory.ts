@@ -1,7 +1,9 @@
 import { defineModel } from '@stacksjs/orm'
 import { schema } from '@stacksjs/validation'
 
-const eventTypes = ['claimed', 'conquered', 'split', 'defended'] as const
+// 'contested' = an attack that wasn't enough to take land (graze / sliver cut);
+// it flips the territory to status 'contested' until defended or conquered.
+const eventTypes = ['claimed', 'conquered', 'split', 'defended', 'contested'] as const
 
 export default defineModel({
   name: 'TerritoryHistory',

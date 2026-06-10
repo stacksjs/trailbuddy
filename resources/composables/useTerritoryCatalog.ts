@@ -23,6 +23,7 @@ interface MapFeature {
     ownerName: string
     areaSize: number
     conquestCount: number
+    defendCount: number
     claimedAt: string
     status: string
     centerLat: number
@@ -66,7 +67,7 @@ export async function loadTerritories(tb: TerritoryStoreLike | null): Promise<bo
         user_id: p.ownerId,
         areaSize: p.areaSize ?? 0,
         conquestCount: p.conquestCount ?? 0,
-        defendCount: 0,
+        defendCount: p.defendCount ?? 0,
         totalRunners: 0,
         status: p.status === 'contested' ? 'contested' : 'active',
         claimedAt: p.claimedAt ?? new Date().toISOString(),

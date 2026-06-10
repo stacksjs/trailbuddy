@@ -5,7 +5,9 @@ import { schema } from '@stacksjs/validation'
 // framework's core `Notification` model + `notifications` table. Snake_case
 // attribute keys; FK columns are plain fillable attributes (no belongsTo).
 
-const types = ['kudos', 'comment', 'follow', 'conquest'] as const
+// conquest_attack / conquest_defend / conquest_win match the frontend's
+// notification vocabulary (icons + styling in notifications.stx).
+const types = ['kudos', 'comment', 'follow', 'conquest', 'conquest_attack', 'conquest_defend', 'conquest_win'] as const
 
 export default defineModel({
   name: 'UserNotification',

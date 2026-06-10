@@ -26,6 +26,10 @@ export interface ConquestResult {
   error?: string
   conqueredCount?: number
   territories?: Array<{ originalId: number, conqueredArea: number, remainingArea: number, newTerritoryId?: number }>
+  /** Enemy territories this run attacked without taking land (now 'contested'). */
+  contested?: Array<{ id: number, name: string }>
+  /** Own contested territories this run defended (back to 'active'). */
+  defended?: Array<{ id: number, name: string }>
 }
 
 // The browser auth client (@stacksjs/browser) stores the bearer token under
@@ -275,14 +279,26 @@ export async function persistRunAndProcess(payload: {
 
 /** Build a short toast message from a run result, or null if nothing happened. */
 export function runResultMessage(result: RunResult): string | null {
+  const parts: string[] = []
+
   const count = result.conquest?.conqueredCount ?? 0
   if (count > 0) {
     const plural = count > 1 ? 'territories' : 'territory'
-    return `Conquered ${count} ${plural}!`
+    parts.push(`Conquered ${count} ${plural}!`)
   }
+
+  const defended = result.conquest?.defended ?? []
+  if (defended.length > 0)
+    parts.push(`Defended ${defended.map(d => d.name).join(', ')}!`)
+
   if (result.claim?.success && result.claim.territory) {
     const km2 = (result.claim.territory.areaSize / 1000000).toFixed(2)
-    return `Claimed new territory — ${km2} km²!`
+    parts.push(`Claimed new territory — ${km2} km²!`)
   }
-  return null
+
+  const contested = result.conquest?.contested ?? []
+  if (contested.length > 0)
+    parts.push(`Attacked ${contested.map(c => c.name).join(', ')} — run through to conquer!`)
+
+  return parts.length ? parts.join(' ') : null
 }
