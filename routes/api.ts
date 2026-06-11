@@ -390,29 +390,47 @@ route.get('/users/{id}', 'Actions/Social/AthleteShowAction')
 // Writes that act on behalf of a user MUST be authenticated — the acting
 // user is derived from the session (Auth.user()), never from the request body,
 // so a caller can't record/kudos/claim/conquer as someone else (#939).
+//
+// Rate limits (#980) — enforced per authenticated user (falls back to IP) by
+// the Throttle middleware (429 + Retry-After + X-RateLimit-* headers):
+//   - game writes  (claim / process-conquest)  30/min — GPS-heavy, one real
+//     run produces exactly one claim + one conquest call, so 30 is generous
+//     for humans and a wall for scripts
+//   - sweeps       (ranks / decay / counters / evaluate)  10/min — full-table
+//     recomputes; events already trigger them, manual calls are rare
+//   - social writes (activities, kudos, comments, reviews, follows,
+//     notifications)  60/min — normal interactive ceiling
 route.group({ middleware: 'auth' }, () => {
-  // Activities
-  route.post('/activities', 'Actions/Activity/ActivityStoreAction')
-  route.patch('/activities/{id}', 'Actions/Activity/ActivityUpdateAction')
-  route.delete('/activities/{id}', 'Actions/Activity/ActivityDestroyAction')
-  route.post('/activities/{id}/kudos', 'Actions/Activity/KudosToggleAction')
-  route.post('/activities/{id}/comments', 'Actions/Activity/ActivityCommentStoreAction')
   // Territory game — claim land by running closed loops, conquer others' turf
-  route.post('/territories/claim', 'Actions/Territory/ClaimTerritoryAction')
-  route.post('/territories/process-conquest', 'Actions/Territory/ProcessActivityConquestAction')
-  route.post('/territories/recompute-ranks', 'Actions/Territory/ComputeTerritoryRanksAction')
-  route.post('/territories/decay-sweep', 'Actions/Territory/DecayTerritoriesAction')
-  // Trail reviews — one per user per trail, upserts (#972/#973)
-  route.post('/trails/{id}/reviews', 'Actions/Trail/TrailReviewStoreAction')
-  // Denormalized counter drift repair (#973)
-  route.post('/maintenance/recompute-counters', 'Actions/Maintenance/RecomputeCountersAction')
-  // Achievement engine — manual refresh for the session user (#982)
-  route.post('/achievements/evaluate', 'Actions/Achievement/EvaluateAchievementsAction')
-  // Social graph — follow/unfollow another athlete
-  route.post('/users/{id}/follow', 'Actions/Social/FollowToggleAction')
-  // Notifications (recipient = session user)
-  route.get('/notifications', 'Actions/Social/NotificationIndexAction')
-  route.post('/notifications/read', 'Actions/Social/NotificationReadAction')
+  route.group({ middleware: 'throttle:30,1' }, () => {
+    route.post('/territories/claim', 'Actions/Territory/ClaimTerritoryAction')
+    route.post('/territories/process-conquest', 'Actions/Territory/ProcessActivityConquestAction')
+  })
+
+  // Full-table sweeps — event hooks keep these fresh; manual calls are rare
+  route.group({ middleware: 'throttle:10,1' }, () => {
+    route.post('/territories/recompute-ranks', 'Actions/Territory/ComputeTerritoryRanksAction')
+    route.post('/territories/decay-sweep', 'Actions/Territory/DecayTerritoriesAction')
+    route.post('/maintenance/recompute-counters', 'Actions/Maintenance/RecomputeCountersAction')
+    route.post('/achievements/evaluate', 'Actions/Achievement/EvaluateAchievementsAction')
+  })
+
+  // Interactive writes
+  route.group({ middleware: 'throttle:60,1' }, () => {
+    // Activities
+    route.post('/activities', 'Actions/Activity/ActivityStoreAction')
+    route.patch('/activities/{id}', 'Actions/Activity/ActivityUpdateAction')
+    route.delete('/activities/{id}', 'Actions/Activity/ActivityDestroyAction')
+    route.post('/activities/{id}/kudos', 'Actions/Activity/KudosToggleAction')
+    route.post('/activities/{id}/comments', 'Actions/Activity/ActivityCommentStoreAction')
+    // Trail reviews — one per user per trail, upserts (#972/#973)
+    route.post('/trails/{id}/reviews', 'Actions/Trail/TrailReviewStoreAction')
+    // Social graph — follow/unfollow another athlete
+    route.post('/users/{id}/follow', 'Actions/Social/FollowToggleAction')
+    // Notifications (recipient = session user)
+    route.get('/notifications', 'Actions/Social/NotificationIndexAction')
+    route.post('/notifications/read', 'Actions/Social/NotificationReadAction')
+  })
 })
 
 // Authenticated user routes

@@ -13,6 +13,9 @@ declare global {
   const computeTerritoryRankAssignments: typeof autoImports.computeTerritoryRankAssignments
   const increment: typeof autoImports.increment
   const count: typeof autoImports.count
+  const longestDayStreak: typeof autoImports.longestDayStreak
+  const hasSubSevenMile: typeof autoImports.hasSubSevenMile
+  const computeAchievementProgress: typeof autoImports.computeAchievementProgress
   const totalElevationGainFt: typeof autoImports.totalElevationGainFt
   const computeSplitsFromSamples: typeof autoImports.computeSplitsFromSamples
   const ELEVATION_NOISE_FLOOR_FT: typeof autoImports.ELEVATION_NOISE_FLOOR_FT
@@ -20,6 +23,10 @@ declare global {
   const isDark: typeof autoImports.isDark
   const toggleDark: typeof autoImports.toggleDark
   const preferredDark: typeof autoImports.preferredDark
+  const positiveInt: typeof autoImports.positiveInt
+  const boundedNumber: typeof autoImports.boundedNumber
+  const boundedString: typeof autoImports.boundedString
+  const durationString: typeof autoImports.durationString
   const parseGpx: typeof autoImports.parseGpx
   const parseJsonCoordinates: typeof autoImports.parseJsonCoordinates
   const parseGpsData: typeof autoImports.parseGpsData

@@ -81,11 +81,22 @@ export default new Action({
 
   async handle(request) {
     try {
-      const staleDays = request.get<number>('stale_days')
-      const expireDays = request.get<number>('expire_days')
+      // Field validation (#977): both knobs optional, but must be sane days.
+      const fields: Record<string, string> = {}
+      const staleRaw = request.get('stale_days')
+      const expireRaw = request.get('expire_days')
+      const staleDays = staleRaw === undefined || staleRaw === null ? undefined : boundedNumber(staleRaw, 1, 3650)
+      const expireDays = expireRaw === undefined || expireRaw === null ? undefined : boundedNumber(expireRaw, 1, 3650)
+      if (staleRaw !== undefined && staleRaw !== null && staleDays === null)
+        fields.stale_days = 'must be a number of days between 1 and 3650'
+      if (expireRaw !== undefined && expireRaw !== null && expireDays === null)
+        fields.expire_days = 'must be a number of days between 1 and 3650'
+      if (Object.keys(fields).length)
+        return response.json({ success: false, error: 'Validation failed', fields }, 422)
+
       const result = await runTerritoryDecaySweep({
-        staleDays: staleDays || undefined,
-        expireDays: expireDays || undefined,
+        staleDays: staleDays ?? undefined,
+        expireDays: expireDays ?? undefined,
       })
 
       return response.json({

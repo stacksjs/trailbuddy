@@ -10,14 +10,15 @@ export default new Action({
   method: 'POST',
 
   async handle(request) {
-    const targetId = request.get<number>('id')
-    const followerId = (await Auth.user().catch(() => null))?.id ?? request.get<number>('follower_id')
+    const targetId = positiveInt(request.get('id'))
+    const followerId = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('follower_id'))
 
+    // Field validation (#977).
     if (!targetId)
-      return response.json({ success: false, error: 'User ID is required' }, 400)
+      return response.json({ success: false, error: 'Validation failed', fields: { id: 'required: a positive integer user id' } }, 422)
     if (!followerId)
       return response.json({ success: false, error: 'Authentication required' }, 401)
-    if (Number(targetId) === Number(followerId))
+    if (targetId === followerId)
       return response.json({ success: false, error: 'You cannot follow yourself' }, 400)
 
     try {

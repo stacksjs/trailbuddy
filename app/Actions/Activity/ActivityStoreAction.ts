@@ -16,19 +16,42 @@ export default new Action({
   async handle(request) {
     // Owner from the authenticated session (route is behind `auth`); body
     // fallback is for the in-process seed harness only.
-    const userId = (await Auth.user().catch(() => null))?.id ?? request.get<number>('user_id')
+    const userId = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('user_id'))
     const activityType = request.get<string>('activity_type') || 'Trail Run'
-    const distance = request.get<number>('distance')
-    const duration = request.get<string>('duration')
+    const distance = boundedNumber(request.get('distance'), 0, 1000)
+    const duration = durationString(request.get('duration'))
 
+    // Field validation (#977): malformed input → 422 with a field-keyed map.
+    const fields: Record<string, string> = {}
     if (!userId)
-      return response.json({ success: false, error: 'User ID is required' }, 400)
-    if (distance === undefined || distance === null)
-      return response.json({ success: false, error: 'Distance is required' }, 400)
-    if (!duration)
-      return response.json({ success: false, error: 'Duration is required' }, 400)
+      fields.user_id = 'required: authenticated session (or user_id in the harness)'
     if (!ACTIVITY_TYPES.includes(activityType))
-      return response.json({ success: false, error: `Invalid activity type: ${activityType}` }, 400)
+      fields.activity_type = `must be one of: ${ACTIVITY_TYPES.join(', ')}`
+    if (distance === null)
+      fields.distance = 'required: miles as a number between 0 and 1000'
+    if (duration === null)
+      fields.duration = 'required: a MM:SS or H:MM:SS duration'
+
+    const movingTime = request.get('moving_time')
+    if (movingTime !== undefined && movingTime !== null && durationString(movingTime) === null)
+      fields.moving_time = 'must be a MM:SS or H:MM:SS duration'
+    const elevationRaw = request.get('elevation')
+    const elevation = elevationRaw === undefined || elevationRaw === null ? 0 : boundedNumber(elevationRaw, 0, 100000)
+    if (elevation === null)
+      fields.elevation = 'must be feet as a number between 0 and 100000'
+    const trailIdRaw = request.get('trail_id')
+    const trailId = trailIdRaw === undefined || trailIdRaw === null ? null : positiveInt(trailIdRaw)
+    if (trailIdRaw !== undefined && trailIdRaw !== null && trailId === null)
+      fields.trail_id = 'must be a positive integer trail id'
+    const gpxData = request.get('gpx_data')
+    if (gpxData !== undefined && gpxData !== null && (typeof gpxData !== 'string' || gpxData.length > 2_000_000))
+      fields.gpx_data = 'must be a GeoJSON/JSON string under 2MB'
+    const completedAt = request.get('completed_at')
+    if (completedAt !== undefined && completedAt !== null && (typeof completedAt !== 'string' || Number.isNaN(Date.parse(completedAt))))
+      fields.completed_at = 'must be a parseable date string'
+
+    if (Object.keys(fields).length)
+      return response.json({ success: false, error: 'Validation failed', fields }, 422)
 
     // Splits arrive as an array of { mile, pace, elev } (or a pre-encoded JSON
     // string); store as JSON text. Cap the count to keep payloads sane.
@@ -42,18 +65,18 @@ export default new Action({
     try {
       const activity = await Activity.create({
         user_id: userId,
-        trail_id: request.get<number>('trail_id') ?? null,
+        trail_id: trailId,
         activity_type: activityType,
         distance,
         duration,
-        moving_time: request.get<string>('moving_time') ?? null,
+        moving_time: durationString(movingTime) ?? null,
         pace: request.get<string>('pace') ?? null,
-        elevation: request.get<number>('elevation') ?? 0,
+        elevation,
         kudos_count: 0,
         notes: request.get<string>('notes') ?? null,
-        gpx_data: request.get<string>('gpx_data') ?? null,
+        gpx_data: (gpxData as string | undefined) ?? null,
         splits: splitsJson,
-        completed_at: request.get<string>('completed_at') ?? new Date().toISOString(),
+        completed_at: (completedAt as string | undefined) ?? new Date().toISOString(),
       })
 
       // Unlock engine hook (#982) — best-effort, never blocks the store.

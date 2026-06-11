@@ -13,13 +13,13 @@ export default new Action({
   method: 'DELETE',
 
   async handle(request) {
-    const id = request.get<number>('id')
+    const id = positiveInt(request.get('id'))
     // Owner from the authenticated session (route is behind `auth`); body
     // fallback is for the in-process seed harness only.
-    const userId = (await Auth.user().catch(() => null))?.id ?? request.get<number>('user_id')
+    const userId = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('user_id'))
 
     if (!id)
-      return response.json({ success: false, error: 'Activity ID is required' }, 400)
+      return response.json({ success: false, error: 'Validation failed', fields: { id: 'required: a positive integer activity id' } }, 422)
     if (!userId)
       return response.json({ success: false, error: 'Authentication required' }, 401)
 

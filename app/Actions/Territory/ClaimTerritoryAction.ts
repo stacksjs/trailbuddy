@@ -14,19 +14,20 @@ export default new Action({
   method: 'POST',
 
   async handle(request) {
-    const activityId = request.get<number>('activity_id')
+    const activityId = positiveInt(request.get('activity_id'))
     // Acting user comes from the authenticated session (route is behind `auth`).
     // The body fallback only fires for in-process callers (the seed harness),
     // never over HTTP — so a client can't claim as another user.
-    const userId = (await Auth.user().catch(() => null))?.id ?? request.get<number>('user_id')
+    const userId = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('user_id'))
 
-    if (!activityId) {
-      return response.json({ success: false, error: 'Activity ID is required' }, 400)
-    }
-
-    if (!userId) {
-      return response.json({ success: false, error: 'User ID is required' }, 400)
-    }
+    // Field validation (#977): malformed input → 422 with a field-keyed map.
+    const fields: Record<string, string> = {}
+    if (!activityId)
+      fields.activity_id = 'required: a positive integer activity id'
+    if (!userId)
+      fields.user_id = 'required: authenticated session (or user_id in the harness)'
+    if (Object.keys(fields).length)
+      return response.json({ success: false, error: 'Validation failed', fields }, 422)
 
     try {
       const activity = await Activity.find(activityId)

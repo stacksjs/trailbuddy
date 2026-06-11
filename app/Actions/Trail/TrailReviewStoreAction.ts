@@ -14,26 +14,31 @@ export default new Action({
   method: 'POST',
 
   async handle(request) {
-    const trailId = request.get<number>('id') ?? request.get<number>('trail_id')
+    const trailId = positiveInt(request.get('id') ?? request.get('trail_id'))
     // Reviewer from the authenticated session (route is behind `auth`); body
     // fallback is for the in-process seed harness only.
-    const userId = (await Auth.user().catch(() => null))?.id ?? request.get<number>('user_id')
+    const userId = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('user_id'))
     const rating = request.get<number>('rating')
     const content = (request.get<string>('content') ?? '').trim()
     const title = (request.get<string>('title') ?? '').trim() || null
     const conditions = request.get<string>('conditions') ?? null
     const visitDate = request.get<string>('visit_date') ?? null
 
-    if (!trailId)
-      return response.json({ success: false, error: 'Trail ID is required' }, 400)
     if (!userId)
       return response.json({ success: false, error: 'Authentication required' }, 401)
+
+    // Field validation (#977).
+    const fields: Record<string, string> = {}
+    if (!trailId)
+      fields.trail_id = 'required: a positive integer trail id'
     if (typeof rating !== 'number' || !Number.isInteger(rating) || rating < 1 || rating > 5)
-      return response.json({ success: false, error: 'Rating must be an integer from 1 to 5' }, 422)
+      fields.rating = 'required: an integer from 1 to 5'
     if (content.length < 10 || content.length > 2000)
-      return response.json({ success: false, error: 'Review must be 10–2000 characters' }, 422)
+      fields.content = 'required: 10–2000 characters'
     if (conditions !== null && !REVIEW_CONDITIONS.includes(conditions))
-      return response.json({ success: false, error: `Invalid conditions: ${conditions}` }, 422)
+      fields.conditions = `must be one of: ${REVIEW_CONDITIONS.join(', ')}`
+    if (Object.keys(fields).length)
+      return response.json({ success: false, error: 'Validation failed', fields }, 422)
 
     try {
       const trail = await Trail.find(trailId)

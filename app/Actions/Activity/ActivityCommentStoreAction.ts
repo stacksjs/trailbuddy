@@ -9,18 +9,22 @@ export default new Action({
   method: 'POST',
 
   async handle(request) {
-    const activityId = request.get<number>('id') ?? request.get<number>('activity_id')
+    const activityId = positiveInt(request.get('id') ?? request.get('activity_id'))
     // Author from the authenticated session (route is behind `auth`); body
     // fallback is for the in-process harness only.
-    const userId = (await Auth.user().catch(() => null))?.id ?? request.get<number>('user_id')
-    const body = (request.get<string>('body') ?? '').trim()
+    const userId = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('user_id'))
+    const body = boundedString(request.get('body'), 2000)
 
+    // Field validation (#977).
+    const fields: Record<string, string> = {}
     if (!activityId)
-      return response.json({ success: false, error: 'Activity ID is required' }, 400)
+      fields.activity_id = 'required: a positive integer activity id'
     if (!userId)
-      return response.json({ success: false, error: 'User ID is required' }, 400)
+      fields.user_id = 'required: authenticated session (or user_id in the harness)'
     if (!body)
-      return response.json({ success: false, error: 'Comment text is required' }, 400)
+      fields.body = 'required: comment text, at most 2000 characters'
+    if (Object.keys(fields).length)
+      return response.json({ success: false, error: 'Validation failed', fields }, 422)
 
     try {
       const activity = await Activity.find(activityId)
