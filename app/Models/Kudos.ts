@@ -21,6 +21,12 @@ export default defineModel({
 
   belongsTo: ['User', 'Activity'],
 
+  // One kudos per giver per activity (#972) — the toggle action treats a
+  // conflict as "already kudosed".
+  indexes: [
+    { name: 'kudos_giver_activity_unique', columns: ['giver_id', 'activity_id'], unique: true },
+  ],
+
   attributes: {
     // The user giving kudos.
     giver_id: {

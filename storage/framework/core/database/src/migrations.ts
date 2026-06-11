@@ -251,18 +251,41 @@ export function preprocessSqliteMigrations(): void {
       continue
     }
 
-    // CREATE UNIQUE INDEX fails in SQLite when the column already has
-    // a UNIQUE constraint from table creation. IF NOT EXISTS only checks
-    // by index name, not by column — so a second unique index with a
-    // different name triggers SQLITE_CONSTRAINT_UNIQUE.
+    // CREATE UNIQUE INDEX is only redundant on SQLite when the SAME
+    // single column already carries an inline UNIQUE constraint in its
+    // CREATE TABLE (duplicate unique indexes on such columns conflict).
+    // Composite unique indexes — and single-column ones with no inline
+    // counterpart — are real constraints and MUST execute; the old
+    // blanket skip here silently dropped them (#972).
     //
-    // Same skip-but-keep rule as FK constraints: MySQL/Postgres need
-    // the explicit `CREATE UNIQUE INDEX` (their indexes are separate
-    // objects, not inline). The file survives a driver switch.
+    // Redundant files keep the skip-but-keep rule from FK constraints:
+    // MySQL/Postgres need the explicit `CREATE UNIQUE INDEX` (their
+    // indexes are separate objects, not inline), so the file survives
+    // a driver switch.
     const allCreateUniqueIndex = statements.every(s => createUniqueIndexPattern.test(s))
     if (allCreateUniqueIndex) {
-      skipMigration(file, 'unique constraint already inline on table')
-      continue
+      const allRedundant = statements.every((s) => {
+        const m = s.match(/ON\s+["]?(\w+)["]?\s*\(([^)]+)\)/i)
+        if (!m || !m[1] || !m[2])
+          return false
+        const cols = m[2].split(',').map(c => c.trim().replace(/"/g, ''))
+        if (cols.length !== 1)
+          return false // composite — never inline on the table
+        const createFile = createTableEarliest.get(m[1])
+        if (!createFile)
+          return false
+        try {
+          const createSql = readFileSync(join(migrationsDir, createFile), 'utf-8')
+          return new RegExp(`"?${cols[0]}"?\\s+[^,)]*UNIQUE`, 'i').test(createSql)
+        }
+        catch {
+          return false
+        }
+      })
+      if (allRedundant) {
+        skipMigration(file, 'unique constraint already inline on table')
+        continue
+      }
     }
 
     // DROP COLUMN fails in SQLite if the column doesn't exist (e.g., on fresh DB

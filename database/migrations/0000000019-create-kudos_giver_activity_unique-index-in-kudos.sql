@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS "kudos_kudos_giver_activity_unique" ON "kudos" ("giver_id", "activity_id");

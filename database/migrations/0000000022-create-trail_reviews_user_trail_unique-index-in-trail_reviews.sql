@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS "trail_reviews_trail_reviews_user_trail_unique" ON "trail_reviews" ("user_id", "trail_id");

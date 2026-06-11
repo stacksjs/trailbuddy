@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS "territory_stats_territory_stats_user_unique" ON "territory_stats" ("user_id");

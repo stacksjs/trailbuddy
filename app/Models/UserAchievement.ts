@@ -18,6 +18,11 @@ export default defineModel({
 
   belongsTo: ['User', 'Achievement'],
 
+  // An achievement can only be earned once per user (#972).
+  indexes: [
+    { name: 'user_achievements_user_achievement_unique', columns: ['user_id', 'achievement_id'], unique: true },
+  ],
+
   attributes: {
     progress: {
       order: 1,

@@ -87,7 +87,7 @@ async function callAction(action: any, body: Record<string, unknown>): Promise<{
 
 const db = new Database('database/stacks.sqlite')
 const gameTables = [
-  'user_notifications', 'activity_comments', 'kudos', 'follows',
+  'user_notifications', 'activity_comments', 'kudos', 'follows', 'trail_reviews',
   'territory_histories', 'territory_stats', 'territories', 'activities', 'users',
 ]
 for (const t of gameTables) {
@@ -258,10 +258,46 @@ for (const n of notifPlan) {
 }
 console.log(`✅ notifications: ${notifPlan.length} for ${users[0].name}`)
 
+// --- trail reviews + honest counters (#973) --------------------------------
+// Every trail gets 1-3 reviews from the three athletes, then the denormalized
+// counters (kudos_count, rating, review_count) are rebuilt from rows so the
+// factory numbers can't drift from reality.
+
+const Review = g.Review
+const allTrails = ((await Trail.all()) ?? []) as any[]
+const reviewBlurbs = [
+  'Great climbs and even better views from the top.',
+  'Well marked the whole way, a little crowded on weekends.',
+  'Muddy after rain but absolutely worth it.',
+  'Perfect tempo-run terrain, rolling and runnable.',
+  'Quiet, shaded, and the descent is a blast.',
+]
+let reviewCount = 0
+for (const [i, trail] of allTrails.entries()) {
+  const reviewers = users.slice(0, (i % 3) + 1) // 1-3 reviewers per trail
+  for (const [j, reviewer] of reviewers.entries()) {
+    await Review.forceCreate({
+      user_id: reviewer.id,
+      trail_id: trail.id,
+      rating: 3 + ((i + j) % 3), // 3-5 stars, deterministic
+      title: null,
+      content: reviewBlurbs[(i + j) % reviewBlurbs.length],
+      conditions: ['excellent', 'good', 'fair'][(i + j) % 3],
+      visit_date: null,
+      helpful_count: 0,
+      photos: null,
+    })
+    reviewCount++
+  }
+}
+const { recomputeDenormalizedCounters } = await import('../app/Actions/Maintenance/RecomputeCountersAction')
+const counterResult = await recomputeDenormalizedCounters()
+console.log(`✅ trail reviews: ${reviewCount} seeded; counters fixed (${counterResult.activitiesFixed} activities, ${counterResult.trailsFixed} trails)`)
+
 // --- final state -----------------------------------------------------------
 
 const db2 = new Database('database/stacks.sqlite', { readonly: true })
-const counts = ['users', 'trails', 'activities', 'territories', 'territory_histories', 'territory_stats']
+const counts = ['users', 'trails', 'activities', 'territories', 'territory_histories', 'territory_stats', 'trail_reviews']
   .map(t => `${t}=${(db2.query(`SELECT COUNT(*) c FROM ${t}`).get() as any).c}`)
 db2.close()
 console.log(`\n📊 ${counts.join('  ')}`)

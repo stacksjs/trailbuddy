@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS "follows_follows_follower_following_unique" ON "follows" ("follower_id", "following_id");

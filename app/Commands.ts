@@ -39,4 +39,8 @@ export default {
     file: 'DecayTerritories',
     enabled: true,
   },
+  'counters:recompute': {
+    file: 'RecomputeCounters',
+    enabled: true,
+  },
 } satisfies CommandRegistry

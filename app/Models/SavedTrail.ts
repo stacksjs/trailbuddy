@@ -18,6 +18,11 @@ export default defineModel({
 
   belongsTo: ['User', 'Trail'],
 
+  // A trail can only be saved once per user (#972).
+  indexes: [
+    { name: 'saved_trails_user_trail_unique', columns: ['user_id', 'trail_id'], unique: true },
+  ],
+
   attributes: {
     notes: {
       order: 1,

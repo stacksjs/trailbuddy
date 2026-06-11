@@ -401,6 +401,10 @@ route.group({ middleware: 'auth' }, () => {
   route.post('/territories/process-conquest', 'Actions/Territory/ProcessActivityConquestAction')
   route.post('/territories/recompute-ranks', 'Actions/Territory/ComputeTerritoryRanksAction')
   route.post('/territories/decay-sweep', 'Actions/Territory/DecayTerritoriesAction')
+  // Trail reviews — one per user per trail, upserts (#972/#973)
+  route.post('/trails/{id}/reviews', 'Actions/Trail/TrailReviewStoreAction')
+  // Denormalized counter drift repair (#973)
+  route.post('/maintenance/recompute-counters', 'Actions/Maintenance/RecomputeCountersAction')
   // Social graph — follow/unfollow another athlete
   route.post('/users/{id}/follow', 'Actions/Social/FollowToggleAction')
   // Notifications (recipient = session user)

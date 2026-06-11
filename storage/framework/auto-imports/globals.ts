@@ -27,10 +27,13 @@ declare global {
   const generateSampleLoopJson: typeof autoImports.generateSampleLoopJson
   const validateGpsDataForClaim: typeof autoImports.validateGpsDataForClaim
   const validateTrackRealism: typeof autoImports.validateTrackRealism
+  const parseDurationToSeconds: typeof autoImports.parseDurationToSeconds
+  const paceString: typeof autoImports.paceString
   const territoryFreshnessMs: typeof autoImports.territoryFreshnessMs
   const computeTerritoryDecay: typeof autoImports.computeTerritoryDecay
   const DECAY_STALE_DAYS: typeof autoImports.DECAY_STALE_DAYS
   const DECAY_EXPIRE_DAYS: typeof autoImports.DECAY_EXPIRE_DAYS
+  const computeCounterFixes: typeof autoImports.computeCounterFixes
   const haversineDistance: typeof autoImports.haversineDistance
   const isClosedLoop: typeof autoImports.isClosedLoop
   const calculatePolygonArea: typeof autoImports.calculatePolygonArea

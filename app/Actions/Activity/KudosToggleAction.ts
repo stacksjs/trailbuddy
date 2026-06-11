@@ -38,24 +38,33 @@ export default new Action({
         kudosed = false
       }
       else {
-        await Kudos.forceCreate({
-          giver_id: giverId,
-          user_id: activity.user_id,
-          activity_id: activityId,
-        })
         kudosed = true
-        // Notify the activity owner (skip self-kudos).
-        if (activity.user_id && activity.user_id !== giverId) {
-          const giver = await User.find(giverId)
-          await UserNotification.forceCreate({
-            recipient_id: activity.user_id,
-            actor_id: giverId,
-            actor_name: giver?.name ?? 'Someone',
-            type: 'kudos',
-            body: `${giver?.name ?? 'Someone'} gave kudos to your activity`,
-            link: `/activity/${activityId}`,
-            read: false,
+        try {
+          await Kudos.forceCreate({
+            giver_id: giverId,
+            user_id: activity.user_id,
+            activity_id: activityId,
           })
+          // Notify the activity owner (skip self-kudos).
+          if (activity.user_id && activity.user_id !== giverId) {
+            const giver = await User.find(giverId)
+            await UserNotification.forceCreate({
+              recipient_id: activity.user_id,
+              actor_id: giverId,
+              actor_name: giver?.name ?? 'Someone',
+              type: 'kudos',
+              body: `${giver?.name ?? 'Someone'} gave kudos to your activity`,
+              link: `/activity/${activityId}`,
+              read: false,
+            })
+          }
+        }
+        catch (err) {
+          // A concurrent double-tap can race the existence check above; the
+          // unique index (#972) rejects the second insert — the kudos already
+          // exists, so the toggle result stands (and the winner notified).
+          if (!String(err).includes('UNIQUE constraint failed'))
+            throw err
         }
       }
 

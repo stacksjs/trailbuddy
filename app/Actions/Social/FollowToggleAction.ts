@@ -36,19 +36,28 @@ export default new Action({
         following = false
       }
       else {
-        await Follow.forceCreate({ follower_id: followerId, following_id: targetId })
         following = true
-        // Notify the followed athlete.
-        const follower = await User.find(followerId)
-        await UserNotification.forceCreate({
-          recipient_id: targetId,
-          actor_id: followerId,
-          actor_name: follower?.name ?? 'Someone',
-          type: 'follow',
-          body: `${follower?.name ?? 'Someone'} started following you`,
-          link: `/athlete/${followerId}`,
-          read: false,
-        })
+        try {
+          await Follow.forceCreate({ follower_id: followerId, following_id: targetId })
+          // Notify the followed athlete.
+          const follower = await User.find(followerId)
+          await UserNotification.forceCreate({
+            recipient_id: targetId,
+            actor_id: followerId,
+            actor_name: follower?.name ?? 'Someone',
+            type: 'follow',
+            body: `${follower?.name ?? 'Someone'} started following you`,
+            link: `/athlete/${followerId}`,
+            read: false,
+          })
+        }
+        catch (err) {
+          // A concurrent double-tap can race the existence check above; the
+          // unique index (#972) rejects the second insert — the follow already
+          // exists, so the toggle result stands (and the winner notified).
+          if (!String(err).includes('UNIQUE constraint failed'))
+            throw err
+        }
       }
 
       const followers = await Follow.where('following_id', '=', targetId).get()

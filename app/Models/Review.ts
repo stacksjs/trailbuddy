@@ -26,7 +26,30 @@ export default defineModel({
 
   belongsTo: ['User', 'Trail'],
 
+  // One review per user per trail (#972) — the store action upserts.
+  indexes: [
+    { name: 'trail_reviews_user_trail_unique', columns: ['user_id', 'trail_id'], unique: true },
+  ],
+
   attributes: {
+    // FK columns declared explicitly so ORM writes persist them (snake_case
+    // contract); the columns themselves already come from belongsTo.
+    user_id: {
+      order: 0,
+      fillable: true,
+      validation: {
+        rule: schema.number(),
+      },
+    },
+
+    trail_id: {
+      order: 0,
+      fillable: true,
+      validation: {
+        rule: schema.number(),
+      },
+    },
+
     rating: {
       order: 1,
       fillable: true,

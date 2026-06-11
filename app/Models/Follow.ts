@@ -5,7 +5,8 @@ import { schema } from '@stacksjs/validation'
 // snake_case, so attribute KEYS are the column names; FK columns are plain
 // fillable attributes (no belongsTo, which would emit an inline FK that breaks
 // the SQLite migrate:fresh ordering). Uniqueness of (follower_id, following_id)
-// is enforced in the toggle action (it's idempotent).
+// is enforced by a composite unique index (#972); the toggle action stays
+// idempotent and treats a constraint conflict as "already following".
 
 export default defineModel({
   name: 'Follow',
@@ -21,6 +22,10 @@ export default defineModel({
       routes: ['index', 'store', 'destroy'],
     },
   },
+
+  indexes: [
+    { name: 'follows_follower_following_unique', columns: ['follower_id', 'following_id'], unique: true },
+  ],
 
   attributes: {
     follower_id: {
