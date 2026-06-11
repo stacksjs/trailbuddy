@@ -4,6 +4,7 @@
 // activity (idempotent: add if absent, remove if present), then recomputes the
 // denormalized activities.kudos_count from the kudos rows. The giver is taken
 // from the body for now (auth hardening tracked in #939).
+import { evaluateAchievementsForUser } from '../Achievement/EvaluateAchievementsAction'
 
 export default new Action({
   name: 'Toggle Kudos',
@@ -72,6 +73,12 @@ export default new Action({
       const all = await Kudos.where('activity_id', '=', activityId).get()
       const kudosCount = (all ?? []).length
       await Activity.forceUpdate(activityId, { kudos_count: kudosCount })
+
+      // Unlock engine hook (#982): giving kudos moves Social Butterfly.
+      if (kudosed) {
+        await evaluateAchievementsForUser(giverId).catch((err: unknown) =>
+          console.error('[achievements] evaluate after kudos failed:', err))
+      }
 
       return response.json({ success: true, kudosed, kudosCount })
     }

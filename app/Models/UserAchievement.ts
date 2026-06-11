@@ -24,6 +24,24 @@ export default defineModel({
   ],
 
   attributes: {
+    // FK columns declared explicitly so ORM writes persist them (snake_case
+    // contract); the columns themselves already come from belongsTo.
+    user_id: {
+      order: 0,
+      fillable: true,
+      validation: {
+        rule: schema.number(),
+      },
+    },
+
+    achievement_id: {
+      order: 0,
+      fillable: true,
+      validation: {
+        rule: schema.number(),
+      },
+    },
+
     progress: {
       order: 1,
       fillable: true,
@@ -36,7 +54,7 @@ export default defineModel({
       factory: (faker) => faker.number.int({ min: 0, max: 100 }),
     },
 
-    completedAt: {
+    completed_at: {
       order: 2,
       fillable: true,
       nullable: true,
@@ -46,7 +64,7 @@ export default defineModel({
       factory: (faker) => faker.datatype.boolean() ? faker.date.recent({ days: 90 }).toISOString() : null,
     },
 
-    isComplete: {
+    is_complete: {
       order: 3,
       fillable: true,
       validation: {

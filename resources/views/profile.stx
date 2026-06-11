@@ -5,10 +5,12 @@
 @section('content')
 <script client>
   import { fetchFollows } from '../assets/scripts/game-api'
+  import { useAchievementCatalog } from '../composables/useAchievementCatalog'
 
   useHead({ title: 'Profile — TrailBuddy' })
 
   const tb = useStore('tb')
+  useAchievementCatalog(tb)
   const activeTab = state<'activities' | 'achievements' | 'saved'>('activities')
   const followerCount = state(0)
 

@@ -4,6 +4,7 @@
 // (GeoJSON LineString / JSON coords) in `gpx_data`; that payload is what the
 // territory engine (claim / process-conquest) later reads. Snake_case keys
 // match the ORM's column-based attributes.
+import { evaluateAchievementsForUser } from '../Achievement/EvaluateAchievementsAction'
 
 const ACTIVITY_TYPES = ['Trail Run', 'Hike', 'Walk', 'Bike']
 
@@ -54,6 +55,10 @@ export default new Action({
         splits: splitsJson,
         completed_at: request.get<string>('completed_at') ?? new Date().toISOString(),
       })
+
+      // Unlock engine hook (#982) — best-effort, never blocks the store.
+      await evaluateAchievementsForUser(userId).catch((err: unknown) =>
+        console.error('[achievements] evaluate after activity failed:', err))
 
       return response.json({
         success: true,

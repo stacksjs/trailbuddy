@@ -539,6 +539,11 @@
       hydrateNotifications(list: Notification[]) {
         this.notifications = list
       },
+      /** Replace achievements with live engine data (#982). */
+      hydrateAchievements(list: Achievement[]) {
+        if (list.length)
+          this.achievements = list
+      },
       /** Reflect a follow/unfollow toggle in the local following list. */
       setFollowing(userId: number, isFollowing: boolean) {
         const has = this.following.includes(userId)
@@ -644,17 +649,9 @@
           )
         }
 
-        const ach = this.achievements.find((a: Achievement) => a.name === 'Conqueror')
-        if (ach && ach.progress < ach.total)
-          ach.progress = Math.min(ach.total, this.conquestStats.totalConquests)
-
-        const empire = this.achievements.find((a: Achievement) => a.name === 'Empire Builder')
-        if (empire) {
-          const owned = this.myTerritories().length
-          empire.progress = owned
-          if (owned >= empire.total && !empire.unlockedAt)
-            empire.unlockedAt = new Date().toISOString()
-        }
+        // Achievement progress is engine-owned (#982): the backend evaluates
+        // unlocks after claim/conquest and the profile re-hydrates from
+        // /api/users/{id}/achievements — no client-side bookkeeping here.
 
         const nextN = Math.max(0, ...this.notifications.map((n: Notification) => n.id)) + 1
         this.notifications.unshift({

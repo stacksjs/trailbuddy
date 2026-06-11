@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS "user_notifications" (
   "recipient_id" INTEGER,
   "actor_id" INTEGER,
   "actor_name" TEXT,
-  "type" TEXT CHECK ("type" IN ('kudos', 'comment', 'follow', 'conquest', 'conquest_attack', 'conquest_defend', 'conquest_win')),
+  "type" TEXT CHECK ("type" IN ('kudos', 'comment', 'follow', 'conquest', 'conquest_attack', 'conquest_defend', 'conquest_win', 'achievement')),
   "body" TEXT,
   "link" TEXT,
   "read" INTEGER,

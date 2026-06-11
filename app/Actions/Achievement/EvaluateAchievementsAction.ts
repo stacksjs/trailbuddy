@@ -1,0 +1,116 @@
+// No imports needed - everything is auto-imported!
+//
+// The achievement unlock engine (#982). `evaluateAchievementsForUser` computes
+// every metric from source-of-truth rows, upserts user_achievements progress,
+// and notifies on fresh unlocks. It runs after the events that can move a
+// metric (activity stored, territory claimed/conquered, kudos given) and is
+// exposed as POST /api/achievements/evaluate for a manual refresh.
+// Achievements never un-unlock: progress can fall (e.g. Empire Builder after
+// losing land) but is_complete/completed_at are sticky once earned.
+
+// eslint-disable-next-line pickier/no-unused-vars -- false positive: userId is used throughout the body
+export async function evaluateAchievementsForUser(userId: number): Promise<{
+  evaluated: number
+  unlocked: Array<{ id: number, name: string }>
+}> {
+  const definitions = (await Achievement.all()) ?? []
+  if (!definitions.length)
+    return { evaluated: 0, unlocked: [] }
+
+  const activities = (await Activity.where('user_id', '=', userId).get()) ?? []
+  const kudosGiven = (await Kudos.where('giver_id', '=', userId).get()) ?? []
+  const stats = await TerritoryStats.where('user_id', '=', userId).first()
+
+  const metricValues: Record<string, number> = {
+    activities: activities.length,
+    distinct_trails: new Set(activities.map((a: any) => a.trail_id).filter(Boolean)).size,
+    total_miles: activities.reduce((sum: number, a: any) => sum + (a.distance ?? 0), 0),
+    total_elevation: activities.reduce((sum: number, a: any) => sum + (a.elevation ?? 0), 0),
+    territories_conquered: stats?.territories_conquered ?? 0,
+    territories_defended: stats?.territories_defended ?? 0,
+    territories_owned: stats?.total_territories_owned ?? 0,
+    kudos_given: kudosGiven.length,
+    streak_days: longestDayStreak(activities.map((a: any) => a.completed_at)),
+    fast_mile: hasSubSevenMile(activities.map((a: any) => a.splits)) ? 1 : 0,
+  }
+
+  const entries = computeAchievementProgress(definitions, metricValues)
+  const existing = (await UserAchievement.where('user_id', '=', userId).get()) ?? []
+  const existingByAchievement = new Map(existing.map((u: any) => [u.achievement_id, u]))
+
+  const unlocked: Array<{ id: number, name: string }> = []
+  for (const entry of entries) {
+    const row = existingByAchievement.get(entry.achievement_id)
+    const wasComplete = !!row?.is_complete
+    const isComplete = wasComplete || entry.is_complete // sticky once earned
+    const freshUnlock = entry.is_complete && !wasComplete
+
+    if (row) {
+      if (row.progress !== entry.progress || !!row.is_complete !== isComplete) {
+        await UserAchievement.forceUpdate(row.id, {
+          progress: entry.progress,
+          is_complete: isComplete,
+          completed_at: row.completed_at ?? (freshUnlock ? new Date().toISOString() : null),
+        })
+      }
+    }
+    else {
+      try {
+        await UserAchievement.forceCreate({
+          user_id: userId,
+          achievement_id: entry.achievement_id,
+          progress: entry.progress,
+          is_complete: isComplete,
+          completed_at: freshUnlock ? new Date().toISOString() : null,
+        })
+      }
+      catch (err) {
+        // Concurrent evaluations can race; the unique index (#972) keeps one row.
+        if (!String(err).includes('UNIQUE constraint failed'))
+          throw err
+      }
+    }
+
+    if (freshUnlock) {
+      const def = definitions.find((d: any) => d.id === entry.achievement_id)
+      unlocked.push({ id: entry.achievement_id, name: def?.name ?? 'Achievement' })
+      try {
+        await UserNotification.forceCreate({
+          recipient_id: userId,
+          actor_id: userId,
+          actor_name: 'TrailBuddy',
+          type: 'achievement',
+          body: `Achievement unlocked: ${def?.icon ?? '🏅'} ${def?.name ?? ''}`.trim(),
+          link: '/profile',
+          read: false,
+        })
+      }
+      catch (err) {
+        console.error('[achievements] unlock notification failed:', err)
+      }
+    }
+  }
+
+  return { evaluated: entries.length, unlocked }
+}
+
+export default new Action({
+  name: 'Evaluate Achievements',
+  description: 'Recompute the acting user\'s achievement progress and unlocks',
+  method: 'POST',
+
+  async handle(request) {
+    const userId = (await Auth.user().catch(() => null))?.id ?? request.get<number>('user_id')
+    if (!userId)
+      return response.json({ success: false, error: 'Authentication required' }, 401)
+
+    try {
+      const result = await evaluateAchievementsForUser(userId)
+      return response.json({ success: true, ...result })
+    }
+    catch (error) {
+      console.error('Error evaluating achievements:', error)
+      return response.json({ success: false, error: 'Failed to evaluate achievements' }, 500)
+    }
+  },
+})

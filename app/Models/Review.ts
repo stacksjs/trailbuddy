@@ -96,7 +96,7 @@ export default defineModel({
       factory: (faker) => faker.lorem.paragraphs(2),
     },
 
-    visitDate: {
+    visit_date: {
       order: 4,
       fillable: true,
       nullable: true,
@@ -116,7 +116,7 @@ export default defineModel({
       factory: (faker): typeof conditions[number] => faker.helpers.arrayElement([...conditions]),
     },
 
-    helpfulCount: {
+    helpful_count: {
       order: 6,
       fillable: true,
       validation: {

@@ -244,6 +244,15 @@ export async function markNotificationsRead(id?: number): Promise<boolean> {
   return res.ok
 }
 
+/** Fetch achievement definitions merged with a user's progress (#982). */
+export async function fetchAchievements(userId: number): Promise<{ achievements: any[], meta: any } | null> {
+  const res = await fetch(`/api/users/${userId}/achievements`)
+  if (!res.ok)
+    return null
+  const json = await res.json()
+  return json?.success ? json : null
+}
+
 /** Fetch a public athlete profile (identity, stats, social counts, recent activities). */
 export async function fetchAthlete(userId: number): Promise<any | null> {
   const res = await fetch(`/api/users/${userId}`)

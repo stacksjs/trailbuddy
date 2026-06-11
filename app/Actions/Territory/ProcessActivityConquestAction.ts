@@ -36,6 +36,7 @@
 //    count — a closed-loop activity legitimately claims first, then gets a
 //    conquest pass.)
 
+import { evaluateAchievementsForUser } from '../Achievement/EvaluateAchievementsAction'
 import { recomputeTerritoryRanks } from './ComputeTerritoryRanksAction'
 import { runTerritoryDecaySweep } from './DecayTerritoriesAction'
 
@@ -342,6 +343,13 @@ export default new Action({
       if (conqueredTerritories.length) {
         await recomputeTerritoryRanks().catch((err: unknown) =>
           console.error('Rank recompute after conquest failed:', err))
+      }
+
+      // Unlock engine hook (#982): conquests/defenses move Conqueror,
+      // Defender and Empire Builder.
+      if (conqueredTerritories.length || defendedTerritories.length) {
+        await evaluateAchievementsForUser(userId).catch((err: unknown) =>
+          console.error('[achievements] evaluate after conquest failed:', err))
       }
 
       return response.json({

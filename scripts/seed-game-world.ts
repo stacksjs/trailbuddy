@@ -88,6 +88,7 @@ async function callAction(action: any, body: Record<string, unknown>): Promise<{
 const db = new Database('database/stacks.sqlite')
 const gameTables = [
   'user_notifications', 'activity_comments', 'kudos', 'follows', 'trail_reviews',
+  'user_achievements', 'achievements',
   'territory_histories', 'territory_stats', 'territories', 'activities', 'users',
 ]
 for (const t of gameTables) {
@@ -293,6 +294,34 @@ for (const [i, trail] of allTrails.entries()) {
 const { recomputeDenormalizedCounters } = await import('../app/Actions/Maintenance/RecomputeCountersAction')
 const counterResult = await recomputeDenormalizedCounters()
 console.log(`✅ trail reviews: ${reviewCount} seeded; counters fixed (${counterResult.activitiesFixed} activities, ${counterResult.trailsFixed} trails)`)
+
+// --- achievements (#982) -----------------------------------------------------
+// The 10 badge definitions the unlock engine evaluates, then an initial
+// evaluation pass for every athlete so the UI shows real progress.
+
+const Achievement = g.Achievement
+const achievementDefs = [
+  { name: 'First Steps', description: 'Complete your first activity', icon: '👟', category: 'exploration', metric: 'activities', target_value: 1, target_unit: 'activities', points: 50, badge_color: 'bronze' },
+  { name: 'Trail Blazer', description: 'Complete 10 different trails', icon: '🔥', category: 'exploration', metric: 'distinct_trails', target_value: 10, target_unit: 'trails', points: 200, badge_color: 'silver' },
+  { name: 'Century Club', description: 'Log 100 total miles', icon: '💯', category: 'distance', metric: 'total_miles', target_value: 100, target_unit: 'miles', points: 500, badge_color: 'gold' },
+  { name: 'King of the Hill', description: 'Gain 50,000 ft of elevation', icon: '⛰️', category: 'elevation', metric: 'total_elevation', target_value: 50000, target_unit: 'feet', points: 500, badge_color: 'gold' },
+  { name: 'Conqueror', description: 'Conquer 5 territories', icon: '⚔️', category: 'exploration', metric: 'territories_conquered', target_value: 5, target_unit: 'territories', points: 300, badge_color: 'emerald' },
+  { name: 'Defender', description: 'Successfully defend 10 times', icon: '🛡️', category: 'exploration', metric: 'territories_defended', target_value: 10, target_unit: 'territories', points: 300, badge_color: 'emerald' },
+  { name: 'Streak Master', description: 'Maintain a 30-day activity streak', icon: '🔥', category: 'streak', metric: 'streak_days', target_value: 30, target_unit: 'days', points: 500, badge_color: 'ruby' },
+  { name: 'Social Butterfly', description: 'Give 50 kudos', icon: '🦋', category: 'social', metric: 'kudos_given', target_value: 50, target_unit: 'kudos', points: 200, badge_color: 'silver' },
+  { name: 'Speed Demon', description: 'Run a sub-7:00 mile on trails', icon: '⚡', category: 'speed', metric: 'fast_mile', target_value: 1, target_unit: 'activities', points: 300, badge_color: 'ruby' },
+  { name: 'Empire Builder', description: 'Own 5 territories at once', icon: '🏰', category: 'exploration', metric: 'territories_owned', target_value: 5, target_unit: 'territories', points: 500, badge_color: 'gold' },
+]
+for (const def of achievementDefs)
+  await Achievement.forceCreate(def)
+
+const { evaluateAchievementsForUser } = await import('../app/Actions/Achievement/EvaluateAchievementsAction')
+let unlockedTotal = 0
+for (const u of users) {
+  const result = await evaluateAchievementsForUser(u.id)
+  unlockedTotal += result.unlocked.length
+}
+console.log(`✅ achievements: ${achievementDefs.length} definitions, ${unlockedTotal} unlocked across ${users.length} athletes`)
 
 // --- final state -----------------------------------------------------------
 

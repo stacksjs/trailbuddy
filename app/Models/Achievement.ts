@@ -2,8 +2,23 @@ import { defineModel } from '@stacksjs/orm'
 import { schema } from '@stacksjs/validation'
 
 const categories = ['distance', 'elevation', 'streak', 'social', 'exploration', 'speed'] as const
-const targetUnits = ['trails', 'miles', 'feet', 'days', 'kudos', 'hours'] as const
+const targetUnits = ['trails', 'miles', 'feet', 'days', 'kudos', 'hours', 'activities', 'territories'] as const
 const badgeColors = ['gold', 'silver', 'bronze', 'emerald', 'ruby'] as const
+
+// What the unlock engine measures (#982) — each key maps to a computable
+// stat in EvaluateAchievementsAction.
+const metrics = [
+  'activities', // total activities logged
+  'distinct_trails', // different trails completed
+  'total_miles', // lifetime distance
+  'total_elevation', // lifetime climbing (ft)
+  'territories_conquered',
+  'territories_defended',
+  'territories_owned', // currently held
+  'kudos_given',
+  'streak_days', // longest consecutive-day activity streak
+  'fast_mile', // any recorded sub-7:00 mile split
+] as const
 
 export default defineModel({
   name: 'Achievement',
@@ -88,7 +103,19 @@ export default defineModel({
       factory: (faker): typeof categories[number] => faker.helpers.arrayElement([...categories]),
     },
 
-    targetValue: {
+    metric: {
+      order: 5,
+      fillable: true,
+      validation: {
+        rule: schema.enum(metrics).required(),
+        message: {
+          required: 'Metric is required',
+        },
+      },
+      factory: (): typeof metrics[number] => 'activities',
+    },
+
+    target_value: {
       order: 5,
       fillable: true,
       validation: {
@@ -100,7 +127,7 @@ export default defineModel({
       factory: (faker) => faker.helpers.arrayElement([10, 25, 50, 100, 30, 7, 14]),
     },
 
-    targetUnit: {
+    target_unit: {
       order: 6,
       fillable: true,
       validation: {
@@ -118,7 +145,7 @@ export default defineModel({
       factory: (faker) => faker.helpers.arrayElement([50, 100, 200, 500, 1000]),
     },
 
-    badgeColor: {
+    badge_color: {
       order: 8,
       fillable: true,
       validation: {

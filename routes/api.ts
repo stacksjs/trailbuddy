@@ -384,6 +384,7 @@ route.get('/territories/map', 'Actions/Territory/GetTerritoriesForMapAction')
 route.get('/territories/leaderboard', 'Actions/Territory/TerritoryLeaderboardAction')
 route.get('/territories/user/{userId}', 'Actions/Territory/UserTerritoriesAction')
 route.get('/users/{id}/follows', 'Actions/Social/UserFollowsAction')
+route.get('/users/{id}/achievements', 'Actions/Achievement/UserAchievementsAction')
 route.get('/users/{id}', 'Actions/Social/AthleteShowAction')
 
 // Writes that act on behalf of a user MUST be authenticated — the acting
@@ -405,6 +406,8 @@ route.group({ middleware: 'auth' }, () => {
   route.post('/trails/{id}/reviews', 'Actions/Trail/TrailReviewStoreAction')
   // Denormalized counter drift repair (#973)
   route.post('/maintenance/recompute-counters', 'Actions/Maintenance/RecomputeCountersAction')
+  // Achievement engine — manual refresh for the session user (#982)
+  route.post('/achievements/evaluate', 'Actions/Achievement/EvaluateAchievementsAction')
   // Social graph — follow/unfollow another athlete
   route.post('/users/{id}/follow', 'Actions/Social/FollowToggleAction')
   // Notifications (recipient = session user)

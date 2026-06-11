@@ -2,6 +2,7 @@
 // names like user_id / gpx_data / area_size). Reads and write keys below use
 // snake_case accordingly; the JSON response keeps camelCase for API consumers.
 
+import { evaluateAchievementsForUser } from '../Achievement/EvaluateAchievementsAction'
 import { recomputeTerritoryRanks } from './ComputeTerritoryRanksAction'
 
 const MIN_TERRITORY_SIZE = 1000
@@ -153,6 +154,10 @@ export default new Action({
       // Holdings changed — refresh persisted leaderboard ranks (#944).
       await recomputeTerritoryRanks().catch((err: unknown) =>
         console.error('Rank recompute after claim failed:', err))
+
+      // Unlock engine hook (#982): owning land moves Empire Builder.
+      await evaluateAchievementsForUser(userId).catch((err: unknown) =>
+        console.error('[achievements] evaluate after claim failed:', err))
 
       return response.json({
         success: true,
