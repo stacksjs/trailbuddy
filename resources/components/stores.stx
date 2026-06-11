@@ -550,6 +550,14 @@
       hydrateSavedTrails(ids: number[]) {
         this.savedTrailIds = ids
       },
+      /** Mirror the backend's recomputed trail rating/review_count (#981). */
+      setTrailRating(trailId: number, rating: number, reviewCount: number) {
+        const t = this.trails.find((x: Trail) => x.id === trailId)
+        if (t) {
+          t.rating = rating
+          t.reviewCount = reviewCount
+        }
+      },
       isTrailSaved(trailId: number): boolean {
         return (this.savedTrailIds ?? []).includes(trailId)
       },

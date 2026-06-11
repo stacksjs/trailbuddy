@@ -244,6 +244,43 @@ export async function markNotificationsRead(id?: number): Promise<boolean> {
   return res.ok
 }
 
+export interface TrailReview {
+  id: number
+  userId: number
+  userName: string
+  rating: number
+  title: string | null
+  content: string
+  conditions: string | null
+  visitDate: string | null
+  createdAt: string
+}
+
+/** Fetch a trail's reviews (author names joined, newest first) (#981). */
+export async function fetchTrailReviews(trailId: number): Promise<TrailReview[] | null> {
+  const res = await fetch(`/api/trails/${trailId}/reviews`)
+  if (!res.ok)
+    return null
+  const json = await res.json()
+  return json?.success ? json.reviews : null
+}
+
+/** Create or update the session user's review of a trail (#981). */
+export async function postTrailReview(trailId: number, payload: { rating: number, content: string, conditions?: string | null, title?: string | null }): Promise<{ success: boolean, review?: any, trail?: { id: number, rating: number, reviewCount: number }, updated?: boolean, error?: string, fields?: Record<string, string> }> {
+  await ensureSession()
+  const res = await fetch(`/api/trails/${trailId}/reviews`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  })
+  try {
+    return await res.json()
+  }
+  catch {
+    return { success: false, error: `HTTP ${res.status}` }
+  }
+}
+
 /** Toggle the session user's saved/bookmark state for a trail (#969). */
 export async function toggleSaveTrail(trailId: number): Promise<{ success: boolean, saved?: boolean }> {
   await ensureSession()

@@ -376,6 +376,7 @@ route.group({ prefix: '/shipping' }, () => {
 
 // Trail catalog (explore map + OSM geometry)
 route.get('/trails', 'Actions/Trail/TrailIndexAction')
+route.get('/trails/{id}/reviews', 'Actions/Trail/TrailReviewIndexAction')
 
 // Public reads — feed, activity detail, territory map/leaderboard/profile, follows.
 route.get('/activities', 'Actions/Activity/ActivityIndexAction')
