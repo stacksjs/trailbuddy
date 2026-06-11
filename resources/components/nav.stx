@@ -5,6 +5,7 @@
     { to: '/territories', label: 'Turf' },
     { to: '/battles', label: 'Battles' },
     { to: '/leaderboard', label: 'Rank' },
+    { to: '/athletes', label: 'Athletes' },
   ])
   const mobileOpen = state(false)
 </script>

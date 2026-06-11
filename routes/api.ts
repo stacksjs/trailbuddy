@@ -384,6 +384,8 @@ route.get('/activities/{id}', 'Actions/Activity/ActivityShowAction')
 route.get('/territories/map', 'Actions/Territory/GetTerritoriesForMapAction')
 route.get('/territories/leaderboard', 'Actions/Territory/TerritoryLeaderboardAction')
 route.get('/territories/user/{userId}', 'Actions/Territory/UserTerritoriesAction')
+// Registered before /users/{id} so 'search' isn't captured as an id (#971).
+route.get('/users/search', 'Actions/Social/UserSearchAction')
 route.get('/users/{id}/follows', 'Actions/Social/UserFollowsAction')
 route.get('/users/{id}/achievements', 'Actions/Achievement/UserAchievementsAction')
 route.get('/users/{id}/saved-trails', 'Actions/Trail/SavedTrailIndexAction')

@@ -6,6 +6,7 @@
 <script client>
   import { createTrailMap, drawTrailRoute, runWhenMapReady, type TrailMapHandle } from '../../composables/useTrailMap'
   import { useActivityEditor } from '../../composables/useActivityEditor'
+  import { useMentions } from '../../composables/useMentions'
   import { fetchActivityDetail, postComment, toggleKudos } from '../../assets/scripts/game-api'
 
   useHead({ title: 'Activity Details — TrailBuddy' })
@@ -22,6 +23,8 @@
 
   const activity = derived(() => tb ? tb.findActivity(activityId) : null)
   const isOwner = derived(() => !!(tb && activity() && activity().user_id === tb.currentUserId()))
+
+  const { mentionMatches, onCommentInput, pickMention, clearMentions, mentionSegments } = useMentions(tb, newComment)
 
   const {
     editing, saving, deleted, confirmingDelete, editorError,
@@ -62,6 +65,7 @@
       const text = newComment().trim()
       if (!text || !tb) return
       newComment.set('')
+      clearMentions()
       const created = await postComment(activityId, tb.currentUserId(), text)
       if (created)
         comments.set([...comments(), created])
@@ -239,7 +243,12 @@
                 <span class="text-sm font-semibold dark:text-white" :text="comment.userName"></span>
                 <span class="text-xs text-gray-400" :text="tb.timeAgo(comment.createdAt)"></span>
               </div>
-              <p class="text-sm text-gray-600 dark:text-slate-400" :text="comment.body"></p>
+              <p class="text-sm text-gray-600 dark:text-slate-400">
+                <template :for="seg in mentionSegments(comment.body)">
+                  <StxLink :if="seg.userId" x-to="'/athlete/' + seg.userId" class="text-emerald-600 font-medium hover:underline" :text="seg.text"></StxLink>
+                  <span :if="!seg.userId" :text="seg.text"></span>
+                </template>
+              </p>
             </div>
           </div>
         </template>
@@ -248,18 +257,29 @@
         </div>
       </div>
 
-      <div class="flex gap-3 pt-4 border-t border-gray-100 dark:border-slate-700">
-        <div class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600 text-xs font-bold shrink-0">Y</div>
-        <div class="flex-1 flex gap-2">
-          <input
-            type="text"
-            x-value="newComment"
-            @input="e => newComment.set(e.target.value)"
-            @keydown.enter="handlers.submitComment()"
-            placeholder="Write a comment..."
-            class="flex-1 px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
-          />
-          <button @click="handlers.submitComment()" class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition">Post</button>
+      <div class="pt-4 border-t border-gray-100 dark:border-slate-700">
+        <!-- @mention autocomplete (#971) — appears while typing "@…" -->
+        <div :if="mentionMatches.length > 0" class="mb-2 ml-11 flex flex-wrap gap-2">
+          <template :for="candidate in mentionMatches">
+            <button
+              @click="pickMention(candidate.name)"
+              class="px-3 py-1.5 text-xs font-medium rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 hover:bg-emerald-100 transition"
+              :text="'@' + candidate.name"></button>
+          </template>
+        </div>
+        <div class="flex gap-3">
+          <div class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600 text-xs font-bold shrink-0">Y</div>
+          <div class="flex-1 flex gap-2">
+            <input
+              type="text"
+              x-value="newComment"
+              @input="onCommentInput($event.target.value)"
+              @keydown.enter="handlers.submitComment()"
+              placeholder="Write a comment... use @ to mention"
+              class="flex-1 px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+            />
+            <button @click="handlers.submitComment()" class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition">Post</button>
+          </div>
         </div>
       </div>
     </div>

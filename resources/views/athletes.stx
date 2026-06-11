@@ -1,0 +1,102 @@
+@extends('layouts/default')
+
+@section('title', 'Find Athletes — TrailBuddy')
+
+@section('content')
+<script client>
+  import { searchAthletes, toggleFollow } from '../assets/scripts/game-api'
+
+  useHead({ title: 'Find Athletes — TrailBuddy' })
+
+  const tb = useStore('tb')
+  const query = state('')
+  const athletes = state<any[]>([])
+  const searching = state(false)
+  const searched = state(false)
+
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+  async function runSearch(q: string) {
+    searching.set(true)
+    const results = await searchAthletes(q)
+    searching.set(false)
+    searched.set(true)
+    athletes.set(results ?? [])
+  }
+
+  function onQueryInput(value: string) {
+    query.set(value)
+    if (debounceTimer) clearTimeout(debounceTimer)
+    debounceTimer = setTimeout(() => { void runSearch(query().trim()) }, 250)
+  }
+
+  // Load the discover list (most active athletes) on first visit.
+  onMount(() => { void runSearch('') })
+
+  async function onFollow(userId: number) {
+    if (!tb || userId === tb.currentUserId()) return
+    const wasFollowing = tb.isFollowing(userId)
+    tb.setFollowing(userId, !wasFollowing) // optimistic
+    const res = await toggleFollow(userId)
+    if (res && res.success) tb.setFollowing(userId, !!res.following)
+    else tb.setFollowing(userId, wasFollowing) // rollback
+  }
+
+  function areaKm2(m2: number): string {
+    return (m2 / 1000000).toFixed(2)
+  }
+</script>
+
+  <div class="mx-auto px-4 py-6 sm:px-6 lg:px-8 max-w-3xl">
+    <div class="mb-6">
+      <h1 class="font-bold text-2xl dark:text-white">Find Athletes</h1>
+      <p class="text-sm text-gray-500 dark:text-slate-400">Search by name, or browse the most active runners</p>
+    </div>
+
+    <div class="relative mb-6">
+      <Icon name="search" size="18" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+      <input
+        type="text"
+        placeholder="Search athletes…"
+        x-value="query"
+        @input="onQueryInput($event.target.value)"
+        class="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+      />
+    </div>
+
+    <div class="space-y-3">
+      <template :for="athlete in athletes">
+        <div class="card flex items-center gap-4">
+          <StxLink x-to="'/athlete/' + athlete.id" class="flex items-center gap-3 flex-1 min-w-0 group">
+            <div class="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 text-lg font-bold shrink-0" :text="athlete.name.charAt(0)"></div>
+            <div class="min-w-0">
+              <p class="font-bold dark:text-white group-hover:text-emerald-600 transition truncate" :text="athlete.name"></p>
+              <p class="text-xs text-gray-500 dark:text-slate-400">
+                <span :text="athlete.activityCount + ' activities'"></span>
+                <span class="mx-1">·</span>
+                <span :text="athlete.followerCount + ' followers'"></span>
+                <span :if="athlete.territoriesOwned > 0" class="mx-1">·</span>
+                <span :if="athlete.territoriesOwned > 0" :text="athlete.territoriesOwned + ' territories (' + areaKm2(athlete.totalAreaOwned) + ' km²)'"></span>
+              </p>
+            </div>
+          </StxLink>
+          <button
+            :if="tb && athlete.id !== tb.currentUserId()"
+            @click="onFollow(athlete.id)"
+            x-class="tb.isFollowing(athlete.id) ? 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'"
+            class="px-4 py-2 font-semibold text-xs rounded-lg transition shrink-0"
+            :text="tb.isFollowing(athlete.id) ? 'Following' : 'Follow'"></button>
+          <span :if="tb && athlete.id === tb.currentUserId()" class="px-3 py-2 text-xs text-gray-400 shrink-0">That's you</span>
+        </div>
+      </template>
+
+      <div :if="searched && !searching && athletes.length === 0" class="py-16 text-center">
+        <div class="w-16 h-16 mx-auto mb-4 bg-emerald-100 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center">
+          <Icon name="search" size="28" class="text-emerald-400" />
+        </div>
+        <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">No athletes found</h3>
+        <p class="text-sm text-gray-500 dark:text-slate-400" x-text="'Nothing matched “' + query + '” — try another name.'"></p>
+      </div>
+    </div>
+  </div>
+@endsection

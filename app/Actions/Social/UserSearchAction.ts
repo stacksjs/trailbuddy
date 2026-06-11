@@ -1,0 +1,56 @@
+// No imports needed - everything is auto-imported!
+//
+// GET /api/users/search?q= — find athletes by name (#971). With a query of
+// 2+ characters it's a case-insensitive LIKE search; with no/shorter query it
+// returns the most active athletes as a discover list. Public read; response
+// includes enough stats to render discover cards without extra calls.
+
+const SEARCH_LIMIT = 20
+
+export default new Action({
+  name: 'User Search',
+  description: 'Search athletes by name (discover list when no query)',
+  method: 'GET',
+
+  async handle(request) {
+    const qRaw = request.get<string>('q')
+    const q = typeof qRaw === 'string' ? qRaw.trim() : ''
+
+    try {
+      const users = q.length >= 2
+        ? (await User.where('name', 'like', `%${q}%`).limit(SEARCH_LIMIT).get()) ?? []
+        : (await User.query().limit(SEARCH_LIMIT).get()) ?? []
+
+      const ids = users.map((u: any) => u.id)
+      const activities = ids.length ? (await Activity.whereIn('user_id', ids).get()) ?? [] : []
+      const stats = ids.length ? (await TerritoryStats.whereIn('user_id', ids).get()) ?? [] : []
+      const followers = ids.length ? (await Follow.whereIn('following_id', ids).get()) ?? [] : []
+
+      const activityCount = new Map<number, number>()
+      for (const a of activities)
+        activityCount.set(a.user_id, (activityCount.get(a.user_id) ?? 0) + 1)
+      const followerCount = new Map<number, number>()
+      for (const f of followers)
+        followerCount.set(f.following_id, (followerCount.get(f.following_id) ?? 0) + 1)
+      const statsByUser = new Map(stats.map((s: any) => [s.user_id, s]))
+
+      const athletes = users
+        .map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          activityCount: activityCount.get(u.id) ?? 0,
+          followerCount: followerCount.get(u.id) ?? 0,
+          territoriesOwned: statsByUser.get(u.id)?.total_territories_owned ?? 0,
+          totalAreaOwned: statsByUser.get(u.id)?.total_area_owned ?? 0,
+        }))
+        // Discover mode surfaces the most active athletes first.
+        .sort((a: any, b: any) => b.activityCount - a.activityCount || b.followerCount - a.followerCount || a.id - b.id)
+
+      return response.json({ success: true, athletes, meta: { total: athletes.length, query: q } })
+    }
+    catch (error) {
+      console.error('[users] search failed:', error)
+      return response.json({ success: false, error: 'Failed to search users' }, 500)
+    }
+  },
+})

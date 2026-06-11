@@ -303,6 +303,24 @@ export async function fetchSavedTrails(userId: number): Promise<{ savedTrails: a
   return json?.success ? json : null
 }
 
+export interface AthleteSearchResult {
+  id: number
+  name: string
+  activityCount: number
+  followerCount: number
+  territoriesOwned: number
+  totalAreaOwned: number
+}
+
+/** Search athletes by name; empty/short query returns a discover list (#971). */
+export async function searchAthletes(q: string): Promise<AthleteSearchResult[] | null> {
+  const res = await fetch(`/api/users/search?q=${encodeURIComponent(q)}`)
+  if (!res.ok)
+    return null
+  const json = await res.json()
+  return json?.success ? json.athletes : null
+}
+
 /** Fetch achievement definitions merged with a user's progress (#982). */
 export async function fetchAchievements(userId: number): Promise<{ achievements: any[], meta: any } | null> {
   const res = await fetch(`/api/users/${userId}/achievements`)
