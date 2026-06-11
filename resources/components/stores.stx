@@ -59,6 +59,8 @@
     splits: Split[]
     kudos_count: number
     comments: Comment[]
+    notes?: string
+    hasGps?: boolean
     created_at: string
   }
 
@@ -502,13 +504,23 @@
       territoryConquests(territoryId: number): Conquest[] {
         return this.conquests.filter((c: Conquest) => c.territory_id === territoryId)
       },
-      addActivity(activity: Omit<Activity, 'id' | 'created_at'>) {
-        const id = Math.max(0, ...this.activities.map((a: Activity) => a.id)) + 1
+      addActivity(activity: Omit<Activity, 'id' | 'created_at'> & { id?: number }) {
+        // Use the backend id when the caller has one (manual entry), otherwise
+        // synthesize a local id (recorder's optimistic insert).
+        const id = activity.id ?? Math.max(0, ...this.activities.map((a: Activity) => a.id)) + 1
         this.activities.unshift({
           ...activity,
           id,
           created_at: new Date().toISOString(),
         } as Activity)
+      },
+      /** Apply an edit returned by PATCH /api/activities/{id}. */
+      patchActivity(id: number, fields: Partial<Activity>) {
+        const a = this.activities.find((x: Activity) => x.id === id)
+        if (a) Object.assign(a, fields)
+      },
+      removeActivity(id: number) {
+        this.activities = this.activities.filter((a: Activity) => a.id !== id)
       },
       toggleKudos(activityId: number, delta: number) {
         const a = this.activities.find((x: Activity) => x.id === activityId)

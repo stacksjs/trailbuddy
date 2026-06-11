@@ -392,6 +392,8 @@ route.get('/users/{id}', 'Actions/Social/AthleteShowAction')
 route.group({ middleware: 'auth' }, () => {
   // Activities
   route.post('/activities', 'Actions/Activity/ActivityStoreAction')
+  route.patch('/activities/{id}', 'Actions/Activity/ActivityUpdateAction')
+  route.delete('/activities/{id}', 'Actions/Activity/ActivityDestroyAction')
   route.post('/activities/{id}/kudos', 'Actions/Activity/KudosToggleAction')
   route.post('/activities/{id}/comments', 'Actions/Activity/ActivityCommentStoreAction')
   // Territory game — claim land by running closed loops, conquer others' turf

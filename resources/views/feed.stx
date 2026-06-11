@@ -5,11 +5,18 @@
 @section('content')
 <script client>
   import { routePreviewDataUri } from '../composables/useRoutePreview'
+  import { useManualActivity } from '../composables/useManualActivity'
   import { toggleFollow, toggleKudos } from '../assets/scripts/game-api'
 
   useHead({ title: 'Activity Feed — TrailBuddy' })
 
   const tb = useStore('tb')
+
+  const {
+    manualOpen, submitting, manualError,
+    mType, mDistance, mDuration, mElevation, mTrailId, mDate, mNotes,
+    openManualEntry, closeManualEntry, submitManualEntry,
+  } = useManualActivity(tb)
   const filter = state<'all' | 'Trail Run' | 'Hike' | 'Walk' | 'Bike'>('all')
   const scope = state<'all' | 'following'>('all')
   const kudosed = state<Record<number, boolean>>({})
@@ -66,7 +73,10 @@
         <h1 class="font-bold text-2xl dark:text-white">Activity Feed</h1>
         <p class="text-sm text-gray-500 dark:text-slate-400">Runs, kudos, and conquest highlights</p>
       </div>
-      <StxLink to="/record" class="px-4 py-2 font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition">Capture run</StxLink>
+      <div class="flex items-center gap-2">
+        <button @click="openManualEntry()" class="px-4 py-2 font-semibold text-sm text-emerald-700 dark:text-emerald-400 border border-emerald-600/40 hover:border-emerald-600 rounded-lg transition">Log activity</button>
+        <StxLink to="/record" class="px-4 py-2 font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition">Capture run</StxLink>
+      </div>
     </div>
 
     <div :if="tb && tb.liveConquests().length > 0" class="mb-6 p-4 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800/40 rounded-xl">
@@ -168,6 +178,67 @@
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No activities yet</h3>
         <p class="text-gray-500 dark:text-slate-400 max-w-sm mx-auto mb-6">Your feed is empty. Head outside and record your first trail run!</p>
         <StxLink to="/record" class="px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Record Activity</StxLink>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual entry modal (#955) -->
+  <div :if="manualOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div @click="closeManualEntry()" class="absolute inset-0 bg-black/40"></div>
+    <div class="relative w-full max-w-md card">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-bold text-lg dark:text-white">Log an activity</h2>
+        <button @click="closeManualEntry()" class="text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 text-xl leading-none">×</button>
+      </div>
+      <div class="space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Type</label>
+            <select x-value="mType" @change="mType.set($event.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm">
+              <option value="Trail Run">Trail Run</option>
+              <option value="Hike">Hike</option>
+              <option value="Walk">Walk</option>
+              <option value="Bike">Bike</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Date</label>
+            <input type="date" x-value="mDate" @input="mDate.set($event.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm" />
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Miles</label>
+            <input type="text" inputmode="decimal" placeholder="5.2" x-value="mDistance" @input="mDistance.set($event.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Duration</label>
+            <input type="text" placeholder="45:30" x-value="mDuration" @input="mDuration.set($event.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Elev (ft)</label>
+            <input type="text" inputmode="numeric" placeholder="350" x-value="mElevation" @input="mElevation.set($event.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Trail (optional)</label>
+          <select @change="mTrailId.set($event.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm">
+            <option value="">No trail</option>
+            <template :for="trail in tb.trails()">
+              <option x-value="trail.id" x-selected="String(trail.id) === mTrailId" x-text="trail.name"></option>
+            </template>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Notes</label>
+          <textarea rows="2" placeholder="How did it go?" x-value="mNotes" @input="mNotes.set($event.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm"></textarea>
+        </div>
+        <p :if="manualError" class="text-sm text-red-500" :text="manualError"></p>
+        <div class="flex gap-2 pt-1">
+          <button @click="submitManualEntry()" class="flex-1 px-4 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition" :text="submitting ? 'Saving…' : 'Log activity'"></button>
+          <button @click="closeManualEntry()" class="px-4 py-2.5 text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 transition">Cancel</button>
+        </div>
+        <p class="text-xs text-gray-400">Manual entries don't capture territory — record with GPS to claim ground.</p>
       </div>
     </div>
   </div>

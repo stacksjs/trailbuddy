@@ -64,6 +64,7 @@ export default new Action({
           splits: parseSplits(a.splits),
           kudosCount: a.kudos_count ?? 0,
           notes: a.notes,
+          hasGps: !!a.gpx_data,
           completedAt: a.completed_at,
           createdAt: a.created_at,
           route,

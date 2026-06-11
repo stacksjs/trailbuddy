@@ -5,6 +5,7 @@
 @section('content')
 <script client>
   import { createTrailMap, drawTrailRoute, runWhenMapReady, type TrailMapHandle } from '../../composables/useTrailMap'
+  import { useActivityEditor } from '../../composables/useActivityEditor'
   import { fetchActivityDetail, postComment, toggleKudos } from '../../assets/scripts/game-api'
 
   useHead({ title: 'Activity Details — TrailBuddy' })
@@ -20,6 +21,13 @@
   )
 
   const activity = derived(() => tb ? tb.findActivity(activityId) : null)
+  const isOwner = derived(() => !!(tb && activity() && activity().user_id === tb.currentUserId()))
+
+  const {
+    editing, saving, deleted, confirmingDelete, editorError,
+    formType, formNotes, formDistance, formDuration, formElevation,
+    openEditor, closeEditor, saveEdit, deleteRun, cancelDelete,
+  } = useActivityEditor(tb)
 
   // Hydrate real comments from the API on load (falls back to whatever the
   // store activity already carries).
@@ -29,6 +37,10 @@
       comments.set(detail.comments)
     else if (activity()?.comments)
       comments.set(activity().comments)
+    // The API is authoritative for GPS-lock + notes (persisted store copies
+    // from before #954 don't carry them).
+    if (detail && tb && typeof detail.hasGps === 'boolean')
+      tb.patchActivity(activityId, { hasGps: detail.hasGps, notes: detail.notes ?? '' })
   })
 
   const handlers = {
@@ -93,10 +105,64 @@
             </p>
           </div>
         </div>
+        <div :if="isOwner" class="flex items-center gap-2">
+          <button
+            @click="editing ? closeEditor() : openEditor(activity)"
+            class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-600 transition"
+            :text="editing ? 'Close' : 'Edit'"></button>
+          <button
+            :if="confirmingDelete"
+            @click="cancelDelete()"
+            class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 transition">Keep it</button>
+          <button
+            @click="deleteRun(activity)"
+            x-class="confirmingDelete ? 'bg-red-600 text-white border-red-600' : 'border-gray-200 dark:border-slate-600 text-red-500 hover:border-red-400'"
+            class="px-3 py-1.5 text-xs font-semibold rounded-lg border transition"
+            :text="confirmingDelete ? 'Confirm delete' : 'Delete'"></button>
+        </div>
       </div>
 
       <h1 class="text-2xl font-bold dark:text-white mb-2" :text="activity.title"></h1>
       <StxLink :if="activity.trail_id" x-to="'/trail/' + activity.trail_id" class="text-sm text-emerald-600 hover:underline" :text="'→ ' + activity.trail_name"></StxLink>
+      <p :if="activity.notes && !editing" class="mt-3 text-sm text-gray-600 dark:text-slate-300" :text="activity.notes"></p>
+      <p :if="editorError && !editing" class="mt-2 text-sm text-red-500" :text="editorError"></p>
+
+      <!-- Owner edit panel (#954) -->
+      <div :if="editing" class="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700 space-y-3">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Type</label>
+            <select x-value="formType" @change="e => formType.set(e.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm">
+              <option value="Trail Run">Trail Run</option>
+              <option value="Hike">Hike</option>
+              <option value="Walk">Walk</option>
+              <option value="Bike">Bike</option>
+            </select>
+          </div>
+          <div :if="!activity.hasGps">
+            <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Miles</label>
+            <input type="text" inputmode="decimal" x-value="formDistance" @input="e => formDistance.set(e.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm" />
+          </div>
+          <div :if="!activity.hasGps">
+            <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Duration</label>
+            <input type="text" placeholder="45:30" x-value="formDuration" @input="e => formDuration.set(e.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm" />
+          </div>
+          <div :if="!activity.hasGps">
+            <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Elev (ft)</label>
+            <input type="text" inputmode="numeric" x-value="formElevation" @input="e => formElevation.set(e.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Notes</label>
+          <textarea rows="2" x-value="formNotes" @input="e => formNotes.set(e.target.value)" placeholder="How did it go?" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm"></textarea>
+        </div>
+        <p :if="activity.hasGps" class="text-xs text-gray-400">Distance, time and elevation come from the GPS track and can't be edited.</p>
+        <p :if="editorError" class="text-sm text-red-500" :text="editorError"></p>
+        <div class="flex gap-2">
+          <button @click="saveEdit(activity)" class="px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition" :text="saving ? 'Saving…' : 'Save changes'"></button>
+          <button @click="closeEditor()" class="px-4 py-2 text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-700 transition">Cancel</button>
+        </div>
+      </div>
     </div>
 
     <!-- Map -->
@@ -199,7 +265,13 @@
     </div>
   </div>
 
-  <div :if="!activity" class="text-center py-32">
+  <div :if="deleted" class="text-center py-32">
+    <p class="text-gray-900 dark:text-white font-semibold mb-1">Activity deleted</p>
+    <p class="text-gray-500 dark:text-slate-400 text-sm">Its kudos and comments are gone too. Territory you captured stays yours.</p>
+    <StxLink to="/feed" class="inline-block mt-4 px-6 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Back to Feed</StxLink>
+  </div>
+
+  <div :if="!activity && !deleted" class="text-center py-32">
     <p class="text-gray-500 font-medium">Activity not found</p>
     <StxLink to="/feed" class="inline-block mt-4 px-6 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Back to Feed</StxLink>
   </div>

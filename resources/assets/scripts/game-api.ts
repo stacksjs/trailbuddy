@@ -111,6 +111,7 @@ export interface ActivityPayload {
   gpx_data?: string | null
   /** Per-mile splits computed from the GPS samples (#952). */
   splits?: Array<{ mile: number, pace: string, elev: number }>
+  notes?: string
   completed_at?: string
 }
 
@@ -126,6 +127,45 @@ export async function createActivity(payload: ActivityPayload): Promise<CreatedA
     return null
   const json = await res.json()
   return json?.activity ?? null
+}
+
+export interface ActivityUpdatePayload {
+  activity_type?: string
+  notes?: string | null
+  trail_id?: number | null
+  // Measured fields — the API only accepts these for manual (non-GPS) entries.
+  distance?: number
+  duration?: string
+  moving_time?: string
+  pace?: string
+  elevation?: number
+  completed_at?: string
+}
+
+/** Edit an activity (owner only). Returns { success, activity?, error? }. */
+export async function updateActivity(activityId: number, payload: ActivityUpdatePayload): Promise<{ success: boolean, activity?: any, error?: string }> {
+  await ensureSession()
+  const res = await fetch(`/api/activities/${activityId}`, {
+    method: 'PATCH',
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  })
+  try {
+    return await res.json()
+  }
+  catch {
+    return { success: false, error: `HTTP ${res.status}` }
+  }
+}
+
+/** Delete an activity (owner only). Kudos/comments cascade; territory stays. */
+export async function deleteActivity(activityId: number): Promise<boolean> {
+  await ensureSession()
+  const res = await fetch(`/api/activities/${activityId}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  })
+  return res.ok
 }
 
 export interface ActivityComment {

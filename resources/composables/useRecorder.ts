@@ -459,6 +459,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
         splits,
         kudos_count: 0,
         comments: [],
+        hasGps: true,
       })
     }
     mode.set('idle')

@@ -27,6 +27,8 @@ interface ApiActivity {
   calories: number
   kudosCount: number
   splits?: Array<{ mile: number, pace: string, elev: number }>
+  notes?: string | null
+  hasGps?: boolean
   completedAt: string | null
   createdAt: string | null
 }
@@ -70,6 +72,8 @@ export function useActivityCatalog(tb: ActivityStoreLike | null) {
         splits: Array.isArray(a.splits) ? a.splits : [],
         kudos_count: a.kudosCount ?? 0,
         comments: [],
+        notes: a.notes ?? '',
+        hasGps: a.hasGps ?? false,
         created_at: a.createdAt ?? a.completedAt ?? new Date().toISOString(),
       }))
 
