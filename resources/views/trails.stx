@@ -5,6 +5,7 @@
 @section('content')
 <script client>
   import { catalogError, catalogLoading, catalogSource } from '../composables/useTrailCatalog'
+  import { useSavedTrails } from '../composables/useSavedTrails'
   import {
     createTrailMap,
     drawTrailMarker,
@@ -17,6 +18,7 @@
   useHead({ title: 'Explore Trails — TrailBuddy' })
 
   const tb = useStore('tb')
+  const { onToggleSave } = useSavedTrails(tb)
   const search = state('')
   const difficulty = state<'all' | 'easy' | 'moderate' | 'hard'>('all')
   const selectedTrailId = state<number | null>(null)
@@ -166,6 +168,13 @@
             <div class="absolute left-3 top-3">
               <span x-class="'px-2 py-1 capitalize font-semibold text-xs rounded-full difficulty-' + trail.difficulty" :text="trail.difficulty"></span>
             </div>
+            <button
+              @click.stop.prevent="onToggleSave(trail.id)"
+              x-class="tb.isTrailSaved(trail.id) ? 'bg-red-500 text-white' : 'bg-black/30 text-white hover:bg-black/50'"
+              class="absolute right-3 top-3 p-2 rounded-full backdrop-blur-sm transition"
+              x-aria-label="tb.isTrailSaved(trail.id) ? 'Unsave trail' : 'Save trail'">
+              <Icon name="heart" size="16" />
+            </button>
           </div>
           <div class="p-4">
             <div class="flex items-start justify-between mb-1">

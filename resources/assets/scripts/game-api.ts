@@ -244,6 +244,28 @@ export async function markNotificationsRead(id?: number): Promise<boolean> {
   return res.ok
 }
 
+/** Toggle the session user's saved/bookmark state for a trail (#969). */
+export async function toggleSaveTrail(trailId: number): Promise<{ success: boolean, saved?: boolean }> {
+  await ensureSession()
+  const res = await fetch(`/api/trails/${trailId}/save`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({}),
+  })
+  if (!res.ok)
+    return { success: false }
+  return res.json()
+}
+
+/** Fetch a user's saved trails (with trail summaries) (#969). */
+export async function fetchSavedTrails(userId: number): Promise<{ savedTrails: any[] } | null> {
+  const res = await fetch(`/api/users/${userId}/saved-trails`)
+  if (!res.ok)
+    return null
+  const json = await res.json()
+  return json?.success ? json : null
+}
+
 /** Fetch achievement definitions merged with a user's progress (#982). */
 export async function fetchAchievements(userId: number): Promise<{ achievements: any[], meta: any } | null> {
   const res = await fetch(`/api/users/${userId}/achievements`)

@@ -24,6 +24,24 @@ export default defineModel({
   ],
 
   attributes: {
+    // FK columns declared explicitly so ORM writes persist them (snake_case
+    // contract); the columns themselves already come from belongsTo.
+    user_id: {
+      order: 0,
+      fillable: true,
+      validation: {
+        rule: schema.number(),
+      },
+    },
+
+    trail_id: {
+      order: 0,
+      fillable: true,
+      validation: {
+        rule: schema.number(),
+      },
+    },
+
     notes: {
       order: 1,
       fillable: true,
@@ -34,7 +52,7 @@ export default defineModel({
       factory: (faker) => faker.lorem.sentence(),
     },
 
-    wantToVisit: {
+    want_to_visit: {
       order: 2,
       fillable: true,
       validation: {
@@ -43,7 +61,7 @@ export default defineModel({
       factory: (faker) => faker.datatype.boolean(),
     },
 
-    hasVisited: {
+    has_visited: {
       order: 3,
       fillable: true,
       validation: {

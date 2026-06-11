@@ -385,6 +385,7 @@ route.get('/territories/leaderboard', 'Actions/Territory/TerritoryLeaderboardAct
 route.get('/territories/user/{userId}', 'Actions/Territory/UserTerritoriesAction')
 route.get('/users/{id}/follows', 'Actions/Social/UserFollowsAction')
 route.get('/users/{id}/achievements', 'Actions/Achievement/UserAchievementsAction')
+route.get('/users/{id}/saved-trails', 'Actions/Trail/SavedTrailIndexAction')
 route.get('/users/{id}', 'Actions/Social/AthleteShowAction')
 
 // Writes that act on behalf of a user MUST be authenticated — the acting
@@ -425,6 +426,8 @@ route.group({ middleware: 'auth' }, () => {
     route.post('/activities/{id}/comments', 'Actions/Activity/ActivityCommentStoreAction')
     // Trail reviews — one per user per trail, upserts (#972/#973)
     route.post('/trails/{id}/reviews', 'Actions/Trail/TrailReviewStoreAction')
+    // Saved trails — bookmark toggle, deduped per user+trail (#969)
+    route.post('/trails/{id}/save', 'Actions/Trail/SavedTrailToggleAction')
     // Social graph — follow/unfollow another athlete
     route.post('/users/{id}/follow', 'Actions/Social/FollowToggleAction')
     // Notifications (recipient = session user)

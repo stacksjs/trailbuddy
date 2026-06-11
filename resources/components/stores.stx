@@ -443,6 +443,8 @@
       /** GPS samples inside enemy polygons this session (territory id → count). */
       captureSamples: {} as Record<number, number>,
       sessionXp: 0,
+      /** Trail ids the current user has saved (hydrated from the API, #969). */
+      savedTrailIds: [] as number[],
       /** User ids the current user follows (hydrated from /api/users/{id}/follows). */
       following: [] as number[],
     }),
@@ -543,6 +545,20 @@
       hydrateAchievements(list: Achievement[]) {
         if (list.length)
           this.achievements = list
+      },
+      /** Replace saved trail ids with live data (#969). */
+      hydrateSavedTrails(ids: number[]) {
+        this.savedTrailIds = ids
+      },
+      isTrailSaved(trailId: number): boolean {
+        return (this.savedTrailIds ?? []).includes(trailId)
+      },
+      setTrailSaved(trailId: number, saved: boolean) {
+        const has = (this.savedTrailIds ?? []).includes(trailId)
+        if (saved && !has)
+          this.savedTrailIds = [...(this.savedTrailIds ?? []), trailId]
+        else if (!saved && has)
+          this.savedTrailIds = (this.savedTrailIds ?? []).filter((id: number) => id !== trailId)
       },
       /** Reflect a follow/unfollow toggle in the local following list. */
       setFollowing(userId: number, isFollowing: boolean) {
@@ -676,6 +692,6 @@
 
     // v3: territory status vocabulary changed 'secure' -> 'active' (#942);
     // older persisted snapshots would resurrect the dead enum value.
-    persist: { key: 'trailbuddy-tb-v3' },
+    persist: { key: 'trailbuddy-tb-v4' },
   })
 </script>

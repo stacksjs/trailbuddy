@@ -88,7 +88,7 @@ async function callAction(action: any, body: Record<string, unknown>): Promise<{
 const db = new Database('database/stacks.sqlite')
 const gameTables = [
   'user_notifications', 'activity_comments', 'kudos', 'follows', 'trail_reviews',
-  'user_achievements', 'achievements',
+  'user_achievements', 'achievements', 'saved_trails',
   'territory_histories', 'territory_stats', 'territories', 'activities', 'users',
 ]
 for (const t of gameTables) {
@@ -322,6 +322,22 @@ for (const u of users) {
   unlockedTotal += result.unlocked.length
 }
 console.log(`✅ achievements: ${achievementDefs.length} definitions, ${unlockedTotal} unlocked across ${users.length} athletes`)
+
+// --- saved trails (#969) -----------------------------------------------------
+// "You" bookmarks a few trails so the profile's Saved tab has DB-backed data.
+
+const SavedTrail = g.SavedTrail
+const savedPlan = allTrails.slice(0, 3)
+for (const [i, trail] of savedPlan.entries()) {
+  await SavedTrail.forceCreate({
+    user_id: users[0].id,
+    trail_id: trail.id,
+    notes: null,
+    want_to_visit: i !== 0,
+    has_visited: i === 0,
+  })
+}
+console.log(`✅ saved trails: ${savedPlan.length} for ${users[0].name}`)
 
 // --- final state -----------------------------------------------------------
 

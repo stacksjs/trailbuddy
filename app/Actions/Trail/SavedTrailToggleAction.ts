@@ -1,0 +1,66 @@
+// No imports needed - everything is auto-imported!
+//
+// POST /api/trails/{id}/save — toggle the session user's saved/bookmarked
+// state for a trail (#969). Idempotent: save if absent, unsave if present;
+// the (user_id, trail_id) unique index (#972) makes a concurrent double-tap
+// resolve to "already saved" instead of a duplicate row.
+
+export default new Action({
+  name: 'Saved Trail Toggle',
+  description: 'Save or unsave a trail for the acting user',
+  method: 'POST',
+
+  async handle(request) {
+    const trailId = positiveInt(request.get('id') ?? request.get('trail_id'))
+    // Saver from the authenticated session (route is behind `auth`); body
+    // fallback is for the in-process harness only.
+    const userId = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('user_id'))
+
+    // Field validation (#977).
+    if (!userId)
+      return response.json({ success: false, error: 'Authentication required' }, 401)
+    if (!trailId)
+      return response.json({ success: false, error: 'Validation failed', fields: { trail_id: 'required: a positive integer trail id' } }, 422)
+
+    try {
+      const trail = await Trail.find(trailId)
+      if (!trail)
+        return response.json({ success: false, error: 'Trail not found' }, 404)
+
+      const existing = await SavedTrail
+        .where('user_id', '=', userId)
+        .where('trail_id', '=', trailId)
+        .first()
+
+      let saved: boolean
+      if (existing) {
+        await SavedTrail.delete(existing.id)
+        saved = false
+      }
+      else {
+        saved = true
+        try {
+          await SavedTrail.forceCreate({
+            user_id: userId,
+            trail_id: trailId,
+            notes: null,
+            want_to_visit: true,
+            has_visited: false,
+          })
+        }
+        catch (err) {
+          // Concurrent double-tap raced the existence check; the unique
+          // index (#972) kept one row — the trail is saved either way.
+          if (!String(err).includes('UNIQUE constraint failed'))
+            throw err
+        }
+      }
+
+      return response.json({ success: true, saved })
+    }
+    catch (error) {
+      console.error('Error toggling saved trail:', error)
+      return response.json({ success: false, error: 'Failed to toggle saved trail' }, 500)
+    }
+  },
+})

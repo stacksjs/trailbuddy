@@ -5,11 +5,12 @@
 @section('content')
 <script client>
   import { createTrailMap, drawTrailRoute, runWhenMapReady, type TrailMapHandle } from '../../composables/useTrailMap'
+  import { useSavedTrails } from '../../composables/useSavedTrails'
 
   useHead({ title: 'Trail Details — TrailBuddy' })
 
   const tb = useStore('tb')
-  const saved = state(false)
+  const { onToggleSave } = useSavedTrails(tb)
   const reviewTab = state<'reviews' | 'conditions'>('reviews')
   let detailMap: TrailMapHandle | null = null
 
@@ -21,6 +22,7 @@
   })
 
   const trail = derived(() => tb ? tb.trails().find((t: any) => t.id === trailId()) ?? null : null)
+  const saved = derived(() => !!(tb && tb.isTrailSaved(trailId())))
   const reviews = derived(() => tb ? tb.reviews().filter((r: any) => r.trail_id === trailId()) : [])
   const segments = derived(() => tb ? tb.segments().filter((s: any) => s.trail_id === trailId()) : [])
 
@@ -77,7 +79,7 @@
           <p class="text-white/70" x-text="trail.location"></p>
         </div>
         <div class="flex gap-2">
-          <button @click="saved.set(!saved())" class="p-3 rounded-xl backdrop-blur-sm transition" x-class="saved ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'">
+          <button @click="onToggleSave(trailId())" class="p-3 rounded-xl backdrop-blur-sm transition" x-class="saved ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'" x-aria-label="saved ? 'Unsave trail' : 'Save trail'">
             <Icon name="heart" size="20" />
           </button>
           <StxLink to="/record" class="px-5 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition">Start</StxLink>

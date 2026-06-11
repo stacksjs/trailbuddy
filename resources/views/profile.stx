@@ -6,11 +6,13 @@
 <script client>
   import { fetchFollows } from '../assets/scripts/game-api'
   import { useAchievementCatalog } from '../composables/useAchievementCatalog'
+  import { useSavedTrails } from '../composables/useSavedTrails'
 
   useHead({ title: 'Profile — TrailBuddy' })
 
   const tb = useStore('tb')
   useAchievementCatalog(tb)
+  const { onToggleSave } = useSavedTrails(tb)
   const activeTab = state<'activities' | 'achievements' | 'saved'>('activities')
   const followerCount = state(0)
 
@@ -20,6 +22,7 @@
   const followingCount = derived(() => tb ? tb.following().length : 0)
   const myActivities = derived(() => tb ? tb.activities().filter((a: any) => a.user_id === tb.currentUserId()) : [])
   const achievements = derived(() => tb ? tb.achievements() : [])
+  const savedTrails = derived(() => tb ? tb.trails().filter((t: any) => tb.isTrailSaved(t.id)) : [])
 
   onMount(async () => {
     if (!tb) return
@@ -128,7 +131,29 @@
     </div>
 
     <!-- Saved -->
-    <div :if="activeTab === 'saved'" class="py-16 text-center">
+    <div :if="activeTab === 'saved' && savedTrails.length > 0" class="grid gap-4 grid-cols-1 sm:grid-cols-2">
+      <template :for="trail in savedTrails">
+        <div class="card flex items-center gap-4 hover:shadow-lg transition">
+          <StxLink x-to="'/trail/' + trail.id" class="flex-1 min-w-0 group">
+            <h3 class="font-bold text-gray-900 dark:text-white group-hover:text-emerald-600 transition truncate" :text="trail.name"></h3>
+            <p class="text-sm text-gray-500 dark:text-slate-400 truncate" :text="trail.location"></p>
+            <div class="flex gap-3 items-center mt-2 text-xs text-gray-500 dark:text-slate-400">
+              <span class="capitalize" x-class="'px-2 py-0.5 font-semibold rounded-full difficulty-' + trail.difficulty" :text="trail.difficulty"></span>
+              <span :text="trail.distance + ' mi'"></span>
+              <span class="flex items-center gap-1">
+                <Icon name="star" size="12" class="text-yellow-400" />
+                <span :text="trail.rating || '—'"></span>
+              </span>
+            </div>
+          </StxLink>
+          <button @click="onToggleSave(trail.id)" class="p-2.5 rounded-xl bg-red-500 text-white transition hover:bg-red-600 shrink-0" aria-label="Unsave trail">
+            <Icon name="heart" size="16" />
+          </button>
+        </div>
+      </template>
+    </div>
+
+    <div :if="activeTab === 'saved' && savedTrails.length === 0" class="py-16 text-center">
       <div class="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900/20 rounded-2xl flex items-center justify-center">
         <Icon name="heart" size="32" class="text-red-400" />
       </div>
