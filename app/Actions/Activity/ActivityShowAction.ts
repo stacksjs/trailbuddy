@@ -30,6 +30,15 @@ export default new Action({
       if (!a)
         return response.json({ success: false, error: 'Activity not found' }, 404)
 
+      // Visibility gate (#957): viewer from the session token; harness fallback
+      // (viewer_id) is null over real HTTP so it can't be spoofed.
+      const viewerId = (await Auth.user().catch(() => null))?.id ?? harnessFallbackUserId(request, 'viewer_id')
+      const viewerFollowing = viewerId !== null
+        ? new Set(((await Follow.where('follower_id', '=', viewerId).get()) ?? []).map((f: any) => f.following_id))
+        : new Set<number>()
+      if (!canViewActivity(a, viewerId, viewerFollowing))
+        return response.json({ success: false, error: 'This activity is private' }, 403)
+
       // gpx_data is a GeoJSON LineString / JSON coords string; parse to [{lat,lng}].
       const route = a.gpx_data ? parseGpsData(a.gpx_data) : []
 
@@ -65,6 +74,7 @@ export default new Action({
           kudosCount: a.kudos_count ?? 0,
           notes: a.notes,
           hasGps: !!a.gpx_data,
+          visibility: a.visibility ?? 'public',
           completedAt: a.completed_at,
           createdAt: a.created_at,
           route,

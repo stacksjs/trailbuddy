@@ -13,6 +13,7 @@ export { extractMentionQuery, mentionCandidates, applyMention, parseMentions } f
 export type { MentionUser, MentionSegment } from '../../../resources/functions/mentions'
 export { totalElevationGainFt, computeSplitsFromSamples, ELEVATION_NOISE_FLOOR_FT, METERS_TO_FEET } from '../../../resources/functions/splits'
 export type { RecorderSample, MileSplit } from '../../../resources/functions/splits'
+export { canViewActivity } from '../../../resources/functions/visibility'
 export { isDark, toggleDark, preferredDark } from '../../../resources/functions/dark'
 export { positiveInt, boundedNumber, boundedString, durationString } from '../../../resources/functions/validate'
 export type { FieldErrors } from '../../../resources/functions/validate'

@@ -134,5 +134,16 @@ export default defineModel({
       },
       factory: (faker) => faker.number.int({ min: 1, max: 500 }),
     },
+
+    // Persisted lifetime XP (#947), accumulated server-side on claim/conquest/
+    // defend so it survives refresh and can rank a leaderboard.
+    xp: {
+      order: 11,
+      fillable: true,
+      validation: {
+        rule: schema.number().min(0),
+      },
+      factory: (faker) => faker.number.int({ min: 0, max: 5000 }),
+    },
   },
 })

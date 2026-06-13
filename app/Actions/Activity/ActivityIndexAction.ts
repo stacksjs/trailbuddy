@@ -33,10 +33,19 @@ export default new Action({
     const page = readPageParams(request, { defaultLimit: 100, maxLimit: 500 })
 
     try {
+      // The viewer (who's asking) drives visibility (#957) — from the session
+      // token; the harness fallback (viewer_id) is null over real HTTP so it
+      // can't be spoofed. `user_id` above is the profile filter, not the viewer.
+      const viewerId = (await Auth.user().catch(() => null))?.id ?? harnessFallbackUserId(request, 'viewer_id')
+      const viewerFollowing = viewerId !== null
+        ? new Set(((await Follow.where('follower_id', '=', viewerId).get()) ?? []).map((f: any) => f.following_id))
+        : new Set<number>()
+
       const query = userId
         ? Activity.where('user_id', '=', userId)
         : Activity.query()
-      const rows = (await query.orderBy('completed_at', 'desc').get()) ?? []
+      const allRows = (await query.orderBy('completed_at', 'desc').get()) ?? []
+      const rows = allRows.filter((a: any) => canViewActivity(a, viewerId, viewerFollowing))
 
       // Batch-load owners + trails so the feed gets names without N+1 lookups.
       const userIds = [...new Set(rows.map((a: any) => a.user_id).filter(Boolean))]
@@ -66,6 +75,7 @@ export default new Action({
           kudosCount: a.kudos_count ?? 0,
           notes: a.notes,
           hasGps: !!a.gpx_data,
+          visibility: a.visibility ?? 'public',
           completedAt: a.completed_at,
           createdAt: a.created_at,
         }

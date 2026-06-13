@@ -60,6 +60,7 @@
     kudos_count: number
     comments: Comment[]
     notes?: string
+    visibility?: string
     hasGps?: boolean
     created_at: string
   }

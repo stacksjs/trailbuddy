@@ -109,6 +109,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
   const recording = state(false)
   const paused = state(false)
   const activityType = state<ActivityType>('Trail Run')
+  const visibility = state('public')
   const mode = state<RecordMode>('idle')
   const elapsed = state(0)
   const distance = state(0)
@@ -391,6 +392,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
         elevation: elevation(),
         gpx_data: routeToGeoJson(routeSnapshot),
         splits: metrics.splits,
+        visibility: visibility(),
         completed_at: new Date().toISOString(),
       })
       const message = runResultMessage(result)
@@ -459,6 +461,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
         splits,
         kudos_count: 0,
         comments: [],
+        visibility: visibility(),
         hasGps: true,
       })
     }
@@ -547,6 +550,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     recording,
     paused,
     activityType,
+    visibility,
     mode,
     elapsed,
     distance,

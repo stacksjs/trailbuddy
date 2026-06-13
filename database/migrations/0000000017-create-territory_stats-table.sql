@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS "territory_stats" (
   "largest_territory_area" REAL,
   "weekly_rank" INTEGER,
   "all_time_rank" INTEGER,
+  "xp" INTEGER,
   "created_at" TEXT not null default CURRENT_TIMESTAMP,
   "updated_at" TEXT,
   "uuid" TEXT

@@ -29,6 +29,7 @@ interface ApiActivity {
   splits?: Array<{ mile: number, pace: string, elev: number }>
   notes?: string | null
   hasGps?: boolean
+  visibility?: string
   completedAt: string | null
   createdAt: string | null
 }
@@ -73,6 +74,7 @@ export function useActivityCatalog(tb: ActivityStoreLike | null) {
         kudos_count: a.kudosCount ?? 0,
         comments: [],
         notes: a.notes ?? '',
+        visibility: a.visibility ?? 'public',
         hasGps: a.hasGps ?? false,
         created_at: a.createdAt ?? a.completedAt ?? new Date().toISOString(),
       }))

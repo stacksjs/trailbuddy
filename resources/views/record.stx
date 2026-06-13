@@ -13,6 +13,7 @@
     recording,
     paused,
     activityType,
+    visibility,
     mode,
     runMode,
     elapsed,
@@ -56,9 +57,16 @@
         <h1 class="font-bold text-2xl dark:text-white">Capture Run</h1>
         <p class="text-gray-500 text-sm dark:text-slate-400">Run through enemy zones to paint them yours — Strava stats + turf wars</p>
       </div>
-      <div class="flex gap-2 p-1 bg-gray-100 dark:bg-slate-800 rounded-lg">
-        <button @click="runMode.set('capture')" x-class="runMode === 'capture' ? 'bg-emerald-600 text-white shadow' : 'text-gray-600 dark:text-slate-400'" class="px-4 py-2 font-semibold text-xs rounded-md transition">Capture</button>
-        <button @click="runMode.set('free')" x-class="runMode === 'free' ? 'bg-emerald-600 text-white shadow' : 'text-gray-600 dark:text-slate-400'" class="px-4 py-2 font-semibold text-xs rounded-md transition">Free Run</button>
+      <div class="flex items-center gap-2">
+        <select x-value="visibility" @change="visibility.set($event.target.value)" x-class="recording ? 'hidden' : ''" class="px-3 py-2 text-xs font-medium bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400 rounded-lg border-0" aria-label="Activity visibility">
+          <option value="public">🌐 Public</option>
+          <option value="followers">👥 Followers</option>
+          <option value="private">🔒 Private</option>
+        </select>
+        <div class="flex gap-2 p-1 bg-gray-100 dark:bg-slate-800 rounded-lg">
+          <button @click="runMode.set('capture')" x-class="runMode === 'capture' ? 'bg-emerald-600 text-white shadow' : 'text-gray-600 dark:text-slate-400'" class="px-4 py-2 font-semibold text-xs rounded-md transition">Capture</button>
+          <button @click="runMode.set('free')" x-class="runMode === 'free' ? 'bg-emerald-600 text-white shadow' : 'text-gray-600 dark:text-slate-400'" class="px-4 py-2 font-semibold text-xs rounded-md transition">Free Run</button>
+        </div>
       </div>
     </div>
 

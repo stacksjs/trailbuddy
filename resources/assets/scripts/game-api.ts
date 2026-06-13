@@ -112,6 +112,8 @@ export interface ActivityPayload {
   /** Per-mile splits computed from the GPS samples (#952). */
   splits?: Array<{ mile: number, pace: string, elev: number }>
   notes?: string
+  /** Who can see it (#957): public | followers | private. Defaults public. */
+  visibility?: string
   completed_at?: string
 }
 
@@ -132,6 +134,7 @@ export async function createActivity(payload: ActivityPayload): Promise<CreatedA
 export interface ActivityUpdatePayload {
   activity_type?: string
   notes?: string | null
+  visibility?: string
   trail_id?: number | null
   // Measured fields — the API only accepts these for manual (non-GPS) entries.
   distance?: number

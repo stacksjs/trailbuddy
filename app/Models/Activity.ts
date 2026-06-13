@@ -2,6 +2,7 @@ import { defineModel } from '@stacksjs/orm'
 import { schema } from '@stacksjs/validation'
 
 const activityTypes = ['Trail Run', 'Hike', 'Walk', 'Bike'] as const
+const visibilities = ['public', 'followers', 'private'] as const
 
 export default defineModel({
   name: 'Activity',
@@ -157,8 +158,19 @@ export default defineModel({
       factory: () => null,
     },
 
-    completed_at: {
+    // Who can see this activity (#957): public (everyone), followers (the
+    // owner's followers + the owner), private (owner only).
+    visibility: {
       order: 9,
+      fillable: true,
+      validation: {
+        rule: schema.enum(visibilities).required(),
+      },
+      factory: (): typeof visibilities[number] => 'public',
+    },
+
+    completed_at: {
+      order: 10,
       fillable: true,
       validation: {
         rule: schema.string(),

@@ -14,7 +14,7 @@
 
   const {
     manualOpen, submitting, manualError,
-    mType, mDistance, mDuration, mElevation, mTrailId, mDate, mNotes,
+    mType, mDistance, mDuration, mElevation, mTrailId, mDate, mNotes, mVisibility,
     openManualEntry, closeManualEntry, submitManualEntry,
   } = useManualActivity(tb)
   const filter = state<'all' | 'Trail Run' | 'Hike' | 'Walk' | 'Bike'>('all')
@@ -231,6 +231,14 @@
         <div>
           <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Notes</label>
           <textarea rows="2" placeholder="How did it go?" x-value="mNotes" @input="mNotes.set($event.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Who can see this</label>
+          <select x-value="mVisibility" @change="mVisibility.set($event.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm">
+            <option value="public">Public — everyone</option>
+            <option value="followers">Followers only</option>
+            <option value="private">Private — just me</option>
+          </select>
         </div>
         <p :if="manualError" class="text-sm text-red-500">{{ manualError }}</p>
         <div class="flex gap-2 pt-1">

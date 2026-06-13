@@ -7,6 +7,7 @@
 // can't retroactively alter a track that claimed or conquered territory.
 
 const ACTIVITY_TYPES = ['Trail Run', 'Hike', 'Walk', 'Bike']
+const VISIBILITIES = ['public', 'followers', 'private']
 const MEASURED_FIELDS = ['distance', 'duration', 'moving_time', 'pace', 'elevation', 'completed_at']
 
 export default new Action({
@@ -49,6 +50,14 @@ export default new Action({
       if (trailId !== undefined)
         updates.trail_id = trailId
 
+      // Visibility (#957) — descriptive, always editable.
+      const visibility = request.get<string>('visibility')
+      if (visibility !== undefined && visibility !== null) {
+        if (!VISIBILITIES.includes(visibility))
+          return response.json({ success: false, error: `Invalid visibility: ${visibility}` }, 422)
+        updates.visibility = visibility
+      }
+
       // Measured fields: reject outright on GPS runs instead of silently
       // dropping them, so the client knows the edit didn't take.
       const measured = MEASURED_FIELDS.filter(f => request.get(f) !== undefined && request.get(f) !== null)
@@ -85,6 +94,7 @@ export default new Action({
           elevation: updated.elevation,
           notes: updated.notes,
           completedAt: updated.completed_at,
+          visibility: updated.visibility ?? 'public',
           hasGps: !!updated.gpx_data,
         },
       })

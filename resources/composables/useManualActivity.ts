@@ -30,6 +30,7 @@ export function useManualActivity(tb: ManualStoreLike | null) {
   const mTrailId = state('')
   const mDate = state('')
   const mNotes = state('')
+  const mVisibility = state('public')
 
   function openManualEntry() {
     mType.set('Trail Run')
@@ -39,6 +40,7 @@ export function useManualActivity(tb: ManualStoreLike | null) {
     mTrailId.set('')
     mDate.set('')
     mNotes.set('')
+    mVisibility.set('public')
     manualError.set(null)
     manualOpen.set(true)
   }
@@ -94,6 +96,7 @@ export function useManualActivity(tb: ManualStoreLike | null) {
       pace,
       elevation,
       notes: notes || undefined,
+      visibility: mVisibility(),
       completed_at: completedAt,
     })
     submitting.set(false)
@@ -126,6 +129,7 @@ export function useManualActivity(tb: ManualStoreLike | null) {
       kudos_count: 0,
       comments: [],
       notes,
+      visibility: mVisibility(),
       hasGps: false,
     })
     manualOpen.set(false)
@@ -142,6 +146,7 @@ export function useManualActivity(tb: ManualStoreLike | null) {
     mTrailId,
     mDate,
     mNotes,
+    mVisibility,
     openManualEntry,
     closeManualEntry,
     submitManualEntry,

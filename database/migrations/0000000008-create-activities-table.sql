@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS "activities" (
   "notes" TEXT,
   "gpx_data" TEXT,
   "splits" TEXT,
+  "visibility" TEXT CHECK ("visibility" IN ('public', 'followers', 'private')),
   "completed_at" TEXT,
   "created_at" TEXT not null default CURRENT_TIMESTAMP,
   "updated_at" TEXT,

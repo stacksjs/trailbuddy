@@ -27,6 +27,7 @@ declare global {
   const computeSplitsFromSamples: typeof autoImports.computeSplitsFromSamples
   const ELEVATION_NOISE_FLOOR_FT: typeof autoImports.ELEVATION_NOISE_FLOOR_FT
   const METERS_TO_FEET: typeof autoImports.METERS_TO_FEET
+  const canViewActivity: typeof autoImports.canViewActivity
   const isDark: typeof autoImports.isDark
   const toggleDark: typeof autoImports.toggleDark
   const preferredDark: typeof autoImports.preferredDark

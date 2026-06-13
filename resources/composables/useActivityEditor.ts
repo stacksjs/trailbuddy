@@ -22,6 +22,7 @@ export interface EditableActivity {
   elevation_gain: number
   trail_name?: string
   notes?: string
+  visibility?: string
   hasGps?: boolean
 }
 
@@ -37,6 +38,7 @@ export function useActivityEditor(tb: EditorStoreLike | null) {
   const formDistance = state('')
   const formDuration = state('')
   const formElevation = state('')
+  const formVisibility = state('public')
 
   function openEditor(a: EditableActivity) {
     formType.set(a.activityType)
@@ -44,6 +46,7 @@ export function useActivityEditor(tb: EditorStoreLike | null) {
     formDistance.set(String(a.distance ?? ''))
     formDuration.set(a.duration ?? '')
     formElevation.set(String(a.elevation_gain ?? 0))
+    formVisibility.set(a.visibility ?? 'public')
     editorError.set(null)
     confirmingDelete.set(false)
     editing.set(true)
@@ -60,6 +63,7 @@ export function useActivityEditor(tb: EditorStoreLike | null) {
     const payload: Record<string, unknown> = {
       activity_type: formType(),
       notes: formNotes().trim() || null,
+      visibility: formVisibility(),
     }
 
     if (!a.hasGps) {
@@ -100,6 +104,7 @@ export function useActivityEditor(tb: EditorStoreLike | null) {
         moving_time: updated.movingTime ?? updated.duration,
         pace: updated.pace ?? '--',
         elevation_gain: updated.elevation ?? 0,
+        visibility: updated.visibility ?? 'public',
         title: a.trail_name && !a.trail_name.endsWith('Activity')
           ? `${updated.activityType} at ${a.trail_name}`
           : updated.activityType,
@@ -147,6 +152,7 @@ export function useActivityEditor(tb: EditorStoreLike | null) {
     formDistance,
     formDuration,
     formElevation,
+    formVisibility,
     openEditor,
     closeEditor,
     saveEdit,

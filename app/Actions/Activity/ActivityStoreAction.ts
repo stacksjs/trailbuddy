@@ -7,6 +7,7 @@
 import { evaluateAchievementsForUser } from '../Achievement/EvaluateAchievementsAction'
 
 const ACTIVITY_TYPES = ['Trail Run', 'Hike', 'Walk', 'Bike']
+const VISIBILITIES = ['public', 'followers', 'private']
 
 export default new Action({
   name: 'Activity Store',
@@ -49,6 +50,9 @@ export default new Action({
     const completedAt = request.get('completed_at')
     if (completedAt !== undefined && completedAt !== null && (typeof completedAt !== 'string' || Number.isNaN(Date.parse(completedAt))))
       fields.completed_at = 'must be a parseable date string'
+    const visibility = request.get<string>('visibility') ?? 'public'
+    if (!VISIBILITIES.includes(visibility))
+      fields.visibility = `must be one of: ${VISIBILITIES.join(', ')}`
 
     if (Object.keys(fields).length)
       return response.json({ success: false, error: 'Validation failed', fields }, 422)
@@ -76,6 +80,7 @@ export default new Action({
         notes: request.get<string>('notes') ?? null,
         gpx_data: (gpxData as string | undefined) ?? null,
         splits: splitsJson,
+        visibility,
         completed_at: (completedAt as string | undefined) ?? new Date().toISOString(),
       })
 
@@ -96,6 +101,7 @@ export default new Action({
           pace: activity.pace,
           elevation: activity.elevation,
           completedAt: activity.completed_at,
+          visibility: activity.visibility ?? 'public',
           hasGps: !!activity.gpx_data,
         },
       }, 201)

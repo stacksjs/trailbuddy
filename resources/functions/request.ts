@@ -13,12 +13,12 @@
  * EnhancedRequest always carries `url`/`headers`/`query`. So over HTTP this
  * returns null (never spoofable), while the harness still gets its fallback.
  */
-export function harnessFallbackUserId(request: any): number | null {
+export function harnessFallbackUserId(request: any, key = 'user_id'): number | null {
   const isHttpRequest = !!(request
     && (request.url !== undefined || request.headers !== undefined || request.query !== undefined))
   if (isHttpRequest)
     return null
-  const raw = request?.get?.('user_id')
+  const raw = request?.get?.(key)
   const n = typeof raw === 'string' || typeof raw === 'number' ? Number(raw) : Number.NaN
   return Number.isInteger(n) && n > 0 ? n : null
 }
