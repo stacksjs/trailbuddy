@@ -76,40 +76,40 @@
       <!-- Header -->
       <div class="mb-6 card">
         <div class="flex flex-col gap-6 items-center sm:flex-row">
-          <div class="flex items-center justify-center h-24 w-24 font-bold text-3xl text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 rounded-full" :text="(profile.user.name || 'U').charAt(0)"></div>
+          <div class="flex items-center justify-center h-24 w-24 font-bold text-3xl text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">{{ (profile.user.name || 'U').charAt(0) }}</div>
           <div class="flex-1 text-center sm:text-left">
             <div class="flex flex-col sm:flex-row sm:items-center gap-3 justify-center sm:justify-start">
-              <h1 class="font-bold text-2xl dark:text-white" :text="profile.user.name"></h1>
+              <h1 class="font-bold text-2xl dark:text-white">{{ profile.user.name }}</h1>
               <button
                 :if="!isSelf"
                 @click="onFollow()"
                 x-class="isFollowing ? 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'"
                 class="px-4 py-1.5 font-semibold text-sm rounded-lg transition"
-                :text="isFollowing ? 'Following' : 'Follow'"></button>
+>{{ isFollowing ? 'Following' : 'Follow' }}</button>
             </div>
             <div class="flex flex-wrap gap-4 justify-center sm:justify-start mt-3">
               <div class="text-center">
-                <p class="text-lg font-bold text-emerald-600" :text="profile.stats.totalDistance.toFixed(1)"></p>
+                <p class="text-lg font-bold text-emerald-600">{{ profile.stats.totalDistance.toFixed(1) }}</p>
                 <p class="metric-label">Miles</p>
               </div>
               <div class="text-center">
-                <p class="text-lg font-bold text-emerald-600" :text="profile.stats.activityCount"></p>
+                <p class="text-lg font-bold text-emerald-600">{{ profile.stats.activityCount }}</p>
                 <p class="metric-label">Activities</p>
               </div>
               <div class="text-center">
-                <p class="text-lg font-bold text-emerald-600" :text="profile.stats.totalElevation.toLocaleString()"></p>
+                <p class="text-lg font-bold text-emerald-600">{{ profile.stats.totalElevation.toLocaleString() }}</p>
                 <p class="metric-label">Elev (ft)</p>
               </div>
               <div class="text-center">
-                <p class="text-lg font-bold text-emerald-600" :text="profile.stats.territoriesOwned"></p>
+                <p class="text-lg font-bold text-emerald-600">{{ profile.stats.territoriesOwned }}</p>
                 <p class="metric-label">Territories</p>
               </div>
               <div class="text-center">
-                <p class="text-lg font-bold text-emerald-600" :text="profile.followerCount"></p>
+                <p class="text-lg font-bold text-emerald-600">{{ profile.followerCount }}</p>
                 <p class="metric-label">Followers</p>
               </div>
               <div class="text-center">
-                <p class="text-lg font-bold text-emerald-600" :text="profile.followingCount"></p>
+                <p class="text-lg font-bold text-emerald-600">{{ profile.followingCount }}</p>
                 <p class="metric-label">Following</p>
               </div>
             </div>
@@ -125,14 +125,14 @@
             <StxLink x-to="'/activity/' + a.id" class="flex items-center justify-between py-3 border-b border-gray-100 dark:border-slate-700 last:border-0">
               <div>
                 <p class="font-semibold text-sm dark:text-white">
-                  <span :text="a.activityType"></span>
-                  <span :if="a.trailName" class="text-gray-500 dark:text-slate-400"> · <span :text="a.trailName"></span></span>
+                  <span>{{ a.activityType }}</span>
+                  <span :if="a.trailName" class="text-gray-500 dark:text-slate-400"> · <span>{{ a.trailName }}</span></span>
                 </p>
-                <p class="text-gray-400 text-xs" :text="tb.timeAgo(a.completedAt)"></p>
+                <p class="text-gray-400 text-xs">{{ tb.timeAgo(a.completedAt) }}</p>
               </div>
               <div class="text-right">
-                <p class="font-bold text-emerald-600 text-sm" :text="a.distance.toFixed(1) + ' mi'"></p>
-                <p class="text-gray-400 text-xs" :text="a.elevationGain.toLocaleString() + ' ft'"></p>
+                <p class="font-bold text-emerald-600 text-sm">{{ a.distance.toFixed(1) + ' mi' }}</p>
+                <p class="text-gray-400 text-xs">{{ a.elevationGain.toLocaleString() + ' ft' }}</p>
               </div>
             </StxLink>
           </template>

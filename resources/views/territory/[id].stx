@@ -56,13 +56,13 @@
         <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
             <div class="flex gap-3 items-center mb-3">
-              <span class="px-3 py-1 font-semibold text-sm rounded-full" x-class="isMine ? 'bg-white/20 text-white' : 'bg-orange-500 text-white'" :text="isMine ? 'Your Territory' : 'Enemy Territory'"></span>
-              <span class="px-3 py-1 font-semibold text-sm rounded-full" x-class="territory.status === 'contested' ? 'bg-red-500 text-white' : 'bg-emerald-300/30 text-white'" :text="territory.status === 'contested' ? 'Contested' : 'Secure'"></span>
+              <span class="px-3 py-1 font-semibold text-sm rounded-full" x-class="isMine ? 'bg-white/20 text-white' : 'bg-orange-500 text-white'">{{ isMine ? 'Your Territory' : 'Enemy Territory' }}</span>
+              <span class="px-3 py-1 font-semibold text-sm rounded-full" x-class="territory.status === 'contested' ? 'bg-red-500 text-white' : 'bg-emerald-300/30 text-white'">{{ territory.status === 'contested' ? 'Contested' : 'Secure' }}</span>
             </div>
-            <h1 class="font-bold font-display text-3xl md:text-4xl text-white mb-2" :text="territory.name"></h1>
-            <p class="text-lg text-white/70">Owned by <span class="font-semibold text-white" :text="isMine ? 'You' : (owner?.name || 'Unknown')"></span></p>
+            <h1 class="font-bold font-display text-3xl md:text-4xl text-white mb-2">{{ territory.name }}</h1>
+            <p class="text-lg text-white/70">Owned by <span class="font-semibold text-white">{{ isMine ? 'You' : (owner?.name || 'Unknown') }}</span></p>
           </div>
-          <StxLink to="/record" class="px-6 py-3 font-semibold text-sm rounded-xl transition" x-class="isMine ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-white text-orange-700 hover:bg-gray-100 shadow-lg'" :text="isMine ? 'Defend' : 'Conquer This'"></StxLink>
+          <StxLink to="/record" class="px-6 py-3 font-semibold text-sm rounded-xl transition" x-class="isMine ? 'bg-white/20 text-white hover:bg-white/30' : 'bg-white text-orange-700 hover:bg-gray-100 shadow-lg'">{{ isMine ? 'Defend' : 'Conquer This' }}</StxLink>
         </div>
       </div>
     </section>
@@ -76,19 +76,19 @@
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div class="card text-center">
-              <p class="text-2xl font-bold text-emerald-600" :text="(territory.areaSize / 1000).toFixed(1)"></p>
+              <p class="text-2xl font-bold text-emerald-600">{{ (territory.areaSize / 1000).toFixed(1) }}</p>
               <p class="metric-label">km²</p>
             </div>
             <div class="card text-center">
-              <p class="text-2xl font-bold text-blue-600" :text="territory.conquestCount"></p>
+              <p class="text-2xl font-bold text-blue-600">{{ territory.conquestCount }}</p>
               <p class="metric-label">Times Conquered</p>
             </div>
             <div class="card text-center">
-              <p class="text-2xl font-bold text-orange-600" :text="territory.defendCount"></p>
+              <p class="text-2xl font-bold text-orange-600">{{ territory.defendCount }}</p>
               <p class="metric-label">Defenses</p>
             </div>
             <div class="card text-center">
-              <p class="text-2xl font-bold text-purple-600" :text="territory.totalRunners"></p>
+              <p class="text-2xl font-bold text-purple-600">{{ territory.totalRunners }}</p>
               <p class="metric-label">Runners</p>
             </div>
           </div>
@@ -98,15 +98,15 @@
             <div class="space-y-3">
               <template :for="event in history">
                 <div class="card flex items-center gap-4">
-                  <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-bold" x-class="event.status === 'conquered' ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600' : 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600'" :text="event.attackerName.charAt(0)"></div>
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-bold" x-class="event.status === 'conquered' ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600' : 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600'">{{ event.attackerName.charAt(0) }}</div>
                   <div class="flex-1">
                     <p class="text-sm font-semibold dark:text-white">
-                      <span :text="event.attackerName"></span>
-                      <span :text="event.status === 'conquered' ? ' conquered this' : ' failed to conquer'"></span>
+                      <span>{{ event.attackerName }}</span>
+                      <span>{{ event.status === 'conquered' ? ' conquered this' : ' failed to conquer' }}</span>
                     </p>
-                    <p class="text-xs text-gray-500" :text="tb.timeAgo(event.created_at)"></p>
+                    <p class="text-xs text-gray-500">{{ tb.timeAgo(event.created_at) }}</p>
                   </div>
-                  <span class="text-xs px-2 py-1 rounded-full font-medium" x-class="event.status === 'conquered' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'" :text="event.status === 'conquered' ? 'Conquered' : 'Defended'"></span>
+                  <span class="text-xs px-2 py-1 rounded-full font-medium" x-class="event.status === 'conquered' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'">{{ event.status === 'conquered' ? 'Conquered' : 'Defended' }}</span>
                 </div>
               </template>
               <div :if="history.length === 0" class="text-center py-8 text-gray-400 text-sm">
@@ -120,10 +120,10 @@
           <div class="card">
             <h3 class="font-bold text-lg dark:text-white mb-4">Current Owner</h3>
             <div class="flex items-center gap-4">
-              <div class="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 text-xl font-bold" :text="(owner?.name || 'U').charAt(0)"></div>
+              <div class="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 text-xl font-bold">{{ (owner?.name || 'U').charAt(0) }}</div>
               <div>
-                <p class="font-bold dark:text-white" :text="isMine ? 'You' : (owner?.name || 'Unknown')"></p>
-                <p class="text-sm text-gray-500" :text="'Claimed ' + tb.timeAgo(territory.claimedAt)"></p>
+                <p class="font-bold dark:text-white">{{ isMine ? 'You' : (owner?.name || 'Unknown') }}</p>
+                <p class="text-sm text-gray-500">{{ 'Claimed ' + tb.timeAgo(territory.claimedAt) }}</p>
               </div>
             </div>
           </div>

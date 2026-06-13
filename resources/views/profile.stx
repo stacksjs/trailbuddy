@@ -44,33 +44,33 @@
     <!-- Profile header -->
     <div class="mb-6 card">
       <div class="flex flex-col gap-6 items-center sm:flex-row">
-        <div class="flex items-center justify-center h-24 w-24 font-bold text-3xl text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 rounded-full" :text="(currentUser?.name || 'U').charAt(0)"></div>
+        <div class="flex items-center justify-center h-24 w-24 font-bold text-3xl text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">{{ (currentUser?.name || 'U').charAt(0) }}</div>
         <div class="flex-1 text-center sm:text-left">
-          <h1 class="font-bold text-2xl dark:text-white" :text="currentUser?.name || 'Athlete'"></h1>
-          <p class="mt-1 text-gray-500 text-sm dark:text-slate-400" :text="currentUser?.email || ''"></p>
+          <h1 class="font-bold text-2xl dark:text-white">{{ currentUser?.name || 'Athlete' }}</h1>
+          <p class="mt-1 text-gray-500 text-sm dark:text-slate-400">{{ currentUser?.email || '' }}</p>
           <div class="flex flex-wrap gap-4 justify-center sm:justify-start mt-3">
             <div class="text-center">
-              <p class="text-lg font-bold text-emerald-600" :text="userStats?.totalDistance.toFixed(1) || '0'"></p>
+              <p class="text-lg font-bold text-emerald-600">{{ userStats?.totalDistance.toFixed(1) || '0' }}</p>
               <p class="metric-label">Miles</p>
             </div>
             <div class="text-center">
-              <p class="text-lg font-bold text-emerald-600" :text="userStats?.trailsCompleted || 0"></p>
+              <p class="text-lg font-bold text-emerald-600">{{ userStats?.trailsCompleted || 0 }}</p>
               <p class="metric-label">Trails</p>
             </div>
             <div class="text-center">
-              <p class="text-lg font-bold text-emerald-600" :text="(userStats?.totalElevation || 0).toLocaleString()"></p>
+              <p class="text-lg font-bold text-emerald-600">{{ (userStats?.totalElevation || 0).toLocaleString() }}</p>
               <p class="metric-label">Elev (ft)</p>
             </div>
             <div class="text-center">
-              <p class="text-lg font-bold text-emerald-600" :text="userStats?.currentStreak || 0"></p>
+              <p class="text-lg font-bold text-emerald-600">{{ userStats?.currentStreak || 0 }}</p>
               <p class="metric-label">Streak</p>
             </div>
             <div class="text-center">
-              <p class="text-lg font-bold text-emerald-600" :text="followerCount"></p>
+              <p class="text-lg font-bold text-emerald-600">{{ followerCount }}</p>
               <p class="metric-label">Followers</p>
             </div>
             <div class="text-center">
-              <p class="text-lg font-bold text-emerald-600" :text="followingCount"></p>
+              <p class="text-lg font-bold text-emerald-600">{{ followingCount }}</p>
               <p class="metric-label">Following</p>
             </div>
           </div>
@@ -93,16 +93,16 @@
             <Icon name="zap" size="24" class="text-emerald-600" />
           </div>
           <div class="flex-1 min-w-0">
-            <p class="font-semibold text-sm truncate dark:text-white" :text="activity.title"></p>
-            <p class="text-gray-500 text-xs dark:text-slate-400" :text="activity.activityType + ' · ' + tb.timeAgo(activity.created_at)"></p>
+            <p class="font-semibold text-sm truncate dark:text-white">{{ activity.title }}</p>
+            <p class="text-gray-500 text-xs dark:text-slate-400">{{ activity.activityType + ' · ' + tb.timeAgo(activity.created_at) }}</p>
           </div>
           <div class="flex gap-4 shrink-0 text-right">
             <div>
-              <p class="font-bold text-sm dark:text-white" :text="activity.distance.toFixed(1) + ' mi'"></p>
+              <p class="font-bold text-sm dark:text-white">{{ activity.distance.toFixed(1) + ' mi' }}</p>
               <p class="metric-label">Distance</p>
             </div>
             <div>
-              <p class="font-bold text-sm dark:text-white" :text="activity.duration"></p>
+              <p class="font-bold text-sm dark:text-white">{{ activity.duration }}</p>
               <p class="metric-label">Time</p>
             </div>
           </div>
@@ -123,15 +123,15 @@
     <div :if="activeTab === 'achievements' && achievements.length > 0" class="grid gap-4 grid-cols-1 sm:grid-cols-2">
       <template :for="achievement in achievements">
         <div class="flex gap-4 items-center card">
-          <span class="text-3xl" :text="achievement.icon"></span>
+          <span class="text-3xl">{{ achievement.icon }}</span>
           <div class="flex-1">
-            <p class="font-semibold text-sm dark:text-white" :text="achievement.name"></p>
-            <p class="text-gray-500 text-xs dark:text-slate-400" :text="achievement.description"></p>
+            <p class="font-semibold text-sm dark:text-white">{{ achievement.name }}</p>
+            <p class="text-gray-500 text-xs dark:text-slate-400">{{ achievement.description }}</p>
             <div class="overflow-hidden mt-2 h-1.5 bg-gray-200 dark:bg-slate-600 rounded-full">
               <div class="h-full bg-emerald-500 rounded-full" x-style="'width: ' + (achievement.progress / achievement.total * 100) + '%'"></div>
             </div>
           </div>
-          <p class="shrink-0 text-gray-400 text-xs dark:text-slate-500" :text="achievement.progress + '/' + achievement.total"></p>
+          <p class="shrink-0 text-gray-400 text-xs dark:text-slate-500">{{ achievement.progress + '/' + achievement.total }}</p>
         </div>
       </template>
     </div>
@@ -150,14 +150,14 @@
       <template :for="trail in savedTrails">
         <div class="card flex items-center gap-4 hover:shadow-lg transition">
           <StxLink x-to="'/trail/' + trail.id" class="flex-1 min-w-0 group">
-            <h3 class="font-bold text-gray-900 dark:text-white group-hover:text-emerald-600 transition truncate" :text="trail.name"></h3>
-            <p class="text-sm text-gray-500 dark:text-slate-400 truncate" :text="trail.location"></p>
+            <h3 class="font-bold text-gray-900 dark:text-white group-hover:text-emerald-600 transition truncate">{{ trail.name }}</h3>
+            <p class="text-sm text-gray-500 dark:text-slate-400 truncate">{{ trail.location }}</p>
             <div class="flex gap-3 items-center mt-2 text-xs text-gray-500 dark:text-slate-400">
-              <span class="capitalize" x-class="'px-2 py-0.5 font-semibold rounded-full difficulty-' + trail.difficulty" :text="trail.difficulty"></span>
-              <span :text="trail.distance + ' mi'"></span>
+              <span class="capitalize" x-class="'px-2 py-0.5 font-semibold rounded-full difficulty-' + trail.difficulty">{{ trail.difficulty }}</span>
+              <span>{{ trail.distance + ' mi' }}</span>
               <span class="flex items-center gap-1">
                 <Icon name="star" size="12" class="text-yellow-400" />
-                <span :text="trail.rating || '—'"></span>
+                <span>{{ trail.rating || '—' }}</span>
               </span>
             </div>
           </StxLink>

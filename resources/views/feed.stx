@@ -108,13 +108,13 @@
         <div class="card">
           <div class="flex items-center justify-between mb-4">
             <div class="flex gap-3 items-center">
-              <div class="flex items-center justify-center h-10 w-10 font-bold text-emerald-600 text-sm bg-emerald-100 dark:bg-emerald-900/30 rounded-full" :text="activity.userName.charAt(0)"></div>
+              <div class="flex items-center justify-center h-10 w-10 font-bold text-emerald-600 text-sm bg-emerald-100 dark:bg-emerald-900/30 rounded-full">{{ activity.userName.charAt(0) }}</div>
               <div>
-                <StxLink x-to="'/athlete/' + activity.user_id" class="font-semibold text-sm dark:text-white hover:text-emerald-600 transition" :text="activity.userName"></StxLink>
+                <StxLink x-to="'/athlete/' + activity.user_id" class="font-semibold text-sm dark:text-white hover:text-emerald-600 transition">{{ activity.userName }}</StxLink>
                 <p class="text-gray-500 text-xs dark:text-slate-400">
-                  <span :text="activity.activityType"></span>
+                  <span>{{ activity.activityType }}</span>
                   <span class="mx-1">·</span>
-                  <span :text="tb.timeAgo(activity.created_at)"></span>
+                  <span>{{ tb.timeAgo(activity.created_at) }}</span>
                 </p>
               </div>
             </div>
@@ -123,10 +123,10 @@
               @click="onFollow(activity.user_id)"
               x-class="tb.isFollowing(activity.user_id) ? 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'"
               class="px-3 py-1.5 font-semibold text-xs rounded-lg transition"
-              :text="tb.isFollowing(activity.user_id) ? 'Following' : 'Follow'"></button>
+>{{ tb.isFollowing(activity.user_id) ? 'Following' : 'Follow' }}</button>
           </div>
 
-          <StxLink x-to="'/activity/' + activity.id" class="font-bold text-gray-900 text-lg dark:text-white hover:text-emerald-600 transition block" :text="activity.title"></StxLink>
+          <StxLink x-to="'/activity/' + activity.id" class="font-bold text-gray-900 text-lg dark:text-white hover:text-emerald-600 transition block">{{ activity.title }}</StxLink>
           <p :if="activity.title.includes('Capture')" class="mt-1 text-xs text-purple-600 font-medium">Territory capture run</p>
 
           <div :if="activityRoutePreview(activity)" class="route-preview mt-3" x-style="'background-image:url(' + activityRoutePreview(activity) + ')'"></div>
@@ -139,19 +139,19 @@
 
           <div class="grid gap-3 grid-cols-2 sm:grid-cols-4 mt-4">
             <div class="text-center">
-              <p class="font-bold text-lg dark:text-white" :text="activity.distance.toFixed(1)"></p>
+              <p class="font-bold text-lg dark:text-white">{{ activity.distance.toFixed(1) }}</p>
               <p class="metric-label">Miles</p>
             </div>
             <div class="text-center">
-              <p class="font-bold text-lg dark:text-white" :text="activity.duration"></p>
+              <p class="font-bold text-lg dark:text-white">{{ activity.duration }}</p>
               <p class="metric-label">Time</p>
             </div>
             <div class="text-center">
-              <p class="font-bold text-lg dark:text-white" :text="activity.pace"></p>
+              <p class="font-bold text-lg dark:text-white">{{ activity.pace }}</p>
               <p class="metric-label">Pace</p>
             </div>
             <div class="text-center">
-              <p class="font-bold text-lg dark:text-white" :text="activity.elevation_gain.toLocaleString()"></p>
+              <p class="font-bold text-lg dark:text-white">{{ activity.elevation_gain.toLocaleString() }}</p>
               <p class="metric-label">Elev (ft)</p>
             </div>
           </div>
@@ -159,7 +159,7 @@
           <div class="flex gap-6 items-center mt-4 pt-4 border-gray-100 border-t dark:border-slate-700">
             <button @click="onKudos(activity)" x-class="kudosed[activity.id] ? 'text-red-500' : 'text-gray-500 dark:text-slate-400 hover:text-red-500'" class="flex items-center gap-1 transition text-sm">
               <Icon name="heart" size="20" />
-              <span :text="activity.kudos_count + ' Kudos'"></span>
+              <span>{{ activity.kudos_count + ' Kudos' }}</span>
             </button>
             <StxLink x-to="'/activity/' + activity.id" class="flex items-center gap-1 text-gray-500 dark:text-slate-400 hover:text-emerald-500 transition text-sm">
               <Icon name="message-circle" size="20" />
@@ -224,7 +224,7 @@
           <select @change="mTrailId.set($event.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm">
             <option value="">No trail</option>
             <template :for="trail in tb.trails()">
-              <option x-value="trail.id" x-selected="String(trail.id) === mTrailId" x-text="trail.name"></option>
+              <option x-value="trail.id" x-selected="String(trail.id) === mTrailId" :text="trail.name"></option>
             </template>
           </select>
         </div>
@@ -232,9 +232,9 @@
           <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Notes</label>
           <textarea rows="2" placeholder="How did it go?" x-value="mNotes" @input="mNotes.set($event.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm"></textarea>
         </div>
-        <p :if="manualError" class="text-sm text-red-500" :text="manualError"></p>
+        <p :if="manualError" class="text-sm text-red-500">{{ manualError }}</p>
         <div class="flex gap-2 pt-1">
-          <button @click="submitManualEntry()" class="flex-1 px-4 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition" :text="submitting ? 'Saving…' : 'Log activity'"></button>
+          <button @click="submitManualEntry()" class="flex-1 px-4 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">{{ submitting ? 'Saving…' : 'Log activity' }}</button>
           <button @click="closeManualEntry()" class="px-4 py-2.5 text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 transition">Cancel</button>
         </div>
         <p class="text-xs text-gray-400">Manual entries don't capture territory — record with GPS to claim ground.</p>

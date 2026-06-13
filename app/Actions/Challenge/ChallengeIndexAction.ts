@@ -33,7 +33,10 @@ export default new Action({
         }))
         .sort((a: any, b: any) => Date.parse(b.createdAt ?? '') - Date.parse(a.createdAt ?? ''))
 
-      return response.json({ success: true, challenges, meta: { total: challenges.length } })
+      // Generous default — the page filters the full set into client-side
+      // tabs (active/sent/received/completed) and has no load-more (#978 review).
+      const paged = paginate(challenges, readPageParams(request, { defaultLimit: 200, maxLimit: 200 }))
+      return response.json({ success: true, challenges: paged.items, meta: paged.meta })
     }
     catch (error) {
       console.error('[challenges] index failed:', error)

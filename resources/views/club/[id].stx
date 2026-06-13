@@ -71,27 +71,27 @@
       <!-- Header -->
       <div class="card mb-6">
         <div class="flex flex-col sm:flex-row gap-6">
-          <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold shrink-0 bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600" :text="club.name.charAt(0)"></div>
+          <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold shrink-0 bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600">{{ club.name.charAt(0) }}</div>
           <div class="flex-1 min-w-0">
             <div class="flex items-start justify-between gap-4">
               <div>
-                <h1 class="text-2xl font-bold dark:text-white" :text="club.name"></h1>
+                <h1 class="text-2xl font-bold dark:text-white">{{ club.name }}</h1>
                 <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-slate-400 mt-1">
-                  <span :text="club.location || 'Worldwide'"></span>
-                  <span :text="club.memberCount + ' members'"></span>
-                  <span class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-700 font-medium" :text="club.type"></span>
+                  <span>{{ club.location || 'Worldwide' }}</span>
+                  <span>{{ club.memberCount + ' members' }}</span>
+                  <span class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-700 font-medium">{{ club.type }}</span>
                   <span :if="club.isPrivate" class="px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-medium">Private</span>
                 </div>
               </div>
               <div class="flex items-center gap-2 shrink-0">
-                <button :if="!isOwner" @click="onToggle()" x-disabled="busy" class="px-4 py-2 text-sm font-semibold rounded-lg transition disabled:opacity-60" x-class="club.isMember ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'" :text="club.isMember ? 'Joined' : 'Join'"></button>
+                <button :if="!isOwner" @click="onToggle()" x-disabled="busy" class="px-4 py-2 text-sm font-semibold rounded-lg transition disabled:opacity-60" x-class="club.isMember ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'">{{ club.isMember ? 'Joined' : 'Join' }}</button>
                 <button :if="isOwner" @click="onDelete()" x-disabled="busy" class="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 dark:border-slate-600 text-red-500 hover:border-red-400 transition disabled:opacity-60">Delete club</button>
               </div>
             </div>
-            <p class="text-sm text-gray-600 dark:text-slate-400 mt-3" :text="club.description"></p>
+            <p class="text-sm text-gray-600 dark:text-slate-400 mt-3">{{ club.description }}</p>
             <div class="flex items-center gap-6 pt-3 mt-3 border-t border-gray-100 dark:border-slate-700 text-sm">
-              <div><span class="font-semibold dark:text-white" :text="club.weeklyDistance + ' mi'"></span> <span class="text-gray-500 dark:text-slate-400">this week</span></div>
-              <div><span class="font-semibold dark:text-white" :text="club.activitiesThisWeek"></span> <span class="text-gray-500 dark:text-slate-400">activities</span></div>
+              <div><span class="font-semibold dark:text-white">{{ club.weeklyDistance + ' mi' }}</span> <span class="text-gray-500 dark:text-slate-400">this week</span></div>
+              <div><span class="font-semibold dark:text-white">{{ club.activitiesThisWeek }}</span> <span class="text-gray-500 dark:text-slate-400">activities</span></div>
             </div>
           </div>
         </div>
@@ -103,14 +103,14 @@
           <h2 class="font-bold text-lg dark:text-white">Recent activity</h2>
           <template :for="a in club.recentFeed">
             <StxLink x-to="'/activity/' + a.id" class="card flex items-center gap-4 hover:shadow-md transition block">
-              <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 font-bold shrink-0" :text="a.userName.charAt(0)"></div>
+              <div class="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 font-bold shrink-0">{{ a.userName.charAt(0) }}</div>
               <div class="flex-1 min-w-0">
-                <p class="font-semibold text-sm dark:text-white truncate" :text="a.userName + ' · ' + a.activityType"></p>
-                <p class="text-xs text-gray-500 dark:text-slate-400" :text="tb.timeAgo(a.completedAt)"></p>
+                <p class="font-semibold text-sm dark:text-white truncate">{{ a.userName + ' · ' + a.activityType }}</p>
+                <p class="text-xs text-gray-500 dark:text-slate-400">{{ tb.timeAgo(a.completedAt) }}</p>
               </div>
               <div class="text-right shrink-0">
-                <p class="font-bold text-sm dark:text-white" :text="(a.distance || 0).toFixed(1) + ' mi'"></p>
-                <p class="metric-label" :text="a.duration"></p>
+                <p class="font-bold text-sm dark:text-white">{{ (a.distance || 0).toFixed(1) + ' mi' }}</p>
+                <p class="metric-label">{{ a.duration }}</p>
               </div>
             </StxLink>
           </template>
@@ -129,9 +129,9 @@
             <div class="space-y-2">
               <template :for="row in club.leaderboard">
                 <div class="flex items-center gap-3 text-sm">
-                  <span class="w-5 text-center font-bold" x-class="row.rank <= 3 ? 'text-yellow-500' : 'text-gray-400'" :text="row.rank"></span>
-                  <StxLink x-to="'/athlete/' + row.userId" class="flex-1 truncate dark:text-white hover:text-emerald-600 transition" :text="row.name"></StxLink>
-                  <span class="text-gray-500 dark:text-slate-400" :text="row.weeklyDistance + ' mi'"></span>
+                  <span class="w-5 text-center font-bold" x-class="row.rank <= 3 ? 'text-yellow-500' : 'text-gray-400'">{{ row.rank }}</span>
+                  <StxLink x-to="'/athlete/' + row.userId" class="flex-1 truncate dark:text-white hover:text-emerald-600 transition">{{ row.name }}</StxLink>
+                  <span class="text-gray-500 dark:text-slate-400">{{ row.weeklyDistance + ' mi' }}</span>
                 </div>
               </template>
               <div :if="club.leaderboard.length === 0" class="text-center py-4 text-sm text-gray-500 dark:text-slate-400">No members yet.</div>
@@ -139,12 +139,12 @@
           </div>
 
           <div class="card">
-            <h3 class="font-bold dark:text-white mb-3" :text="'Members (' + club.memberCount + ')'"></h3>
+            <h3 class="font-bold dark:text-white mb-3">{{ 'Members (' + club.memberCount + ')' }}</h3>
             <div class="space-y-2">
               <template :for="m in club.members">
                 <div class="flex items-center gap-3 text-sm">
-                  <StxLink x-to="'/athlete/' + m.userId" class="flex-1 truncate dark:text-white hover:text-emerald-600 transition" :text="m.name"></StxLink>
-                  <span :if="m.role !== 'member'" class="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-medium capitalize" :text="m.role"></span>
+                  <StxLink x-to="'/athlete/' + m.userId" class="flex-1 truncate dark:text-white hover:text-emerald-600 transition">{{ m.name }}</StxLink>
+                  <span :if="m.role !== 'member'" class="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-medium capitalize">{{ m.role }}</span>
                 </div>
               </template>
             </div>

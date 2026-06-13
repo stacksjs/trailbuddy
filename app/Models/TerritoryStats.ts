@@ -48,7 +48,7 @@ export default defineModel({
       order: 2,
       fillable: true,
       validation: {
-        rule: schema.number().min(0),
+        rule: schema.float().min(0),
       },
       factory: (faker) => faker.number.float({ min: 0, max: 5000000, fractionDigits: 2 }),
     },
@@ -108,7 +108,7 @@ export default defineModel({
       order: 8,
       fillable: true,
       validation: {
-        rule: schema.number().min(0),
+        rule: schema.float().min(0),
       },
       factory: (faker) => faker.number.float({ min: 0, max: 500000, fractionDigits: 2 }),
     },

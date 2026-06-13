@@ -5,8 +5,6 @@
 // returns the most active athletes as a discover list. Public read; response
 // includes enough stats to render discover cards without extra calls.
 
-const SEARCH_LIMIT = 20
-
 export default new Action({
   name: 'User Search',
   description: 'Search athletes by name (discover list when no query)',
@@ -17,9 +15,12 @@ export default new Action({
     const q = typeof qRaw === 'string' ? qRaw.trim() : ''
 
     try {
+      // Fetch the full match set, then paginate — so meta.total/hasMore reflect
+      // the real count (a DB-side .limit() before paginate() would cap total at
+      // the page size and make hasMore always false, #978 review).
       const users = q.length >= 2
-        ? (await User.where('name', 'like', `%${q}%`).limit(SEARCH_LIMIT).get()) ?? []
-        : (await User.query().limit(SEARCH_LIMIT).get()) ?? []
+        ? (await User.where('name', 'like', `%${q}%`).get()) ?? []
+        : (await User.query().get()) ?? []
 
       const ids = users.map((u: any) => u.id)
       const activities = ids.length ? (await Activity.whereIn('user_id', ids).get()) ?? [] : []
@@ -46,7 +47,8 @@ export default new Action({
         // Discover mode surfaces the most active athletes first.
         .sort((a: any, b: any) => b.activityCount - a.activityCount || b.followerCount - a.followerCount || a.id - b.id)
 
-      return response.json({ success: true, athletes, meta: { total: athletes.length, query: q } })
+      const paged = paginate(athletes, readPageParams(request, { defaultLimit: 20, maxLimit: 50 }))
+      return response.json({ success: true, athletes: paged.items, meta: { ...paged.meta, query: q } })
     }
     catch (error) {
       console.error('[users] search failed:', error)

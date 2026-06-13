@@ -41,26 +41,26 @@
           <p class="mb-4 text-xs font-bold text-emerald-400 uppercase tracking-wider">Your empire</p>
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <p class="text-3xl font-bold text-white" :text="myTerritories().length"></p>
+              <p class="text-3xl font-bold text-white">{{ myTerritories().length }}</p>
               <p class="metric-label text-slate-400">Zones owned</p>
             </div>
             <div>
-              <p class="text-3xl font-bold text-white" :text="(totalArea() / 1000).toFixed(1) + ' km²'"></p>
+              <p class="text-3xl font-bold text-white">{{ (totalArea() / 1000).toFixed(1) + ' km²' }}</p>
               <p class="metric-label text-slate-400">Turf controlled</p>
             </div>
             <div>
-              <p class="text-3xl font-bold text-emerald-400" :text="gameStats?.powerRating ?? 0"></p>
+              <p class="text-3xl font-bold text-emerald-400">{{ gameStats?.powerRating ?? 0 }}</p>
               <p class="metric-label text-slate-400">Power rating</p>
             </div>
             <div>
-              <p class="text-3xl font-bold text-white" :text="stats?.weeklyDistance?.toFixed(1) ?? '0'"></p>
+              <p class="text-3xl font-bold text-white">{{ stats?.weeklyDistance?.toFixed(1) ?? '0' }}</p>
               <p class="metric-label text-slate-400">Mi this week</p>
             </div>
           </div>
           <div :if="liveBattles.length > 0" class="pt-4 border-t border-white/10">
             <p class="flex gap-2 items-center mb-2 text-xs font-semibold text-orange-400">
               <span class="h-2 w-2 bg-red-500 rounded-full animate-pulse"></span>
-              <span :text="liveBattles.length + ' live battle' + (liveBattles.length > 1 ? 's' : '')"></span>
+              <span>{{ liveBattles.length + ' live battle' + (liveBattles.length > 1 ? 's' : '') }}</span>
             </p>
             <StxLink to="/battles" class="text-sm text-white/80 hover:text-white underline">Watch the map →</StxLink>
           </div>
@@ -75,19 +75,19 @@
       <div class="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 class="font-bold text-lg dark:text-white">This week</h2>
-          <p class="text-sm text-gray-500 dark:text-slate-400" :text="(stats?.weeklyActivities ?? 0) + ' activities · ' + (stats?.currentStreak ?? 0) + ' day streak'"></p>
+          <p class="text-sm text-gray-500 dark:text-slate-400">{{ (stats?.weeklyActivities ?? 0) + ' activities · ' + (stats?.currentStreak ?? 0) + ' day streak' }}</p>
         </div>
         <div class="grid grid-cols-3 gap-6 sm:gap-10 text-center">
           <div>
-            <p class="text-2xl font-bold text-emerald-600" :text="stats?.weeklyDistance?.toFixed(1) ?? '0'"></p>
+            <p class="text-2xl font-bold text-emerald-600">{{ stats?.weeklyDistance?.toFixed(1) ?? '0' }}</p>
             <p class="metric-label">Miles</p>
           </div>
           <div>
-            <p class="text-2xl font-bold text-emerald-600" :text="(stats?.weeklyElevation ?? 0).toLocaleString()"></p>
+            <p class="text-2xl font-bold text-emerald-600">{{ (stats?.weeklyElevation ?? 0).toLocaleString() }}</p>
             <p class="metric-label">Elevation</p>
           </div>
           <div>
-            <p class="text-2xl font-bold text-emerald-600" :text="gameStats?.totalConquests ?? 0"></p>
+            <p class="text-2xl font-bold text-emerald-600">{{ gameStats?.totalConquests ?? 0 }}</p>
             <p class="metric-label">Conquests</p>
           </div>
         </div>
@@ -134,17 +134,17 @@
       <template :for="activity in recent">
         <StxLink x-to="'/activity/' + activity.id" class="card flex flex-col gap-4 sm:flex-row sm:items-center hover:shadow-md transition block">
           <div class="flex gap-3 items-center flex-1 min-w-0">
-            <div class="shrink-0 flex items-center justify-center h-12 w-12 font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 rounded-full" :text="activity.userName.charAt(0)"></div>
+            <div class="shrink-0 flex items-center justify-center h-12 w-12 font-bold text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">{{ activity.userName.charAt(0) }}</div>
             <div class="min-w-0">
-              <p class="font-bold dark:text-white truncate" :text="activity.title"></p>
-              <p class="text-sm text-gray-500 dark:text-slate-400" :text="activity.activityType + ' · ' + tb.timeAgo(activity.created_at)"></p>
+              <p class="font-bold dark:text-white truncate">{{ activity.title }}</p>
+              <p class="text-sm text-gray-500 dark:text-slate-400">{{ activity.activityType + ' · ' + tb.timeAgo(activity.created_at) }}</p>
             </div>
           </div>
           <div class="grid grid-cols-4 gap-4 text-center shrink-0">
-            <div><p class="font-bold text-emerald-600" :text="activity.distance.toFixed(1)"></p><p class="metric-label">mi</p></div>
-            <div><p class="font-bold dark:text-white text-sm" :text="activity.duration"></p><p class="metric-label">time</p></div>
-            <div><p class="font-bold dark:text-white text-sm" :text="activity.pace"></p><p class="metric-label">pace</p></div>
-            <div><p class="font-bold dark:text-white text-sm" :text="activity.kudos_count"></p><p class="metric-label">kudos</p></div>
+            <div><p class="font-bold text-emerald-600">{{ activity.distance.toFixed(1) }}</p><p class="metric-label">mi</p></div>
+            <div><p class="font-bold dark:text-white text-sm">{{ activity.duration }}</p><p class="metric-label">time</p></div>
+            <div><p class="font-bold dark:text-white text-sm">{{ activity.pace }}</p><p class="metric-label">pace</p></div>
+            <div><p class="font-bold dark:text-white text-sm">{{ activity.kudos_count }}</p><p class="metric-label">kudos</p></div>
           </div>
         </StxLink>
       </template>
@@ -171,10 +171,10 @@
         <template :for="t in myTerritories">
           <StxLink x-to="'/territory/' + t.id" class="card block hover:border-emerald-400 transition">
             <div class="flex justify-between items-start mb-2">
-              <h3 class="font-bold dark:text-white" :text="t.name"></h3>
-              <span class="px-2 py-0.5 text-xs font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-900/40 rounded-full" :text="t.status"></span>
+              <h3 class="font-bold dark:text-white">{{ t.name }}</h3>
+              <span class="px-2 py-0.5 text-xs font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-900/40 rounded-full">{{ t.status }}</span>
             </div>
-            <p class="text-sm text-gray-500 dark:text-slate-400" :text="(t.areaSize / 1000).toFixed(1) + ' km² · ' + t.defendCount + ' defenses'"></p>
+            <p class="text-sm text-gray-500 dark:text-slate-400">{{ (t.areaSize / 1000).toFixed(1) + ' km² · ' + t.defendCount + ' defenses' }}</p>
           </StxLink>
         </template>
       </div>

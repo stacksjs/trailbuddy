@@ -4,20 +4,23 @@ export default new Action({
   method: 'GET',
 
   async handle(request) {
-    const limit = Math.min(Math.max(request.get<number>('limit') || 500, 1), 500)
+    const page = readPageParams(request, { defaultLimit: 500, maxLimit: 500 })
 
     try {
-      const rows = await Trail.limit(limit).get()
+      const rows = await Trail.all()
       const trails = (rows ?? []).map((row: Record<string, unknown>) => ({
         ...row,
         lat: row.latitude ?? row.lat,
         lng: row.longitude ?? row.lng,
       }))
-      return response.json(trails)
+      // Wrapped (was a bare array, #978) — the catalog's extractApiTrailRows
+      // already reads `.trails`, so this is backward-compatible.
+      const { items, meta } = paginate(trails, page)
+      return response.json({ success: true, trails: items, meta })
     }
     catch (error) {
       console.error('[trails] index failed:', error)
-      return response.json([], 200)
+      return response.json({ success: false, trails: [], meta: { offset: 0, limit: 0, total: 0, hasMore: false }, error: 'Failed to fetch trails' }, 500)
     }
   },
 })

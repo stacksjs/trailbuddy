@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS "user_stats" (
   "id" INTEGER PRIMARY KEY AUTOINCREMENT,
-  "total_distance" INTEGER,
+  "total_distance" REAL,
   "total_time" TEXT,
-  "total_elevation" INTEGER,
+  "total_elevation" REAL,
   "trails_completed" INTEGER,
   "current_streak" INTEGER,
   "longest_streak" INTEGER,

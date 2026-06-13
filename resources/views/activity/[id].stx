@@ -99,13 +99,13 @@
     <div class="card mb-6">
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 text-lg font-bold" :text="activity.userName.charAt(0)"></div>
+          <div class="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 text-lg font-bold">{{ activity.userName.charAt(0) }}</div>
           <div>
-            <p class="font-bold dark:text-white" :text="activity.userName"></p>
+            <p class="font-bold dark:text-white">{{ activity.userName }}</p>
             <p class="text-sm text-gray-500 dark:text-slate-400">
-              <span :text="activity.activityType"></span>
+              <span>{{ activity.activityType }}</span>
               <span class="mx-1">·</span>
-              <span :text="tb.timeAgo(activity.created_at)"></span>
+              <span>{{ tb.timeAgo(activity.created_at) }}</span>
             </p>
           </div>
         </div>
@@ -113,7 +113,7 @@
           <button
             @click="editing ? closeEditor() : openEditor(activity)"
             class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-600 transition"
-            :text="editing ? 'Close' : 'Edit'"></button>
+>{{ editing ? 'Close' : 'Edit' }}</button>
           <button
             :if="confirmingDelete"
             @click="cancelDelete()"
@@ -122,14 +122,14 @@
             @click="deleteRun(activity)"
             x-class="confirmingDelete ? 'bg-red-600 text-white border-red-600' : 'border-gray-200 dark:border-slate-600 text-red-500 hover:border-red-400'"
             class="px-3 py-1.5 text-xs font-semibold rounded-lg border transition"
-            :text="confirmingDelete ? 'Confirm delete' : 'Delete'"></button>
+>{{ confirmingDelete ? 'Confirm delete' : 'Delete' }}</button>
         </div>
       </div>
 
-      <h1 class="text-2xl font-bold dark:text-white mb-2" :text="activity.title"></h1>
-      <StxLink :if="activity.trail_id" x-to="'/trail/' + activity.trail_id" class="text-sm text-emerald-600 hover:underline" :text="'→ ' + activity.trail_name"></StxLink>
-      <p :if="activity.notes && !editing" class="mt-3 text-sm text-gray-600 dark:text-slate-300" :text="activity.notes"></p>
-      <p :if="editorError && !editing" class="mt-2 text-sm text-red-500" :text="editorError"></p>
+      <h1 class="text-2xl font-bold dark:text-white mb-2">{{ activity.title }}</h1>
+      <StxLink :if="activity.trail_id" x-to="'/trail/' + activity.trail_id" class="text-sm text-emerald-600 hover:underline">{{ '→ ' + activity.trail_name }}</StxLink>
+      <p :if="activity.notes && !editing" class="mt-3 text-sm text-gray-600 dark:text-slate-300">{{ activity.notes }}</p>
+      <p :if="editorError && !editing" class="mt-2 text-sm text-red-500">{{ editorError }}</p>
 
       <!-- Owner edit panel (#954) -->
       <div :if="editing" class="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700 space-y-3">
@@ -161,9 +161,9 @@
           <textarea rows="2" x-value="formNotes" @input="e => formNotes.set(e.target.value)" placeholder="How did it go?" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm"></textarea>
         </div>
         <p :if="activity.hasGps" class="text-xs text-gray-400">Distance, time and elevation come from the GPS track and can't be edited.</p>
-        <p :if="editorError" class="text-sm text-red-500" :text="editorError"></p>
+        <p :if="editorError" class="text-sm text-red-500">{{ editorError }}</p>
         <div class="flex gap-2">
-          <button @click="saveEdit(activity)" class="px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition" :text="saving ? 'Saving…' : 'Save changes'"></button>
+          <button @click="saveEdit(activity)" class="px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">{{ saving ? 'Saving…' : 'Save changes' }}</button>
           <button @click="closeEditor()" class="px-4 py-2 text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-700 transition">Cancel</button>
         </div>
       </div>
@@ -177,28 +177,28 @@
     <!-- Stats -->
     <div class="grid grid-cols-3 sm:grid-cols-6 gap-4 mb-6">
       <div class="card text-center">
-        <p class="text-xl font-bold text-emerald-600" :text="activity.distance.toFixed(1)"></p>
+        <p class="text-xl font-bold text-emerald-600">{{ activity.distance.toFixed(1) }}</p>
         <p class="metric-label">Miles</p>
       </div>
       <div class="card text-center">
-        <p class="text-xl font-bold dark:text-white" :text="activity.moving_time || activity.duration"></p>
+        <p class="text-xl font-bold dark:text-white">{{ activity.moving_time || activity.duration }}</p>
         <p class="metric-label">Moving Time</p>
-        <p :if="activity.moving_time && activity.moving_time !== activity.duration" class="text-xs text-gray-400 mt-1" :text="'Elapsed ' + activity.duration"></p>
+        <p :if="activity.moving_time && activity.moving_time !== activity.duration" class="text-xs text-gray-400 mt-1">{{ 'Elapsed ' + activity.duration }}</p>
       </div>
       <div class="card text-center">
-        <p class="text-xl font-bold dark:text-white" :text="activity.pace"></p>
+        <p class="text-xl font-bold dark:text-white">{{ activity.pace }}</p>
         <p class="metric-label">Pace</p>
       </div>
       <div class="card text-center">
-        <p class="text-xl font-bold text-blue-600" :text="activity.elevation_gain.toLocaleString()"></p>
+        <p class="text-xl font-bold text-blue-600">{{ activity.elevation_gain.toLocaleString() }}</p>
         <p class="metric-label">Elev (ft)</p>
       </div>
       <div class="card text-center">
-        <p class="text-xl font-bold text-orange-600" :text="activity.calories || 0"></p>
+        <p class="text-xl font-bold text-orange-600">{{ activity.calories || 0 }}</p>
         <p class="metric-label">Calories</p>
       </div>
       <div class="card text-center">
-        <p class="text-xl font-bold text-red-500" :text="activity.heartRateAvg || '--'"></p>
+        <p class="text-xl font-bold text-red-500">{{ activity.heartRateAvg || '--' }}</p>
         <p class="metric-label">Avg HR</p>
       </div>
     </div>
@@ -209,9 +209,9 @@
       <div class="space-y-2">
         <template :for="split in activity.splits">
           <div class="grid grid-cols-3 gap-2 items-center p-3 rounded-lg">
-            <span class="text-sm font-medium dark:text-white" :text="'Mile ' + split.mile"></span>
-            <span class="text-center text-sm font-semibold dark:text-white" :text="split.pace"></span>
-            <span class="text-right text-sm text-gray-600 dark:text-slate-400" :text="split.elev + ' ft'"></span>
+            <span class="text-sm font-medium dark:text-white">{{ 'Mile ' + split.mile }}</span>
+            <span class="text-center text-sm font-semibold dark:text-white">{{ split.pace }}</span>
+            <span class="text-right text-sm text-gray-600 dark:text-slate-400">{{ split.elev + ' ft' }}</span>
           </div>
         </template>
       </div>
@@ -222,11 +222,11 @@
       <div class="flex items-center gap-6">
         <button @click="handlers.toggleKudos()" class="flex items-center gap-2 transition" x-class="hasKudos ? 'text-red-500' : 'text-gray-500 hover:text-red-500'">
           <Icon name="heart" size="18" />
-          <span class="font-medium" x-text="activity.kudos_count + ' Kudos'"></span>
+          <span class="font-medium">{{ activity.kudos_count + ' Kudos' }}</span>
         </button>
         <span class="flex items-center gap-2 text-gray-500">
           <Icon name="message-circle" size="18" />
-          <span class="font-medium" x-text="comments.length + ' Comments'"></span>
+          <span class="font-medium">{{ comments.length + ' Comments' }}</span>
         </span>
       </div>
     </div>
@@ -237,16 +237,16 @@
       <div class="space-y-4 mb-4">
         <template :for="comment in comments">
           <div class="flex gap-3">
-            <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-slate-300 shrink-0" :text="comment.userName.charAt(0)"></div>
+            <div class="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-slate-300 shrink-0">{{ comment.userName.charAt(0) }}</div>
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-1">
-                <span class="text-sm font-semibold dark:text-white" :text="comment.userName"></span>
-                <span class="text-xs text-gray-400" :text="tb.timeAgo(comment.createdAt)"></span>
+                <span class="text-sm font-semibold dark:text-white">{{ comment.userName }}</span>
+                <span class="text-xs text-gray-400">{{ tb.timeAgo(comment.createdAt) }}</span>
               </div>
               <p class="text-sm text-gray-600 dark:text-slate-400">
                 <template :for="seg in mentionSegments(comment.body)">
-                  <StxLink :if="seg.userId" x-to="'/athlete/' + seg.userId" class="text-emerald-600 font-medium hover:underline" :text="seg.text"></StxLink>
-                  <span :if="!seg.userId" :text="seg.text"></span>
+                  <StxLink :if="seg.userId" x-to="'/athlete/' + seg.userId" class="text-emerald-600 font-medium hover:underline">{{ seg.text }}</StxLink>
+                  <span :if="!seg.userId">{{ seg.text }}</span>
                 </template>
               </p>
             </div>
@@ -264,7 +264,7 @@
             <button
               @click="pickMention(candidate.name)"
               class="px-3 py-1.5 text-xs font-medium rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 hover:bg-emerald-100 transition"
-              :text="'@' + candidate.name"></button>
+>{{ '@' + candidate.name }}</button>
           </template>
         </div>
         <div class="flex gap-3">

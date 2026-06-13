@@ -36,7 +36,10 @@ export default new Action({
         createdAt: r.created_at,
       }))
 
-      return response.json({ success: true, reviews, meta: { total: reviews.length } })
+      // Generous default — the reviews tab renders the full set, no load-more
+      // (#978 review); ?limit/?offset still paginate on demand.
+      const paged = paginate(reviews, readPageParams(request, { defaultLimit: 200, maxLimit: 200 }))
+      return response.json({ success: true, reviews: paged.items, meta: paged.meta })
     }
     catch (error) {
       console.error('[trail-reviews] index failed:', error)

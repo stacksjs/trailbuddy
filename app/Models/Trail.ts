@@ -57,7 +57,7 @@ export default defineModel({
       order: 3,
       fillable: true,
       validation: {
-        rule: schema.number().required().min(0),
+        rule: schema.float().required().min(0),
         message: {
           required: 'Distance is required',
           min: 'Distance must be positive',
@@ -70,7 +70,7 @@ export default defineModel({
       order: 4,
       fillable: true,
       validation: {
-        rule: schema.number().required().min(0),
+        rule: schema.float().required().min(0),
         message: {
           required: 'Elevation is required',
         },
@@ -94,7 +94,7 @@ export default defineModel({
       order: 6,
       fillable: true,
       validation: {
-        rule: schema.number().min(0).max(5),
+        rule: schema.float().min(0).max(5),
       },
       factory: (faker) => faker.number.float({ min: 3.5, max: 5, fractionDigits: 1 }),
     },
@@ -143,7 +143,7 @@ export default defineModel({
       order: 11,
       fillable: true,
       validation: {
-        rule: schema.number(),
+        rule: schema.float(),
       },
       factory: (faker) => faker.location.latitude(),
     },
@@ -152,7 +152,7 @@ export default defineModel({
       order: 12,
       fillable: true,
       validation: {
-        rule: schema.number(),
+        rule: schema.float(),
       },
       factory: (faker) => faker.location.longitude(),
     },

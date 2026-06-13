@@ -5,6 +5,8 @@ export type { TerritoryRankStatsRow, TerritoryGainEvent, TerritoryRankAssignment
 export { increment, count } from '../../../resources/functions/counter'
 export { shapeChallenge } from '../../../resources/functions/challenges'
 export type { ChallengeNames } from '../../../resources/functions/challenges'
+export { readPageParams, paginate } from '../../../resources/functions/pagination'
+export type { PageParams, PageMeta } from '../../../resources/functions/pagination'
 export { longestDayStreak, hasSubSevenMile, computeAchievementProgress } from '../../../resources/functions/achievements'
 export type { AchievementDefinitionRow, AchievementProgressEntry } from '../../../resources/functions/achievements'
 export { extractMentionQuery, mentionCandidates, applyMention, parseMentions } from '../../../resources/functions/mentions'

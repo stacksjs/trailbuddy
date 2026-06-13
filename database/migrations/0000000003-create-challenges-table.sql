@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS "challenges" (
   "challenger_id" INTEGER,
   "challenged_id" INTEGER,
   "territory_id" INTEGER REFERENCES "territories"("id"),
-  "area_at_stake" INTEGER,
+  "area_at_stake" REAL,
   "status" TEXT CHECK ("status" IN ('pending', 'active', 'completed', 'declined')),
   "winner_id" INTEGER,
   "deadline" TEXT,

@@ -48,7 +48,10 @@ export default new Action({
           }
         })
 
-      return response.json({ success: true, savedTrails, meta: { total: savedTrails.length } })
+      // Generous default — the profile Saved tab renders the full set, no
+      // load-more (#978 review); ?limit/?offset still paginate on demand.
+      const paged = paginate(savedTrails, readPageParams(request, { defaultLimit: 200, maxLimit: 200 }))
+      return response.json({ success: true, savedTrails: paged.items, meta: paged.meta })
     }
     catch (error) {
       console.error('[saved-trails] index failed:', error)
