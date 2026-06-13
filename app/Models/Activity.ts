@@ -59,7 +59,7 @@ export default defineModel({
       order: 2,
       fillable: true,
       validation: {
-        rule: schema.number().required().min(0),
+        rule: schema.float().required().min(0),
         message: {
           required: 'Distance is required',
         },
@@ -113,7 +113,7 @@ export default defineModel({
       order: 5,
       fillable: true,
       validation: {
-        rule: schema.number().min(0),
+        rule: schema.float().min(0),
       },
       factory: (faker) => faker.number.int({ min: 100, max: 3000 }),
     },

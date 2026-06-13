@@ -112,7 +112,7 @@ export default defineModel({
       order: 5,
       fillable: true,
       validation: {
-        rule: schema.number().required(),
+        rule: schema.float().required(),
         message: {
           required: 'Center latitude is required',
         },
@@ -124,7 +124,7 @@ export default defineModel({
       order: 6,
       fillable: true,
       validation: {
-        rule: schema.number().required(),
+        rule: schema.float().required(),
         message: {
           required: 'Center longitude is required',
         },
@@ -136,7 +136,7 @@ export default defineModel({
       order: 7,
       fillable: true,
       validation: {
-        rule: schema.number().required().min(0),
+        rule: schema.float().required().min(0),
         message: {
           required: 'Area size is required',
         },
@@ -149,7 +149,7 @@ export default defineModel({
       fillable: true,
       nullable: true,
       validation: {
-        rule: schema.number().min(0),
+        rule: schema.float().min(0),
       },
       factory: (faker) => faker.number.float({ min: 100, max: 5000, fractionDigits: 2 }),
     },

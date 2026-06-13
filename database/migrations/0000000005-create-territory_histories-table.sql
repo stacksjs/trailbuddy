@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS "territory_histories" (
   "activity_id" INTEGER REFERENCES "activities"("id"),
   "previous_owner_id" INTEGER,
   "event_type" TEXT CHECK ("event_type" IN ('claimed', 'conquered', 'split', 'defended', 'contested', 'expired')),
-  "area_at_event" INTEGER,
+  "area_at_event" REAL,
   "previous_ownership_duration" INTEGER,
   "notes" TEXT,
   "new_territory_id" INTEGER,

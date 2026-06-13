@@ -349,7 +349,7 @@ export function mapFieldTypeToColumnType(validator: ValidationType, driver = 'my
     return `'timestamp'`
 
   if (isFloatValidator(validator))
-    return `'float4'`
+    return driver === 'sqlite' ? `'real'` : `'float4'` // SQLite: REAL affinity for floats (#974)
 
   // Handle array/object types
   if (['array', 'object'].includes(validator.name))
