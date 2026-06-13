@@ -5,6 +5,7 @@
 @section('content')
 <script client>
   import { fetchAthlete, toggleFollow } from '../../assets/scripts/game-api'
+  import { useRouteParam } from '../../composables/useRouteParam'
 
   useHead({ title: 'Athlete — TrailBuddy' })
 
@@ -12,10 +13,9 @@
   const profile = state<any>(null)
   const loading = state(true)
 
-  const athleteId = Number(
-    (typeof window !== 'undefined' && (window as any).__routeParams?.id)
-    ?? 0,
-  )
+  // -1 is a no-match sentinel so an unresolved param renders "not found"
+  // rather than silently loading athlete 0/1 (#987).
+  const athleteId = useRouteParam('id') ?? -1
 
   const isSelf = derived(() => !!tb && athleteId === tb.currentUserId())
   const isFollowing = derived(() => !!tb && tb.isFollowing(athleteId))

@@ -7,6 +7,7 @@
   import { createTrailMap, drawTrailRoute, runWhenMapReady, type TrailMapHandle } from '../../composables/useTrailMap'
   import { useActivityEditor } from '../../composables/useActivityEditor'
   import { useMentions } from '../../composables/useMentions'
+  import { useRouteParam } from '../../composables/useRouteParam'
   import { fetchActivityDetail, postComment, toggleKudos } from '../../assets/scripts/game-api'
 
   useHead({ title: 'Activity Details — TrailBuddy' })
@@ -16,10 +17,9 @@
   const newComment = state('')
   const comments = state<Array<{ id: number, userName: string, body: string, createdAt: string }>>([])
 
-  const activityId = Number(
-    (typeof window !== 'undefined' && (window as any).__routeParams?.id)
-    ?? 1
-  )
+  // -1 is a no-match sentinel so an unresolved param renders "not found"
+  // rather than silently loading activity 1 (#987).
+  const activityId = useRouteParam('id') ?? -1
 
   const activity = derived(() => tb ? tb.findActivity(activityId) : null)
   const isOwner = derived(() => !!(tb && activity() && activity().user_id === tb.currentUserId()))
