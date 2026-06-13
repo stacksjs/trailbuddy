@@ -65,11 +65,12 @@
     <!-- Target zone (capture mode) -->
     <div x-class="runMode === 'capture' && !recording ? 'mb-4 card border-2 border-orange-200 dark:border-orange-800/50' : 'hidden'">
       <p class="mb-2 font-semibold text-sm dark:text-white">Target a zone to attack</p>
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap gap-2 items-center">
         <button @click="targetTerritoryId.set(null)" x-class="!targetTerritoryId ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-gray-100 dark:bg-slate-700'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition">Any nearby</button>
         <template :for="zone in attackable">
           <button @click="targetTerritoryId.set(zone.id)" x-class="targetTerritoryId === zone.id ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-900/20' : 'bg-gray-100 dark:bg-slate-700'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition" x-text="zone.name"></button>
         </template>
+        <span :if="attackable.length === 0" class="text-xs text-gray-500 dark:text-slate-400">No enemy zones in range yet — start running near orange turf.</span>
       </div>
       <p :if="targetZone" class="mt-2 text-orange-600 text-xs">Focus run: cross <span class="font-semibold" :text="targetZone.name"></span> to fill the capture meter</p>
     </div>
@@ -145,12 +146,13 @@
         <span class="text-xs text-gray-500">Paint a trail route • no GPS</span>
       </div>
       <div class="flex gap-2">
-        <select @change="selectedTrailId.set(Number($event.target.value))" class="flex-1 px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg">
+        <select @change="selectedTrailId.set(Number($event.target.value))" x-disabled="trailOptions.length === 0" class="flex-1 px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg disabled:opacity-50">
+          <option :if="trailOptions.length === 0" disabled>No trails available yet</option>
           <template :for="opt in trailOptions">
             <option x-value="opt.id" x-selected="opt.id === selectedTrailId" x-text="opt.name"></option>
           </template>
         </select>
-        <button @click="simulate()" class="px-4 py-2 font-semibold text-sm text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition whitespace-nowrap">Simulate capture</button>
+        <button @click="simulate()" x-disabled="trailOptions.length === 0" class="px-4 py-2 font-semibold text-sm text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">Simulate capture</button>
       </div>
     </div>
 

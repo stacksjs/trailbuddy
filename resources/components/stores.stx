@@ -698,8 +698,14 @@
       },
     },
 
-    // v3: territory status vocabulary changed 'secure' -> 'active' (#942);
-    // older persisted snapshots would resurrect the dead enum value.
+    // PERSIST-KEY DISCIPLINE (#988): a persisted snapshot fully REPLACES the
+    // seeded state on hydration, so any breaking change to the store's shape —
+    // a renamed/removed field, a changed enum vocabulary, or a new field that
+    // older snapshots lack and code assumes — MUST bump this version suffix
+    // (-v4 -> -v5 …). Bumping invalidates every stale snapshot in the wild so
+    // the new shape/seed actually takes effect instead of being masked.
+    // History: v3 — territory status 'secure' -> 'active' (#942);
+    //          v4 — added savedTrailIds for saved trails (#969).
     persist: { key: 'trailbuddy-tb-v4' },
   })
 </script>

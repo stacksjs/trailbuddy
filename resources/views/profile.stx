@@ -26,10 +26,16 @@
 
   onMount(async () => {
     if (!tb) return
-    const data = await fetchFollows(tb.currentUserId())
-    if (data) {
-      followerCount.set(data.followerCount)
-      tb.hydrateFollowing(data.followingIds) // keep store in sync
+    try {
+      const data = await fetchFollows(tb.currentUserId())
+      if (data) {
+        followerCount.set(data.followerCount)
+        tb.hydrateFollowing(data.followingIds) // keep store in sync
+      }
+    }
+    catch {
+      // Follower data is non-critical — leave the seeded counts in place
+      // rather than letting an unhandled rejection break the page.
     }
   })
 </script>
@@ -114,7 +120,7 @@
     </div>
 
     <!-- Achievements -->
-    <div :if="activeTab === 'achievements'" class="grid gap-4 grid-cols-1 sm:grid-cols-2">
+    <div :if="activeTab === 'achievements' && achievements.length > 0" class="grid gap-4 grid-cols-1 sm:grid-cols-2">
       <template :for="achievement in achievements">
         <div class="flex gap-4 items-center card">
           <span class="text-3xl" :text="achievement.icon"></span>
@@ -128,6 +134,15 @@
           <p class="shrink-0 text-gray-400 text-xs dark:text-slate-500" :text="achievement.progress + '/' + achievement.total"></p>
         </div>
       </template>
+    </div>
+
+    <div :if="activeTab === 'achievements' && achievements.length === 0" class="py-16 text-center">
+      <div class="w-16 h-16 mx-auto mb-4 bg-emerald-100 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center">
+        <Icon name="award" size="32" class="text-emerald-400" />
+      </div>
+      <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">No achievements yet</h3>
+      <p class="text-sm text-gray-500 dark:text-slate-400 mb-4">Record runs and conquer territory to start unlocking badges.</p>
+      <StxLink to="/record" class="px-5 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Get moving</StxLink>
     </div>
 
     <!-- Saved -->

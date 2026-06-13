@@ -124,7 +124,6 @@
               x-class="tb.isFollowing(activity.user_id) ? 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'"
               class="px-3 py-1.5 font-semibold text-xs rounded-lg transition"
               :text="tb.isFollowing(activity.user_id) ? 'Following' : 'Follow'"></button>
-            <span class="text-gray-600 text-xs dark:text-slate-400 px-2 py-1 bg-gray-100 dark:bg-slate-700 rounded-full" :text="activity.activityType"></span>
           </div>
 
           <StxLink x-to="'/activity/' + activity.id" class="font-bold text-gray-900 text-lg dark:text-white hover:text-emerald-600 transition block" :text="activity.title"></StxLink>

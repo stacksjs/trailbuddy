@@ -13,15 +13,29 @@
   const athletes = state<any[]>([])
   const searching = state(false)
   const searched = state(false)
+  const error = state('')
 
   let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
   async function runSearch(q: string) {
     searching.set(true)
+    error.set('')
     const results = await searchAthletes(q)
     searching.set(false)
     searched.set(true)
-    athletes.set(results ?? [])
+    // null = request failed (vs [] = genuinely no matches) — keep the two
+    // distinct so a network error doesn't read as "no athletes found".
+    if (results === null) {
+      error.set('Could not load athletes. Check your connection and try again.')
+      athletes.set([])
+    }
+    else {
+      athletes.set(results)
+    }
+  }
+
+  function retrySearch() {
+    void runSearch(query().trim())
   }
 
   function onQueryInput(value: string) {
@@ -64,7 +78,26 @@
       />
     </div>
 
-    <div class="space-y-3">
+    <!-- Loading -->
+    <div :if="searching" class="py-16 text-center text-sm text-gray-500 dark:text-slate-400">
+      <svg class="mx-auto mb-3 h-6 w-6 text-emerald-500 animate-spin" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+      Searching athletes…
+    </div>
+
+    <!-- Error (distinct from empty) -->
+    <div :if="error && !searching" class="py-16 text-center">
+      <div class="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900/20 rounded-2xl flex items-center justify-center">
+        <Icon name="alert-triangle" size="28" class="text-red-400" />
+      </div>
+      <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">Couldn't load athletes</h3>
+      <p class="text-sm text-gray-500 dark:text-slate-400 mb-4" :text="error"></p>
+      <button @click="retrySearch()" class="px-5 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Try again</button>
+    </div>
+
+    <div :if="!searching && !error" class="space-y-3">
       <template :for="athlete in athletes">
         <div class="card flex items-center gap-4">
           <StxLink x-to="'/athlete/' + athlete.id" class="flex items-center gap-3 flex-1 min-w-0 group">
@@ -90,7 +123,7 @@
         </div>
       </template>
 
-      <div :if="searched && !searching && athletes.length === 0" class="py-16 text-center">
+      <div :if="searched && athletes.length === 0" class="py-16 text-center">
         <div class="w-16 h-16 mx-auto mb-4 bg-emerald-100 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center">
           <Icon name="search" size="28" class="text-emerald-400" />
         </div>
