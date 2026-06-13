@@ -126,13 +126,17 @@ export default new Action({
         notes: 'Initial claim',
       })
 
+      // XP for claiming new ground (#947), persisted to territory_stats.
+      const xpGained = XP_REWARDS.claim(area)
       const stats = await TerritoryStats.where('user_id', '=', userId).first()
+      const prevXp = stats?.xp || 0
       if (stats) {
         await TerritoryStats.forceUpdate(stats.id, {
           total_territories_owned: (stats.total_territories_owned || 0) + 1,
           total_area_owned: (stats.total_area_owned || 0) + area,
           territories_claimed: (stats.territories_claimed || 0) + 1,
           largest_territory_area: Math.max(stats.largest_territory_area || 0, area),
+          xp: prevXp + xpGained,
         })
       }
       else {
@@ -146,6 +150,7 @@ export default new Action({
           territories_defended: 0,
           longest_ownership_days: 0,
           largest_territory_area: area,
+          xp: xpGained,
           // Unranked until the recompute below assigns real ranks (#944).
           weekly_rank: null,
           all_time_rank: null,
@@ -162,6 +167,8 @@ export default new Action({
 
       return response.json({
         success: true,
+        xpGained,
+        totalXp: prevXp + xpGained,
         territory: {
           id: territory.id,
           name: territory.name,

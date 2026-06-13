@@ -35,6 +35,7 @@ declare global {
   const boundedNumber: typeof autoImports.boundedNumber
   const boundedString: typeof autoImports.boundedString
   const durationString: typeof autoImports.durationString
+  const XP_REWARDS: typeof autoImports.XP_REWARDS
   const parseGpx: typeof autoImports.parseGpx
   const parseJsonCoordinates: typeof autoImports.parseJsonCoordinates
   const parseGpsData: typeof autoImports.parseGpsData

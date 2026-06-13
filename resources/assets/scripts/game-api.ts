@@ -19,6 +19,9 @@ export interface ClaimResult {
   success: boolean
   error?: string
   territory?: { id: number, name: string, areaSize: number, centerLat: number, centerLng: number }
+  /** Authoritative XP from the server (#947). */
+  xpGained?: number
+  totalXp?: number
 }
 
 export interface ConquestResult {
@@ -30,6 +33,9 @@ export interface ConquestResult {
   contested?: Array<{ id: number, name: string }>
   /** Own contested territories this run defended (back to 'active'). */
   defended?: Array<{ id: number, name: string }>
+  /** Authoritative XP from the server (#947). */
+  xpGained?: number
+  totalXp?: number
 }
 
 // The browser auth client (@stacksjs/browser) stores the bearer token under
@@ -538,6 +544,11 @@ export function runResultMessage(result: RunResult): string | null {
   const contested = result.conquest?.contested ?? []
   if (contested.length > 0)
     parts.push(`Attacked ${contested.map(c => c.name).join(', ')} — run through to conquer!`)
+
+  // Authoritative XP from the server (#947), summed across claim + conquest.
+  const xpGained = (result.claim?.xpGained ?? 0) + (result.conquest?.xpGained ?? 0)
+  if (xpGained > 0)
+    parts.push(`+${xpGained} XP!`)
 
   return parts.length ? parts.join(' ') : null
 }

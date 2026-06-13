@@ -101,6 +101,9 @@ export default new Action({
           contested: [],
           defended: [],
           alreadyProcessed: true,
+          // No XP on replay; echo the persisted total so the shape is consistent (#947).
+          xpGained: 0,
+          totalXp: (await TerritoryStats.where('user_id', '=', userId).first())?.xp || 0,
         })
       }
 
@@ -125,6 +128,8 @@ export default new Action({
       }> = []
       const contestedTerritories: Array<{ id: number, name: string }> = []
       const defendedTerritories: Array<{ id: number, name: string }> = []
+      // XP earned this run (#947), accumulated then persisted once below.
+      let runXp = 0
 
       for (const territory of allTerritories) {
         if (!territory.bounding_box || !boundingBoxesOverlap(routeBbox, territory.bounding_box)) continue
@@ -156,6 +161,7 @@ export default new Action({
               notes: 'Territory defended — owner ran through contested land',
             })
             await incrementDefenseStats(userId)
+            runXp += XP_REWARDS.defend()
 
             defendedTerritories.push({ id: territory.id, name: territory.name })
             await notify(userId, actor, 'conquest_defend', `You defended ${territory.name}!`, `/territory/${territory.id}`)
@@ -232,6 +238,7 @@ export default new Action({
               wholeTerritory: true,
               ownershipDurationSeconds: ownershipDuration,
             })
+            runXp += XP_REWARDS.conquest(territory.area_size)
 
             await notify(previousOwner, actor, 'conquest_attack', `${actorName} conquered ${territory.name}!`, `/territory/${territory.id}`)
           }
@@ -311,6 +318,7 @@ export default new Action({
               wholeTerritory: false,
               ownershipDurationSeconds: ownershipDuration,
             })
+            runXp += XP_REWARDS.conquest(conqueredPolygon.area)
 
             await notify(previousOwner, actor, 'conquest_attack', `${actorName} conquered ${Math.round(conqueredPolygon.area).toLocaleString()} m² of ${territory.name}!`, `/territory/${territory.id}`)
           }
@@ -353,12 +361,33 @@ export default new Action({
           console.error('[achievements] evaluate after conquest failed:', err))
       }
 
+      // Persist this run's XP once (#947), inside the idempotency guard so a
+      // replay can't double-award. totalXp echoed so the client shows the
+      // authoritative value instead of a session-only counter.
+      let totalXp = 0
+      if (runXp > 0) {
+        const stats = await TerritoryStats.where('user_id', '=', userId).first()
+        if (stats) {
+          totalXp = (stats.xp || 0) + runXp
+          await TerritoryStats.forceUpdate(stats.id, { xp: totalXp })
+        }
+        else {
+          totalXp = runXp
+          await TerritoryStats.forceCreate({ user_id: userId, xp: runXp })
+        }
+      }
+      else {
+        totalXp = (await TerritoryStats.where('user_id', '=', userId).first())?.xp || 0
+      }
+
       return response.json({
         success: true,
         conqueredCount: conqueredTerritories.length,
         territories: conqueredTerritories,
         contested: contestedTerritories,
         defended: defendedTerritories,
+        xpGained: runXp,
+        totalXp,
       })
     }
     catch (error) {

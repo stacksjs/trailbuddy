@@ -53,6 +53,7 @@ export default new Action({
           territoriesOwned: tStats?.total_territories_owned ?? 0,
           totalArea: tStats?.total_area_owned ?? 0,
           territoriesConquered: tStats?.territories_conquered ?? 0,
+          xp: tStats?.xp ?? 0,
         },
         followerCount: (followers ?? []).length,
         followingCount: (following ?? []).length,

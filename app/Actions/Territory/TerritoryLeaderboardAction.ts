@@ -21,6 +21,9 @@ export default new Action({
         case 'conquests':
           sortField = 'territories_conquered'
           break
+        case 'xp': // XP leaderboard (#947)
+          sortField = 'xp'
+          break
         case 'area':
         default:
           sortField = 'total_area_owned'
@@ -46,6 +49,7 @@ export default new Action({
           territoriesDefended: s.territories_defended || 0,
           longestOwnershipDays: s.longest_ownership_days || 0,
           largestTerritoryArea: s.largest_territory_area || 0,
+          xp: s.xp || 0,
         }
       })
 
