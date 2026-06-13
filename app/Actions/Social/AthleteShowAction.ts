@@ -18,7 +18,18 @@ export default new Action({
       if (!user)
         return response.json({ success: false, error: 'User not found' }, 404)
 
-      const activities = (await Activity.where('user_id', '=', userId).get()) ?? []
+      // Visibility (#957): everything derived from this athlete's activities —
+      // the recent list AND the aggregate totals — must only reflect what the
+      // VIEWER is allowed to see, so private mileage never leaks into a public
+      // profile. Viewer from the session token; harness fallback is null over
+      // real HTTP (can't be spoofed).
+      const viewerId = (await Auth.user().catch(() => null))?.id ?? harnessFallbackUserId(request, 'viewer_id')
+      const viewerFollowing = viewerId !== null
+        ? new Set(((await Follow.where('follower_id', '=', viewerId).get()) ?? []).map((f: any) => f.following_id))
+        : new Set<number>()
+      const allActivities = (await Activity.where('user_id', '=', userId).get()) ?? []
+      const activities = allActivities.filter((a: any) => canViewActivity(a, viewerId, viewerFollowing))
+
       const trailIds = [...new Set(activities.map((a: any) => a.trail_id).filter(Boolean))]
       const trails = trailIds.length ? await Trail.whereIn('id', trailIds).get() : []
       const trailName = new Map(trails.map((t: any) => [t.id, t.name]))

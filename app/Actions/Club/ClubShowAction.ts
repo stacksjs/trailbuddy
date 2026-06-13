@@ -41,9 +41,19 @@ export default new Action({
         }))
         .sort((a: any, b: any) => (a.role === 'owner' ? -1 : 0) - (b.role === 'owner' ? -1 : 0))
 
-      const activities = memberIds.length ? (await Activity.whereIn('user_id', memberIds).get()) ?? [] : []
-      const sortedActivities = [...activities].sort((a: any, b: any) =>
-        Date.parse(b.completed_at ?? b.created_at ?? '') - Date.parse(a.completed_at ?? a.created_at ?? ''))
+      const allActivities = memberIds.length ? (await Activity.whereIn('user_id', memberIds).get()) ?? [] : []
+
+      // Every member-activity-derived value — the feed AND the weekly
+      // leaderboard — must respect each activity's visibility (#957): a
+      // member's private/followers-only run can't leak through the club to a
+      // viewer who isn't allowed to see it.
+      const viewerFollowing = sessionUser !== null
+        ? new Set(((await Follow.where('follower_id', '=', sessionUser).get()) ?? []).map((f: any) => f.following_id))
+        : new Set<number>()
+      const activities = allActivities.filter((a: any) => canViewActivity(a, sessionUser, viewerFollowing))
+      const sortedActivities = [...activities]
+        .sort((a: any, b: any) =>
+          Date.parse(b.completed_at ?? b.created_at ?? '') - Date.parse(a.completed_at ?? a.created_at ?? ''))
 
       const recentFeed = sortedActivities.slice(0, 10).map((a: any) => ({
         id: a.id,

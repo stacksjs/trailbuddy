@@ -15,6 +15,7 @@ import process from 'node:process'
 
 process.on('unhandledRejection', (err) => { console.error('UNHANDLED', err); process.exit(1) })
 
+import { Database } from 'bun:sqlite'
 import { generateAutoImportFiles, injectGlobalAutoImports } from '@stacksjs/server'
 import { path } from '@stacksjs/path'
 import { canViewActivity } from '../resources/functions/visibility'
@@ -49,6 +50,8 @@ const StoreAction = (await import('../app/Actions/Activity/ActivityStoreAction')
 const UpdateAction = (await import('../app/Actions/Activity/ActivityUpdateAction')).default
 const IndexAction = (await import('../app/Actions/Activity/ActivityIndexAction')).default
 const ShowAction = (await import('../app/Actions/Activity/ActivityShowAction')).default
+const AthleteShowAction = (await import('../app/Actions/Social/AthleteShowAction')).default
+const ClubShowAction = (await import('../app/Actions/Club/ClubShowAction')).default
 
 async function call(action: any, body: Record<string, unknown>): Promise<{ status: number, json: any }> {
   const request = { get: (k: string) => (body as any)[k] }
@@ -107,6 +110,23 @@ check('spoofed ?viewer_id over HTTP can\'t open a private activity', (spoof?.sta
 const toPrivate = await call(UpdateAction, { id: pubId, user_id: 1, visibility: 'private' })
 check('owner can change visibility', toPrivate.status === 200 && toPrivate.json?.activity?.visibility === 'private')
 check('now-private activity hidden from anonymous', !has(await call(IndexAction, { user_id: 1 }), pubId))
+
+// --- cross-endpoint leaks: private activities must not surface elsewhere (review #957) ---
+const inRecent = (res: any, id: number) => (res.json?.recentActivities ?? []).some((a: any) => a.id === id)
+const profAnon = await call(AthleteShowAction, { id: 1 })
+check('athlete profile (anonymous) hides the owner\'s private activity', !inRecent(profAnon, priId))
+const profOwner = await call(AthleteShowAction, { id: 1, viewer_id: 1 })
+check('athlete profile (owner) shows the owner\'s private activity', inRecent(profOwner, priId))
+
+const db = new Database('database/stacks.sqlite', { readonly: true })
+const pubClub = db.query('SELECT cm.club_id c FROM club_members cm JOIN clubs cl ON cl.id = cm.club_id WHERE cm.user_id = 1 AND cl.is_private = 0 LIMIT 1').get() as any
+if (pubClub) {
+  const clubAnon = await call(ClubShowAction, { id: pubClub.c })
+  check('club feed (anonymous) hides a member\'s private activity', !((clubAnon.json?.club?.recentFeed ?? []).some((a: any) => a.id === priId)))
+}
+else {
+  check('club feed leak check (skipped: no public club for user 1)', true)
+}
 
 console.log(failures === 0 ? '\n✅ all privacy checks passed' : `\n❌ ${failures} check(s) failed`)
 process.exit(failures === 0 ? 0 : 1)

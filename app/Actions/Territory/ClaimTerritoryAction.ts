@@ -39,6 +39,16 @@ export default new Action({
         return response.json({ success: false, error: 'Activity does not belong to user' }, 403)
       }
 
+      // Idempotency (#947 review): this activity has already claimed land. The
+      // overlap check below blocks a re-claim only while that territory is
+      // still active/contested — if it later expired, re-POSTing would award
+      // claim XP again. Guard on the 'claimed' history event instead.
+      const priorClaims = (await TerritoryHistory.where('activity_id', '=', activityId).get()) ?? []
+      if (priorClaims.some((h: any) => h.event_type === 'claimed')) {
+        const existing = await TerritoryStats.where('user_id', '=', userId).first()
+        return response.json({ success: true, alreadyProcessed: true, xpGained: 0, totalXp: existing?.xp || 0 })
+      }
+
       if (!activity.gpx_data) {
         return response.json({ success: false, error: 'Activity has no GPS data' }, 400)
       }

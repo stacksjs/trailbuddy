@@ -432,6 +432,7 @@ async function updateConquestStats(update: {
       territories_defended: 0,
       longest_ownership_days: 0,
       largest_territory_area: areaGained,
+      xp: 0, // counter starts at 0, never NULL (#947 review)
       // Unranked until the post-battle recompute assigns real ranks (#944).
       weekly_rank: null,
       all_time_rank: null,
@@ -475,6 +476,7 @@ async function incrementDefenseStats(userId: number) {
       territories_defended: 1,
       longest_ownership_days: 0,
       largest_territory_area: 0,
+      xp: 0, // counter starts at 0, never NULL (#947 review)
       // Unranked until the post-battle recompute assigns real ranks (#944).
       weekly_rank: null,
       all_time_rank: null,

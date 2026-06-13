@@ -91,6 +91,12 @@ check('claim xpGained matches the area formula', claim.json?.xpGained === expect
 check('XP persisted to territory_stats', xpOf(1) === xpBefore + expectedClaimXp, `${xpOf(1)} vs ${xpBefore + expectedClaimXp}`)
 check('totalXp echoes the persisted value', claim.json?.totalXp === xpOf(1))
 
+// Replaying the same claim activity must not re-award (idempotency guard).
+const xpAfterClaim = xpOf(1)
+const claimReplay = await call(ClaimAction, { activity_id: claimActivity.id, user_id: 1 })
+check('claim replay → alreadyProcessed, no double XP', claimReplay.json?.alreadyProcessed === true
+  && (claimReplay.json?.xpGained ?? 0) === 0 && xpOf(1) === xpAfterClaim, JSON.stringify({ replay: claimReplay.json?.alreadyProcessed, xp: xpOf(1), was: xpAfterClaim }))
+
 // --- Part 3: conquest replay doesn't double-award (idempotent) -------------------
 
 // The seed ran one conquest already; replaying that activity must not re-award.

@@ -19,7 +19,12 @@ export default new Action({
 
       const clubs = (await Club.all()) ?? []
       const memberships = (await ClubMember.all()) ?? []
-      const activities = (await Activity.all()) ?? []
+      // Only count activities the viewer is allowed to see (#957) so private
+      // member mileage never feeds a public club's weekly numbers.
+      const viewerFollowing = sessionUser !== null
+        ? new Set(((await Follow.where('follower_id', '=', sessionUser).get()) ?? []).map((f: any) => f.following_id))
+        : new Set<number>()
+      const activities = ((await Activity.all()) ?? []).filter((a: any) => canViewActivity(a, sessionUser, viewerFollowing))
 
       const membersByClub = new Map<number, number[]>()
       for (const m of memberships) {
