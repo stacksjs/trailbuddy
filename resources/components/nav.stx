@@ -25,7 +25,7 @@
             x-to="link.to"
             activeClass="nav-active"
             class="px-3 py-2 font-medium text-slate-500 text-sm dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors"
-            x-text="link.label" />
+          >{{ link.label }}</StxLink>
         </div>
       </div>
 
@@ -59,7 +59,7 @@
       <StxLink :for="link in navLinks" :key="link.to"
         x-to="link.to"
         class="block px-3 py-2 text-slate-500 text-sm dark:text-slate-400 rounded"
-        x-text="link.label" />
+      >{{ link.label }}</StxLink>
       <StxLink to="/record" class="block px-3 py-2 font-semibold text-emerald-600 text-sm rounded">+ Record Activity</StxLink>
       <StxLink to="/clubs" class="block px-3 py-2 text-slate-500 text-sm dark:text-slate-400 rounded">Clubs</StxLink>
       <StxLink to="/stats" class="block px-3 py-2 text-slate-500 text-sm dark:text-slate-400 rounded">Stats</StxLink>

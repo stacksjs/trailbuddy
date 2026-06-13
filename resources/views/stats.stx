@@ -35,21 +35,21 @@
       <!-- Summary cards -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         <div class="card text-center">
-          <p class="text-3xl font-bold text-emerald-600" :text="period === 'weekly' ? userStats.weeklyDistance : period === 'monthly' ? userStats.monthlyDistance : userStats.totalDistance"></p>
+          <p class="text-3xl font-bold text-emerald-600">{{ period === 'weekly' ? userStats.weeklyDistance : period === 'monthly' ? userStats.monthlyDistance : userStats.totalDistance }}</p>
           <p class="metric-label">Miles</p>
         </div>
         <div class="card text-center">
-          <p class="text-3xl font-bold text-blue-600" :text="(period === 'weekly' ? userStats.weeklyElevation : period === 'monthly' ? userStats.monthlyElevation : userStats.totalElevation).toLocaleString()"></p>
+          <p class="text-3xl font-bold text-blue-600">{{ (period === 'weekly' ? userStats.weeklyElevation : period === 'monthly' ? userStats.monthlyElevation : userStats.totalElevation).toLocaleString() }}</p>
           <p class="metric-label">Elev (ft)</p>
         </div>
         <div class="card text-center">
-          <p class="text-3xl font-bold text-orange-600" :text="period === 'weekly' ? userStats.weeklyActivities : userStats.totalActivities"></p>
+          <p class="text-3xl font-bold text-orange-600">{{ period === 'weekly' ? userStats.weeklyActivities : userStats.totalActivities }}</p>
           <p class="metric-label">Activities</p>
         </div>
         <div class="card text-center">
-          <p class="text-3xl font-bold text-purple-600" :text="userStats.currentStreak"></p>
+          <p class="text-3xl font-bold text-purple-600">{{ userStats.currentStreak }}</p>
           <p class="metric-label">Day Streak</p>
-          <p class="text-xs text-purple-500 mt-1" :text="'Best: ' + userStats.longestStreak + ' days'"></p>
+          <p class="text-xs text-purple-500 mt-1">{{ 'Best: ' + userStats.longestStreak + ' days' }}</p>
         </div>
       </div>
 
@@ -59,9 +59,9 @@
         <div :if="userStats.weeklyHistory.length > 0" class="flex items-end gap-3 h-40">
           <template :for="(week, i) in userStats.weeklyHistory">
             <div class="flex-1 flex flex-col items-center gap-2">
-              <span class="text-xs font-semibold dark:text-white" :text="week.distance.toFixed(1)"></span>
+              <span class="text-xs font-semibold dark:text-white">{{ week.distance.toFixed(1) }}</span>
               <div class="w-full rounded-t-lg transition-all duration-500" x-class="i === userStats.weeklyHistory.length - 1 ? 'bg-emerald-500' : 'bg-emerald-200 dark:bg-emerald-800'" x-style="'height: ' + (week.distance / maxWeeklyDistance * 100) + '%'"></div>
-              <span class="text-xs text-gray-500 dark:text-slate-400 whitespace-nowrap" :text="week.week"></span>
+              <span class="text-xs text-gray-500 dark:text-slate-400 whitespace-nowrap">{{ week.week }}</span>
             </div>
           </template>
         </div>
@@ -84,28 +84,28 @@
                 <Icon name="zap" size="16" class="text-yellow-500" />
                 Fastest Mile
               </span>
-              <span class="font-bold text-gray-900 dark:text-white" x-text="userStats.personalRecords.fastestMile + ' /mi'"></span>
+              <span class="font-bold text-gray-900 dark:text-white">{{ userStats.personalRecords.fastestMile + ' /mi' }}</span>
             </div>
             <div class="flex items-center justify-between p-3 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl">
               <span class="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-400">
                 <Icon name="footprints" size="16" class="text-emerald-500" />
                 Longest Run
               </span>
-              <span class="font-bold text-gray-900 dark:text-white" x-text="userStats.personalRecords.longestRun + ' mi'"></span>
+              <span class="font-bold text-gray-900 dark:text-white">{{ userStats.personalRecords.longestRun + ' mi' }}</span>
             </div>
             <div class="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/10 rounded-xl">
               <span class="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-400">
                 <Icon name="mountain" size="16" class="text-blue-500" />
                 Biggest Climb
               </span>
-              <span class="font-bold text-gray-900 dark:text-white" x-text="userStats.personalRecords.biggestClimb.toLocaleString() + ' ft'"></span>
+              <span class="font-bold text-gray-900 dark:text-white">{{ userStats.personalRecords.biggestClimb.toLocaleString() + ' ft' }}</span>
             </div>
             <div class="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/10 rounded-xl">
               <span class="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-400">
                 <Icon name="flame" size="16" class="text-orange-500" />
                 Longest Streak
               </span>
-              <span class="font-bold text-gray-900 dark:text-white" x-text="userStats.personalRecords.longestStreak + ' days'"></span>
+              <span class="font-bold text-gray-900 dark:text-white">{{ userStats.personalRecords.longestStreak + ' days' }}</span>
             </div>
           </div>
         </div>
@@ -117,7 +117,7 @@
             <div>
               <div class="flex items-center justify-between mb-1">
                 <span class="text-sm text-gray-600 dark:text-slate-400">Trail Runs</span>
-                <span class="text-sm font-medium dark:text-white" :text="myActivities.filter((a) => a.activityType === 'Trail Run').length + ' activities'"></span>
+                <span class="text-sm font-medium dark:text-white">{{ myActivities.filter((a) => a.activityType === 'Trail Run').length + ' activities' }}</span>
               </div>
               <div class="h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
                 <div class="h-full bg-emerald-500 rounded-full" x-style="'width: ' + (myActivities.filter((a) => a.activityType === 'Trail Run').length / Math.max(myActivities.length, 1) * 100) + '%'"></div>
@@ -126,7 +126,7 @@
             <div>
               <div class="flex items-center justify-between mb-1">
                 <span class="text-sm text-gray-600 dark:text-slate-400">Hikes</span>
-                <span class="text-sm font-medium dark:text-white" :text="myActivities.filter((a) => a.activityType === 'Hike').length + ' activities'"></span>
+                <span class="text-sm font-medium dark:text-white">{{ myActivities.filter((a) => a.activityType === 'Hike').length + ' activities' }}</span>
               </div>
               <div class="h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
                 <div class="h-full bg-blue-500 rounded-full" x-style="'width: ' + (myActivities.filter((a) => a.activityType === 'Hike').length / Math.max(myActivities.length, 1) * 100) + '%'"></div>
@@ -135,7 +135,7 @@
             <div>
               <div class="flex items-center justify-between mb-1">
                 <span class="text-sm text-gray-600 dark:text-slate-400">Walks</span>
-                <span class="text-sm font-medium dark:text-white" :text="myActivities.filter((a) => a.activityType === 'Walk').length + ' activities'"></span>
+                <span class="text-sm font-medium dark:text-white">{{ myActivities.filter((a) => a.activityType === 'Walk').length + ' activities' }}</span>
               </div>
               <div class="h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
                 <div class="h-full bg-purple-500 rounded-full" x-style="'width: ' + (myActivities.filter((a) => a.activityType === 'Walk').length / Math.max(myActivities.length, 1) * 100) + '%'"></div>
@@ -144,7 +144,7 @@
             <div>
               <div class="flex items-center justify-between mb-1">
                 <span class="text-sm text-gray-600 dark:text-slate-400">Bike Rides</span>
-                <span class="text-sm font-medium dark:text-white" :text="myActivities.filter((a) => a.activityType === 'Bike').length + ' activities'"></span>
+                <span class="text-sm font-medium dark:text-white">{{ myActivities.filter((a) => a.activityType === 'Bike').length + ' activities' }}</span>
               </div>
               <div class="h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
                 <div class="h-full bg-orange-500 rounded-full" x-style="'width: ' + (myActivities.filter((a) => a.activityType === 'Bike').length / Math.max(myActivities.length, 1) * 100) + '%'"></div>
@@ -153,9 +153,9 @@
           </div>
 
           <div class="mt-6 pt-4 border-t border-gray-100 dark:border-slate-700 space-y-2 text-sm">
-            <div class="flex justify-between"><span class="text-gray-500 dark:text-slate-400">Total Time</span><span class="font-bold dark:text-white" :text="userStats.totalTime"></span></div>
-            <div class="flex justify-between"><span class="text-gray-500 dark:text-slate-400">Avg Pace</span><span class="font-bold dark:text-white" :text="userStats.avgPace"></span></div>
-            <div class="flex justify-between"><span class="text-gray-500 dark:text-slate-400">Total Calories</span><span class="font-bold dark:text-white" :text="userStats.totalCalories.toLocaleString()"></span></div>
+            <div class="flex justify-between"><span class="text-gray-500 dark:text-slate-400">Total Time</span><span class="font-bold dark:text-white">{{ userStats.totalTime }}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500 dark:text-slate-400">Avg Pace</span><span class="font-bold dark:text-white">{{ userStats.avgPace }}</span></div>
+            <div class="flex justify-between"><span class="text-gray-500 dark:text-slate-400">Total Calories</span><span class="font-bold dark:text-white">{{ userStats.totalCalories.toLocaleString() }}</span></div>
           </div>
         </div>
       </div>

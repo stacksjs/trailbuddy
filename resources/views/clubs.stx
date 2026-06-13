@@ -47,28 +47,28 @@
       <template :for="club in filtered">
         <div class="card">
           <div class="flex flex-col sm:flex-row gap-6">
-            <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold shrink-0" x-class="club.type === 'Running' ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600' : club.type === 'Hiking' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600' : club.type === 'Territory Game' ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600' : 'bg-purple-100 dark:bg-purple-900/20 text-purple-600'" :text="club.name.charAt(0)"></div>
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold shrink-0" x-class="club.type === 'Running' ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600' : club.type === 'Hiking' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600' : club.type === 'Territory Game' ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-600' : 'bg-purple-100 dark:bg-purple-900/20 text-purple-600'">{{ club.name.charAt(0) }}</div>
             <div class="flex-1 min-w-0">
               <div class="flex items-start justify-between gap-4 mb-2">
                 <div>
-                  <StxLink x-to="'/club/' + club.id" class="font-bold text-lg text-gray-900 dark:text-white hover:text-emerald-600 transition" :text="club.name"></StxLink>
+                  <StxLink x-to="'/club/' + club.id" class="font-bold text-lg text-gray-900 dark:text-white hover:text-emerald-600 transition">{{ club.name }}</StxLink>
                   <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-slate-400 mt-1">
-                    <span :text="club.location"></span>
-                    <span :text="club.memberCount + ' members'"></span>
-                    <span class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-700 font-medium" :text="club.type"></span>
+                    <span>{{ club.location }}</span>
+                    <span>{{ club.memberCount + ' members' }}</span>
+                    <span class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-700 font-medium">{{ club.type }}</span>
                     <span :if="club.isPrivate" class="px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-medium">Private</span>
                   </div>
                 </div>
-                <button @click="onToggleMembership(club)" class="shrink-0 px-4 py-2 text-sm font-semibold rounded-lg transition" x-class="isMember(club) ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'" :text="isMember(club) ? 'Joined' : 'Join'"></button>
+                <button @click="onToggleMembership(club)" class="shrink-0 px-4 py-2 text-sm font-semibold rounded-lg transition" x-class="isMember(club) ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'">{{ isMember(club) ? 'Joined' : 'Join' }}</button>
               </div>
-              <p class="text-sm text-gray-600 dark:text-slate-400 mb-4" :text="club.description"></p>
+              <p class="text-sm text-gray-600 dark:text-slate-400 mb-4">{{ club.description }}</p>
               <div class="flex items-center gap-6 pt-3 border-t border-gray-100 dark:border-slate-700 text-sm">
                 <div class="flex items-center gap-1.5">
-                  <span class="font-semibold dark:text-white" :text="club.weeklyDistance + ' mi'"></span>
+                  <span class="font-semibold dark:text-white">{{ club.weeklyDistance + ' mi' }}</span>
                   <span class="text-gray-500 dark:text-slate-400">this week</span>
                 </div>
                 <div class="flex items-center gap-1.5">
-                  <span class="font-semibold dark:text-white" :text="club.activitiesThisWeek"></span>
+                  <span class="font-semibold dark:text-white">{{ club.activitiesThisWeek }}</span>
                   <span class="text-gray-500 dark:text-slate-400">activities</span>
                 </div>
               </div>
@@ -124,9 +124,9 @@
           <input type="checkbox" x-checked="fPrivate" @change="fPrivate.set($event.target.checked)" class="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
           Private — only members can see it
         </label>
-        <p :if="createError" class="text-sm text-red-500" :text="createError"></p>
+        <p :if="createError" class="text-sm text-red-500">{{ createError }}</p>
         <div class="flex gap-2 pt-1">
-          <button @click="submitCreate()" class="flex-1 px-4 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition" :text="submitting ? 'Creating…' : 'Create club'"></button>
+          <button @click="submitCreate()" class="flex-1 px-4 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">{{ submitting ? 'Creating…' : 'Create club' }}</button>
           <button @click="closeCreate()" class="px-4 py-2.5 text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 transition">Cancel</button>
         </div>
       </div>

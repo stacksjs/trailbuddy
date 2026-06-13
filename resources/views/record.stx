@@ -68,11 +68,11 @@
       <div class="flex flex-wrap gap-2 items-center">
         <button @click="targetTerritoryId.set(null)" x-class="!targetTerritoryId ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-gray-100 dark:bg-slate-700'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition">Any nearby</button>
         <template :for="zone in attackable">
-          <button @click="targetTerritoryId.set(zone.id)" x-class="targetTerritoryId === zone.id ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-900/20' : 'bg-gray-100 dark:bg-slate-700'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition" x-text="zone.name"></button>
+          <button @click="targetTerritoryId.set(zone.id)" x-class="targetTerritoryId === zone.id ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-900/20' : 'bg-gray-100 dark:bg-slate-700'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition">{{ zone.name }}</button>
         </template>
         <span :if="attackable.length === 0" class="text-xs text-gray-500 dark:text-slate-400">No enemy zones in range yet — start running near orange turf.</span>
       </div>
-      <p :if="targetZone" class="mt-2 text-orange-600 text-xs">Focus run: cross <span class="font-semibold" :text="targetZone.name"></span> to fill the capture meter</p>
+      <p :if="targetZone" class="mt-2 text-orange-600 text-xs">Focus run: cross <span class="font-semibold">{{ targetZone.name }}</span> to fill the capture meter</p>
     </div>
 
     <!-- Map -->
@@ -81,7 +81,7 @@
 
       <div class="flex absolute right-3 top-3 z-[1000] gap-1.5 items-center px-2.5 py-1 font-medium text-xs rounded-full bg-white/90 backdrop-blur-sm shadow-sm" x-class="gpsStatus === 'active' ? 'text-emerald-700' : gpsStatus === 'searching' ? 'text-yellow-700' : 'text-gray-600'">
         <div class="h-2 w-2 rounded-full" x-class="gpsStatus === 'active' ? 'bg-emerald-500 animate-pulse' : gpsStatus === 'searching' ? 'bg-yellow-500 animate-pulse' : 'bg-gray-400'"></div>
-        <span x-text="gpsStatus === 'active' ? (mode === 'simulated' ? 'Simulating' : 'GPS Active') : gpsStatus === 'searching' ? 'Searching...' : 'GPS Off'"></span>
+        <span>{{ gpsStatus === 'active' ? (mode === 'simulated' ? 'Simulating' : 'GPS Active') : gpsStatus === 'searching' ? 'Searching...' : 'GPS Off' }}</span>
       </div>
 
       <div class="absolute bottom-3 left-3 z-[1000] px-3 py-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm">
@@ -93,7 +93,7 @@
         </div>
       </div>
 
-      <div :if="conquestToast" class="capture-toast absolute top-3 left-1/2 -translate-x-1/2 z-[1000] px-5 py-2.5 font-bold text-white bg-emerald-600 rounded-full shadow-xl" x-text="conquestToast"></div>
+      <div :if="conquestToast" class="capture-toast absolute top-3 left-1/2 -translate-x-1/2 z-[1000] px-5 py-2.5 font-bold text-white bg-emerald-600 rounded-full shadow-xl">{{ conquestToast }}</div>
     </div>
 
     <!-- Live capture meters -->
@@ -101,8 +101,8 @@
       <template :for="cap in activeCaptures">
         <div class="card py-3">
           <div class="flex justify-between mb-1 text-xs">
-            <span class="font-semibold dark:text-white" :text="'Capturing ' + cap.name"></span>
-            <span class="text-purple-600 font-bold" :text="cap.pct + '%'"></span>
+            <span class="font-semibold dark:text-white">{{ 'Capturing ' + cap.name }}</span>
+            <span class="text-purple-600 font-bold">{{ cap.pct + '%' }}</span>
           </div>
           <div class="capture-bar"><div class="capture-bar-fill" :style="'width:' + cap.pct + '%'"></div></div>
         </div>
@@ -112,28 +112,28 @@
     <!-- Strava-style stats -->
     <div class="mb-6 card">
       <div class="mb-4 text-center">
-        <p class="font-bold font-mono text-5xl sm:text-6xl tracking-tight dark:text-white" x-text="fmtDuration(elapsed)"></p>
+        <p class="font-bold font-mono text-5xl sm:text-6xl tracking-tight dark:text-white">{{ fmtDuration(elapsed) }}</p>
         <p class="mt-1 metric-label">Elapsed</p>
       </div>
       <div class="grid gap-4 grid-cols-2 sm:grid-cols-5">
         <div class="strava-stat">
-          <p class="font-bold text-2xl dark:text-white" x-text="distance.toFixed(2)"></p>
+          <p class="font-bold text-2xl dark:text-white">{{ distance.toFixed(2) }}</p>
           <p class="metric-label">Miles</p>
         </div>
         <div class="strava-stat">
-          <p class="font-bold text-2xl dark:text-white" x-text="distance > 0.01 ? fmtDuration(Math.round(elapsed / distance)) : '--:--'"></p>
+          <p class="font-bold text-2xl dark:text-white">{{ distance > 0.01 ? fmtDuration(Math.round(elapsed / distance)) : '--:--' }}</p>
           <p class="metric-label">Pace</p>
         </div>
         <div class="strava-stat">
-          <p class="font-bold text-2xl dark:text-white" x-text="elevation.toLocaleString()"></p>
+          <p class="font-bold text-2xl dark:text-white">{{ elevation.toLocaleString() }}</p>
           <p class="metric-label">Elev ft</p>
         </div>
         <div class="strava-stat">
-          <p class="font-bold text-2xl text-emerald-600" x-text="conqueredIds.length"></p>
+          <p class="font-bold text-2xl text-emerald-600">{{ conqueredIds.length }}</p>
           <p class="metric-label">Captured</p>
         </div>
         <div class="strava-stat">
-          <p class="font-bold text-2xl text-purple-600" x-text="sessionXp"></p>
+          <p class="font-bold text-2xl text-purple-600">{{ sessionXp }}</p>
           <p class="metric-label">XP</p>
         </div>
       </div>
@@ -149,7 +149,7 @@
         <select @change="selectedTrailId.set(Number($event.target.value))" x-disabled="trailOptions.length === 0" class="flex-1 px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg disabled:opacity-50">
           <option :if="trailOptions.length === 0" disabled>No trails available yet</option>
           <template :for="opt in trailOptions">
-            <option x-value="opt.id" x-selected="opt.id === selectedTrailId" x-text="opt.name"></option>
+            <option x-value="opt.id" x-selected="opt.id === selectedTrailId" :text="opt.name"></option>
           </template>
         </select>
         <button @click="simulate()" x-disabled="trailOptions.length === 0" class="px-4 py-2 font-semibold text-sm text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">Simulate capture</button>
@@ -159,13 +159,13 @@
     <!-- Controls -->
     <div class="flex gap-4 items-center justify-center">
       <button @click="startManual()" x-class="recording ? 'hidden' : 'record-btn-start'">▶</button>
-      <button @click="togglePause()" x-class="!recording ? 'hidden' : paused ? 'record-btn-resume' : 'record-btn-pause'" x-text="paused ? '▶' : '⏸'"></button>
+      <button @click="togglePause()" x-class="!recording ? 'hidden' : paused ? 'record-btn-resume' : 'record-btn-pause'">{{ paused ? '▶' : '⏸' }}</button>
       <button @click="stop()" x-class="recording ? 'record-btn-stop' : 'hidden'">⏹</button>
     </div>
 
     <p class="mt-4 text-center text-gray-500 text-sm dark:text-slate-400">
       <span :if="!recording">Hit ▶ to start GPS capture, or simulate a trail route</span>
-      <span :if="recording" x-text="runMode === 'capture' ? 'Stay inside enemy zones — capture bar fills as you run' : 'Free run — no territory capture'"></span>
+      <span :if="recording">{{ runMode === 'capture' ? 'Stay inside enemy zones — capture bar fills as you run' : 'Free run — no territory capture' }}</span>
     </p>
   </div>
 @endsection

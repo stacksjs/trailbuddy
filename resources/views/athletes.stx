@@ -93,7 +93,7 @@
         <Icon name="alert-triangle" size="28" class="text-red-400" />
       </div>
       <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">Couldn't load athletes</h3>
-      <p class="text-sm text-gray-500 dark:text-slate-400 mb-4" :text="error"></p>
+      <p class="text-sm text-gray-500 dark:text-slate-400 mb-4">{{ error }}</p>
       <button @click="retrySearch()" class="px-5 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Try again</button>
     </div>
 
@@ -101,15 +101,15 @@
       <template :for="athlete in athletes">
         <div class="card flex items-center gap-4">
           <StxLink x-to="'/athlete/' + athlete.id" class="flex items-center gap-3 flex-1 min-w-0 group">
-            <div class="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 text-lg font-bold shrink-0" :text="athlete.name.charAt(0)"></div>
+            <div class="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 text-lg font-bold shrink-0">{{ athlete.name.charAt(0) }}</div>
             <div class="min-w-0">
-              <p class="font-bold dark:text-white group-hover:text-emerald-600 transition truncate" :text="athlete.name"></p>
+              <p class="font-bold dark:text-white group-hover:text-emerald-600 transition truncate">{{ athlete.name }}</p>
               <p class="text-xs text-gray-500 dark:text-slate-400">
-                <span :text="athlete.activityCount + ' activities'"></span>
+                <span>{{ athlete.activityCount + ' activities' }}</span>
                 <span class="mx-1">·</span>
-                <span :text="athlete.followerCount + ' followers'"></span>
+                <span>{{ athlete.followerCount + ' followers' }}</span>
                 <span :if="athlete.territoriesOwned > 0" class="mx-1">·</span>
-                <span :if="athlete.territoriesOwned > 0" :text="athlete.territoriesOwned + ' territories (' + areaKm2(athlete.totalAreaOwned) + ' km²)'"></span>
+                <span :if="athlete.territoriesOwned > 0">{{ athlete.territoriesOwned + ' territories (' + areaKm2(athlete.totalAreaOwned) + ' km²)' }}</span>
               </p>
             </div>
           </StxLink>
@@ -118,7 +118,7 @@
             @click="onFollow(athlete.id)"
             x-class="tb.isFollowing(athlete.id) ? 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'"
             class="px-4 py-2 font-semibold text-xs rounded-lg transition shrink-0"
-            :text="tb.isFollowing(athlete.id) ? 'Following' : 'Follow'"></button>
+>{{ tb.isFollowing(athlete.id) ? 'Following' : 'Follow' }}</button>
           <span :if="tb && athlete.id === tb.currentUserId()" class="px-3 py-2 text-xs text-gray-400 shrink-0">That's you</span>
         </div>
       </template>
@@ -128,7 +128,7 @@
           <Icon name="search" size="28" class="text-emerald-400" />
         </div>
         <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">No athletes found</h3>
-        <p class="text-sm text-gray-500 dark:text-slate-400" x-text="'Nothing matched “' + query + '” — try another name.'"></p>
+        <p class="text-sm text-gray-500 dark:text-slate-400">{{ 'Nothing matched “' + query + '” — try another name.' }}</p>
       </div>
     </div>
   </div>

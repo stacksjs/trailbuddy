@@ -83,10 +83,10 @@
         </div>
 
         <!-- Error Alert -->
-        <div :if="error" class="mb-6 p-4 text-red-700 text-sm dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-xl dark:border-red-800" :text="error"></div>
+        <div :if="error" class="mb-6 p-4 text-red-700 text-sm dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-xl dark:border-red-800">{{ error }}</div>
 
         <!-- Success Alert -->
-        <div :if="success" class="mb-6 p-4 text-emerald-700 text-sm dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 rounded-xl dark:border-emerald-800" :text="success"></div>
+        <div :if="success" class="mb-6 p-4 text-emerald-700 text-sm dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 rounded-xl dark:border-emerald-800">{{ success }}</div>
 
         <!-- Register Form -->
         <form @submit="handleRegister" class="space-y-5">
@@ -140,7 +140,7 @@
               <div class="overflow-hidden h-1 bg-gray-200 dark:bg-slate-600 rounded-full">
                 <div x-class="passwordStrength().level" class="h-full rounded-full transition-all" x-style="'width: ' + passwordStrength().width"></div>
               </div>
-              <p x-class="passwordStrength().color" class="mt-1 text-xs" :text="passwordStrength().text"></p>
+              <p x-class="passwordStrength().color" class="mt-1 text-xs">{{ passwordStrength().text }}</p>
             </div>
           </div>
 

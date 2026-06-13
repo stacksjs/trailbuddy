@@ -94,8 +94,8 @@
       <div>
         <h1 class="font-bold text-2xl dark:text-white">Explore Trails</h1>
         <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">
-          <span :text="trailCount() + ' trails'"></span>
-          <span :if="routeCount() > 0"> · <span :text="routeCount() + ' with GPS paths'"></span></span>
+          <span>{{ trailCount() + ' trails' }}</span>
+          <span :if="routeCount() > 0"> · <span>{{ routeCount() + ' with GPS paths' }}</span></span>
           <span :if="catalogSource() === 'api'" class="text-emerald-600 dark:text-emerald-400"> · live data</span>
         </p>
       </div>
@@ -109,7 +109,7 @@
     </div>
 
     <div :if="catalogLoading()" class="mb-4 text-sm text-emerald-600 dark:text-emerald-400">Loading trail database…</div>
-    <div :if="catalogError()" class="mb-4 text-sm text-amber-600 dark:text-amber-400" :text="'Using demo trails — ' + catalogError()"></div>
+    <div :if="catalogError()" class="mb-4 text-sm text-amber-600 dark:text-amber-400">{{ 'Using demo trails — ' + catalogError() }}</div>
 
     <!-- Split: trail list + map (Strava-style) -->
     <div class="grid gap-6 mb-6 lg:grid-cols-5">
@@ -131,12 +131,12 @@
               <img x-src="trail.image || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=200&h=200&fit=crop'" x-alt="trail.name" class="object-cover h-full w-full" />
             </div>
             <div class="min-w-0 flex-1">
-              <p class="font-semibold text-sm dark:text-white truncate" :text="trail.name"></p>
-              <p class="text-xs text-gray-500 dark:text-slate-400 truncate" :text="trail.location"></p>
+              <p class="font-semibold text-sm dark:text-white truncate">{{ trail.name }}</p>
+              <p class="text-xs text-gray-500 dark:text-slate-400 truncate">{{ trail.location }}</p>
               <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                <span :text="trail.distance + ' mi'"></span>
+                <span>{{ trail.distance + ' mi' }}</span>
                 <span class="mx-1">·</span>
-                <span x-class="'capitalize difficulty-' + trail.difficulty" :text="trail.difficulty"></span>
+                <span x-class="'capitalize difficulty-' + trail.difficulty">{{ trail.difficulty }}</span>
               </p>
             </div>
           </StxLink>
@@ -166,7 +166,7 @@
           <div class="overflow-hidden relative h-48">
             <img x-src="trail.image || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&h=600&fit=crop'" x-alt="trail.name" class="object-cover h-full w-full duration-300 transition-transform group-hover:scale-105" />
             <div class="absolute left-3 top-3">
-              <span x-class="'px-2 py-1 capitalize font-semibold text-xs rounded-full difficulty-' + trail.difficulty" :text="trail.difficulty"></span>
+              <span x-class="'px-2 py-1 capitalize font-semibold text-xs rounded-full difficulty-' + trail.difficulty">{{ trail.difficulty }}</span>
             </div>
             <button
               @click.stop.prevent="onToggleSave(trail.id)"
@@ -178,17 +178,17 @@
           </div>
           <div class="p-4">
             <div class="flex items-start justify-between mb-1">
-              <h3 class="font-bold text-gray-900 dark:text-white group-hover:text-emerald-600 transition" :text="trail.name"></h3>
+              <h3 class="font-bold text-gray-900 dark:text-white group-hover:text-emerald-600 transition">{{ trail.name }}</h3>
               <div class="flex gap-1 items-center shrink-0 text-sm">
                 <Icon name="star" size="16" class="text-yellow-400" />
-                <span class="font-semibold" :text="trail.rating || '—'"></span>
+                <span class="font-semibold">{{ trail.rating || '—' }}</span>
               </div>
             </div>
-            <p class="mb-3 text-gray-500 text-sm dark:text-slate-400" :text="trail.location"></p>
+            <p class="mb-3 text-gray-500 text-sm dark:text-slate-400">{{ trail.location }}</p>
             <div class="flex gap-4 items-center pt-3 text-gray-500 text-xs dark:text-slate-400 border-gray-100 border-t dark:border-slate-700">
-              <span :text="trail.distance + ' mi'"></span>
-              <span :text="trail.elevation.toLocaleString() + ' ft elev'"></span>
-              <span :text="'~' + trail.estimatedTime"></span>
+              <span>{{ trail.distance + ' mi' }}</span>
+              <span>{{ trail.elevation.toLocaleString() + ' ft elev' }}</span>
+              <span>{{ '~' + trail.estimatedTime }}</span>
             </div>
           </div>
         </StxLink>

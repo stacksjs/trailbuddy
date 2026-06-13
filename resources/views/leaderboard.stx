@@ -73,23 +73,23 @@
     <!-- Top 3 podium -->
     <div :if="leaders.length >= 3" class="grid gap-4 grid-cols-3 mb-8">
       <div class="pt-8 text-center card">
-        <div class="flex items-center justify-center mb-2 mx-auto h-14 w-14 font-bold text-gray-600 text-xl dark:text-slate-300 bg-gray-200 dark:bg-slate-700 rounded-full" :text="(leaders[1]?.userName || 'U').charAt(0)"></div>
-        <p class="font-semibold text-sm truncate dark:text-white" :text="leaders[1]?.userName || 'Athlete'"></p>
+        <div class="flex items-center justify-center mb-2 mx-auto h-14 w-14 font-bold text-gray-600 text-xl dark:text-slate-300 bg-gray-200 dark:bg-slate-700 rounded-full">{{ (leaders[1]?.userName || 'U').charAt(0) }}</div>
+        <p class="font-semibold text-sm truncate dark:text-white">{{ leaders[1]?.userName || 'Athlete' }}</p>
         <p class="mt-1 font-bold text-gray-400 text-lg">2nd</p>
-        <p class="font-semibold text-emerald-600 text-sm" :text="metricText(leaders[1])"></p>
+        <p class="font-semibold text-emerald-600 text-sm">{{ metricText(leaders[1]) }}</p>
       </div>
       <div class="ring-2 ring-yellow-400 pt-4 text-center card">
         <div class="mb-1 text-2xl">👑</div>
-        <div class="flex items-center justify-center mb-2 mx-auto h-16 w-16 font-bold text-2xl text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 rounded-full" :text="(leaders[0]?.userName || 'U').charAt(0)"></div>
-        <p class="font-bold text-sm truncate dark:text-white" :text="leaders[0]?.userName || 'Athlete'"></p>
+        <div class="flex items-center justify-center mb-2 mx-auto h-16 w-16 font-bold text-2xl text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 rounded-full">{{ (leaders[0]?.userName || 'U').charAt(0) }}</div>
+        <p class="font-bold text-sm truncate dark:text-white">{{ leaders[0]?.userName || 'Athlete' }}</p>
         <p class="mt-1 font-bold text-lg text-yellow-500">1st</p>
-        <p class="font-semibold text-emerald-600 text-sm" :text="metricText(leaders[0])"></p>
+        <p class="font-semibold text-emerald-600 text-sm">{{ metricText(leaders[0]) }}</p>
       </div>
       <div class="pt-8 text-center card">
-        <div class="flex items-center justify-center mb-2 mx-auto h-14 w-14 font-bold text-orange-600 text-xl bg-orange-100 dark:bg-orange-900/30 rounded-full" :text="(leaders[2]?.userName || 'U').charAt(0)"></div>
-        <p class="font-semibold text-sm truncate dark:text-white" :text="leaders[2]?.userName || 'Athlete'"></p>
+        <div class="flex items-center justify-center mb-2 mx-auto h-14 w-14 font-bold text-orange-600 text-xl bg-orange-100 dark:bg-orange-900/30 rounded-full">{{ (leaders[2]?.userName || 'U').charAt(0) }}</div>
+        <p class="font-semibold text-sm truncate dark:text-white">{{ leaders[2]?.userName || 'Athlete' }}</p>
         <p class="mt-1 font-bold text-lg text-orange-400">3rd</p>
-        <p class="font-semibold text-emerald-600 text-sm" :text="metricText(leaders[2])"></p>
+        <p class="font-semibold text-emerald-600 text-sm">{{ metricText(leaders[2]) }}</p>
       </div>
     </div>
 
@@ -97,15 +97,15 @@
     <div class="space-y-2">
       <template :for="(leader, index) in leaders">
         <div class="flex gap-4 items-center py-3 card">
-          <span class="w-8 font-bold text-center text-sm" x-class="index < 3 ? 'text-emerald-600' : 'text-gray-400 dark:text-slate-500'" :text="index + 1"></span>
-          <div class="flex items-center justify-center shrink-0 h-10 w-10 font-bold text-gray-600 text-sm dark:text-slate-300 bg-gray-100 dark:bg-slate-700 rounded-full" :text="leader.userName.charAt(0)"></div>
+          <span class="w-8 font-bold text-center text-sm" x-class="index < 3 ? 'text-emerald-600' : 'text-gray-400 dark:text-slate-500'">{{ index + 1 }}</span>
+          <div class="flex items-center justify-center shrink-0 h-10 w-10 font-bold text-gray-600 text-sm dark:text-slate-300 bg-gray-100 dark:bg-slate-700 rounded-full">{{ leader.userName.charAt(0) }}</div>
           <div class="flex-1 min-w-0">
-            <StxLink x-to="'/athlete/' + leader.userId" class="font-semibold text-sm truncate dark:text-white hover:text-emerald-600 transition block" :text="leader.userName"></StxLink>
-            <p class="text-gray-500 text-xs dark:text-slate-400" :text="leader.trailsCompleted + ' trails completed'"></p>
+            <StxLink x-to="'/athlete/' + leader.userId" class="font-semibold text-sm truncate dark:text-white hover:text-emerald-600 transition block">{{ leader.userName }}</StxLink>
+            <p class="text-gray-500 text-xs dark:text-slate-400">{{ leader.trailsCompleted + ' trails completed' }}</p>
           </div>
           <div class="shrink-0 text-right">
-            <p class="font-bold text-emerald-600 text-sm" :text="metricText(leader)"></p>
-            <p class="text-gray-400 text-xs dark:text-slate-500" :text="leader.totalElevation.toLocaleString() + ' ft'"></p>
+            <p class="font-bold text-emerald-600 text-sm">{{ metricText(leader) }}</p>
+            <p class="text-gray-400 text-xs dark:text-slate-500">{{ leader.totalElevation.toLocaleString() + ' ft' }}</p>
           </div>
         </div>
       </template>
