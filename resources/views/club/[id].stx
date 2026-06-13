@@ -4,7 +4,7 @@
 
 @section('content')
 <script client>
-  import { fetchClubDetail, toggleClubMembership } from '../../assets/scripts/game-api'
+  import { deleteClub, fetchClubDetail, toggleClubMembership } from '../../assets/scripts/game-api'
   import { useRouteParam } from '../../composables/useRouteParam'
 
   useHead({ title: 'Club — TrailBuddy' })
@@ -38,6 +38,16 @@
     if (res && res.success) {
       club.set({ ...club(), isMember: !!res.joined, memberCount: res.memberCount ?? club().memberCount })
     }
+  }
+
+  const isOwner = derived(() => !!(tb && club() && club().creatorId === tb.currentUserId()))
+
+  async function onDelete() {
+    if (!club() || busy()) return
+    busy.set(true)
+    const ok = await deleteClub(clubId)
+    busy.set(false)
+    if (ok) navigate('/clubs')
   }
 
   function km2(m2) {
@@ -77,7 +87,10 @@
                   <span :if="club.isPrivate" class="px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-medium">Private</span>
                 </div>
               </div>
-              <button @click="onToggle()" x-disabled="busy" class="shrink-0 px-4 py-2 text-sm font-semibold rounded-lg transition disabled:opacity-60" x-class="club.isMember ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'" :text="club.isMember ? 'Joined' : 'Join'"></button>
+              <div class="flex items-center gap-2 shrink-0">
+                <button :if="!isOwner" @click="onToggle()" x-disabled="busy" class="px-4 py-2 text-sm font-semibold rounded-lg transition disabled:opacity-60" x-class="club.isMember ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'" :text="club.isMember ? 'Joined' : 'Join'"></button>
+                <button :if="isOwner" @click="onDelete()" x-disabled="busy" class="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 dark:border-slate-600 text-red-500 hover:border-red-400 transition disabled:opacity-60">Delete club</button>
+              </div>
             </div>
             <p class="text-sm text-gray-600 dark:text-slate-400 mt-3" :text="club.description"></p>
             <div class="flex items-center gap-6 pt-3 mt-3 border-t border-gray-100 dark:border-slate-700 text-sm">

@@ -33,6 +33,7 @@ const IndexAction = (await import('../app/Actions/Club/ClubIndexAction')).defaul
 const StoreAction = (await import('../app/Actions/Club/ClubStoreAction')).default
 const ToggleAction = (await import('../app/Actions/Club/ClubMembershipToggleAction')).default
 const ShowAction = (await import('../app/Actions/Club/ClubShowAction')).default
+const DestroyAction = (await import('../app/Actions/Club/ClubDestroyAction')).default
 
 async function callAction(action: any, body: Record<string, unknown>): Promise<{ status: number, json: any }> {
   const request = { get: (k: string) => (body as any)[k] }
@@ -118,6 +119,19 @@ const privNonMember = await callAction(ShowAction, { id: privateClub, user_id: 2
 check('private club detail → 403 for non-member', privNonMember.status === 403, String(privNonMember.status))
 const privMember = await callAction(ShowAction, { id: privateClub, user_id: 1 })
 check('private club detail → 200 for member', privMember.status === 200)
+
+// --- delete (owner only) --------------------------------------------------------
+
+// newClubId was created by user 2 (its owner).
+const nonOwnerDelete = await callAction(DestroyAction, { id: newClubId, user_id: 3 })
+check('non-owner can\'t delete → 403, club survives', nonOwnerDelete.status === 403
+  && one('SELECT COUNT(*) n FROM clubs WHERE id = ?', newClubId).n === 1)
+const ownerDelete = await callAction(DestroyAction, { id: newClubId, user_id: 2 })
+check('owner deletes → 200, club + memberships gone', ownerDelete.status === 200
+  && one('SELECT COUNT(*) n FROM clubs WHERE id = ?', newClubId).n === 0
+  && one('SELECT COUNT(*) n FROM club_members WHERE club_id = ?', newClubId).n === 0)
+const replayDelete = await callAction(DestroyAction, { id: newClubId, user_id: 2 })
+check('delete replay → 404', replayDelete.status === 404)
 
 console.log(failures === 0 ? '\n✅ all club checks passed' : `\n❌ ${failures} check(s) failed`)
 process.exit(failures === 0 ? 0 : 1)

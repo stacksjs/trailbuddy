@@ -334,6 +334,13 @@ export async function createClub(payload: ClubPayload): Promise<{ success: boole
   }
 }
 
+/** Delete a club (owner only). */
+export async function deleteClub(clubId: number): Promise<boolean> {
+  await ensureSession()
+  const res = await fetch(`/api/clubs/${clubId}`, { method: 'DELETE', headers: authHeaders() })
+  return res.ok
+}
+
 /** Join or leave a club; returns the new membership state + count. */
 export async function toggleClubMembership(clubId: number): Promise<{ success: boolean, joined?: boolean, memberCount?: number, error?: string }> {
   await ensureSession()

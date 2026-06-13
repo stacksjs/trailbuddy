@@ -436,9 +436,10 @@ route.group({ middleware: 'auth' }, () => {
     route.post('/trails/{id}/save', 'Actions/Trail/SavedTrailToggleAction')
     // Social graph — follow/unfollow another athlete
     route.post('/users/{id}/follow', 'Actions/Social/FollowToggleAction')
-    // Clubs — create + join/leave (#964)
+    // Clubs — create + join/leave + owner delete (#964)
     route.post('/clubs', 'Actions/Club/ClubStoreAction')
     route.post('/clubs/{id}/join', 'Actions/Club/ClubMembershipToggleAction')
+    route.delete('/clubs/{id}', 'Actions/Club/ClubDestroyAction')
     // Challenges — the user's challenges + create/respond/resolve (#965)
     route.get('/challenges', 'Actions/Challenge/ChallengeIndexAction')
     route.post('/challenges', 'Actions/Challenge/ChallengeStoreAction')
