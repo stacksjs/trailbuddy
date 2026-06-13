@@ -13,6 +13,7 @@ declare global {
   const computeTerritoryRankAssignments: typeof autoImports.computeTerritoryRankAssignments
   const increment: typeof autoImports.increment
   const count: typeof autoImports.count
+  const shapeChallenge: typeof autoImports.shapeChallenge
   const longestDayStreak: typeof autoImports.longestDayStreak
   const hasSubSevenMile: typeof autoImports.hasSubSevenMile
   const computeAchievementProgress: typeof autoImports.computeAchievementProgress

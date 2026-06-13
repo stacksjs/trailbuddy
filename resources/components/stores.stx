@@ -560,6 +560,17 @@
           t.reviewCount = reviewCount
         }
       },
+      /** Replace challenges with live API data (#965). */
+      hydrateChallenges(list: Challenge[]) {
+        if (list.length)
+          this.challenges = list
+      },
+      /** Insert or replace a challenge (create/respond outcome, #965). */
+      upsertChallenge(challenge: Challenge) {
+        const i = this.challenges.findIndex((c: Challenge) => c.id === challenge.id)
+        if (i >= 0) this.challenges[i] = challenge
+        else this.challenges = [challenge, ...this.challenges]
+      },
       /** Replace clubs with live API data (#964). */
       hydrateClubs(list: Club[]) {
         if (list.length)

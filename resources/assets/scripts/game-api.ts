@@ -244,6 +244,50 @@ export async function markNotificationsRead(id?: number): Promise<boolean> {
   return res.ok
 }
 
+// --- Challenges (#965) -------------------------------------------------------
+
+/** List the session user's challenges (sent + received). */
+export async function fetchChallenges(): Promise<any[] | null> {
+  await ensureSession()
+  const res = await fetch('/api/challenges', { headers: authHeaders() })
+  if (!res.ok)
+    return null
+  const json = await res.json()
+  return json?.success ? json.challenges : null
+}
+
+/** Create a challenge over a rival's territory (opponent + stake derived). */
+export async function createChallenge(territoryId: number, deadline?: string): Promise<{ success: boolean, challenge?: any, error?: string, fields?: Record<string, string> }> {
+  await ensureSession()
+  const res = await fetch('/api/challenges', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(deadline ? { territory_id: territoryId, deadline } : { territory_id: territoryId }),
+  })
+  try {
+    return await res.json()
+  }
+  catch {
+    return { success: false, error: `HTTP ${res.status}` }
+  }
+}
+
+/** Accept or decline a pending challenge (defender only). */
+export async function respondToChallenge(challengeId: number, action: 'accept' | 'decline'): Promise<{ success: boolean, challenge?: any, error?: string }> {
+  await ensureSession()
+  const res = await fetch(`/api/challenges/${challengeId}/respond`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ action }),
+  })
+  try {
+    return await res.json()
+  }
+  catch {
+    return { success: false, error: `HTTP ${res.status}` }
+  }
+}
+
 // --- Clubs (#964) ------------------------------------------------------------
 
 export interface ClubPayload {

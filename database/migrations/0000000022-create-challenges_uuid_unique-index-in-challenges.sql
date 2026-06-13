@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS "challenges_challenges_uuid_unique" ON "challenges" ("uuid");

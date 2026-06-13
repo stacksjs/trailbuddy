@@ -4,12 +4,19 @@
 
 @section('content')
 <script client>
+  import { useChallenges } from '../composables/useChallenges'
+
   useHead({ title: 'Challenges — TrailBuddy' })
 
   const tb = useStore('tb')
   const tab = state<'active' | 'sent' | 'received' | 'completed'>('active')
 
   const currentUserId = derived(() => tb?.currentUserId())
+
+  const {
+    createOpen, submitting, createError, targetTerritoryId, busyId,
+    rivalTerritories, openCreate, closeCreate, submitCreate, respond,
+  } = useChallenges(tb)
 
   const filtered = derived(() => {
     if (!tb) return []
@@ -28,7 +35,7 @@
         <h1 class="font-bold text-2xl dark:text-white">Challenges</h1>
         <p class="mt-1 text-gray-500 text-sm dark:text-slate-400">Challenge rivals to conquer their territories</p>
       </div>
-      <button class="flex items-center px-4 py-2 font-semibold text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition">+ New Challenge</button>
+      <button @click="openCreate()" class="flex items-center px-4 py-2 font-semibold text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition">+ New Challenge</button>
     </div>
 
     <div class="flex gap-1 mb-6 border-b border-gray-200 dark:border-slate-700">
@@ -71,6 +78,13 @@
             </div>
             <span class="text-xs text-gray-500 dark:text-slate-400" :text="(challenge.areaAtStake / 1000).toFixed(1) + ' km²'"></span>
           </div>
+
+          <!-- Accept / decline (received + pending only) (#965) -->
+          <div :if="challenge.challenged_id === currentUserId && challenge.status === 'pending'" class="flex gap-2 mt-3">
+            <button @click="respond(challenge, 'accept')" x-disabled="busyId === challenge.id" class="flex-1 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition disabled:opacity-60">Accept</button>
+            <button @click="respond(challenge, 'decline')" x-disabled="busyId === challenge.id" class="flex-1 px-4 py-2 border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 text-sm font-semibold rounded-lg hover:border-red-400 hover:text-red-500 transition disabled:opacity-60">Decline</button>
+          </div>
+          <p :if="challenge.challenger_id === currentUserId && challenge.status === 'pending'" class="mt-3 text-xs text-gray-400 text-center">Waiting for <span :text="challenge.challengedName"></span> to respond…</p>
         </div>
       </template>
 
@@ -80,7 +94,38 @@
         </div>
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No challenges yet</h3>
         <p class="text-gray-500 dark:text-slate-400 max-w-sm mx-auto mb-6">Pick a rival's territory and throw down the gauntlet.</p>
-        <StxLink to="/territories" class="px-6 py-2.5 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition">Find Rivals</StxLink>
+        <button @click="openCreate()" class="px-6 py-2.5 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition">New Challenge</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- New-challenge modal (#965) -->
+  <div :if="createOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div @click="closeCreate()" class="absolute inset-0 bg-black/40"></div>
+    <div class="relative w-full max-w-md card">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-bold text-lg dark:text-white">Challenge a rival</h2>
+        <button @click="closeCreate()" class="text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 text-xl leading-none">×</button>
+      </div>
+      <div :if="rivalTerritories().length > 0" class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Territory to challenge for</label>
+          <select @change="targetTerritoryId.set($event.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm">
+            <template :for="t in rivalTerritories()">
+              <option x-value="t.id" x-selected="String(t.id) === targetTerritoryId" x-text="t.name + ' (' + (t.areaSize / 1000).toFixed(1) + ' km²)'"></option>
+            </template>
+          </select>
+        </div>
+        <p class="text-xs text-gray-400">You'll challenge whoever currently holds it. The territory's area is what's at stake.</p>
+        <p :if="createError" class="text-sm text-red-500" :text="createError"></p>
+        <div class="flex gap-2 pt-1">
+          <button @click="submitCreate()" class="flex-1 px-4 py-2.5 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition" :text="submitting ? 'Sending…' : 'Throw down'"></button>
+          <button @click="closeCreate()" class="px-4 py-2.5 text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 transition">Cancel</button>
+        </div>
+      </div>
+      <div :if="rivalTerritories().length === 0" class="text-center py-6">
+        <p class="text-sm text-gray-500 dark:text-slate-400 mb-4">No rival territories to challenge right now — they're all yours, or the map is still loading.</p>
+        <StxLink to="/territories" class="inline-block px-5 py-2 bg-orange-600 text-white text-sm font-semibold rounded-lg hover:bg-orange-700 transition">Open the map</StxLink>
       </div>
     </div>
   </div>

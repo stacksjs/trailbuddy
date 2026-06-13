@@ -3,6 +3,8 @@
 export { computeTerritoryRankAssignments } from '../../../resources/functions/ranks'
 export type { TerritoryRankStatsRow, TerritoryGainEvent, TerritoryRankAssignment } from '../../../resources/functions/ranks'
 export { increment, count } from '../../../resources/functions/counter'
+export { shapeChallenge } from '../../../resources/functions/challenges'
+export type { ChallengeNames } from '../../../resources/functions/challenges'
 export { longestDayStreak, hasSubSevenMile, computeAchievementProgress } from '../../../resources/functions/achievements'
 export type { AchievementDefinitionRow, AchievementProgressEntry } from '../../../resources/functions/achievements'
 export { extractMentionQuery, mentionCandidates, applyMention, parseMentions } from '../../../resources/functions/mentions'

@@ -88,7 +88,7 @@ async function callAction(action: any, body: Record<string, unknown>): Promise<{
 const db = new Database('database/stacks.sqlite')
 const gameTables = [
   'user_notifications', 'activity_comments', 'kudos', 'follows', 'trail_reviews',
-  'user_achievements', 'achievements', 'saved_trails', 'club_members', 'clubs',
+  'user_achievements', 'achievements', 'saved_trails', 'club_members', 'clubs', 'challenges',
   'territory_histories', 'territory_stats', 'territories', 'activities', 'users',
 ]
 for (const t of gameTables) {
@@ -367,6 +367,33 @@ for (const plan of clubPlan) {
   }
 }
 console.log(`✅ clubs: ${clubPlan.length} with ${membershipCount} memberships`)
+
+// --- challenges (#965) -------------------------------------------------------
+// A handful of challenges over real territories, in varied lifecycle states so
+// every tab (active/sent/received/completed) has data. The challenger is an
+// athlete who doesn't own the staked territory.
+
+const Challenge = g.Challenge
+const terrsForChallenges = ((await g.Territory.all()) ?? []) as any[]
+const statusCycle = ['pending', 'active', 'completed', 'pending']
+let challengeCount = 0
+for (const [i, t] of terrsForChallenges.slice(0, 4).entries()) {
+  const challenger = users.find(u => u.id !== t.user_id)
+  if (!challenger)
+    continue
+  const status = statusCycle[i % statusCycle.length]
+  await Challenge.forceCreate({
+    challenger_id: challenger.id,
+    challenged_id: t.user_id,
+    territory_id: t.id,
+    area_at_stake: t.area_size ?? 30000,
+    status,
+    winner_id: status === 'completed' ? challenger.id : null,
+    deadline: new Date(Date.now() + (i + 2) * 86400000).toISOString(),
+  })
+  challengeCount++
+}
+console.log(`✅ challenges: ${challengeCount} seeded`)
 
 // --- final state -----------------------------------------------------------
 

@@ -1,0 +1,62 @@
+// No imports needed - everything is auto-imported!
+//
+// POST /api/challenges/{id}/resolve (auth) — settle an active challenge (#965).
+// The winner is decided by who currently holds the staked territory: if the
+// challenger has taken it, the challenger wins; otherwise the defender held it.
+// Either party can trigger resolution (normally after the deadline). This is
+// the basic progress/outcome tracking the issue calls for.
+
+export default new Action({
+  name: 'Challenge Resolve',
+  description: 'Resolve an active challenge by current territory ownership',
+  method: 'POST',
+
+  async handle(request) {
+    const userId = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('user_id'))
+    if (!userId)
+      return response.json({ success: false, error: 'Authentication required' }, 401)
+
+    const challengeId = positiveInt(request.get('id') ?? request.get('challenge_id'))
+    if (!challengeId)
+      return response.json({ success: false, error: 'Validation failed', fields: { challenge_id: 'required: a positive integer challenge id' } }, 422)
+
+    try {
+      const challenge = await Challenge.find(challengeId)
+      if (!challenge)
+        return response.json({ success: false, error: 'Challenge not found' }, 404)
+      if (challenge.challenger_id !== userId && challenge.challenged_id !== userId)
+        return response.json({ success: false, error: 'Only a participant can resolve this challenge' }, 403)
+      if (challenge.status !== 'active')
+        return response.json({ success: false, error: `Only active challenges can be resolved (this one is ${challenge.status})` }, 409)
+
+      const territory = await Territory.find(challenge.territory_id)
+      // Challenger wins iff they now hold the staked territory; else the
+      // defender successfully held it.
+      const winnerId = territory && territory.user_id === challenge.challenger_id
+        ? challenge.challenger_id
+        : challenge.challenged_id
+
+      await Challenge.forceUpdate(challengeId, { status: 'completed', winner_id: winnerId })
+      const updated = await Challenge.find(challengeId)
+
+      const [challenger, challenged] = await Promise.all([
+        User.find(challenge.challenger_id),
+        User.find(challenge.challenged_id),
+      ])
+
+      return response.json({
+        success: true,
+        winnerId,
+        challenge: shapeChallenge(updated, {
+          challengerName: challenger?.name,
+          challengedName: challenged?.name,
+          territoryName: territory?.name,
+        }),
+      })
+    }
+    catch (error) {
+      console.error('[challenges] resolve failed:', error)
+      return response.json({ success: false, error: 'Failed to resolve challenge' }, 500)
+    }
+  },
+})
