@@ -56,7 +56,7 @@ const tags = typeof tagsRaw === 'string' ? (tagsRaw ? tagsRaw.split(',') : []) :
     <div class="overflow-hidden relative h-48">
       <img src="{{ image }}" alt="{{ name }}" class="object-cover h-full w-full trail-image" />
       <div class="absolute left-4 top-4">
-        <span class="px-3 py-1 capitalize font-semibold text-xs rounded-full {{ }} getDifficultyClass(difficulty)">
+        <span class="px-3 py-1 capitalize font-semibold text-xs rounded-full {{ getDifficultyClass(difficulty) }}">
           {{ difficulty }}
         </span>
       </div>

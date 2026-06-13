@@ -24,6 +24,10 @@ const defaultAchievement: Achievement = {
 const { achievement } = withDefaults(defineProps<AchievementProgressProps>(), {
   achievement: defaultAchievement
 })
+
+// Precompute the bar width once (clamped 0–100) rather than interpolating an
+// arithmetic expression inside the style attribute, which renders unreliably.
+const pct = Math.max(0, Math.min(100, Math.round((achievement.progress / (achievement.total || 1)) * 100)))
 </script>
 
 <template>
@@ -38,7 +42,7 @@ const { achievement } = withDefaults(defineProps<AchievementProgressProps>(), {
       </div>
     </div>
     <div class="overflow-hidden relative h-2 bg-gray-200 rounded-full">
-      <div class="absolute left-0 top-0 h-full bg-emerald-500 rounded-full transition-all" style="width: {{ (achievement.progress / achievement.total) * 100 }}%"></div>
+      <div class="absolute left-0 top-0 h-full bg-emerald-500 rounded-full transition-all" style="width: {{ pct }}%"></div>
     </div>
     <p class="mt-1 text-gray-500 text-right text-xs">{{ achievement.progress }}/{{ achievement.total }}</p>
   </div>

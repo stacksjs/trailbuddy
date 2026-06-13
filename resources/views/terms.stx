@@ -1,0 +1,58 @@
+@extends('layouts/default')
+
+@section('title', 'Terms of Service — TrailBuddy')
+
+@section('content')
+<script client>
+  useHead({ title: 'Terms of Service — TrailBuddy' })
+</script>
+
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="mb-8">
+      <h1 class="font-bold text-3xl text-gray-900 dark:text-white mb-2">Terms of Service</h1>
+      <p class="text-sm text-gray-500 dark:text-slate-400">Last updated June 2026</p>
+    </div>
+
+    <div class="space-y-8 text-gray-600 dark:text-slate-300 leading-relaxed">
+      <section>
+        <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">1. Acceptance of terms</h2>
+        <p>By creating a TrailBuddy account or using the app, you agree to these Terms of Service. If you don't agree, please don't use TrailBuddy.</p>
+      </section>
+
+      <section>
+        <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">2. Your account</h2>
+        <p>You're responsible for keeping your login credentials secure and for all activity that happens under your account. Tell us right away if you suspect unauthorized use. You must be at least 13 years old to use TrailBuddy.</p>
+      </section>
+
+      <section>
+        <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">3. Activities and territory game</h2>
+        <p>TrailBuddy records GPS activities and runs a territory-conquest game on top of them. Submit only your own genuine activity data. Fabricated, manipulated, or impossible GPS tracks may be rejected by our anti-cheat checks and can lead to removal of claimed territory or your account.</p>
+      </section>
+
+      <section>
+        <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">4. Your content</h2>
+        <p>You keep ownership of the activities, reviews, photos, and comments you post. You grant TrailBuddy a license to store and display that content so the app can function. Don't post content that's unlawful, harassing, or infringes someone else's rights.</p>
+      </section>
+
+      <section>
+        <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">5. Safety</h2>
+        <p>Outdoor activity carries real risk. TrailBuddy is a tracking and social tool, not a safety device or navigation authority. Always assess conditions yourself, follow local rules, and don't trespass to claim territory. You participate at your own risk.</p>
+      </section>
+
+      <section>
+        <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">6. Changes</h2>
+        <p>We may update these terms as TrailBuddy evolves. We'll revise the "last updated" date above; continued use after a change means you accept the new terms.</p>
+      </section>
+
+      <section>
+        <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">7. Contact</h2>
+        <p>Questions about these terms? Reach us at <a href="mailto:support@trailbuddy.test" class="text-emerald-600 hover:underline">support@trailbuddy.test</a>.</p>
+      </section>
+    </div>
+
+    <div class="mt-12 pt-6 border-t border-gray-100 dark:border-slate-700 flex items-center gap-4 text-sm">
+      <StxLink to="/privacy" class="text-emerald-600 hover:underline font-medium">Privacy Policy</StxLink>
+      <StxLink to="/register" class="text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200">Back to sign up</StxLink>
+    </div>
+  </div>
+@endsection

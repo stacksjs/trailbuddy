@@ -1,0 +1,53 @@
+@extends('layouts/default')
+
+@section('title', 'Privacy Policy — TrailBuddy')
+
+@section('content')
+<script client>
+  useHead({ title: 'Privacy Policy — TrailBuddy' })
+</script>
+
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="mb-8">
+      <h1 class="font-bold text-3xl text-gray-900 dark:text-white mb-2">Privacy Policy</h1>
+      <p class="text-sm text-gray-500 dark:text-slate-400">Last updated June 2026</p>
+    </div>
+
+    <div class="space-y-8 text-gray-600 dark:text-slate-300 leading-relaxed">
+      <section>
+        <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">What we collect</h2>
+        <p>To run TrailBuddy we store the account details you give us (name, email), the activities you record (GPS tracks, distance, time, elevation), and the social content you create (reviews, comments, kudos, follows, saved trails). GPS tracks are precise location data — we treat them carefully.</p>
+      </section>
+
+      <section>
+        <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">How we use it</h2>
+        <p>Your data powers the features you use: showing your activities, computing pace/elevation/splits, running the territory-conquest game and leaderboards, and connecting you with other athletes. We don't sell your personal data.</p>
+      </section>
+
+      <section>
+        <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">What others can see</h2>
+        <p>Your profile, activities, reviews, and the territory you hold are visible to other TrailBuddy users by default. Per-activity privacy controls are on our roadmap; until then, treat anything you post as visible to the community. Your email is never shown publicly.</p>
+      </section>
+
+      <section>
+        <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">Location data</h2>
+        <p>GPS tracks are recorded only while you're actively recording an activity. You can delete any activity, which removes its track; territory you've already captured stays on the map but is no longer linked to the deleted activity.</p>
+      </section>
+
+      <section>
+        <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">Your choices</h2>
+        <p>You can edit or delete your activities at any time and update your account details. To delete your account entirely, contact us and we'll remove your personal data, subject to any legal retention requirements.</p>
+      </section>
+
+      <section>
+        <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">Contact</h2>
+        <p>Privacy questions? Email <a href="mailto:privacy@trailbuddy.test" class="text-emerald-600 hover:underline">privacy@trailbuddy.test</a>.</p>
+      </section>
+    </div>
+
+    <div class="mt-12 pt-6 border-t border-gray-100 dark:border-slate-700 flex items-center gap-4 text-sm">
+      <StxLink to="/terms" class="text-emerald-600 hover:underline font-medium">Terms of Service</StxLink>
+      <StxLink to="/register" class="text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200">Back to sign up</StxLink>
+    </div>
+  </div>
+@endsection

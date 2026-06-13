@@ -118,7 +118,7 @@ const typeLabels = {
 
     <!-- View All Link -->
     <div class="px-4 py-3 bg-gray-50 border-gray-100 border-t">
-      <StxLink to="/territories/leaderboard" class="flex items-center justify-center font-medium text-emerald-600 text-sm hover:text-emerald-700 transition">
+      <StxLink to="/leaderboard" class="flex items-center justify-center font-medium text-emerald-600 text-sm hover:text-emerald-700 transition">
         View Full Leaderboard
         <Icon name="chevron-right" size="16" class="ml-1" />
       </StxLink>

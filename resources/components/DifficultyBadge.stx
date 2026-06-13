@@ -20,7 +20,7 @@ function getDifficultyClass(diff: Difficulty): string {
 </script>
 
 <template>
-  <span class="px-3 py-1 capitalize font-semibold text-xs rounded-full {{ }} getDifficultyClass(difficulty)">
+  <span class="px-3 py-1 capitalize font-semibold text-xs rounded-full {{ getDifficultyClass(difficulty) }}">
     {{ difficulty }}
   </span>
 </template>

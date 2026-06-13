@@ -52,7 +52,7 @@ const { name, location, distance, elevation, difficulty, rating, image } = withD
               {{ elevation.toLocaleString() }} ft
             </span>
           </div>
-          <span class="px-3 py-1 capitalize font-semibold text-xs rounded-full }} difficulty difficulty-{{">{{ difficulty }}</span>
+          <span class="px-3 py-1 capitalize font-semibold text-xs rounded-full difficulty difficulty-{{ difficulty }}">{{ difficulty }}</span>
         </div>
       </div>
     </div>
