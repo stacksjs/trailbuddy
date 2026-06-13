@@ -30,13 +30,13 @@ export default new Action({
 
   async handle(request) {
     const userId = request.get<number>('user_id')
-    const limit = Math.min(Math.max(request.get<number>('limit') || 100, 1), 500)
+    const page = readPageParams(request, { defaultLimit: 100, maxLimit: 500 })
 
     try {
       const query = userId
         ? Activity.where('user_id', '=', userId)
         : Activity.query()
-      const rows = (await query.orderBy('completed_at', 'desc').limit(limit).get()) ?? []
+      const rows = (await query.orderBy('completed_at', 'desc').get()) ?? []
 
       // Batch-load owners + trails so the feed gets names without N+1 lookups.
       const userIds = [...new Set(rows.map((a: any) => a.user_id).filter(Boolean))]
@@ -71,7 +71,8 @@ export default new Action({
         }
       })
 
-      return response.json({ activities, meta: { total: activities.length } })
+      const { items, meta } = paginate(activities, page)
+      return response.json({ activities: items, meta })
     }
     catch (error) {
       console.error('[activities] index failed:', error)

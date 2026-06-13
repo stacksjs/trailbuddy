@@ -46,7 +46,8 @@ export default new Action({
         // Discover mode surfaces the most active athletes first.
         .sort((a: any, b: any) => b.activityCount - a.activityCount || b.followerCount - a.followerCount || a.id - b.id)
 
-      return response.json({ success: true, athletes, meta: { total: athletes.length, query: q } })
+      const paged = paginate(athletes, readPageParams(request, { defaultLimit: 20, maxLimit: 50 }))
+      return response.json({ success: true, athletes: paged.items, meta: { ...paged.meta, query: q } })
     }
     catch (error) {
       console.error('[users] search failed:', error)

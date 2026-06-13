@@ -48,7 +48,8 @@ export default new Action({
           }
         })
 
-      return response.json({ success: true, savedTrails, meta: { total: savedTrails.length } })
+      const paged = paginate(savedTrails, readPageParams(request))
+      return response.json({ success: true, savedTrails: paged.items, meta: paged.meta })
     }
     catch (error) {
       console.error('[saved-trails] index failed:', error)

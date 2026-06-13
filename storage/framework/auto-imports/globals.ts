@@ -14,6 +14,8 @@ declare global {
   const increment: typeof autoImports.increment
   const count: typeof autoImports.count
   const shapeChallenge: typeof autoImports.shapeChallenge
+  const readPageParams: typeof autoImports.readPageParams
+  const paginate: typeof autoImports.paginate
   const longestDayStreak: typeof autoImports.longestDayStreak
   const hasSubSevenMile: typeof autoImports.hasSubSevenMile
   const computeAchievementProgress: typeof autoImports.computeAchievementProgress

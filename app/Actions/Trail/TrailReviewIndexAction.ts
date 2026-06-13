@@ -36,7 +36,8 @@ export default new Action({
         createdAt: r.created_at,
       }))
 
-      return response.json({ success: true, reviews, meta: { total: reviews.length } })
+      const paged = paginate(reviews, readPageParams(request))
+      return response.json({ success: true, reviews: paged.items, meta: paged.meta })
     }
     catch (error) {
       console.error('[trail-reviews] index failed:', error)

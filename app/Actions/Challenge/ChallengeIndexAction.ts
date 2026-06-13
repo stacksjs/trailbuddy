@@ -33,7 +33,8 @@ export default new Action({
         }))
         .sort((a: any, b: any) => Date.parse(b.createdAt ?? '') - Date.parse(a.createdAt ?? ''))
 
-      return response.json({ success: true, challenges, meta: { total: challenges.length } })
+      const paged = paginate(challenges, readPageParams(request))
+      return response.json({ success: true, challenges: paged.items, meta: paged.meta })
     }
     catch (error) {
       console.error('[challenges] index failed:', error)

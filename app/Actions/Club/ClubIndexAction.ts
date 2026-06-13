@@ -73,7 +73,8 @@ export default new Action({
         })
         .sort((a: any, b: any) => b.memberCount - a.memberCount || a.id - b.id)
 
-      return response.json({ success: true, clubs: result, meta: { total: result.length } })
+      const paged = paginate(result, readPageParams(request))
+      return response.json({ success: true, clubs: paged.items, meta: paged.meta })
     }
     catch (error) {
       console.error('[clubs] index failed:', error)
