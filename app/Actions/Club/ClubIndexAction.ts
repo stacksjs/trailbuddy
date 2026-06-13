@@ -73,7 +73,9 @@ export default new Action({
         })
         .sort((a: any, b: any) => b.memberCount - a.memberCount || a.id - b.id)
 
-      const paged = paginate(result, readPageParams(request))
+      // Generous default — the clubs page has no load-more and expects the
+      // full set; ?limit/?offset still paginate on demand (#978 review).
+      const paged = paginate(result, readPageParams(request, { defaultLimit: 200, maxLimit: 200 }))
       return response.json({ success: true, clubs: paged.items, meta: paged.meta })
     }
     catch (error) {

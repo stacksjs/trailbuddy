@@ -35,6 +35,7 @@ const REAL_COLS: Array<[string, string]> = [
   ['territory_stats', 'total_area_owned'], ['territory_stats', 'largest_territory_area'],
   ['challenges', 'area_at_stake'],
   ['territory_histories', 'area_at_event'],
+  ['user_stats', 'total_distance'], ['user_stats', 'total_elevation'],
 ]
 for (const [t, c] of REAL_COLS)
   check(`${t}.${c} is REAL`, colType(t, c) === 'REAL', colType(t, c))
@@ -47,6 +48,7 @@ const INT_COLS: Array<[string, string]> = [
   ['trails', 'review_count'],
   ['territory_stats', 'total_territories_owned'], ['territory_stats', 'territories_conquered'], ['territory_stats', 'weekly_rank'],
   ['challenges', 'challenger_id'], ['challenges', 'winner_id'],
+  ['user_stats', 'trails_completed'], ['user_stats', 'current_streak'], ['user_stats', 'total_activities'],
   ['reviews_alias_skip', 'noop'],
 ]
 for (const [t, c] of INT_COLS) {

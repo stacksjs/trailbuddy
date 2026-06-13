@@ -50,6 +50,7 @@ globalThis.Error = RealError
 const ActivityIndex = (await import('../app/Actions/Activity/ActivityIndexAction')).default
 const TrailIndex = (await import('../app/Actions/Trail/TrailIndexAction')).default
 const ClubIndex = (await import('../app/Actions/Club/ClubIndexAction')).default
+const UserSearch = (await import('../app/Actions/Social/UserSearchAction')).default
 
 async function call(action: any, body: Record<string, unknown>): Promise<{ status: number, json: any }> {
   const request = { get: (k: string) => (body as any)[k] }
@@ -88,6 +89,17 @@ check('TrailIndex paginates', tPage.json?.trails?.length === Math.min(5, tAll.js
 const cAll = await call(ClubIndex, {})
 check('ClubIndex has pagination meta', typeof cAll.json?.meta?.offset === 'number'
   && typeof cAll.json?.meta?.hasMore === 'boolean')
+
+// UserSearch: total must be the REAL match count, not capped at the page size
+// (the DB-side .limit() before paginate() was removed, #978 review).
+const sAll = await call(UserSearch, {})
+const userTotal = sAll.json?.meta?.total
+check('UserSearch total = real match count', typeof userTotal === 'number' && userTotal >= 3
+  && sAll.json?.athletes?.length === userTotal, JSON.stringify(sAll.json?.meta))
+const sPage = await call(UserSearch, { limit: 2 })
+check('UserSearch limit=2: 2 items, total unchanged, hasMore true (not capped)',
+  sPage.json?.athletes?.length === 2 && sPage.json?.meta?.total === userTotal
+  && sPage.json?.meta?.hasMore === (userTotal > 2), JSON.stringify(sPage.json?.meta))
 
 console.log(failures === 0 ? '\n✅ all pagination checks passed' : `\n❌ ${failures} check(s) failed`)
 process.exit(failures === 0 ? 0 : 1)

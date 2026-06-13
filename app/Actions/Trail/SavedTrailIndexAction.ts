@@ -48,7 +48,9 @@ export default new Action({
           }
         })
 
-      const paged = paginate(savedTrails, readPageParams(request))
+      // Generous default — the profile Saved tab renders the full set, no
+      // load-more (#978 review); ?limit/?offset still paginate on demand.
+      const paged = paginate(savedTrails, readPageParams(request, { defaultLimit: 200, maxLimit: 200 }))
       return response.json({ success: true, savedTrails: paged.items, meta: paged.meta })
     }
     catch (error) {
