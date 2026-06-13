@@ -16,16 +16,19 @@ export default new Action({
     if (!userId)
       return response.json({ success: false, error: 'Authentication required' }, 401)
 
-    const name = boundedString(request.get('name'), 100)
+    const rawName = request.get<string>('name')
+    const name = typeof rawName === 'string' ? rawName.trim() : ''
     const clubType = request.get<string>('club_type') ?? request.get<string>('type') ?? 'Running'
     const description = boundedString(request.get('description'), 500)
     const location = boundedString(request.get('location'), 120)
     const isPrivate = request.get('is_private') === true || request.get('is_private') === 'true'
 
-    // Field validation (#977).
+    // Field validation (#977) — distinguish missing/short from too-long.
     const fields: Record<string, string> = {}
-    if (!name || name.length < 2)
-      fields.name = 'required: 2–100 characters'
+    if (name.length < 2)
+      fields.name = 'required: at least 2 characters'
+    else if (name.length > 100)
+      fields.name = 'must be at most 100 characters'
     if (!CLUB_TYPES.includes(clubType))
       fields.club_type = `must be one of: ${CLUB_TYPES.join(', ')}`
     if (Object.keys(fields).length)

@@ -28,13 +28,28 @@ export default new Action({
         return response.json({ success: false, error: 'Only a participant can resolve this challenge' }, 403)
       if (challenge.status !== 'active')
         return response.json({ success: false, error: `Only active challenges can be resolved (this one is ${challenge.status})` }, 409)
+      // Can't settle before time's up — otherwise a party could resolve the
+      // instant they're ahead and lock in the outcome (review #965).
+      const deadlineMs = Date.parse(challenge.deadline)
+      if (Number.isFinite(deadlineMs) && deadlineMs > Date.now())
+        return response.json({ success: false, error: 'This challenge can\'t be resolved until its deadline' }, 409)
 
       const territory = await Territory.find(challenge.territory_id)
-      // Challenger wins iff they now hold the staked territory; else the
-      // defender successfully held it.
-      const winnerId = territory && territory.user_id === challenge.challenger_id
-        ? challenge.challenger_id
-        : challenge.challenged_id
+      // The challenger wins if they now hold the staked land in EITHER form:
+      // a full takeover reassigns the original row's owner, but a split
+      // conquest keeps the original row with the defender and gives the
+      // challenger a NEW child territory (parent_territory_id = the original).
+      // Checking only the original row would wrongly credit the defender after
+      // a successful split (review #965).
+      let challengerHolds = !!(territory && territory.user_id === challenge.challenger_id)
+      if (!challengerHolds) {
+        const children = (await Territory
+          .where('parent_territory_id', '=', challenge.territory_id)
+          .where('user_id', '=', challenge.challenger_id)
+          .get()) ?? []
+        challengerHolds = children.length > 0
+      }
+      const winnerId = challengerHolds ? challenge.challenger_id : challenge.challenged_id
 
       await Challenge.forceUpdate(challengeId, { status: 'completed', winner_id: winnerId })
       const updated = await Challenge.find(challengeId)

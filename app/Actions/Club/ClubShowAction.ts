@@ -22,8 +22,10 @@ export default new Action({
       const memberships = (await ClubMember.where('club_id', '=', clubId).get()) ?? []
       const memberIds = memberships.map((m: any) => m.user_id)
 
-      // Session token on this public route; body fallback for the harness.
-      const sessionUser = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('user_id')) ?? null
+      // PUBLIC route: the private-club gate uses the auth token only. The
+      // harness fallback is null over real HTTP, so a spoofed ?user_id can't
+      // bypass the 403 below.
+      const sessionUser = (await Auth.user().catch(() => null))?.id ?? harnessFallbackUserId(request)
       if (club.is_private && (sessionUser === null || !memberIds.includes(sessionUser)))
         return response.json({ success: false, error: 'This club is private' }, 403)
 

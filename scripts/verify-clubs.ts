@@ -120,6 +120,14 @@ check('private club detail → 403 for non-member', privNonMember.status === 403
 const privMember = await callAction(ShowAction, { id: privateClub, user_id: 1 })
 check('private club detail → 200 for member', privMember.status === 200)
 
+// SECURITY (review #964): a request that LOOKS like real HTTP (has url/headers/
+// query) must NOT honor a spoofed body/query user_id for the private gate —
+// otherwise anyone could pass ?user_id=<a member id> to unmask a private club.
+// user 1 IS a member here, so if the spoof leaked through it would return 200.
+const httpReq: any = { url: `/api/clubs/${privateClub}`, headers: {}, query: { user_id: '1' }, get: (k: string) => (k === 'id' ? privateClub : k === 'user_id' ? 1 : undefined) }
+const spoof = await ShowAction.handle(httpReq)
+check('spoofed ?user_id over HTTP can\'t open a private club (IDOR closed)', (spoof?.status ?? 200) === 403, String(spoof?.status ?? 200))
+
 // --- delete (owner only) --------------------------------------------------------
 
 // newClubId was created by user 2 (its owner).

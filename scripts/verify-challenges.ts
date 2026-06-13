@@ -127,13 +127,32 @@ else {
 
 // --- resolve --------------------------------------------------------------------
 
+// newId is active (accepted above). It can't be resolved before its deadline.
+const earlyResolve = await callAction(ResolveAction, { id: newId, user_id: 1 })
+check('can\'t resolve before the deadline → 409', earlyResolve.status === 409, String(earlyResolve.status))
+db.query('UPDATE challenges SET deadline = ? WHERE id = ?').run(new Date(Date.now() - 86400000).toISOString(), newId)
+
 const nonParticipant = [1, 2, 3].find(u => u !== 1 && u !== defender) ?? 99
 const outsider = await callAction(ResolveAction, { id: newId, user_id: nonParticipant })
 check('non-participant can\'t resolve → 403', outsider.status === 403, String(outsider.status))
+
+// Split-conquest winner (review #965): the challenger took a CHILD piece of the
+// staked territory, not the original row. Clone the staked territory as a child
+// owned by the challenger (user 1) and confirm resolve credits the challenger.
+const stake = one('SELECT * FROM territories WHERE id = ?', rivalTerr.id)
+const cloneCols = Object.keys(stake).filter(k => k !== 'id')
+const cloneVals = cloneCols.map((c) => {
+  if (c === 'user_id') return 1
+  if (c === 'parent_territory_id') return rivalTerr.id
+  if (c === 'uuid') return `child-${rivalTerr.id}-stk`
+  return (stake as any)[c]
+})
+db.query(`INSERT INTO territories (${cloneCols.map(c => `"${c}"`).join(',')}) VALUES (${cloneCols.map(() => '?').join(',')})`).run(...cloneVals)
+
 const resolved = await callAction(ResolveAction, { id: newId, user_id: 1 })
-check('participant resolves active → completed with a winner', resolved.status === 200
+check('resolve credits the challenger for a split-off child territory', resolved.status === 200
   && resolved.json?.challenge?.status === 'completed'
-  && [1, defender].includes(resolved.json?.challenge?.winnerId), JSON.stringify(resolved.json?.challenge))
+  && resolved.json?.challenge?.winnerId === 1, JSON.stringify(resolved.json?.challenge))
 const reResolve = await callAction(ResolveAction, { id: newId, user_id: 1 })
 check('resolving a completed challenge → 409', reResolve.status === 409)
 

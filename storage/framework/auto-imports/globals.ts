@@ -39,6 +39,7 @@ declare global {
   const generateSampleLoopJson: typeof autoImports.generateSampleLoopJson
   const validateGpsDataForClaim: typeof autoImports.validateGpsDataForClaim
   const validateTrackRealism: typeof autoImports.validateTrackRealism
+  const harnessFallbackUserId: typeof autoImports.harnessFallbackUserId
   const parseDurationToSeconds: typeof autoImports.parseDurationToSeconds
   const paceString: typeof autoImports.paceString
   const territoryFreshnessMs: typeof autoImports.territoryFreshnessMs

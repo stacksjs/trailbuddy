@@ -15,6 +15,7 @@ export { isDark, toggleDark, preferredDark } from '../../../resources/functions/
 export { positiveInt, boundedNumber, boundedString, durationString } from '../../../resources/functions/validate'
 export type { FieldErrors } from '../../../resources/functions/validate'
 export { parseGpx, parseJsonCoordinates, parseGpsData, generateSampleLoopGpx, generateSampleLoopJson, validateGpsDataForClaim, validateTrackRealism } from '../../../resources/functions/gpx'
+export { harnessFallbackUserId } from '../../../resources/functions/request'
 export { parseDurationToSeconds, paceString } from '../../../resources/functions/duration'
 export { territoryFreshnessMs, computeTerritoryDecay, DECAY_STALE_DAYS, DECAY_EXPIRE_DAYS } from '../../../resources/functions/decay'
 export type { DecayTerritoryRow, DecayPlan } from '../../../resources/functions/decay'

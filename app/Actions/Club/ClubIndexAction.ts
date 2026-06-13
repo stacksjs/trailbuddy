@@ -12,10 +12,10 @@ export default new Action({
 
   async handle(request) {
     try {
-      // Session user drives private-club visibility + isMember. From the
-      // session token (works on this public route via the auth header); the
-      // body fallback is for the in-process harness only.
-      const sessionUser = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('user_id')) ?? null
+      // Session user drives private-club visibility + isMember. On this PUBLIC
+      // route it MUST come from the auth token only — the harness fallback is
+      // null over real HTTP, so a spoofed ?user_id can't unmask private clubs.
+      const sessionUser = (await Auth.user().catch(() => null))?.id ?? harnessFallbackUserId(request)
 
       const clubs = (await Club.all()) ?? []
       const memberships = (await ClubMember.all()) ?? []
@@ -62,7 +62,8 @@ export default new Action({
             type: c.club_type,
             isPrivate: !!c.is_private,
             creatorId: c.creator_id,
-            members,
+            // Note: the raw member-id roster is intentionally NOT exposed on the
+            // public listing; memberCount + isMember drive the UI.
             memberCount: members.length,
             isMember: sessionUser !== null && members.includes(sessionUser),
             weeklyDistance: Math.round(dist),

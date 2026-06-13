@@ -49,13 +49,17 @@ export function useClubs(tb: ClubStoreLike | null) {
       return
     const club2 = tb.clubs().find(c => c.id === club.id) ?? club
     const was = isMember(club2)
-    const nextCount = (club2.memberCount ?? 0) + (was ? -1 : 1)
+    // Capture the ORIGINAL count before the optimistic mutation — applyClub-
+    // Membership mutates club2.memberCount in place, so reading it again on
+    // failure would roll back to the optimistic value, not the original.
+    const prevCount = club2.memberCount ?? 0
+    const nextCount = prevCount + (was ? -1 : 1)
     tb.applyClubMembership(club.id, !was, nextCount) // optimistic
     const res = await toggleClubMembership(club.id)
     if (res && res.success)
       tb.applyClubMembership(club.id, !!res.joined, res.memberCount ?? nextCount)
     else
-      tb.applyClubMembership(club.id, was, club2.memberCount ?? 0) // rollback
+      tb.applyClubMembership(club.id, was, prevCount) // rollback to original
   }
 
   function openCreate() {
