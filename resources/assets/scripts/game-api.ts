@@ -244,6 +244,68 @@ export async function markNotificationsRead(id?: number): Promise<boolean> {
   return res.ok
 }
 
+// --- Clubs (#964) ------------------------------------------------------------
+
+export interface ClubPayload {
+  name: string
+  club_type: string
+  description?: string | null
+  location?: string | null
+  is_private?: boolean
+}
+
+/** List clubs (public; private clubs only when the session user is a member). */
+export async function fetchClubs(): Promise<any[] | null> {
+  await ensureSession()
+  const res = await fetch('/api/clubs', { headers: authHeaders() })
+  if (!res.ok)
+    return null
+  const json = await res.json()
+  return json?.success ? json.clubs : null
+}
+
+/** Club detail: members, recent feed, leaderboard. */
+export async function fetchClubDetail(clubId: number): Promise<any | null> {
+  await ensureSession()
+  const res = await fetch(`/api/clubs/${clubId}`, { headers: authHeaders() })
+  if (!res.ok)
+    return null
+  const json = await res.json()
+  return json?.success ? json.club : null
+}
+
+/** Create a club; the creator becomes its owner. */
+export async function createClub(payload: ClubPayload): Promise<{ success: boolean, club?: any, error?: string, fields?: Record<string, string> }> {
+  await ensureSession()
+  const res = await fetch('/api/clubs', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  })
+  try {
+    return await res.json()
+  }
+  catch {
+    return { success: false, error: `HTTP ${res.status}` }
+  }
+}
+
+/** Join or leave a club; returns the new membership state + count. */
+export async function toggleClubMembership(clubId: number): Promise<{ success: boolean, joined?: boolean, memberCount?: number, error?: string }> {
+  await ensureSession()
+  const res = await fetch(`/api/clubs/${clubId}/join`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({}),
+  })
+  try {
+    return await res.json()
+  }
+  catch {
+    return { success: false, error: `HTTP ${res.status}` }
+  }
+}
+
 export interface TrailReview {
   id: number
   userId: number

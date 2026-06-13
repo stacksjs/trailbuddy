@@ -132,6 +132,8 @@
     weeklyDistance: number
     activitiesThisWeek: number
     members: number[]
+    isMember?: boolean
+    creatorId?: number
     created_at: string
   }
 
@@ -557,6 +559,27 @@
           t.rating = rating
           t.reviewCount = reviewCount
         }
+      },
+      /** Replace clubs with live API data (#964). */
+      hydrateClubs(list: Club[]) {
+        if (list.length)
+          this.clubs = list
+      },
+      /** Prepend a newly-created club (#964). */
+      addClub(club: Club) {
+        this.clubs = [club, ...this.clubs.filter((c: Club) => c.id !== club.id)]
+      },
+      /** Reflect a join/leave toggle on a club (#964). */
+      applyClubMembership(clubId: number, joined: boolean, memberCount: number) {
+        const c = this.clubs.find((x: Club) => x.id === clubId)
+        if (!c) return
+        const me = this.currentUserId
+        const members = new Set(c.members ?? [])
+        if (joined) members.add(me)
+        else members.delete(me)
+        c.members = [...members]
+        c.isMember = joined
+        if (typeof memberCount === 'number') c.memberCount = memberCount
       },
       isTrailSaved(trailId: number): boolean {
         return (this.savedTrailIds ?? []).includes(trailId)

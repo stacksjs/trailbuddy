@@ -390,6 +390,9 @@ route.get('/users/{id}/follows', 'Actions/Social/UserFollowsAction')
 route.get('/users/{id}/achievements', 'Actions/Achievement/UserAchievementsAction')
 route.get('/users/{id}/saved-trails', 'Actions/Trail/SavedTrailIndexAction')
 route.get('/users/{id}', 'Actions/Social/AthleteShowAction')
+// Clubs — public discovery + detail (#964)
+route.get('/clubs', 'Actions/Club/ClubIndexAction')
+route.get('/clubs/{id}', 'Actions/Club/ClubShowAction')
 
 // Writes that act on behalf of a user MUST be authenticated — the acting
 // user is derived from the session (Auth.user()), never from the request body,
@@ -433,6 +436,9 @@ route.group({ middleware: 'auth' }, () => {
     route.post('/trails/{id}/save', 'Actions/Trail/SavedTrailToggleAction')
     // Social graph — follow/unfollow another athlete
     route.post('/users/{id}/follow', 'Actions/Social/FollowToggleAction')
+    // Clubs — create + join/leave (#964)
+    route.post('/clubs', 'Actions/Club/ClubStoreAction')
+    route.post('/clubs/{id}/join', 'Actions/Club/ClubMembershipToggleAction')
     // Notifications (recipient = session user)
     route.get('/notifications', 'Actions/Social/NotificationIndexAction')
     route.post('/notifications/read', 'Actions/Social/NotificationReadAction')

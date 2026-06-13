@@ -88,7 +88,7 @@ async function callAction(action: any, body: Record<string, unknown>): Promise<{
 const db = new Database('database/stacks.sqlite')
 const gameTables = [
   'user_notifications', 'activity_comments', 'kudos', 'follows', 'trail_reviews',
-  'user_achievements', 'achievements', 'saved_trails',
+  'user_achievements', 'achievements', 'saved_trails', 'club_members', 'clubs',
   'territory_histories', 'territory_stats', 'territories', 'activities', 'users',
 ]
 for (const t of gameTables) {
@@ -338,6 +338,35 @@ for (const [i, trail] of savedPlan.entries()) {
   })
 }
 console.log(`✅ saved trails: ${savedPlan.length} for ${users[0].name}`)
+
+// --- clubs (#964) ------------------------------------------------------------
+// A few clubs with real memberships among the three athletes; the creator is
+// the owner. ClubIndex/Show derive memberCount + weekly stats from rows.
+
+const Club = g.Club
+const ClubMember = g.ClubMember
+const clubPlan = [
+  { name: 'Trail Crushers', description: 'Competitive trail runners pushing limits on technical terrain.', location: 'Bay Area, CA', club_type: 'Running', is_private: false, creator: users[0].id, members: [users[0].id, users[1].id, users[2].id] },
+  { name: 'Weekend Warriors', description: 'Casual hikers and trail runners who love weekend adventures.', location: 'Denver, CO', club_type: 'Mixed', is_private: false, creator: users[1].id, members: [users[1].id, users[0].id] },
+  { name: 'Summit Seekers', description: 'Dedicated peak baggers working through state highpoints.', location: 'National', club_type: 'Hiking', is_private: false, creator: users[2].id, members: [users[2].id, users[1].id] },
+  { name: 'Conqueror\'s Guild', description: 'Territory game enthusiasts focused on conquest strategy.', location: 'National', club_type: 'Territory Game', is_private: true, creator: users[0].id, members: [users[0].id, users[2].id] },
+]
+let membershipCount = 0
+for (const plan of clubPlan) {
+  const club = await Club.forceCreate({
+    creator_id: plan.creator,
+    name: plan.name,
+    description: plan.description,
+    location: plan.location,
+    club_type: plan.club_type,
+    is_private: plan.is_private,
+  })
+  for (const uid of plan.members) {
+    await ClubMember.forceCreate({ club_id: club.id, user_id: uid, role: uid === plan.creator ? 'owner' : 'member' })
+    membershipCount++
+  }
+}
+console.log(`✅ clubs: ${clubPlan.length} with ${membershipCount} memberships`)
 
 // --- final state -----------------------------------------------------------
 

@@ -16,6 +16,10 @@ declare global {
   const longestDayStreak: typeof autoImports.longestDayStreak
   const hasSubSevenMile: typeof autoImports.hasSubSevenMile
   const computeAchievementProgress: typeof autoImports.computeAchievementProgress
+  const extractMentionQuery: typeof autoImports.extractMentionQuery
+  const mentionCandidates: typeof autoImports.mentionCandidates
+  const applyMention: typeof autoImports.applyMention
+  const parseMentions: typeof autoImports.parseMentions
   const totalElevationGainFt: typeof autoImports.totalElevationGainFt
   const computeSplitsFromSamples: typeof autoImports.computeSplitsFromSamples
   const ELEVATION_NOISE_FLOOR_FT: typeof autoImports.ELEVATION_NOISE_FLOOR_FT

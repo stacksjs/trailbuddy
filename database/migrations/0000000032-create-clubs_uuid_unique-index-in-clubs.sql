@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS "clubs_clubs_uuid_unique" ON "clubs" ("uuid");

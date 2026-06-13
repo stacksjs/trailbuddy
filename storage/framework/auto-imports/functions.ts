@@ -5,6 +5,8 @@ export type { TerritoryRankStatsRow, TerritoryGainEvent, TerritoryRankAssignment
 export { increment, count } from '../../../resources/functions/counter'
 export { longestDayStreak, hasSubSevenMile, computeAchievementProgress } from '../../../resources/functions/achievements'
 export type { AchievementDefinitionRow, AchievementProgressEntry } from '../../../resources/functions/achievements'
+export { extractMentionQuery, mentionCandidates, applyMention, parseMentions } from '../../../resources/functions/mentions'
+export type { MentionUser, MentionSegment } from '../../../resources/functions/mentions'
 export { totalElevationGainFt, computeSplitsFromSamples, ELEVATION_NOISE_FLOOR_FT, METERS_TO_FEET } from '../../../resources/functions/splits'
 export type { RecorderSample, MileSplit } from '../../../resources/functions/splits'
 export { isDark, toggleDark, preferredDark } from '../../../resources/functions/dark'

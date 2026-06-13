@@ -4,18 +4,24 @@
 
 @section('content')
 <script client>
+  import { useClubs } from '../composables/useClubs'
+
   useHead({ title: 'Clubs — TrailBuddy' })
 
   const tb = useStore('tb')
   const filter = state<'all' | 'mine' | 'Running' | 'Hiking' | 'Territory Game'>('all')
 
-  const currentUserId = derived(() => tb?.currentUserId())
+  const {
+    createOpen, submitting, createError,
+    fName, fType, fLocation, fDescription, fPrivate,
+    isMember, onToggleMembership, openCreate, closeCreate, submitCreate,
+  } = useClubs(tb)
 
   const filtered = derived(() => {
     if (!tb) return []
     const f = filter()
     if (f === 'all') return tb.clubs()
-    if (f === 'mine') return tb.clubs().filter((c: any) => c.members?.includes(tb.currentUserId()))
+    if (f === 'mine') return tb.clubs().filter((c: any) => isMember(c))
     return tb.clubs().filter((c: any) => c.type === f)
   })
 </script>
@@ -26,7 +32,7 @@
         <h1 class="text-2xl font-bold dark:text-white">Clubs</h1>
         <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">Join a community of trail enthusiasts</p>
       </div>
-      <button class="px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">+ Create Club</button>
+      <button @click="openCreate()" class="px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">+ Create Club</button>
     </div>
 
     <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
@@ -45,7 +51,7 @@
             <div class="flex-1 min-w-0">
               <div class="flex items-start justify-between gap-4 mb-2">
                 <div>
-                  <h3 class="font-bold text-lg text-gray-900 dark:text-white" :text="club.name"></h3>
+                  <StxLink x-to="'/club/' + club.id" class="font-bold text-lg text-gray-900 dark:text-white hover:text-emerald-600 transition" :text="club.name"></StxLink>
                   <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-slate-400 mt-1">
                     <span :text="club.location"></span>
                     <span :text="club.memberCount + ' members'"></span>
@@ -53,7 +59,7 @@
                     <span :if="club.isPrivate" class="px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-medium">Private</span>
                   </div>
                 </div>
-                <button class="shrink-0 px-4 py-2 text-sm font-semibold rounded-lg transition" x-class="club.members?.includes(currentUserId) ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'" :text="club.members?.includes(currentUserId) ? 'Joined' : 'Join'"></button>
+                <button @click="onToggleMembership(club)" class="shrink-0 px-4 py-2 text-sm font-semibold rounded-lg transition" x-class="isMember(club) ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'" :text="isMember(club) ? 'Joined' : 'Join'"></button>
               </div>
               <p class="text-sm text-gray-600 dark:text-slate-400 mb-4" :text="club.description"></p>
               <div class="flex items-center gap-6 pt-3 border-t border-gray-100 dark:border-slate-700 text-sm">
@@ -77,7 +83,52 @@
         </div>
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No clubs found</h3>
         <p class="text-gray-500 dark:text-slate-400 max-w-sm mx-auto mb-6">Join a running club to train with others and share routes.</p>
-        <button class="px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Create a Club</button>
+        <button @click="openCreate()" class="px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Create a Club</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create-club modal (#964) -->
+  <div :if="createOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div @click="closeCreate()" class="absolute inset-0 bg-black/40"></div>
+    <div class="relative w-full max-w-md card">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-bold text-lg dark:text-white">Create a club</h2>
+        <button @click="closeCreate()" class="text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 text-xl leading-none">×</button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Name</label>
+          <input type="text" placeholder="Trail Crushers" x-value="fName" @input="fName.set($event.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Type</label>
+            <select x-value="fType" @change="fType.set($event.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm">
+              <option value="Running">Running</option>
+              <option value="Hiking">Hiking</option>
+              <option value="Mixed">Mixed</option>
+              <option value="Territory Game">Territory Game</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Location</label>
+            <input type="text" placeholder="Bay Area, CA" x-value="fLocation" @input="fLocation.set($event.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Description</label>
+          <textarea rows="2" placeholder="What's your club about?" x-value="fDescription" @input="fDescription.set($event.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm"></textarea>
+        </div>
+        <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300">
+          <input type="checkbox" x-checked="fPrivate" @change="fPrivate.set($event.target.checked)" class="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
+          Private — only members can see it
+        </label>
+        <p :if="createError" class="text-sm text-red-500" :text="createError"></p>
+        <div class="flex gap-2 pt-1">
+          <button @click="submitCreate()" class="flex-1 px-4 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition" :text="submitting ? 'Creating…' : 'Create club'"></button>
+          <button @click="closeCreate()" class="px-4 py-2.5 text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 transition">Cancel</button>
+        </div>
       </div>
     </div>
   </div>
