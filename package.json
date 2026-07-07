@@ -7,8 +7,8 @@
     "url": "git+https://github.com/stacksjs/stacks.git"
   },
   "dependencies": {
-    "@stacksjs/components": "^0.2.72",
-    "@stacksjs/stx": "^0.2.72",
+    "@stacksjs/components": "^0.2.82",
+    "@stacksjs/stx": "^0.2.82",
     "stacks": "workspace:*",
     "ts-maps": "file:../ts-maps/packages/ts-maps",
     "ts-rate-limiter": "0.4.2"
