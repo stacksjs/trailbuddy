@@ -146,7 +146,9 @@ export class Database {
       hooks: this._options.hooks,
     })
 
-    // Create the query builder instance
+    // Create the query builder instance. stacksjs/stacks#1951 — the wrapped
+    // createQueryBuilder bootstraps fresh sqlite connections with the FK
+    // pragmas, so no explicit applySqlitePragmas call is needed here.
     this._queryBuilder = createQueryBuilder()
     this._initialized = true
   }

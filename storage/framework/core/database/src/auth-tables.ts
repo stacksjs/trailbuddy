@@ -22,8 +22,32 @@ import { env as envVars } from '@stacksjs/env'
 import { db } from './utils'
 import { sqlHelpers } from './sql-helpers'
 
+type SqlHelpers = ReturnType<typeof sqlHelpers>
+
 function getDbDriver(): string {
   return envVars.DB_CONNECTION || 'sqlite'
+}
+
+/**
+ * Defensive ALTER guaranteeing `users.email_verified_at` — the column
+ * `verifyEmail()` writes and the `verified` middleware reads, but which
+ * no generated users migration ever creates (stacksjs/stacks#1948).
+ * Pure builder so tests can assert per-dialect DDL without a live DB.
+ */
+export function usersEmailVerifiedAtSql(sql: SqlHelpers): string {
+  return `ALTER TABLE users ADD COLUMN email_verified_at ${sql.nullableTimestamp}`
+}
+
+/**
+ * Defensive ALTER guaranteeing `users.password_changed_at` — the column
+ * `resetPassword()` stamps and the token-validation paths read to bind a
+ * token's validity to the user's credential state (stacksjs/stacks#1957,
+ * a #1947 follow-up). No generated users migration creates it, so the
+ * same pure-builder + try/catch-swallow pattern as
+ * {@link usersEmailVerifiedAtSql} guarantees it from both schema paths.
+ */
+export function usersPasswordChangedAtSql(sql: SqlHelpers): string {
+  return `ALTER TABLE users ADD COLUMN password_changed_at ${sql.nullableTimestamp}`
 }
 
 /**
@@ -107,6 +131,34 @@ export async function migrateAuthTables(options: { verbose?: boolean } = {}): Pr
     }
     catch {
       // Index might already exist
+    }
+
+    // users.email_verified_at — `verifyEmail()` writes it and
+    // `isEmailVerified()` / the `verified` middleware read it, but no
+    // generated users migration creates it (stacksjs/stacks#1948).
+    // Model migrations run before this step on the `buddy migrate`
+    // path, so users exists by now; the ALTER fails harmlessly when
+    // the column is already there (or on a bare DB with no users yet).
+    if (options.verbose) log.info('Ensuring users.email_verified_at column exists...')
+    try {
+      await db.unsafe(usersEmailVerifiedAtSql(sql)).execute()
+    }
+    catch {
+      // Column already exists (or users table missing) — safe to ignore
+    }
+
+    // users.password_changed_at — `resetPassword()` stamps it and the
+    // token-validation paths read it to invalidate any credential
+    // issued before a password change (stacksjs/stacks#1957, a #1947
+    // follow-up). Same defensive ALTER + swallow as email_verified_at:
+    // fails harmlessly when the column already exists or `users` hasn't
+    // been migrated yet.
+    if (options.verbose) log.info('Ensuring users.password_changed_at column exists...')
+    try {
+      await db.unsafe(usersPasswordChangedAtSql(sql)).execute()
+    }
+    catch {
+      // Column already exists (or users table missing) — safe to ignore
     }
 
     if (options.verbose) log.info('Ensuring personal access client exists...')

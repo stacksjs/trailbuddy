@@ -23,6 +23,7 @@ const log = {
 }
 import { err, handleError, ok } from '@stacksjs/error-handling'
 import { path } from '@stacksjs/path'
+import type { MigrationOperation } from '@stacksjs/query-builder'
 import {
   createQueryBuilder,
   executeMigration as qbExecuteMigration,
@@ -127,8 +128,11 @@ function prepareMigrationModelsDir(): { modelsDir: string, skip: boolean } {
  *
  * SQLite does not support:
  * - ALTER TABLE ADD CONSTRAINT (foreign keys must be defined at table creation)
- * - Creating duplicate unique indexes on columns that already have UNIQUE constraints
- *   from inline table definitions (the index name differs but the constraint conflicts)
+ *
+ * Note: CREATE UNIQUE INDEX files are deliberately NOT skipped — the SQLite
+ * dialect driver never renders inline UNIQUE in CREATE TABLE, so the
+ * standalone index file is the only uniqueness enforcement on SQLite
+ * (stacksjs/stacks#1952).
  *
  * Two flavours of "no-op on SQLite" need different handling:
  *
@@ -136,8 +140,8 @@ function prepareMigrationModelsDir(): { modelsDir: string, skip: boolean } {
  *     run cleanly on MySQL/Postgres — but doesn't apply to SQLite. Record
  *     it as executed in the migrations tracking table so it doesn't replay,
  *     but **leave the file on disk** so a future `DB_CONNECTION` flip can
- *     pick it up. This is the right path for FK constraint files and
- *     unique-index files. (stacksjs/stacks#1916)
+ *     pick it up. This is the right path for FK constraint files.
+ *     (stacksjs/stacks#1916)
  *
  *   - **Drop-and-delete** (`deleteMigration`): the file is genuinely dead
  *     — a duplicate CREATE TABLE created by `buddy generate:migrations`
@@ -172,11 +176,19 @@ export function preprocessSqliteMigrations(): void {
     droppedMigrations.push(file)
   }
 
+  // Unique-index files the old skip logic wrongly recorded as executed.
+  // Their indexes never got created — deleting the row from the
+  // migrations table makes the runner pick the file back up.
+  const replayMigrations: string[] = []
+
   const addConstraintPattern = /^\s*ALTER\s+TABLE\s+.+\s+ADD\s+CONSTRAINT\s+/i
-  // Match CREATE UNIQUE INDEX — these are redundant in SQLite when the table
-  // already defines the UNIQUE constraint inline during CREATE TABLE.
-  // Regular CREATE INDEX is fine and should NOT be skipped.
-  const createUniqueIndexPattern = /^\s*CREATE\s+UNIQUE\s+INDEX\s+/i
+  // Match CREATE UNIQUE INDEX, capturing the index name. These files MUST run
+  // on SQLite — the dialect driver never renders inline UNIQUE in CREATE
+  // TABLE, so this index is the only uniqueness enforcement (#1952).
+  // IF NOT EXISTS makes them idempotent by name; SQLite accepts a unique
+  // index alongside an inline constraint; a genuine SQLITE_CONSTRAINT
+  // failure means duplicate rows already exist and must surface.
+  const createUniqueIndexPattern = /^\s*CREATE\s+UNIQUE\s+INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?["'`]?(\w+)["'`]?/i
   // Match ALTER TABLE ... DROP COLUMN — SQLite fails if the column doesn't exist
   const dropColumnPattern = /^\s*ALTER\s+TABLE\s+["']?(\w+)["']?\s+DROP\s+COLUMN\s+["']?(\w+)["']?\s*$/i
   // Match CREATE TABLE — used to detect when buddy regenerates a CREATE TABLE
@@ -251,41 +263,23 @@ export function preprocessSqliteMigrations(): void {
       continue
     }
 
-    // CREATE UNIQUE INDEX is only redundant on SQLite when the SAME
-    // single column already carries an inline UNIQUE constraint in its
-    // CREATE TABLE (duplicate unique indexes on such columns conflict).
-    // Composite unique indexes — and single-column ones with no inline
-    // counterpart — are real constraints and MUST execute; the old
-    // blanket skip here silently dropped them (#972).
-    //
-    // Redundant files keep the skip-but-keep rule from FK constraints:
-    // MySQL/Postgres need the explicit `CREATE UNIQUE INDEX` (their
-    // indexes are separate objects, not inline), so the file survives
-    // a driver switch.
-    const allCreateUniqueIndex = statements.every(s => createUniqueIndexPattern.test(s))
-    if (allCreateUniqueIndex) {
-      const allRedundant = statements.every((s) => {
-        const m = s.match(/ON\s+["]?(\w+)["]?\s*\(([^)]+)\)/i)
-        if (!m || !m[1] || !m[2])
-          return false
-        const cols = m[2].split(',').map(c => c.trim().replace(/"/g, ''))
-        if (cols.length !== 1)
-          return false // composite — never inline on the table
-        const createFile = createTableEarliest.get(m[1])
-        if (!createFile)
-          return false
-        try {
-          const createSql = readFileSync(join(migrationsDir, createFile), 'utf-8')
-          return new RegExp(`"?${cols[0]}"?\\s+[^,)]*UNIQUE`, 'i').test(createSql)
-        }
-        catch {
-          return false
-        }
-      })
-      if (allRedundant) {
-        skipMigration(file, 'unique constraint already inline on table')
-        continue
+    // Self-heal databases the old skip logic poisoned: it recorded
+    // unique-index files as executed without ever creating the index, so
+    // `email: { unique: true }` etc. were never enforced. If the index is
+    // missing from sqlite_master, un-record the file so the runner replays
+    // it; indexes that exist stay recorded (no replay churn). Fresh
+    // installs (no DB yet) fall through and run the file normally.
+    const uniqueIndexNames = statements
+      .map(s => s.match(createUniqueIndexPattern)?.[1])
+      .filter((name): name is string => Boolean(name))
+    if (sqliteDb && uniqueIndexNames.length === statements.length) {
+      const indexExists = (sqliteDb as any).prepare(`SELECT name FROM sqlite_master WHERE type = 'index' AND name = ?`)
+      const missing = uniqueIndexNames.filter(name => !indexExists.get(name))
+      if (missing.length > 0) {
+        log.info(`Re-queueing unique-index migration (index missing from database): ${file}`)
+        replayMigrations.push(file)
       }
+      continue
     }
 
     // DROP COLUMN fails in SQLite if the column doesn't exist (e.g., on fresh DB
@@ -360,9 +354,10 @@ export function preprocessSqliteMigrations(): void {
   }
 
   // Record dropped migrations as executed so they don't get regenerated on
-  // the next `buddy generate:migrations` cycle. Without this, the same
-  // unique-index / add-constraint migrations would reappear every run.
-  if (droppedMigrations.length > 0) {
+  // the next `buddy generate:migrations` cycle, and un-record re-queued
+  // unique-index migrations so the runner replays them (#1952). The DELETE
+  // is a no-op for files that were never recorded.
+  if (droppedMigrations.length > 0 || replayMigrations.length > 0) {
     try {
       const dbPath = join(process.cwd(), dbConfig.connections.sqlite.database || 'stacks.db')
       if (existsSync(dbPath)) {
@@ -376,6 +371,8 @@ export function preprocessSqliteMigrations(): void {
           )`)
           const insert = writeDb.prepare('INSERT OR IGNORE INTO migrations (migration) VALUES (?)')
           for (const migration of droppedMigrations) insert.run(migration)
+          const unrecord = writeDb.prepare('DELETE FROM migrations WHERE migration = ?')
+          for (const migration of replayMigrations) unrecord.run(migration)
         }
         finally { writeDb.close() }
       }
@@ -805,7 +802,53 @@ async function dropFrameworkTables(dialect: 'sqlite' | 'mysql' | 'postgres'): Pr
  * the runner never sees it, so model edits silently no-op'd — defeating
  * the "models are the source of truth" promise.
  */
-export async function generateMigrations(): Promise<Result<string, Error>> {
+export interface GenerateMigrationsOptions {
+  /**
+   * Emit data-preserving `RENAME COLUMN` for unambiguous detected renames
+   * (default true). False forces literal DROP + ADD. Falls back to the
+   * `STACKS_MIGRATE_NO_RENAME` env flag (set by the `buddy migrate` command
+   * across the action subprocess boundary).
+   */
+  applyRenames?: boolean
+  /**
+   * Diff against the live database instead of the snapshot. Falls back to the
+   * `STACKS_MIGRATE_FROM_DB` env flag.
+   */
+  fromDb?: boolean
+}
+
+function resolveGenerateOptions(options: GenerateMigrationsOptions): { applyRenames?: boolean, fromDb?: boolean } {
+  const applyRenames = options.applyRenames ?? (process.env.STACKS_MIGRATE_NO_RENAME === '1' ? false : undefined)
+  const fromDb = options.fromDb ?? (process.env.STACKS_MIGRATE_FROM_DB === '1' ? true : undefined)
+  return { applyRenames, fromDb }
+}
+
+/**
+ * Preview the pending migration as a list of structured operations WITHOUT
+ * writing any files or advancing the snapshot. The `buddy migrate` command
+ * uses this (in the interactive parent process) to gate destructive changes
+ * behind confirmation before spawning the non-interactive migrate action.
+ */
+export async function previewPendingMigrations(options: GenerateMigrationsOptions = {}): Promise<MigrationOperation[]> {
+  try {
+    configureQueryBuilder()
+    const dialect = getDialect()
+    const { modelsDir, skip } = prepareMigrationModelsDir()
+    if (skip)
+      return []
+    const { applyRenames, fromDb } = resolveGenerateOptions(options)
+    const result = await qbGenerateMigration(modelsDir, { dialect, dryRun: true, applyRenames, fromDb })
+    return result.operations ?? []
+  }
+  catch (error) {
+    // A preview must never block the migrate flow on its own failure — the
+    // real generate (with proper error handling) runs right after.
+    log.debug(`[migration] preview failed: ${error instanceof Error ? error.message : String(error)}`)
+    return []
+  }
+}
+
+export async function generateMigrations(options: GenerateMigrationsOptions = {}): Promise<Result<string, Error>> {
   try {
     // Step-progress at debug — buddy's intro/outro carries the user-
     // visible signal. On a no-op generate we want zero lines between
@@ -823,8 +866,9 @@ export async function generateMigrations(): Promise<Result<string, Error>> {
       return ok('Migrations generated')
     }
 
+    const { applyRenames, fromDb } = resolveGenerateOptions(options)
     log.debug(`[migration] Generating migrations for dialect: ${dialect}, models: ${modelsDir}`)
-    const result = await qbGenerateMigration(modelsDir, { dialect })
+    const result = await qbGenerateMigration(modelsDir, { dialect, applyRenames, fromDb })
 
     if (result.hasChanges) {
       const written = persistGeneratedMigrations(result.sqlStatements ?? [])

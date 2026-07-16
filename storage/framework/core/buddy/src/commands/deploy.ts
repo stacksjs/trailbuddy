@@ -648,6 +648,42 @@ async function deployToHetzner(tsCloudConfig: any, deployEnv: string, options: D
   }
 }
 
+/**
+ * Loopback-bound server-app sites (e.g. the `api` site: env.HOST=127.0.0.1,
+ * reached only through `buddy serve`'s same-origin /api proxy on :3000 —
+ * stacksjs/stacks#1950) must NOT have their port opened to the internet.
+ * ts-cloud's Hetzner provisioning opens EVERY numeric `site.port` to
+ * 0.0.0.0/0 + ::/0 (collectUpstreamPorts → buildHetznerFirewallRules), which
+ * would leave only the process bind between the public internet and the full
+ * bun-router API. Hand the provision step a copy of the config with those
+ * ports stripped — the unmodified config still drives deployAllComputeSites,
+ * so the systemd unit (ExecStart, Environment=PORT) is unaffected.
+ *
+ * Domain-less sites only: a loopback site WITH a domain feeds the rpx
+ * gateway's route table (which proxies to 127.0.0.1:port on-box), so its
+ * port declaration is left alone.
+ */
+export function scrubLoopbackSitePortsForFirewall(tsCloudConfig: any): any {
+  const sites = tsCloudConfig?.sites
+  if (!sites)
+    return tsCloudConfig
+
+  const loopbackHosts = new Set(['127.0.0.1', '::1', 'localhost'])
+  const scrubbed: Record<string, any> = {}
+  for (const [siteName, site] of Object.entries<any>(sites)) {
+    const host = String(site?.env?.HOST ?? '').toLowerCase()
+    if (site && typeof site.port === 'number' && !site.domain && loopbackHosts.has(host)) {
+      const rest = { ...site }
+      delete rest.port
+      scrubbed[siteName] = rest
+    }
+    else {
+      scrubbed[siteName] = site
+    }
+  }
+  return { ...tsCloudConfig, sites: scrubbed }
+}
+
 async function runHetznerDeploy(args: {
   tsCloudConfig: any
   environment: 'production' | 'staging' | 'development'
@@ -675,7 +711,9 @@ async function runHetznerDeploy(args: {
   }
 
   log.info('Provisioning Hetzner compute infrastructure...')
-  const outputs = await driver.provisionComputeInfrastructure({ config: tsCloudConfig, environment })
+  // Provision with loopback-only site ports stripped so the firewall never
+  // exposes them (#1950); the full config still drives deployAllComputeSites.
+  const outputs = await driver.provisionComputeInfrastructure({ config: scrubLoopbackSitePortsForFirewall(tsCloudConfig), environment })
   const ip = outputs.appPublicIp
   log.success('Hetzner compute infrastructure ready')
   if (ip)
@@ -785,6 +823,15 @@ async function runHetznerDeploy(args: {
     },
   })
 
+  // Reconcile DNS for every site that declares a public domain. Hetzner deploys
+  // historically had NO DNS step (Route53 reconciliation only ran on the AWS
+  // path), so domains had to be pointed by hand. We now resolve a DNS provider
+  // per-domain via ts-cloud's factory (Porkbun/Route53/Cloudflare/GoDaddy from
+  // env) and upsert A records → the box IP. Non-fatal: a DNS hiccup shouldn't
+  // fail an otherwise-successful release.
+  if (ok)
+    await reconcileHetznerDns(sites, ip, log)
+
   console.log('')
   if (ok) {
     await outro(`Deployed to Hetzner. Your site is live at http://${ip}:3000`, { startTime, useSeconds: true })
@@ -793,6 +840,64 @@ async function runHetznerDeploy(args: {
   else {
     await outro('Hetzner deploy reported a failure — see the per-instance output above.', { startTime, useSeconds: true })
     process.exit(ExitCode.FatalError)
+  }
+}
+
+/**
+ * Point every site's public domain (apex + `www`) at the Hetzner box via the
+ * appropriate DNS provider. Providers are resolved per-domain from the
+ * environment (Porkbun, Route53, Cloudflare, GoDaddy) using ts-cloud's
+ * `detectDnsProvider`, so whichever registrar actually hosts the zone is used.
+ * Idempotent (upsert) and best-effort — failures are logged, not thrown.
+ */
+async function reconcileHetznerDns(sites: Record<string, any>, ip: string, logger: typeof log): Promise<void> {
+  // Collect the apex domains declared by sites (skip loopback/domain-less sites).
+  const domains = new Set<string>()
+  for (const site of Object.values(sites)) {
+    if (site?.domain && typeof site.domain === 'string')
+      domains.add(site.domain.replace(/^www\./, ''))
+  }
+  if (domains.size === 0)
+    return
+
+  // Candidate provider configs, built from whatever credentials are present.
+  const providerConfigs: any[] = []
+  if (process.env.PORKBUN_API_KEY && process.env.PORKBUN_SECRET_KEY)
+    providerConfigs.push({ provider: 'porkbun', apiKey: process.env.PORKBUN_API_KEY, secretKey: process.env.PORKBUN_SECRET_KEY })
+  if (process.env.CLOUDFLARE_API_TOKEN)
+    providerConfigs.push({ provider: 'cloudflare', apiToken: process.env.CLOUDFLARE_API_TOKEN })
+  if (process.env.AWS_ACCESS_KEY_ID || process.env.AWS_PROFILE)
+    providerConfigs.push({ provider: 'route53' })
+
+  if (providerConfigs.length === 0) {
+    logger.warn('DNS: no DNS provider credentials found (PORKBUN_API_KEY/…); skipping DNS reconciliation.')
+    for (const d of domains)
+      logger.info(`  Point manually:  A ${d} → ${ip}   and   A www.${d} → ${ip}`)
+    return
+  }
+
+  const { detectDnsProvider } = await import('@stacksjs/ts-cloud') as any
+  logger.info('Reconciling DNS records...')
+
+  for (const domain of domains) {
+    try {
+      const provider = await detectDnsProvider(domain, providerConfigs)
+      if (!provider) {
+        logger.warn(`  DNS: no configured provider can manage ${domain} — point it manually: A ${domain} → ${ip}`)
+        continue
+      }
+      for (const sub of ['', 'www']) {
+        const fqdn = sub ? `${sub}.${domain}` : domain
+        const res = await provider.upsertRecord(domain, { name: sub, type: 'A', content: ip, ttl: 600 })
+        if (res?.success === false)
+          logger.warn(`  DNS: ${fqdn} → ${ip} failed: ${res.error || 'unknown error'}`)
+        else
+          logger.success(`  DNS: ${fqdn} → ${ip} (${provider.name})`)
+      }
+    }
+    catch (err: any) {
+      logger.warn(`  DNS: ${domain} reconciliation failed: ${err?.message || err}`)
+    }
   }
 }
 
