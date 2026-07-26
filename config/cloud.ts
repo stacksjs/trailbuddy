@@ -10,13 +10,13 @@ const config: CloudConfig = {
   environments: {
     production: {
       type: 'production',
-      domain: 'wildloop.stacksjs.com',
+      domain: 'wildloop.org',
     },
   },
 
   sites: {
     production: {
-      domain: 'wildloop.stacksjs.com',
+      domain: 'wildloop.org',
       root: 'dist',
       build: 'bun run build:frontend',
     },
@@ -24,9 +24,13 @@ const config: CloudConfig = {
 
   infrastructure: {
     dns: {
-      provider: 'route53',
-      hostedZoneId: 'Z01455702Q7952O6RCY37',
-      domain: 'wildloop.stacksjs.com',
+      // wildloop.org is registered and DNS-managed at Porkbun, so records are
+      // written through their API rather than a Route53 hosted zone. ts-cloud
+      // reads PORKBUN_API_KEY / PORKBUN_SECRET_KEY from the environment; there
+      // is deliberately no hostedZoneId here because nothing hosts this zone
+      // on Route53.
+      provider: 'porkbun',
+      domain: 'wildloop.org',
     },
   },
 }
