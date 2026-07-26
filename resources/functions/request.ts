@@ -4,7 +4,7 @@
  * Auth-protected routes can safely fall back to a body `user_id` because the
  * auth middleware guarantees `Auth.user()` succeeds over HTTP, so the body
  * fallback is only ever reached by the in-process verification harness. PUBLIC
- * routes have no such guarantee — an anonymous HTTP caller could pass
+ * routes have no such guarantee - an anonymous HTTP caller could pass
  * `?user_id=<someone>` and be treated as that user, spoofing identity-driven
  * filtering (e.g. private-club visibility).
  *

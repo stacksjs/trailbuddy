@@ -3,7 +3,7 @@ import { createActivity } from '../assets/scripts/game-api'
 import { paceString, parseDurationToSeconds } from '../functions/duration'
 
 /**
- * Manual activity entry (#955) — log a run/hike after the fact with no GPS
+ * Manual activity entry (#955) - log a run/hike after the fact with no GPS
  * track. Reuses POST /api/activities (gpx optional); pace is computed from
  * distance + duration, and the created row (with its real backend id) is
  * inserted into the feed store optimistically.
@@ -102,7 +102,7 @@ export function useManualActivity(tb: ManualStoreLike | null) {
     submitting.set(false)
 
     if (!created) {
-      manualError.set('Could not save the activity — is the API running?')
+      manualError.set('Could not save the activity. Is the API running?')
       return
     }
 
@@ -114,7 +114,7 @@ export function useManualActivity(tb: ManualStoreLike | null) {
       userName: me?.name ?? 'You',
       trail_id: trailId,
       trail_name: trail?.name ?? `${mType()} Activity`,
-      title: trail ? `${mType()} at ${trail.name}` : `${mType()} — ${when}`,
+      title: trail ? `${mType()} at ${trail.name}` : `${mType()}, ${when}`,
       activityType: mType(),
       distance: Number(distance.toFixed(2)),
       duration,

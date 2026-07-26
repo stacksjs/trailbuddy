@@ -11,7 +11,7 @@ const TerritoryStats = defineModel(TerritoryStatsDefinition as any)
 const TerritoryHistory = defineModel(TerritoryHistoryDefinition as any)
 
 /**
- * `buddy territory:ranks` — recompute weekly + all-time territory leaderboard
+ * `buddy territory:ranks` - recompute weekly + all-time territory leaderboard
  * ranks and persist them to territory_stats (#944).
  *
  * Ranks are also refreshed automatically after every claim/conquest, so this
@@ -29,7 +29,7 @@ export default function (cli: CLI) {
 
       const stats = ((await TerritoryStats.all()) ?? []) as any[]
       if (!stats.length) {
-        log.info('No territory_stats rows — nothing to rank.')
+        log.info('No territory_stats rows - nothing to rank.')
         await outro('Done', { startTime: perf, useSeconds: true })
         process.exit(ExitCode.Success)
       }

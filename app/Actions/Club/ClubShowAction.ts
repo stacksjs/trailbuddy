@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// GET /api/clubs/{id} — club detail for the club page (#964): members (with
+// GET /api/clubs/{id} - club detail for the club page (#964): members (with
 // names + roles), a recent activity feed from members, and a weekly-distance
 // leaderboard. Public read; a private club only resolves for its members.
 
@@ -43,8 +43,8 @@ export default new Action({
 
       const allActivities = memberIds.length ? (await Activity.whereIn('user_id', memberIds).get()) ?? [] : []
 
-      // Every member-activity-derived value — the feed AND the weekly
-      // leaderboard — must respect each activity's visibility (#957): a
+      // Every member-activity-derived value - the feed AND the weekly
+      // leaderboard - must respect each activity's visibility (#957): a
       // member's private/followers-only run can't leak through the club to a
       // viewer who isn't allowed to see it.
       const viewerFollowing = sessionUser !== null

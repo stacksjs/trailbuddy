@@ -231,7 +231,7 @@ export function validateGpsDataForClaim(
 
 /**
  * Basic anti-cheat sanity check on a GPS track (no timestamps available, so a
- * true velocity check isn't possible — that needs per-point times from the
+ * true velocity check isn't possible - that needs per-point times from the
  * recorder). Catches gross fabrication: a teleport-sized jump between
  * consecutive points, or an implausibly short total route.
  */

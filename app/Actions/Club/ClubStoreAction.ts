@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// POST /api/clubs (auth) — create a club (#964). The creator is the session
+// POST /api/clubs (auth) - create a club (#964). The creator is the session
 // user (never the body) and is auto-enrolled as the 'owner' member, so a new
 // club starts with one member.
 
@@ -23,7 +23,7 @@ export default new Action({
     const location = boundedString(request.get('location'), 120)
     const isPrivate = request.get('is_private') === true || request.get('is_private') === 'true'
 
-    // Field validation (#977) — distinguish missing/short from too-long.
+    // Field validation (#977) - distinguish missing/short from too-long.
     const fields: Record<string, string> = {}
     if (name.length < 2)
       fields.name = 'required: at least 2 characters'

@@ -6,7 +6,7 @@
  * (activity store, kudos), unlock notifications, stickiness (achievements
  * never un-unlock), and idempotent re-evaluation.
  *
- * MUTATES the seeded world — reseed before running other suites.
+ * MUTATES the seeded world - reseed before running other suites.
  * Run:  bun scripts/seed-game-world.ts && bun scripts/verify-achievements.ts
  */
 /* eslint-disable ts/no-top-level-await */
@@ -22,7 +22,7 @@ import { computeAchievementProgress, hasSubSevenMile, longestDayStreak } from '.
 
 let failures = 0
 function check(label: string, ok: boolean, detail?: string) {
-  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` — ${detail}` : ''}`)
+  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` - ${detail}` : ''}`)
   if (!ok) failures++
 }
 

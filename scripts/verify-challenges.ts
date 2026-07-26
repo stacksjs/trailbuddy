@@ -4,7 +4,7 @@
  * stake, self-challenge + duplicate guards), accept/decline by the defender
  * only, and resolve-by-ownership.
  *
- * MUTATES the seeded world — reseed before running other suites.
+ * MUTATES the seeded world - reseed before running other suites.
  * Run:  bun scripts/seed-game-world.ts && bun scripts/verify-challenges.ts
  */
 /* eslint-disable ts/no-top-level-await */
@@ -20,7 +20,7 @@ import { shapeChallenge } from '../resources/functions/challenges'
 
 let failures = 0
 function check(label: string, ok: boolean, detail?: string) {
-  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` — ${detail}` : ''}`)
+  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` - ${detail}` : ''}`)
   if (!ok) failures++
 }
 

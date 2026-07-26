@@ -15,7 +15,7 @@ const Trail = defineModel(TrailDefinition as any)
 const Review = defineModel(ReviewDefinition as any)
 
 /**
- * `buddy counters:recompute` — rebuild every denormalized counter from its
+ * `buddy counters:recompute` - rebuild every denormalized counter from its
  * source-of-truth rows (#973): activities.kudos_count from kudos, and
  * trails.rating/review_count from trail reviews.
  *
@@ -57,7 +57,7 @@ export default function (cli: CLI) {
       }
 
       await outro(
-        `Fixed ${fixes.activityFixes.length} activity counter(s), ${fixes.trailFixes.length} trail counter(s)${options.dryRun ? ' (dry run — nothing written)' : ''}`,
+        `Fixed ${fixes.activityFixes.length} activity counter(s), ${fixes.trailFixes.length} trail counter(s)${options.dryRun ? ' (dry run - nothing written)' : ''}`,
         { startTime: perf, useSeconds: true },
       )
       process.exit(ExitCode.Success)

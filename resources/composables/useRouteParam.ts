@@ -2,12 +2,12 @@
  * Resolve a route parameter (e.g. the `:id` on `/trail/:id`) without depending
  * on any single undocumented router global (#987).
  *
- * The detail pages used to each read a DIFFERENT global directly —
- * `window.__routeParams?.id`, `window.stx?._rp?.id`, `window.__stx_rp?.id` —
+ * The detail pages used to each read a DIFFERENT global directly -
+ * `window.__routeParams?.id`, `window.stx?._rp?.id`, `window.__stx_rp?.id` -
  * and silently fell back to id `1` or `0` when that global was absent, so a
  * router change would quietly load the wrong record. This helper tries every
  * known router global, then falls back to the URL path, and returns `null`
- * when it genuinely can't resolve a positive id — letting the page render a
+ * when it genuinely can't resolve a positive id - letting the page render a
  * real "not found" state instead of a wrong one.
  *
  * Every `[id]` route in the app is shaped `/{base}/{id}`, so the id is always

@@ -34,7 +34,7 @@
       }
     }
     catch {
-      // Follower data is non-critical — leave the seeded counts in place
+      // Follower data is non-critical - leave the seeded counts in place
       // rather than letting an unhandled rejection break the page.
     }
   })
@@ -157,7 +157,7 @@
               <span>{{ trail.distance + ' mi' }}</span>
               <span class="flex items-center gap-1">
                 <Icon name="star" size="12" class="text-yellow-400" />
-                <span>{{ trail.rating || '—' }}</span>
+                <span>{{ trail.rating || '-' }}</span>
               </span>
             </div>
           </StxLink>

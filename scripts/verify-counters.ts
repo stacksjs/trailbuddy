@@ -7,7 +7,7 @@
  * upserts (one review per user per trail) and keeps trail rating/review_count
  * honest, and the full drift-repair sweep fixes manually corrupted counters.
  *
- * MUTATES the seeded world — reseed before running other suites.
+ * MUTATES the seeded world - reseed before running other suites.
  * Run:  bun scripts/seed-game-world.ts && bun scripts/verify-counters.ts
  */
 /* eslint-disable ts/no-top-level-await */
@@ -23,7 +23,7 @@ import { computeCounterFixes } from '../resources/functions/counters'
 
 let failures = 0
 function check(label: string, ok: boolean, detail?: string) {
-  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` — ${detail}` : ''}`)
+  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` - ${detail}` : ''}`)
   if (!ok) failures++
 }
 

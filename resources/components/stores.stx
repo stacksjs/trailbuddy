@@ -424,7 +424,7 @@
   }
 
   // ===== Store =====
-  // defineStore is idempotent — returns existing store on re-navigation
+  // defineStore is idempotent - returns existing store on re-navigation
   const tbStore = defineStore('tb', {
     state: () => ({
       currentUserId: 1,
@@ -654,7 +654,7 @@
       },
       /**
        * Interval-game capture: each GPS hit inside enemy polygon adds progress.
-       * Returns 0–100; at 100 the caller should invoke conquerTerritory.
+       * Returns 0-100; at 100 the caller should invoke conquerTerritory.
        */
       applyCaptureSample(territoryId: number, samplesNeeded = 10): number {
         const prev = this.captureSamples[territoryId] ?? 0
@@ -710,7 +710,7 @@
 
         // Achievement progress is engine-owned (#982): the backend evaluates
         // unlocks after claim/conquest and the profile re-hydrates from
-        // /api/users/{id}/achievements — no client-side bookkeeping here.
+        // /api/users/{id}/achievements - no client-side bookkeeping here.
 
         const nextN = Math.max(0, ...this.notifications.map((n: Notification) => n.id)) + 1
         this.notifications.unshift({
@@ -734,9 +734,9 @@
     },
 
     // PERSIST-KEY DISCIPLINE (#988): a persisted snapshot fully REPLACES the
-    // seeded state on hydration, so any breaking change to the store's shape —
+    // seeded state on hydration, so any breaking change to the store's shape -
     // a renamed/removed field, a changed enum vocabulary, or a new field that
-    // older snapshots lack and code assumes — MUST bump this version suffix
+    // older snapshots lack and code assumes - MUST bump this version suffix
     // (-v4 -> -v5 …). Bumping invalidates every stale snapshot in the wild so
     // the new shape/seed actually takes effect instead of being masked.
     // History: v3 - territory status 'secure' -> 'active' (#942);

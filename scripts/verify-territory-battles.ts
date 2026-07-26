@@ -99,7 +99,7 @@ function q(sql: string): any {
 
 let failures = 0
 function check(label: string, ok: boolean, detail?: string) {
-  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` — ${detail}` : ''}`)
+  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` - ${detail}` : ''}`)
   if (!ok) failures++
 }
 
@@ -112,7 +112,7 @@ const TINY = { lat: 37.7000, lng: -122.4500, r: 24 } // claimed in scenario E
 const mission = q(`SELECT id, user_id FROM territories WHERE ABS(center_lat - ${MISSION.lat}) < 0.002 AND ABS(center_lng - ${MISSION.lng}) < 0.002`)
 const oakland = q(`SELECT id, user_id FROM territories WHERE ABS(center_lat - ${OAKLAND.lat}) < 0.002 AND ABS(center_lng - ${OAKLAND.lng}) < 0.002`)
 if (!mission || !oakland) {
-  console.error('Seeded territories not found — run scripts/seed-game-world.ts first.')
+  console.error('Seeded territories not found - run scripts/seed-game-world.ts first.')
   process.exit(1)
 }
 console.log(`world: Mission=#${mission.id} (owner ${mission.user_id}), Oakland=#${oakland.id} (owner ${oakland.user_id})\n`)
@@ -148,7 +148,7 @@ check('C: defender notified', q(`SELECT COUNT(*) c FROM user_notifications WHERE
 
 // --- D. sliver cut on a big territory → contested, not conquered --------------
 // Rival (2) clips the very top of Oakland (~150 m radius): chord 6 m inside the
-// rim cuts a few-hundred-m² sliver — far below MIN_TERRITORY_SIZE.
+// rim cuts a few-hundred-m² sliver - far below MIN_TERRITORY_SIZE.
 const sliverLat = OAKLAND.lat + 0.0013
 const sliverAct = await runActivity(2, lineGeoJson(sliverLat, OAKLAND.lng - 0.0040, sliverLat, OAKLAND.lng + 0.0040))
 const sliver = await callAction(ProcessConquest, { activity_id: sliverAct.id, user_id: 2 })
@@ -160,7 +160,7 @@ check('D: owner notified of attack', q(`SELECT COUNT(*) c FROM user_notification
 
 // --- E. finishing blow on a minimum-scale territory ---------------------------
 // Explorer (3) claims a tiny loop (~1,800 m² < 2×MIN), then You (1) cut it clean
-// through — too small to subdivide, so the whole territory falls.
+// through - too small to subdivide, so the whole territory falls.
 const tinyClaimAct = await runActivity(3, loopGeoJson(TINY.lat, TINY.lng, TINY.r), 0.1)
 const tinyClaim = await callAction(ClaimTerritory, { activity_id: tinyClaimAct.id, user_id: 3 })
 check('E: tiny claim succeeded', tinyClaim.json?.success === true, tinyClaim.json?.error)

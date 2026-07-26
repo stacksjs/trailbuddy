@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// POST /api/users/{id}/follow — the authenticated user follows/unfollows user
+// POST /api/users/{id}/follow - the authenticated user follows/unfollows user
 // {id} (idempotent toggle). The follower is the session user (#939), never the
 // body, so you can't make someone else follow on their behalf.
 
@@ -54,7 +54,7 @@ export default new Action({
         }
         catch (err) {
           // A concurrent double-tap can race the existence check above; the
-          // unique index (#972) rejects the second insert — the follow already
+          // unique index (#972) rejects the second insert - the follow already
           // exists, so the toggle result stands (and the winner notified).
           if (!String(err).includes('UNIQUE constraint failed'))
             throw err

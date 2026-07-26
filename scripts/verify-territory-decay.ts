@@ -108,7 +108,7 @@ function daysAgoIso(days: number): string {
 
 let failures = 0
 function check(label: string, ok: boolean, detail?: string) {
-  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` — ${detail}` : ''}`)
+  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` - ${detail}` : ''}`)
   if (!ok) failures++
 }
 
@@ -121,7 +121,7 @@ const berkeley = q(`SELECT id, user_id FROM territories WHERE ABS(center_lat - $
 const oakland = q(`SELECT id, user_id FROM territories WHERE ABS(center_lat - ${OAKLAND.lat}) < 0.002 AND ABS(center_lng - ${OAKLAND.lng}) < 0.002`)
 const mission = q(`SELECT id, user_id FROM territories WHERE ABS(center_lat - ${MISSION.lat}) < 0.002 AND ABS(center_lng - ${MISSION.lng}) < 0.002`)
 if (!berkeley || !oakland || !mission) {
-  console.error('Seeded territories not found — run scripts/seed-game-world.ts first.')
+  console.error('Seeded territories not found - run scripts/seed-game-world.ts first.')
   process.exit(1)
 }
 console.log(`world: Berkeley=#${berkeley.id}, Oakland=#${oakland.id}, Mission=#${mission.id}\n`)

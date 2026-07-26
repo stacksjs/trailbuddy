@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// POST /api/notifications/read (auth) — mark the session user's notifications
+// POST /api/notifications/read (auth) - mark the session user's notifications
 // read. Optional `id` marks a single one; otherwise marks all.
 
 export default new Action({

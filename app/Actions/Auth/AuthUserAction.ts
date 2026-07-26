@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// GET /me — returns the authenticated user. Registered behind the `auth`
+// GET /me - returns the authenticated user. Registered behind the `auth`
 // middleware in routes/api.ts, so reaching handle() implies a valid token; we
 // still guard defensively. The frontend calls this on mount (auth.user()).
 

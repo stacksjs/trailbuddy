@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// POST /api/challenges (auth) — throw down a challenge over a rival's
+// POST /api/challenges (auth) - throw down a challenge over a rival's
 // territory (#965). The challenger is the session user; the challenged athlete
 // and the area at stake are DERIVED from the chosen territory (you challenge
 // whoever currently holds it). Starts 'pending' until the defender responds.

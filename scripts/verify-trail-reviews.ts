@@ -4,7 +4,7 @@
  * behind the review form. (The store/upsert/recompute internals are covered
  * by verify-counters.ts.)
  *
- * MUTATES the seeded world — reseed before running other suites.
+ * MUTATES the seeded world - reseed before running other suites.
  * Run:  bun scripts/seed-game-world.ts && bun scripts/verify-trail-reviews.ts
  */
 /* eslint-disable ts/no-top-level-await */
@@ -19,7 +19,7 @@ import { path } from '@stacksjs/path'
 
 let failures = 0
 function check(label: string, ok: boolean, detail?: string) {
-  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` — ${detail}` : ''}`)
+  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` - ${detail}` : ''}`)
   if (!ok) failures++
 }
 
@@ -61,7 +61,7 @@ check('junk trail id → 422', junk.status === 422, String(junk.status))
 
 // Trail 4 is seeded with a single review by user 1, so user 2 is fresh there.
 const before = one('SELECT COUNT(*) n FROM trail_reviews WHERE trail_id = 4').n
-const created = await callAction(StoreAction, { id: 4, user_id: 2, rating: 5, content: 'Bagged this one at sunrise — unreal.' })
+const created = await callAction(StoreAction, { id: 4, user_id: 2, rating: 5, content: 'Bagged this one at sunrise - unreal.' })
 check('form post creates (201) and returns recomputed trail aggregates', created.status === 201
   && created.json?.trail?.reviewCount === before + 1
   && typeof created.json?.trail?.rating === 'number', JSON.stringify(created.json?.trail))
@@ -71,7 +71,7 @@ const afterRows = after.json?.reviews ?? []
 check('new review appears in the list (newest first)', afterRows.length === before + 1
   && afterRows[0]?.userId === 2 && afterRows[0]?.rating === 5, JSON.stringify(afterRows[0]))
 
-const updated = await callAction(StoreAction, { id: 4, user_id: 2, rating: 2, content: 'Revisited in rain — much sketchier.' })
+const updated = await callAction(StoreAction, { id: 4, user_id: 2, rating: 2, content: 'Revisited in rain - much sketchier.' })
 check('resubmit upserts (200, count unchanged)', updated.status === 200 && updated.json?.updated === true
   && one('SELECT COUNT(*) n FROM trail_reviews WHERE trail_id = 4').n === before + 1)
 

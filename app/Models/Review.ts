@@ -26,7 +26,7 @@ export default defineModel({
 
   belongsTo: ['User', 'Trail'],
 
-  // One review per user per trail (#972) — the store action upserts.
+  // One review per user per trail (#972) - the store action upserts.
   indexes: [
     { name: 'trail_reviews_user_trail_unique', columns: ['user_id', 'trail_id'], unique: true },
   ],

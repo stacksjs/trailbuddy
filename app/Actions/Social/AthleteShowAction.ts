@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// GET /api/users/{id} — public athlete profile: identity, aggregated stats
+// GET /api/users/{id} - public athlete profile: identity, aggregated stats
 // (from real activities + territory_stats), social counts, and recent activities.
 
 export default new Action({
@@ -18,8 +18,8 @@ export default new Action({
       if (!user)
         return response.json({ success: false, error: 'User not found' }, 404)
 
-      // Visibility (#957): everything derived from this athlete's activities —
-      // the recent list AND the aggregate totals — must only reflect what the
+      // Visibility (#957): everything derived from this athlete's activities -
+      // the recent list AND the aggregate totals - must only reflect what the
       // VIEWER is allowed to see, so private mileage never leaks into a public
       // profile. Viewer from the session token; harness fallback is null over
       // real HTTP (can't be spoofed).

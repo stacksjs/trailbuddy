@@ -49,7 +49,7 @@ export function useClubs(tb: ClubStoreLike | null) {
       return
     const club2 = tb.clubs().find(c => c.id === club.id) ?? club
     const was = isMember(club2)
-    // Capture the ORIGINAL count before the optimistic mutation — applyClub-
+    // Capture the ORIGINAL count before the optimistic mutation - applyClub-
     // Membership mutates club2.memberCount in place, so reading it again on
     // failure would roll back to the optimistic value, not the original.
     const prevCount = club2.memberCount ?? 0

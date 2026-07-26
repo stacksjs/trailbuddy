@@ -1,1 +1,1 @@
-// WildLoop — app entry
+// WildLoop - app entry

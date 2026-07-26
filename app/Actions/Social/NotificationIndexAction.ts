@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// GET /api/notifications (auth) — the session user's notifications (newest
+// GET /api/notifications (auth) - the session user's notifications (newest
 // first) + unread count. Recipient is the authenticated user (#939).
 
 export default new Action({

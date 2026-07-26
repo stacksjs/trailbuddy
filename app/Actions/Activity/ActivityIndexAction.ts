@@ -20,7 +20,7 @@ function titleFor(activityType: string, trailName: string | null, completedAt: s
   if (trailName)
     return `${activityType} at ${trailName}`
   const when = completedAt ? new Date(completedAt).toLocaleDateString() : ''
-  return when ? `${activityType} — ${when}` : `${activityType}`
+  return when ? `${activityType}, ${when}` : `${activityType}`
 }
 
 export default new Action({
@@ -33,7 +33,7 @@ export default new Action({
     const page = readPageParams(request, { defaultLimit: 100, maxLimit: 500 })
 
     try {
-      // The viewer (who's asking) drives visibility (#957) — from the session
+      // The viewer (who's asking) drives visibility (#957) - from the session
       // token; the harness fallback (viewer_id) is null over real HTTP so it
       // can't be spoofed. `user_id` above is the profile filter, not the viewer.
       const viewerId = (await Auth.user().catch(() => null))?.id ?? harnessFallbackUserId(request, 'viewer_id')

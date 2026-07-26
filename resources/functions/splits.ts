@@ -1,7 +1,7 @@
 /**
  * Per-mile split + elevation-gain math from recorded GPS samples (#952, #953).
  *
- * Pure functions — no DOM/model access — used by the recorder (live) and
+ * Pure functions - no DOM/model access - used by the recorder (live) and
  * testable in isolation. Pace is computed from MOVING time (#960): each
  * sample carries the recorder's moving-seconds counter, which does not
  * advance while paused, so pause gaps never inflate a split.

@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// POST /api/trails/{id}/save — toggle the session user's saved/bookmarked
+// POST /api/trails/{id}/save - toggle the session user's saved/bookmarked
 // state for a trail (#969). Idempotent: save if absent, unsave if present;
 // the (user_id, trail_id) unique index (#972) makes a concurrent double-tap
 // resolve to "already saved" instead of a duplicate row.
@@ -50,7 +50,7 @@ export default new Action({
         }
         catch (err) {
           // Concurrent double-tap raced the existence check; the unique
-          // index (#972) kept one row — the trail is saved either way.
+          // index (#972) kept one row - the trail is saved either way.
           if (!String(err).includes('UNIQUE constraint failed'))
             throw err
         }

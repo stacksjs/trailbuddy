@@ -378,7 +378,7 @@ route.group({ prefix: '/shipping' }, () => {
 route.get('/trails', 'Actions/Trail/TrailIndexAction')
 route.get('/trails/{id}/reviews', 'Actions/Trail/TrailReviewIndexAction')
 
-// Public reads — feed, activity detail, territory map/leaderboard/profile, follows.
+// Public reads - feed, activity detail, territory map/leaderboard/profile, follows.
 route.get('/activities', 'Actions/Activity/ActivityIndexAction')
 route.get('/activities/{id}', 'Actions/Activity/ActivityShowAction')
 route.get('/territories/map', 'Actions/Territory/GetTerritoriesForMapAction')
@@ -390,31 +390,31 @@ route.get('/users/{id}/follows', 'Actions/Social/UserFollowsAction')
 route.get('/users/{id}/achievements', 'Actions/Achievement/UserAchievementsAction')
 route.get('/users/{id}/saved-trails', 'Actions/Trail/SavedTrailIndexAction')
 route.get('/users/{id}', 'Actions/Social/AthleteShowAction')
-// Clubs — public discovery + detail (#964)
+// Clubs - public discovery + detail (#964)
 route.get('/clubs', 'Actions/Club/ClubIndexAction')
 route.get('/clubs/{id}', 'Actions/Club/ClubShowAction')
 
-// Writes that act on behalf of a user MUST be authenticated — the acting
+// Writes that act on behalf of a user MUST be authenticated - the acting
 // user is derived from the session (Auth.user()), never from the request body,
 // so a caller can't record/kudos/claim/conquer as someone else (#939).
 //
-// Rate limits (#980) — enforced per authenticated user (falls back to IP) by
+// Rate limits (#980) - enforced per authenticated user (falls back to IP) by
 // the Throttle middleware (429 + Retry-After + X-RateLimit-* headers):
-//   - game writes  (claim / process-conquest)  30/min — GPS-heavy, one real
+//   - game writes  (claim / process-conquest)  30/min - GPS-heavy, one real
 //     run produces exactly one claim + one conquest call, so 30 is generous
 //     for humans and a wall for scripts
-//   - sweeps       (ranks / decay / counters / evaluate)  10/min — full-table
+//   - sweeps       (ranks / decay / counters / evaluate)  10/min - full-table
 //     recomputes; events already trigger them, manual calls are rare
 //   - social writes (activities, kudos, comments, reviews, follows,
-//     notifications)  60/min — normal interactive ceiling
+//     notifications)  60/min - normal interactive ceiling
 route.group({ middleware: 'auth' }, () => {
-  // Territory game — claim land by running closed loops, conquer others' turf
+  // Territory game - claim land by running closed loops, conquer others' turf
   route.group({ middleware: 'throttle:30,1' }, () => {
     route.post('/territories/claim', 'Actions/Territory/ClaimTerritoryAction')
     route.post('/territories/process-conquest', 'Actions/Territory/ProcessActivityConquestAction')
   })
 
-  // Full-table sweeps — event hooks keep these fresh; manual calls are rare
+  // Full-table sweeps - event hooks keep these fresh; manual calls are rare
   route.group({ middleware: 'throttle:10,1' }, () => {
     route.post('/territories/recompute-ranks', 'Actions/Territory/ComputeTerritoryRanksAction')
     route.post('/territories/decay-sweep', 'Actions/Territory/DecayTerritoriesAction')
@@ -430,17 +430,17 @@ route.group({ middleware: 'auth' }, () => {
     route.delete('/activities/{id}', 'Actions/Activity/ActivityDestroyAction')
     route.post('/activities/{id}/kudos', 'Actions/Activity/KudosToggleAction')
     route.post('/activities/{id}/comments', 'Actions/Activity/ActivityCommentStoreAction')
-    // Trail reviews — one per user per trail, upserts (#972/#973)
+    // Trail reviews - one per user per trail, upserts (#972/#973)
     route.post('/trails/{id}/reviews', 'Actions/Trail/TrailReviewStoreAction')
-    // Saved trails — bookmark toggle, deduped per user+trail (#969)
+    // Saved trails - bookmark toggle, deduped per user+trail (#969)
     route.post('/trails/{id}/save', 'Actions/Trail/SavedTrailToggleAction')
-    // Social graph — follow/unfollow another athlete
+    // Social graph - follow/unfollow another athlete
     route.post('/users/{id}/follow', 'Actions/Social/FollowToggleAction')
-    // Clubs — create + join/leave + owner delete (#964)
+    // Clubs - create + join/leave + owner delete (#964)
     route.post('/clubs', 'Actions/Club/ClubStoreAction')
     route.post('/clubs/{id}/join', 'Actions/Club/ClubMembershipToggleAction')
     route.delete('/clubs/{id}', 'Actions/Club/ClubDestroyAction')
-    // Challenges — the user's challenges + create/respond/resolve (#965)
+    // Challenges - the user's challenges + create/respond/resolve (#965)
     route.get('/challenges', 'Actions/Challenge/ChallengeIndexAction')
     route.post('/challenges', 'Actions/Challenge/ChallengeStoreAction')
     route.post('/challenges/{id}/respond', 'Actions/Challenge/ChallengeRespondAction')

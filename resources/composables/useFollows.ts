@@ -24,7 +24,7 @@ export function useFollows(tb: FollowStoreLike | null) {
         tb.hydrateFollowing(data.followingIds)
     }
     catch {
-      // ignore — keep empty following list
+      // ignore - keep empty following list
     }
   })
 }

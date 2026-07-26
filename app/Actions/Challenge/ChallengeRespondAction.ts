@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// POST /api/challenges/{id}/respond (auth) — the challenged athlete accepts or
+// POST /api/challenges/{id}/respond (auth) - the challenged athlete accepts or
 // declines a pending challenge (#965). accept → 'active'; decline → 'declined'.
 // Only the defender can respond, and only while it's still pending.
 

@@ -1,9 +1,9 @@
 // No imports needed - everything is auto-imported!
 //
-// PATCH /api/activities/{id} — owner edits an activity. Descriptive fields
+// PATCH /api/activities/{id} - owner edits an activity. Descriptive fields
 // (type, notes, trail) are always editable; measured fields (distance,
 // duration, moving_time, pace, elevation, completed_at) only on manual
-// entries (no gpx_data) — a GPS-recorded run's numbers are locked so an edit
+// entries (no gpx_data) - a GPS-recorded run's numbers are locked so an edit
 // can't retroactively alter a track that claimed or conquered territory.
 
 const ACTIVITY_TYPES = ['Trail Run', 'Hike', 'Walk', 'Bike']
@@ -50,7 +50,7 @@ export default new Action({
       if (trailId !== undefined)
         updates.trail_id = trailId
 
-      // Visibility (#957) — descriptive, always editable.
+      // Visibility (#957) - descriptive, always editable.
       const visibility = request.get<string>('visibility')
       if (visibility !== undefined && visibility !== null) {
         if (!VISIBILITIES.includes(visibility))

@@ -43,7 +43,7 @@ export interface ConquestResult {
 const TOKEN_KEY = 'auth_token'
 
 // Seeded demo athlete ("You" = user id 1). The write endpoints require auth
-// (#939), so we transparently sign this user in if there's no session yet —
+// (#939), so we transparently sign this user in if there's no session yet -
 // keeps the demo frictionless while the backend still derives the acting user
 // from the token (never the request body).
 const DEMO_EMAIL = 'you@wildloop.test'
@@ -86,7 +86,7 @@ export function ensureSession(): Promise<void> {
       }
     }
     catch {
-      // Offline / API down — writes will simply 401 and no-op.
+      // Offline / API down - writes will simply 401 and no-op.
     }
     finally {
       sessionPromise = null
@@ -110,7 +110,7 @@ export interface ActivityPayload {
   distance: number
   /** Wall-clock elapsed time (includes pauses). */
   duration: string
-  /** Pause-aware moving time — what pace is computed from (#960). */
+  /** Pause-aware moving time - what pace is computed from (#960). */
   moving_time?: string | null
   pace?: string | null
   elevation?: number
@@ -142,7 +142,7 @@ export interface ActivityUpdatePayload {
   notes?: string | null
   visibility?: string
   trail_id?: number | null
-  // Measured fields — the API only accepts these for manual (non-GPS) entries.
+  // Measured fields - the API only accepts these for manual (non-GPS) entries.
   distance?: number
   duration?: string
   moving_time?: string
@@ -538,12 +538,12 @@ export function runResultMessage(result: RunResult): string | null {
 
   if (result.claim?.success && result.claim.territory) {
     const km2 = (result.claim.territory.areaSize / 1000000).toFixed(2)
-    parts.push(`Claimed new territory — ${km2} km²!`)
+    parts.push(`Claimed new territory: ${km2} km²!`)
   }
 
   const contested = result.conquest?.contested ?? []
   if (contested.length > 0)
-    parts.push(`Attacked ${contested.map(c => c.name).join(', ')} — run through to conquer!`)
+    parts.push(`Attacked ${contested.map(c => c.name).join(', ')}. Run through to conquer!`)
 
   // Authoritative XP from the server (#947), summed across claim + conquest.
   const xpGained = (result.claim?.xpGained ?? 0) + (result.conquest?.xpGained ?? 0)

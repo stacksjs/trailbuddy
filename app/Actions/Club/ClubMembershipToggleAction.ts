@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// POST /api/clubs/{id}/join (auth) — join or leave a club (#964). Idempotent:
+// POST /api/clubs/{id}/join (auth) - join or leave a club (#964). Idempotent:
 // the (club_id, user_id) unique index (#972) makes a concurrent double-join
 // resolve to "already a member". An owner can't leave their own club (they
 // must delete it), so a club always keeps at least its owner.
@@ -32,7 +32,7 @@ export default new Action({
       let joined: boolean
       if (existing) {
         if (existing.role === 'owner')
-          return response.json({ success: false, error: 'Owners can\'t leave their own club — delete it instead' }, 400)
+          return response.json({ success: false, error: 'Owners can\'t leave their own club. Delete it instead' }, 400)
         await ClubMember.delete(existing.id)
         joined = false
       }
@@ -43,7 +43,7 @@ export default new Action({
         }
         catch (err) {
           // Concurrent double-join raced the existence check; the unique index
-          // kept one row — the user is a member either way.
+          // kept one row - the user is a member either way.
           if (!String(err).includes('UNIQUE constraint failed'))
             throw err
         }

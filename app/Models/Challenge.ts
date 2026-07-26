@@ -3,7 +3,7 @@ import { schema } from '@stacksjs/validation'
 
 // A challenge: one athlete (challenger) stakes a duel over another's territory
 // (#965). The ORM is snake_case; the challenger/challenged/territory/winner FKs
-// are plain fillable attrs (no belongsTo inline FK — breaks SQLite
+// are plain fillable attrs (no belongsTo inline FK - breaks SQLite
 // migrate:fresh ordering). Lifecycle: pending → active (accepted) | declined;
 // active → completed (resolved, with a winner_id).
 

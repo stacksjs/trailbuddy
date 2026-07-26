@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// POST /api/territories/recompute-ranks (auth) — recomputes weekly + all-time
+// POST /api/territories/recompute-ranks (auth) - recomputes weekly + all-time
 // leaderboard ranks and persists them to territory_stats (#944). The ranking
 // math lives in resources/functions/ranks.ts; ClaimTerritoryAction and
 // ProcessActivityConquestAction call `recomputeTerritoryRanks` after every

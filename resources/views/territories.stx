@@ -26,7 +26,7 @@
   <section class="relative overflow-hidden pt-24 pb-16 bg-gradient-to-br from-emerald-600 via-teal-600 to-emerald-700">
     <div class="relative px-4 mx-auto max-w-7xl sm:px-6 lg:px-8 text-center">
       <h1 class="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">Your Territory Map</h1>
-      <p class="text-xl text-white/80 max-w-2xl mx-auto mb-8">Green is yours. Orange is enemy turf — tap a zone, then hit Capture to run the lines that steal it.</p>
+      <p class="text-xl text-white/80 max-w-2xl mx-auto mb-8">Green is yours. Orange is enemy turf. Tap a zone, then hit Capture to run the lines that steal it.</p>
       <StxLink to="/record" class="inline-flex items-center gap-2 px-6 py-3 font-bold text-emerald-800 bg-white hover:bg-gray-100 rounded-full shadow-lg transition">
         <Icon name="zap" size="18" />
         Launch capture run
@@ -34,11 +34,11 @@
     </div>
   </section>
 
-  <!-- API failure notice — otherwise an unreachable map silently shows stale seed data -->
+  <!-- API failure notice - otherwise an unreachable map silently shows stale seed data -->
   <div :if="territoryError" class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4">
     <div class="flex items-center gap-2 p-3 text-sm text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/40 rounded-xl">
       <Icon name="alert-triangle" size="16" />
-      <span>Showing saved territory data — couldn't reach the live map. It'll refresh on your next visit.</span>
+      <span>Showing saved territory data. We couldn't reach the live map. It'll refresh on your next visit.</span>
     </div>
   </div>
 
@@ -116,7 +116,7 @@
               </div>
             </template>
             <div :if="rankedLeaderboard().length === 0" class="py-6 text-center text-sm text-gray-500 dark:text-slate-400">
-              No territory leaders yet — claim a zone to get on the board.
+              No territory leaders yet. Claim a zone to get on the board.
             </div>
           </div>
         </div>

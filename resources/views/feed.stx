@@ -235,9 +235,9 @@
         <div>
           <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Who can see this</label>
           <select x-value="mVisibility" @change="mVisibility.set($event.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm">
-            <option value="public">Public — everyone</option>
+            <option value="public">Public (everyone)</option>
             <option value="followers">Followers only</option>
-            <option value="private">Private — just me</option>
+            <option value="private">Private (just me)</option>
           </select>
         </div>
         <p :if="manualError" class="text-sm text-red-500">{{ manualError }}</p>
@@ -245,7 +245,7 @@
           <button @click="submitManualEntry()" class="flex-1 px-4 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">{{ submitting ? 'Saving…' : 'Log activity' }}</button>
           <button @click="closeManualEntry()" class="px-4 py-2.5 text-sm font-medium text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 transition">Cancel</button>
         </div>
-        <p class="text-xs text-gray-400">Manual entries don't capture territory — record with GPS to claim ground.</p>
+        <p class="text-xs text-gray-400">Manual entries don't capture territory. Record with GPS to claim ground.</p>
       </div>
     </div>
   </div>

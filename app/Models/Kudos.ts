@@ -1,7 +1,7 @@
 import { defineModel } from '@stacksjs/orm'
 import { schema } from '@stacksjs/validation'
 
-// NOTE: the ORM is snake_case — attribute KEYS must be the column names, and
+// NOTE: the ORM is snake_case - attribute KEYS must be the column names, and
 // belongsTo FK columns must be declared as fillable attributes to persist.
 
 export default defineModel({
@@ -21,7 +21,7 @@ export default defineModel({
 
   belongsTo: ['User', 'Activity'],
 
-  // One kudos per giver per activity (#972) — the toggle action treats a
+  // One kudos per giver per activity (#972) - the toggle action treats a
   // conflict as "already kudosed".
   indexes: [
     { name: 'kudos_giver_activity_unique', columns: ['giver_id', 'activity_id'], unique: true },

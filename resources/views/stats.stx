@@ -67,7 +67,7 @@
         </div>
         <div :if="userStats.weeklyHistory.length === 0" class="h-40 flex flex-col items-center justify-center text-center">
           <Icon name="bar-chart-3" size="28" class="text-gray-300 dark:text-slate-600 mb-2" />
-          <p class="text-sm text-gray-500 dark:text-slate-400">Not enough activity this period yet — log a few runs to see your weekly trend.</p>
+          <p class="text-sm text-gray-500 dark:text-slate-400">Not enough activity this period yet. Log a few runs to see your weekly trend.</p>
         </div>
       </div>
 

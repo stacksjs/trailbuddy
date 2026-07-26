@@ -5,7 +5,7 @@ import { paceString, parseDurationToSeconds } from '../functions/duration'
 /**
  * Owner edit/delete for the activity detail page (#954). Descriptive fields
  * (type, notes) are always editable; measured fields (distance, duration,
- * elevation) only for manual entries — the backend rejects them on
+ * elevation) only for manual entries - the backend rejects them on
  * GPS-recorded runs, so the form doesn't offer them either.
  */
 

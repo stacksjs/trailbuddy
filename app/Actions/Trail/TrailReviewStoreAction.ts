@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// POST /api/trails/{id}/reviews (auth) — create or update the session user's
+// POST /api/trails/{id}/reviews (auth) - create or update the session user's
 // review of a trail. One review per user per trail (#972 unique index); a
 // second submission updates the existing review instead of duplicating it.
 // After every write the trail's denormalized rating/review_count are
@@ -34,7 +34,7 @@ export default new Action({
     if (typeof rating !== 'number' || !Number.isInteger(rating) || rating < 1 || rating > 5)
       fields.rating = 'required: an integer from 1 to 5'
     if (content.length < 10 || content.length > 2000)
-      fields.content = 'required: 10–2000 characters'
+      fields.content = 'required: 10-2000 characters'
     if (conditions !== null && !REVIEW_CONDITIONS.includes(conditions))
       fields.conditions = `must be one of: ${REVIEW_CONDITIONS.join(', ')}`
     if (Object.keys(fields).length)
@@ -77,7 +77,7 @@ export default new Action({
         }
         catch (err) {
           // Concurrent double-submit: the unique index (#972) rejected the
-          // second insert — update the row the winner created.
+          // second insert - update the row the winner created.
           if (!String(err).includes('UNIQUE constraint failed'))
             throw err
           const winner = await Review

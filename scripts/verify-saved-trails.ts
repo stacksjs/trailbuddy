@@ -1,10 +1,10 @@
 /**
  * Verification harness for saved trails (#969): toggle on/off through the
  * real action, FK persistence (the SavedTrail model previously had camelCase
- * attrs + no FK attrs — rows would have been NULL-keyed), dedup via the #972
+ * attrs + no FK attrs - rows would have been NULL-keyed), dedup via the #972
  * unique index, and the joined index endpoint the profile tab renders from.
  *
- * MUTATES the seeded world — reseed before running other suites.
+ * MUTATES the seeded world - reseed before running other suites.
  * Run:  bun scripts/seed-game-world.ts && bun scripts/verify-saved-trails.ts
  */
 /* eslint-disable ts/no-top-level-await */
@@ -19,7 +19,7 @@ import { path } from '@stacksjs/path'
 
 let failures = 0
 function check(label: string, ok: boolean, detail?: string) {
-  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` — ${detail}` : ''}`)
+  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` - ${detail}` : ''}`)
   if (!ok) failures++
 }
 

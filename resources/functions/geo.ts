@@ -275,7 +275,7 @@ export function boundingBoxesOverlap(bbox1: string, bbox2: string): boolean {
 
 /**
  * Whether two polygons overlap (share interior area). Bounding-box quick-reject
- * first, then check intersection in both directions — `routeIntersectsPolygon`
+ * first, then check intersection in both directions - `routeIntersectsPolygon`
  * catches a vertex inside the other polygon OR an edge crossing, so running it
  * both ways also covers full containment (one polygon entirely inside the other).
  */

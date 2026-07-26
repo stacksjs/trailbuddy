@@ -5,7 +5,7 @@ const categories = ['distance', 'elevation', 'streak', 'social', 'exploration', 
 const targetUnits = ['trails', 'miles', 'feet', 'days', 'kudos', 'hours', 'activities', 'territories'] as const
 const badgeColors = ['gold', 'silver', 'bronze', 'emerald', 'ruby'] as const
 
-// What the unlock engine measures (#982) — each key maps to a computable
+// What the unlock engine measures (#982) - each key maps to a computable
 // stat in EvaluateAchievementsAction.
 const metrics = [
   'activities', // total activities logged

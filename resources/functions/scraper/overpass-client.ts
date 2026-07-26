@@ -1,6 +1,6 @@
 /**
  * Overpass API client with rate limiting, retries, and exponential backoff
- * Uses Bun's built-in fetch — no external dependencies
+ * Uses Bun's built-in fetch - no external dependencies
  */
 
 import type { Tile } from './region-definitions'

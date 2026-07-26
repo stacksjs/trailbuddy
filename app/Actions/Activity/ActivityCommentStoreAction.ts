@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// POST /api/activities/{id}/comments — add a comment to an activity. The author
+// POST /api/activities/{id}/comments - add a comment to an activity. The author
 // is taken from the body for now (auth hardening tracked in #939).
 
 export default new Action({

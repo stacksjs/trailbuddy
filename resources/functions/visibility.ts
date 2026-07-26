@@ -1,6 +1,6 @@
 /**
  * Activity visibility rules (#957). An activity is visible to a viewer when:
- *  - it's public (or has no visibility set — legacy rows default to public), OR
+ *  - it's public (or has no visibility set - legacy rows default to public), OR
  *  - the viewer is the owner, OR
  *  - it's 'followers' and the viewer follows the owner.
  * 'private' is owner-only. An anonymous viewer (null) sees only public.

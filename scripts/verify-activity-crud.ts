@@ -6,7 +6,7 @@
  * share. Part 2 round-trips update rules (ownership, GPS-locking) and Part 3
  * the destroy cascade (kudos/comments die, territory survives unlinked).
  *
- * MUTATES the seeded world (deletes a claim activity) — reseed before running
+ * MUTATES the seeded world (deletes a claim activity) - reseed before running
  * other suites. Run:  bun scripts/seed-game-world.ts && bun scripts/verify-activity-crud.ts
  */
 /* eslint-disable ts/no-top-level-await */
@@ -22,7 +22,7 @@ import { paceString, parseDurationToSeconds } from '../resources/functions/durat
 
 let failures = 0
 function check(label: string, ok: boolean, detail?: string) {
-  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` — ${detail}` : ''}`)
+  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` - ${detail}` : ''}`)
   if (!ok) failures++
 }
 
@@ -152,7 +152,7 @@ check('show after delete → 404', showGone.status === 404, String(showGone.stat
 const replayDelete = await callAction(DestroyAction, { id: manualId, user_id: 1 })
 check('replay delete → 404', replayDelete.status === 404, String(replayDelete.status))
 
-// Territory survival: delete the run that claimed a territory — the land must
+// Territory survival: delete the run that claimed a territory - the land must
 // stay owned, only the provenance pointer is cleared.
 const tRow = db.query(`
   SELECT t.id tid, t.activity_id aid, t.user_id owner, t.status status

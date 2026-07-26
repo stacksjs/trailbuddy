@@ -17,7 +17,7 @@ export default new Action({
     const limit = request.get<number>('limit') || 100
 
     try {
-      // Contested territories are still on the map — they're the interesting
+      // Contested territories are still on the map - they're the interesting
       // ones (under attack). Only future non-live states would be excluded.
       const query = Territory.whereIn('status', ['active', 'contested'])
       const territories = await query.limit(limit).get()

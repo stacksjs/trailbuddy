@@ -109,7 +109,7 @@
     </div>
 
     <div :if="catalogLoading()" class="mb-4 text-sm text-emerald-600 dark:text-emerald-400">Loading trail database…</div>
-    <div :if="catalogError()" class="mb-4 text-sm text-amber-600 dark:text-amber-400">{{ 'Using demo trails — ' + catalogError() }}</div>
+    <div :if="catalogError()" class="mb-4 text-sm text-amber-600 dark:text-amber-400">{{ 'Using demo trails. ' + catalogError() }}</div>
 
     <!-- Split: trail list + map (Strava-style) -->
     <div class="grid gap-6 mb-6 lg:grid-cols-5">
@@ -181,7 +181,7 @@
               <h3 class="font-bold text-gray-900 dark:text-white group-hover:text-emerald-600 transition">{{ trail.name }}</h3>
               <div class="flex gap-1 items-center shrink-0 text-sm">
                 <Icon name="star" size="16" class="text-yellow-400" />
-                <span class="font-semibold">{{ trail.rating || '—' }}</span>
+                <span class="font-semibold">{{ trail.rating || '-' }}</span>
               </div>
             </div>
             <p class="mb-3 text-gray-500 text-sm dark:text-slate-400">{{ trail.location }}</p>

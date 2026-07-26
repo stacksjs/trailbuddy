@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// GET /api/users/search?q= — find athletes by name (#971). With a query of
+// GET /api/users/search?q= - find athletes by name (#971). With a query of
 // 2+ characters it's a case-insensitive LIKE search; with no/shorter query it
 // returns the most active athletes as a discover list. Public read; response
 // includes enough stats to render discover cards without extra calls.
@@ -15,7 +15,7 @@ export default new Action({
     const q = typeof qRaw === 'string' ? qRaw.trim() : ''
 
     try {
-      // Fetch the full match set, then paginate — so meta.total/hasMore reflect
+      // Fetch the full match set, then paginate - so meta.total/hasMore reflect
       // the real count (a DB-side .limit() before paginate() would cap total at
       // the page size and make hasMore always false, #978 review).
       const users = q.length >= 2

@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// GET /api/users/{id}/follows — a user's social graph: follower/following counts
+// GET /api/users/{id}/follows - a user's social graph: follower/following counts
 // and id lists (used to hydrate follow state + the "Following" feed). Public read.
 
 export default new Action({

@@ -23,7 +23,7 @@
     const results = await searchAthletes(q)
     searching.set(false)
     searched.set(true)
-    // null = request failed (vs [] = genuinely no matches) — keep the two
+    // null = request failed (vs [] = genuinely no matches) - keep the two
     // distinct so a network error doesn't read as "no athletes found".
     if (results === null) {
       error.set('Could not load athletes. Check your connection and try again.')
@@ -128,7 +128,7 @@
           <Icon name="search" size="28" class="text-emerald-400" />
         </div>
         <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">No athletes found</h3>
-        <p class="text-sm text-gray-500 dark:text-slate-400">{{ 'Nothing matched “' + query + '” — try another name.' }}</p>
+        <p class="text-sm text-gray-500 dark:text-slate-400">{{ 'Nothing matched “' + query + '”. Try another name.' }}</p>
       </div>
     </div>
   </div>

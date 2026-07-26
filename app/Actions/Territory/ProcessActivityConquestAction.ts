@@ -4,10 +4,10 @@
 // names). Reads/write keys below use snake_case; the JSON response keeps
 // camelCase for API consumers.
 //
-// Battle state machine (#941) — an enemy route that intersects a territory
+// Battle state machine (#941) - an enemy route that intersects a territory
 // is an ATTACK, resolved by how the route cuts the polygon:
 //   - clean cut, territory < 2×MIN_TERRITORY_SIZE  → FULL TAKEOVER
-//     (a minimum-scale territory can't be subdivided — finishing blow)
+//     (a minimum-scale territory can't be subdivided - finishing blow)
 //   - clean cut, carved piece ≥ MIN_TERRITORY_SIZE → SPLIT CONQUEST
 //     (owner keeps the larger piece; both pieces end 'active')
 //   - clean cut, carved piece < MIN_TERRITORY_SIZE → CONTESTED (sliver graze)
@@ -25,7 +25,7 @@
 //  - On a split the previous owner's area drops by the territory's actual
 //    shrinkage (original - retained) while the conqueror gains the new
 //    piece's area; the two can differ by geometric rounding, so each side
-//    uses its own real delta — area is never invented.
+//    uses its own real delta - area is never invented.
 //  - Stats are written only after the territory create/update succeeded, and
 //    each territory is processed in isolation (per-territory try/catch) so a
 //    failure on one can't corrupt the others. The ORM exposes no transaction
@@ -33,7 +33,7 @@
 //  - Re-POSTing the same activity is a no-op: battle events are recorded in
 //    territory_histories keyed by activity_id, and an activity that already
 //    produced battle events is not processed again. ('claimed' rows don't
-//    count — a closed-loop activity legitimately claims first, then gets a
+//    count - a closed-loop activity legitimately claims first, then gets a
 //    conquest pass.)
 
 import { evaluateAchievementsForUser } from '../Achievement/EvaluateAchievementsAction'
@@ -158,7 +158,7 @@ export default new Action({
               activity_id: activityId,
               event_type: 'defended',
               area_at_event: territory.area_size,
-              notes: 'Territory defended — owner ran through contested land',
+              notes: 'Territory defended. Owner ran through contested land',
             })
             await incrementDefenseStats(userId)
             runXp += XP_REWARDS.defend()
@@ -220,7 +220,7 @@ export default new Action({
               event_type: 'conquered',
               area_at_event: territory.area_size,
               previous_ownership_duration: ownershipDuration,
-              notes: 'Full territory conquest — finishing blow',
+              notes: 'Full territory conquest, finishing blow',
             })
 
             conqueredTerritories.push({
@@ -276,7 +276,7 @@ export default new Action({
             })
 
             // Retained-portion row: ownership did NOT change on this piece, so
-            // previous_owner_id stays null — it links to the new piece instead.
+            // previous_owner_id stays null - it links to the new piece instead.
             await TerritoryHistory.forceCreate({
               territory_id: territory.id,
               user_id: previousOwner,
@@ -286,7 +286,7 @@ export default new Action({
               area_at_event: keepPolygon.area,
               previous_ownership_duration: ownershipDuration,
               new_territory_id: newTerritory.id,
-              notes: 'Territory split — retained portion',
+              notes: 'Territory split, retained portion',
             })
 
             await TerritoryHistory.forceCreate({
@@ -336,7 +336,7 @@ export default new Action({
               previous_owner_id: null,
               event_type: 'contested',
               area_at_event: territory.area_size,
-              notes: 'Attack grazed the territory — not enough to take land',
+              notes: 'Attack grazed the territory, not enough to take land',
             })
 
             contestedTerritories.push({ id: territory.id, name: territory.name })
@@ -348,7 +348,7 @@ export default new Action({
         }
       }
 
-      // Holdings changed — refresh persisted leaderboard ranks (#944).
+      // Holdings changed - refresh persisted leaderboard ranks (#944).
       if (conqueredTerritories.length) {
         await recomputeTerritoryRanks().catch((err: unknown) =>
           console.error('Rank recompute after conquest failed:', err))
@@ -484,7 +484,7 @@ async function incrementDefenseStats(userId: number) {
   }
 }
 
-/** Best-effort notification — never lets a notify failure break the battle. */
+/** Best-effort notification - never lets a notify failure break the battle. */
 async function notify(recipientId: number, actor: any, type: string, body: string, link: string) {
   try {
     await UserNotification.forceCreate({

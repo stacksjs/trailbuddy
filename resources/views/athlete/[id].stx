@@ -26,7 +26,7 @@
     loadError.set(false)
     try {
       // A null result means "no such athlete" (404); a thrown error means the
-      // request itself failed — surface those as different states so a network
+      // request itself failed - surface those as different states so a network
       // blip doesn't masquerade as a permanent "not found".
       const data = await fetchAthlete(athleteId)
       profile.set(data)

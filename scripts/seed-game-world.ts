@@ -95,7 +95,7 @@ for (const t of gameTables) {
   try { db.run(`DELETE FROM ${t}`) }
   catch { /* table may not exist */ }
 }
-// Reset AUTOINCREMENT so "You" lands on id 1 — the frontend hardwires
+// Reset AUTOINCREMENT so "You" lands on id 1 - the frontend hardwires
 // currentUserId: 1, so the seeded world must line up for the live UI.
 for (const t of gameTables) {
   try { db.run(`DELETE FROM sqlite_sequence WHERE name = ?`, [t]) }

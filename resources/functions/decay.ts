@@ -1,13 +1,13 @@
 /**
  * Territory decay classification (#950).
  *
- * Pure functions — no DB/model access — shared by DecayTerritoriesAction
+ * Pure functions - no DB/model access - shared by DecayTerritoriesAction
  * (HTTP/on-demand + opportunistic sweep on conquest processing) and the
  * `buddy territory:decay` command (cron).
  *
  * Rules:
  *  - An ACTIVE territory whose owner hasn't touched it (claim, conquest,
- *    defense, or patrol — tracked in `last_activity_at`) for `staleDays`
+ *    defense, or patrol - tracked in `last_activity_at`) for `staleDays`
  *    becomes CONTESTED: visibly decaying, defendable by the owner exactly
  *    like an attack-contested territory.
  *  - A CONTESTED territory whose owner stays inactive past `expireDays`
@@ -30,9 +30,9 @@ export interface DecayTerritoryRow {
 }
 
 export interface DecayPlan {
-  /** Active territories that crossed staleDays — flip to 'contested'. */
+  /** Active territories that crossed staleDays - flip to 'contested'. */
   toContest: DecayTerritoryRow[]
-  /** Contested territories that crossed expireDays — expire off the map. */
+  /** Contested territories that crossed expireDays - expire off the map. */
   toExpire: DecayTerritoryRow[]
 }
 
@@ -68,7 +68,7 @@ export function computeTerritoryDecay(
 
   for (const t of territories) {
     const freshness = territoryFreshnessMs(t)
-    // No usable timestamp at all — leave it alone rather than guess.
+    // No usable timestamp at all - leave it alone rather than guess.
     if (Number.isNaN(freshness))
       continue
 

@@ -17,7 +17,7 @@ export default new Action({
     const activityId = positiveInt(request.get('activity_id'))
     // Acting user comes from the authenticated session (route is behind `auth`).
     // The body fallback only fires for in-process callers (the seed harness),
-    // never over HTTP — so a client can't claim as another user.
+    // never over HTTP - so a client can't claim as another user.
     const userId = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('user_id'))
 
     // Field validation (#977): malformed input → 422 with a field-keyed map.
@@ -41,7 +41,7 @@ export default new Action({
 
       // Idempotency (#947 review): this activity has already claimed land. The
       // overlap check below blocks a re-claim only while that territory is
-      // still active/contested — if it later expired, re-POSTing would award
+      // still active/contested - if it later expired, re-POSTing would award
       // claim XP again. Guard on the 'claimed' history event instead.
       const priorClaims = (await TerritoryHistory.where('activity_id', '=', activityId).get()) ?? []
       if (priorClaims.some((h: any) => h.event_type === 'claimed')) {
@@ -90,7 +90,7 @@ export default new Action({
         }, 400)
       }
 
-      // Reject claims that overlap existing territory — a loop run over occupied
+      // Reject claims that overlap existing territory - a loop run over occupied
       // land is handled by conquest (route-intersection split), not by stacking
       // a second overlapping territory on top (which produced undefined state).
       // Contested land is still owned land; only 'expired' land is reclaimable.
@@ -100,7 +100,7 @@ export default new Action({
         if (polygonsOverlap(simplified, geoJsonToCoordinates(t.polygon_data))) {
           return response.json({
             success: false,
-            error: 'Territory overlaps existing land — run through it to conquer instead',
+            error: 'Territory overlaps existing land. Run through it to conquer instead',
             code: 'overlap',
           }, 409)
         }
@@ -167,7 +167,7 @@ export default new Action({
         })
       }
 
-      // Holdings changed — refresh persisted leaderboard ranks (#944).
+      // Holdings changed - refresh persisted leaderboard ranks (#944).
       await recomputeTerritoryRanks().catch((err: unknown) =>
         console.error('Rank recompute after claim failed:', err))
 

@@ -6,7 +6,7 @@
  * Seeded social graph: users 2 and 3 follow user 1; user 3 follows user 2;
  * user 2 does NOT follow user 3.
  *
- * MUTATES the seeded world — reseed before running other suites.
+ * MUTATES the seeded world - reseed before running other suites.
  * Run:  bun scripts/seed-game-world.ts && bun scripts/verify-privacy.ts
  */
 /* eslint-disable ts/no-top-level-await */
@@ -22,7 +22,7 @@ import { canViewActivity } from '../resources/functions/visibility'
 
 let failures = 0
 function check(label: string, ok: boolean, detail?: string) {
-  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` — ${detail}` : ''}`)
+  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` - ${detail}` : ''}`)
   if (!ok) failures++
 }
 

@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// GET /api/challenges (auth) — the session user's challenges, both sent and
+// GET /api/challenges (auth) - the session user's challenges, both sent and
 // received (#965), with challenger/challenged/territory names joined so the
 // challenges page can render its active/sent/received/completed tabs.
 
@@ -33,7 +33,7 @@ export default new Action({
         }))
         .sort((a: any, b: any) => Date.parse(b.createdAt ?? '') - Date.parse(a.createdAt ?? ''))
 
-      // Generous default — the page filters the full set into client-side
+      // Generous default - the page filters the full set into client-side
       // tabs (active/sent/received/completed) and has no load-more (#978 review).
       const paged = paginate(challenges, readPageParams(request, { defaultLimit: 200, maxLimit: 200 }))
       return response.json({ success: true, challenges: paged.items, meta: paged.meta })

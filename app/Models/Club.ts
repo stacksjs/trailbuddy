@@ -3,7 +3,7 @@ import { schema } from '@stacksjs/validation'
 
 // A club is a community athletes can join (#964). The ORM is snake_case, so
 // attribute KEYS are column names; the creator FK is a plain fillable attr
-// (no belongsTo — that would emit an inline FK that breaks the SQLite
+// (no belongsTo - that would emit an inline FK that breaks the SQLite
 // migrate:fresh ordering). Membership lives in the ClubMember join table.
 
 const clubTypes = ['Running', 'Hiking', 'Mixed', 'Territory Game'] as const

@@ -122,7 +122,7 @@
         </div>
         <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300">
           <input type="checkbox" x-checked="fPrivate" @change="fPrivate.set($event.target.checked)" class="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
-          Private — only members can see it
+          Private (only members can see it)
         </label>
         <p :if="createError" class="text-sm text-red-500">{{ createError }}</p>
         <div class="flex gap-2 pt-1">

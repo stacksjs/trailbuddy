@@ -136,7 +136,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     routeCoords: LatLng[]
     /** Timestamped samples (alt + moving time) for splits/elevation (#952/#953). */
     samples: RecorderSample[]
-    /** Wall-clock start of the run — elapsed time includes pauses (#960). */
+    /** Wall-clock start of the run - elapsed time includes pauses (#960). */
     startedAtMs: number | null
     hereMarker: CircleMarkerType | null
     elapsedTimer: ReturnType<typeof setInterval> | null
@@ -217,7 +217,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
 
   // altitudeM comes from the GPS (metres, often null on desktop) or, for
   // simulated runs, from the trail's published elevation profile. While paused
-  // nothing accrues — no distance, no samples, no capture progress (#960).
+  // nothing accrues - no distance, no samples, no capture progress (#960).
   function addRoutePoint(lat: number, lng: number, altitudeM: number | null = null) {
     if (!refs.routeLine || !refs.map) return
     if (paused() || !recording()) return
@@ -299,7 +299,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     refs.map.removeLayer(guide)
 
     // Simulated elevation comes from the trail's published total gain,
-    // distributed monotonically along the route — deterministic, no random
+    // distributed monotonically along the route - deterministic, no random
     // values (#953). Converted to metres so addRoutePoint's single GPS-style
     // accumulation path applies to both modes.
     const totalGainFt = tb.findTrail(id)?.elevation ?? 0
@@ -440,8 +440,8 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
       })
       const captures = conqueredIds().length
       const title = captures > 0
-        ? `Capture Run — ${captures} zone${captures > 1 ? 's' : ''} taken`
-        : `${activityType()} — ${new Date().toLocaleDateString()}`
+        ? `Capture Run: ${captures} zone${captures > 1 ? 's' : ''} taken`
+        : `${activityType()}, ${new Date().toLocaleDateString()}`
       tb.addActivity({
         user_id: tb.currentUserId(),
         userName: 'You',
@@ -489,7 +489,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
           color,
           fillOpacity: mine ? 0.45 : 0.15,
           weight: targetTerritoryId() === t.id ? 4 : 2,
-          popupHtml: `<b>${t.name}</b><br>${mine ? 'Your turf' : 'Enemy turf — run through to capture'}<br>${(t.areaSize / 1000).toFixed(1)} km²`,
+          popupHtml: `<b>${t.name}</b><br>${mine ? 'Your turf' : 'Enemy turf. Run through to capture'}<br>${(t.areaSize / 1000).toFixed(1)} km²`,
           onClick: () => {
             if (!mine && !recording())
               targetTerritoryId.set(t.id)

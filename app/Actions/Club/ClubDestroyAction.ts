@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// DELETE /api/clubs/{id} (auth) — the creator/owner deletes their club (#964),
+// DELETE /api/clubs/{id} (auth) - the creator/owner deletes their club (#964),
 // which is what "owners can't leave, delete instead" points at. Memberships go
 // with it.
 

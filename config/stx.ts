@@ -7,21 +7,21 @@ export default {
 
   app: {
     head: {
-      title: 'WildLoop — Discover & Track Your Trail Adventures',
+      title: 'WildLoop - Track Your Trails, Claim Your Territory',
       meta: [
-        { name: 'description', content: 'Discover trails, track adventures, conquer territories. A Strava + AllTrails experience.' },
+        { name: 'description', content: 'Trail running meets turf war. Log your miles like Strava, then close a loop to claim the ground.' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         // Open Graph
-        { property: 'og:title', content: 'WildLoop — Discover & Track Your Trail Adventures' },
-        { property: 'og:description', content: 'Discover trails, track adventures, conquer territories. A Strava + AllTrails experience.' },
+        { property: 'og:title', content: 'WildLoop - Track Your Trails, Claim Your Territory' },
+        { property: 'og:description', content: 'Trail running meets turf war. Log your miles like Strava, then close a loop to claim the ground.' },
         { property: 'og:type', content: 'website' },
         { property: 'og:image', content: '/images/og_image.jpeg' },
         { property: 'og:image:width', content: '1200' },
         { property: 'og:image:height', content: '630' },
         // Twitter Card
         { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:title', content: 'WildLoop — Discover & Track Your Trail Adventures' },
-        { name: 'twitter:description', content: 'Discover trails, track adventures, conquer territories. A Strava + AllTrails experience.' },
+        { name: 'twitter:title', content: 'WildLoop - Track Your Trails, Claim Your Territory' },
+        { name: 'twitter:description', content: 'Trail running meets turf war. Log your miles like Strava, then close a loop to claim the ground.' },
         { name: 'twitter:image', content: '/images/og_image.jpeg' },
       ],
       links: [

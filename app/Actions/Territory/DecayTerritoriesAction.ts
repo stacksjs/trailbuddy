@@ -1,17 +1,17 @@
 // No imports needed - everything is auto-imported!
 //
-// POST /api/territories/decay-sweep (auth) — applies territory decay (#950).
+// POST /api/territories/decay-sweep (auth) - applies territory decay (#950).
 //
 // Rules (math in resources/functions/decay.ts):
-//   active + owner inactive ≥ DECAY_STALE_DAYS   → 'contested' (decaying —
+//   active + owner inactive ≥ DECAY_STALE_DAYS   → 'contested' (decaying -
 //     defendable by the owner exactly like an attack-contested territory)
 //   contested + owner inactive ≥ DECAY_EXPIRE_DAYS → 'expired' (off the map,
 //     the land becomes claimable again)
 //
 // The sweep runs opportunistically at the start of every conquest processing
 // pass (every recorded run ticks the world clock) and via
-// `buddy territory:decay` for cron. Owner activity — claim, conquest, defense,
-// or simply running through own land — refreshes `last_activity_at`.
+// `buddy territory:decay` for cron. Owner activity - claim, conquest, defense,
+// or simply running through own land - refreshes `last_activity_at`.
 
 // eslint-disable-next-line pickier/no-unused-vars -- false positive: `opts` is used below
 export async function runTerritoryDecaySweep(opts?: { staleDays?: number, expireDays?: number }): Promise<{
@@ -34,10 +34,10 @@ export async function runTerritoryDecaySweep(opts?: { staleDays?: number, expire
         previous_owner_id: null,
         event_type: 'contested',
         area_at_event: t.area_size,
-        notes: 'Territory decaying — owner inactive',
+        notes: 'Territory decaying, owner inactive',
       })
       contested.push({ id: t.id, name: t.name ?? `Territory #${t.id}` })
-      await notifyOwner(t.user_id, 'conquest_attack', `${t.name ?? 'Your territory'} is decaying — run through it to defend it!`, `/territory/${t.id}`)
+      await notifyOwner(t.user_id, 'conquest_attack', `${t.name ?? 'Your territory'} is decaying. Run through it to defend it!`, `/territory/${t.id}`)
     }
     catch (error) {
       console.error(`Decay contest failed for territory #${t.id}:`, error)
@@ -59,12 +59,12 @@ export async function runTerritoryDecaySweep(opts?: { staleDays?: number, expire
         event_type: 'expired',
         area_at_event: t.area_size,
         previous_ownership_duration: ownershipDuration,
-        notes: 'Territory expired — owner inactive too long',
+        notes: 'Territory expired, owner inactive too long',
       })
       await applyExpiryStats(t.user_id, t.area_size || 0, ownershipDuration)
 
       expired.push({ id: t.id, name: t.name ?? `Territory #${t.id}` })
-      await notifyOwner(t.user_id, 'conquest_attack', `${t.name ?? 'Your territory'} expired after inactivity — the land is up for grabs.`, `/territories`)
+      await notifyOwner(t.user_id, 'conquest_attack', `${t.name ?? 'Your territory'} expired after inactivity. The land is up for grabs.`, `/territories`)
     }
     catch (error) {
       console.error(`Decay expiry failed for territory #${t.id}:`, error)
@@ -128,7 +128,7 @@ async function applyExpiryStats(userId: number, area: number, ownershipDurationS
   })
 }
 
-/** Best-effort notification — never lets a notify failure break the sweep. */
+/** Best-effort notification - never lets a notify failure break the sweep. */
 async function notifyOwner(recipientId: number, type: string, body: string, link: string) {
   try {
     const owner = await User.find(recipientId)

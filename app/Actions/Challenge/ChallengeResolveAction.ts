@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// POST /api/challenges/{id}/resolve (auth) — settle an active challenge (#965).
+// POST /api/challenges/{id}/resolve (auth) - settle an active challenge (#965).
 // The winner is decided by who currently holds the staked territory: if the
 // challenger has taken it, the challenger wins; otherwise the defender held it.
 // Either party can trigger resolution (normally after the deadline). This is
@@ -28,7 +28,7 @@ export default new Action({
         return response.json({ success: false, error: 'Only a participant can resolve this challenge' }, 403)
       if (challenge.status !== 'active')
         return response.json({ success: false, error: `Only active challenges can be resolved (this one is ${challenge.status})` }, 409)
-      // Can't settle before time's up — otherwise a party could resolve the
+      // Can't settle before time's up - otherwise a party could resolve the
       // instant they're ahead and lock in the outcome (review #965).
       const deadlineMs = Date.parse(challenge.deadline)
       if (Number.isFinite(deadlineMs) && deadlineMs > Date.now())

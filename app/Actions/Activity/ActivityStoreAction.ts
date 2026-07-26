@@ -84,7 +84,7 @@ export default new Action({
         completed_at: (completedAt as string | undefined) ?? new Date().toISOString(),
       })
 
-      // Unlock engine hook (#982) — best-effort, never blocks the store.
+      // Unlock engine hook (#982) - best-effort, never blocks the store.
       await evaluateAchievementsForUser(userId).catch((err: unknown) =>
         console.error('[achievements] evaluate after activity failed:', err))
 

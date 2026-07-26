@@ -22,7 +22,7 @@ export default new Action({
       }
 
       // Contested territories still belong to the user (and they especially
-      // need to see them — they're under attack/decaying); only expired
+      // need to see them - they're under attack/decaying); only expired
       // territories drop out of the list.
       const territories = await Territory
         .where('user_id', '=', userId)

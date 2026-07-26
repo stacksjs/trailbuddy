@@ -1,8 +1,8 @@
 // No imports needed - everything is auto-imported!
 //
-// DELETE /api/activities/{id} — owner deletes an activity. Social children
+// DELETE /api/activities/{id} - owner deletes an activity. Social children
 // (kudos, comments) go with it; territory rows that reference the activity
-// keep the land but lose their provenance pointer — conquered ground is NOT
+// keep the land but lose their provenance pointer - conquered ground is NOT
 // un-conquered by deleting the run that took it, and history rows stay as an
 // (unlinked) audit trail. References are cleared before the parent row is
 // removed so the inline FKs can never trip.

@@ -2,7 +2,7 @@ import { defineModel } from '@stacksjs/orm'
 import { schema } from '@stacksjs/validation'
 
 // 'contested' = under attack or decaying (defendable by the owner running
-// through it); 'expired' = lost to inactivity — off the map, land reclaimable.
+// through it); 'expired' = lost to inactivity - off the map, land reclaimable.
 const statuses = ['active', 'contested', 'expired'] as const
 
 export default defineModel({

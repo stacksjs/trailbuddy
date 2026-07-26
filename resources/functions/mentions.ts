@@ -1,6 +1,6 @@
 /**
  * Pure @mention helpers (#971). Mentions are stored as plain text
- * (`@Rival Runner`) and resolved against the known user list at render time —
+ * (`@Rival Runner`) and resolved against the known user list at render time -
  * longest name first so "Trail Explorer Pro" wins over "Trail Explorer".
  */
 
@@ -23,7 +23,7 @@ export function extractMentionQuery(input: string): string | null {
   if (at === -1)
     return null
   if (at > 0 && !/\s/.test(input[at - 1]))
-    return null // mid-word @ (e.g. an email) — not a mention
+    return null // mid-word @ (e.g. an email) - not a mention
   const query = input.slice(at + 1)
   if (query.length > 24 || query.includes('@'))
     return null
@@ -68,7 +68,7 @@ export function parseMentions(body: string, users: MentionUser[]): MentionSegmen
     }
     const match = byLength.find(u => rest.slice(at + 1).toLowerCase().startsWith(u.name.toLowerCase()))
     if (!match) {
-      // No known name after this @ — emit through it and keep scanning.
+      // No known name after this @ - emit through it and keep scanning.
       segments.push({ text: rest.slice(0, at + 1) })
       rest = rest.slice(at + 1)
       continue

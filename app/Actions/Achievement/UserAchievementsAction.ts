@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// GET /api/users/{id}/achievements — every achievement definition merged with
+// GET /api/users/{id}/achievements - every achievement definition merged with
 // the user's progress (#982). Public read, like the athlete profile; rows the
 // user hasn't started yet come back with progress 0 so the UI can render the
 // full badge wall.

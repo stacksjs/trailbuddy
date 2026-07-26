@@ -3,8 +3,8 @@
  *
  * The Throttle middleware runs in the HTTP router layer (in-process action
  * harnesses bypass it), so this suite drives the same primitives the
- * middleware uses — parseThrottleString + createRateLimitMiddleware from
- * @stacksjs/router — with synthetic requests, then statically asserts the
+ * middleware uses - parseThrottleString + createRateLimitMiddleware from
+ * @stacksjs/router - with synthetic requests, then statically asserts the
  * route tiers in routes/api.ts are wired the way the documentation block
  * says they are.
  *
@@ -20,7 +20,7 @@ const { parseThrottleString, createRateLimitMiddleware } = await import('@stacks
 
 let failures = 0
 function check(label: string, ok: boolean, detail?: string) {
-  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` — ${detail}` : ''}`)
+  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` - ${detail}` : ''}`)
   if (!ok) failures++
 }
 
@@ -59,7 +59,7 @@ check('429 carries Retry-After + X-RateLimit headers', blocked instanceof Respon
 check('still blocked while window is open', results[4] instanceof Response && (results[4] as Response).status === 429)
 
 const otherKey = await limiter(fakeReq('10.0.0.2') as any, async () => null)
-check('limits are per key — another caller is unaffected', !(otherKey instanceof Response))
+check('limits are per key - another caller is unaffected', !(otherKey instanceof Response))
 
 // --- Part 3: route wiring is what the docs say -----------------------------------------
 

@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// GET /api/users/{id}/saved-trails — a user's saved trails with the trail
+// GET /api/users/{id}/saved-trails - a user's saved trails with the trail
 // summary joined in (#969). Public read, like follows/achievements; the
 // profile's Saved tab renders straight from this.
 
@@ -48,7 +48,7 @@ export default new Action({
           }
         })
 
-      // Generous default — the profile Saved tab renders the full set, no
+      // Generous default - the profile Saved tab renders the full set, no
       // load-more (#978 review); ?limit/?offset still paginate on demand.
       const paged = paginate(savedTrails, readPageParams(request, { defaultLimit: 200, maxLimit: 200 }))
       return response.json({ success: true, savedTrails: paged.items, meta: paged.meta })

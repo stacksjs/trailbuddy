@@ -16,7 +16,7 @@
     <div class="space-y-8 text-gray-600 dark:text-slate-300 leading-relaxed">
       <section>
         <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">What we collect</h2>
-        <p>To run WildLoop we store the account details you give us (name, email), the activities you record (GPS tracks, distance, time, elevation), and the social content you create (reviews, comments, kudos, follows, saved trails). GPS tracks are precise location data — we treat them carefully.</p>
+        <p>To run WildLoop we store the account details you give us (name, email), the activities you record (GPS tracks, distance, time, elevation), and the social content you create (reviews, comments, kudos, follows, saved trails). GPS tracks are precise location data, so we treat them carefully.</p>
       </section>
 
       <section>

@@ -42,7 +42,7 @@ export default function (cli: CLI) {
       const tiles = generateTiles(options.region)
       log.info(`Scraping trails from ${region.displayName} (${tiles.length} tiles)`)
       if (options.dryRun)
-        log.info('Dry run mode — no database writes')
+        log.info('Dry run mode - no database writes')
       if (limit > 0)
         log.info(`Limiting to ${limit} trails`)
 
@@ -160,7 +160,7 @@ export default function (cli: CLI) {
       if (totalErrors > 0)
         log.warn(`  Errors: ${totalErrors}`)
       if (options.dryRun)
-        log.info(`  (dry run — no data written)`)
+        log.info(`  (dry run - no data written)`)
 
       await outro(`Scraped ${totalImported} trails from ${region.displayName}`, {
         startTime: perf,

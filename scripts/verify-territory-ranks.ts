@@ -31,7 +31,7 @@ const ComputeRanks = (await import('../app/Actions/Territory/ComputeTerritoryRan
 
 let failures = 0
 function check(label: string, ok: boolean, detail?: string) {
-  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` — ${detail}` : ''}`)
+  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` - ${detail}` : ''}`)
   if (!ok) failures++
 }
 
@@ -42,7 +42,7 @@ function rows(): any[] {
   return r as any[]
 }
 
-// 1. Claims/conquests during seeding already triggered the recompute — the
+// 1. Claims/conquests during seeding already triggered the recompute - the
 //    hardcoded-999 era is over and every row carries a real rank.
 const seeded = rows()
 console.log(`stats: ${seeded.map(r => `u${r.user_id}(area ${r.area}, wk #${r.weekly_rank}, all #${r.all_time_rank})`).join('  ')}\n`)

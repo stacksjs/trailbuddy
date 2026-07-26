@@ -40,7 +40,7 @@ async function callAction(action: any, body: Record<string, unknown>): Promise<{
 
 let failures = 0
 function check(label: string, ok: boolean, detail?: string) {
-  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` — ${detail}` : ''}`)
+  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` - ${detail}` : ''}`)
   if (!ok) failures++
 }
 
@@ -56,7 +56,7 @@ const before = db.query(
 db.close()
 
 if (!conquestRow) {
-  console.error('No seeded conquest found — run scripts/seed-game-world.ts first.')
+  console.error('No seeded conquest found - run scripts/seed-game-world.ts first.')
   process.exit(1)
 }
 

@@ -3,7 +3,7 @@
  * claim/conquest, returned in the response, accumulated into territory_stats.xp
  * (idempotent under replay), and exposed via the leaderboard + athlete profile.
  *
- * MUTATES the seeded world — reseed before running other suites.
+ * MUTATES the seeded world - reseed before running other suites.
  * Run:  bun scripts/seed-game-world.ts && bun scripts/verify-xp.ts
  */
 /* eslint-disable ts/no-top-level-await */
@@ -19,7 +19,7 @@ import { XP_REWARDS } from '../resources/functions/xp'
 
 let failures = 0
 function check(label: string, ok: boolean, detail?: string) {
-  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` — ${detail}` : ''}`)
+  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` - ${detail}` : ''}`)
   if (!ok) failures++
 }
 

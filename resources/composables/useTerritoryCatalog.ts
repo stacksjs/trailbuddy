@@ -38,7 +38,7 @@ export const territoryError = state<string | null>(null)
 let started = false
 
 /**
- * Fetch territories from the API and hydrate the store. Callable any time —
+ * Fetch territories from the API and hydrate the store. Callable any time -
  * on boot AND after a run records a claim/conquest, so the map reflects the
  * backend's authoritative ownership rather than any client-side guess (#943).
  * Returns true if live data was applied.

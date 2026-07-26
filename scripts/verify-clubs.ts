@@ -3,7 +3,7 @@
  * weekly stats and private-club visibility, create-with-auto-owner, join/leave
  * toggle (incl. owner-can't-leave + db dedup), and the detail endpoint.
  *
- * MUTATES the seeded world — reseed before running other suites.
+ * MUTATES the seeded world - reseed before running other suites.
  * Run:  bun scripts/seed-game-world.ts && bun scripts/verify-clubs.ts
  */
 /* eslint-disable ts/no-top-level-await */
@@ -18,7 +18,7 @@ import { path } from '@stacksjs/path'
 
 let failures = 0
 function check(label: string, ok: boolean, detail?: string) {
-  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` — ${detail}` : ''}`)
+  console.log(`${ok ? '✅' : '❌'} ${label}${detail ? ` - ${detail}` : ''}`)
   if (!ok) failures++
 }
 
@@ -50,7 +50,7 @@ const one = (sql: string, ...args: any[]) => db.query(sql).get(...args) as any
 
 // --- index + private visibility -------------------------------------------------
 
-// Anonymous (no user_id) — private clubs must be hidden.
+// Anonymous (no user_id) - private clubs must be hidden.
 const anon = await callAction(IndexAction, {})
 const anonNames = (anon.json?.clubs ?? []).map((c: any) => c.name)
 check('index returns public clubs to anonymous', anon.status === 200 && anonNames.includes('Trail Crushers'))
@@ -81,7 +81,7 @@ check('create without auth → 401', noAuthCreate.status === 401)
 
 // --- join / leave ---------------------------------------------------------------
 
-// User 3 is NOT in Weekend Warriors (club 2) — join then leave.
+// User 3 is NOT in Weekend Warriors (club 2) - join then leave.
 const club2 = one('SELECT id FROM clubs WHERE name = \'Weekend Warriors\'').id
 const before = one('SELECT COUNT(*) n FROM club_members WHERE club_id = ?', club2).n
 const join = await callAction(ToggleAction, { id: club2, user_id: 3 })
@@ -121,7 +121,7 @@ const privMember = await callAction(ShowAction, { id: privateClub, user_id: 1 })
 check('private club detail → 200 for member', privMember.status === 200)
 
 // SECURITY (review #964): a request that LOOKS like real HTTP (has url/headers/
-// query) must NOT honor a spoofed body/query user_id for the private gate —
+// query) must NOT honor a spoofed body/query user_id for the private gate -
 // otherwise anyone could pass ?user_id=<a member id> to unmask a private club.
 // user 1 IS a member here, so if the spoof leaked through it would return 200.
 const httpReq: any = { url: `/api/clubs/${privateClub}`, headers: {}, query: { user_id: '1' }, get: (k: string) => (k === 'id' ? privateClub : k === 'user_id' ? 1 : undefined) }

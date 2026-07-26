@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// POST /api/activities/{id}/kudos — toggles the requesting user's kudos on an
+// POST /api/activities/{id}/kudos - toggles the requesting user's kudos on an
 // activity (idempotent: add if absent, remove if present), then recomputes the
 // denormalized activities.kudos_count from the kudos rows. The giver is taken
 // from the body for now (auth hardening tracked in #939).
@@ -66,7 +66,7 @@ export default new Action({
         }
         catch (err) {
           // A concurrent double-tap can race the existence check above; the
-          // unique index (#972) rejects the second insert — the kudos already
+          // unique index (#972) rejects the second insert - the kudos already
           // exists, so the toggle result stands (and the winner notified).
           if (!String(err).includes('UNIQUE constraint failed'))
             throw err

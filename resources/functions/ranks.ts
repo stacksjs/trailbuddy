@@ -1,7 +1,7 @@
 /**
  * Territory leaderboard ranking math (#944).
  *
- * Pure functions — no DB/model access — so the same logic serves the
+ * Pure functions - no DB/model access - so the same logic serves the
  * ComputeTerritoryRanksAction (HTTP/on-demand), the `buddy territory:ranks`
  * command (cron), and tests.
  */
@@ -43,7 +43,7 @@ function timestampMs(value: string | null | undefined): number {
  * - All-time ranks current empire size: `total_area_owned` desc, tiebreak
  *   territories owned desc, then user_id asc (deterministic).
  * - Weekly ranks area GAINED in the trailing window (claimed + conquered
- *   history events) — what you took this week, not your net worth. Users with
+ *   history events) - what you took this week, not your net worth. Users with
  *   no gains follow the gainers, ordered by their all-time standing.
  *
  * Ranks are ordinal (1..N) with deterministic tiebreaks.

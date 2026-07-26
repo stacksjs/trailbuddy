@@ -18,7 +18,7 @@ export default defineModel({
 
   belongsTo: ['User'],
 
-  // Exactly one stats row per user (#972) — a duplicate would corrupt the
+  // Exactly one stats row per user (#972) - a duplicate would corrupt the
   // leaderboards.
   indexes: [
     { name: 'territory_stats_user_unique', columns: ['user_id'], unique: true },

@@ -72,7 +72,7 @@ export function useTrailReviews(tb: ReviewStoreLike | null, trailId: () => numbe
       return
     }
     if (content.length < 10) {
-      reviewError.set('Tell us a little more — at least 10 characters')
+      reviewError.set('Tell us a little more: at least 10 characters')
       return
     }
 

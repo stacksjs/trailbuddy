@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// POST /api/maintenance/recompute-counters (auth) — recomputes every
+// POST /api/maintenance/recompute-counters (auth) - recomputes every
 // denormalized counter from its source-of-truth rows (#973):
 //   activities.kudos_count   ← kudos
 //   trails.rating            ← avg(trail_reviews.rating), 1 decimal

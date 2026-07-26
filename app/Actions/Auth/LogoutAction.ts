@@ -1,6 +1,6 @@
 // No imports needed - everything is auto-imported!
 //
-// POST /logout — revokes the current access token. Registered behind the `auth`
+// POST /logout - revokes the current access token. Registered behind the `auth`
 // middleware in routes/api.ts.
 
 export default new Action({
