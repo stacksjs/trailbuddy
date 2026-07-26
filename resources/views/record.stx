@@ -55,7 +55,7 @@
     <div class="flex flex-col gap-2 items-center mb-4 sm:flex-row sm:justify-between">
       <div class="text-center sm:text-left">
         <h1 class="font-bold text-2xl dark:text-white">Capture Run</h1>
-        <p class="text-gray-500 text-sm dark:text-slate-400">Run through enemy zones to paint them yours. Strava stats plus turf wars.</p>
+        <p class="text-gray-500 text-sm dark:text-slate-400">Live pace, distance and elevation. Close a loop and the ground inside it is yours.</p>
       </div>
       <div class="flex items-center gap-2">
         <select x-value="visibility" @change="visibility.set($event.target.value)" x-class="recording ? 'hidden' : ''" class="px-3 py-2 text-xs font-medium bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400 rounded-lg border-0" aria-label="Activity visibility">
@@ -78,7 +78,7 @@
         <template :for="zone in attackable">
           <button @click="targetTerritoryId.set(zone.id)" x-class="targetTerritoryId === zone.id ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-900/20' : 'bg-gray-100 dark:bg-slate-700'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition">{{ zone.name }}</button>
         </template>
-        <span :if="attackable.length === 0" class="text-xs text-gray-500 dark:text-slate-400">No enemy zones in range yet. Start running near orange turf.</span>
+        <span :if="attackable.length === 0" class="text-xs text-gray-500 dark:text-slate-400">No claimable zones in range yet. Head toward the orange areas on the map.</span>
       </div>
       <p :if="targetZone" class="mt-2 text-orange-600 text-xs">Focus run: cross <span class="font-semibold">{{ targetZone.name }}</span> to fill the capture meter</p>
     </div>
@@ -173,7 +173,7 @@
 
     <p class="mt-4 text-center text-gray-500 text-sm dark:text-slate-400">
       <span :if="!recording">Hit ▶ to start GPS capture, or simulate a trail route</span>
-      <span :if="recording">{{ runMode === 'capture' ? 'Stay inside enemy zones. The capture bar fills as you run' : 'Free run, no territory capture' }}</span>
+      <span :if="recording">{{ runMode === 'capture' ? 'Stay inside the highlighted zone. The capture bar fills as you run' : 'Free run, no territory capture' }}</span>
     </p>
   </div>
 @endsection

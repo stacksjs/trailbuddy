@@ -2,9 +2,9 @@
   if (typeof navLinks === 'undefined') var navLinks = state([
     { to: '/feed', label: 'Feed' },
     { to: '/trails', label: 'Trails' },
-    { to: '/territories', label: 'Turf' },
+    { to: '/territories', label: 'Territory' },
     { to: '/battles', label: 'Battles' },
-    { to: '/leaderboard', label: 'Rank' },
+    { to: '/leaderboard', label: 'Leaderboard' },
     { to: '/athletes', label: 'Athletes' },
   ])
   const mobileOpen = state(false)
@@ -35,7 +35,7 @@
       </div>
 
       <div class="hidden md:flex gap-3 items-center">
-        <StxLink to="/record" class="px-3 py-1.5 font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm shadow-emerald-600/30 transition-colors">Capture</StxLink>
+        <StxLink to="/record" class="px-3 py-1.5 font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm shadow-emerald-600/30 transition-colors">Record</StxLink>
         <button @click="dark.toggle()" class="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors">
           <Icon name="moon" size="18" class="dark:hidden" />
           <Icon name="sun" size="18" class="hidden dark:inline" />

@@ -14,47 +14,62 @@
   const recent = derived(() => wl ? wl.activities().slice(0, 4) : [])
   const stats = derived(() => wl?.userStats())
   const gameStats = derived(() => wl?.conquestStats())
+
+  // The hero summary is bundled into one derived OBJECT on purpose. A derived
+  // read as `x?.prop` renders server-side and falls back cleanly before the
+  // store hydrates; a derived *called* as `x()` renders nothing at all, which
+  // is what left half the tiles missing from the card.
+  const summary = derived(() => {
+    const held = wl ? wl.myTerritories() : []
+    const s = wl?.userStats()
+    return {
+      miles: s?.weeklyDistance ?? 0,
+      feet: s?.weeklyElevation ?? 0,
+      zones: held.length,
+      km2: held.reduce((sum: number, t: any) => sum + t.areaSize, 0) / 1000,
+    }
+  })
 </script>
 
-  <!-- Hero: turf war first -->
+  <!-- Hero: the trail app first, territory as the thing that sets it apart -->
   <section class="relative bg-gradient-to-br from-slate-900 via-emerald-900 to-teal-800 overflow-hidden">
     <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_20%,#34d399,transparent_50%)]"></div>
     <div class="relative mx-auto px-4 py-16 sm:px-6 lg:px-8 lg:py-20 max-w-7xl">
       <div class="grid gap-10 items-center lg:grid-cols-2">
         <div>
           <span class="inline-flex items-center gap-1.5 mb-4 px-3 py-1 text-xs font-bold text-emerald-300 bg-emerald-500/20 rounded-full border border-emerald-400/30">
-            <Icon name="zap" size="14" />
-            Strava meets turf wars
+            <Icon name="map-pin" size="14" />
+            Trail discovery and GPS tracking
           </span>
-          <h1 class="mb-4 font-display text-4xl font-bold text-white md:text-5xl lg:text-6xl leading-tight">Run. Track. Capture.</h1>
-          <p class="mb-8 text-lg text-slate-300 max-w-lg">Log every mile like Strava, then run through rival zones on the map to steal territory. Close the loop and the ground is yours.</p>
+          <h1 class="mb-4 font-display text-4xl font-bold text-white md:text-5xl lg:text-6xl leading-tight">Find the trail. Log the miles. Own the map.</h1>
+          <p class="mb-8 text-lg text-slate-300 max-w-lg">Search real trails with ratings, distance and elevation. Track every run and hike with live pace and splits. Then close a loop and the ground inside it is yours to hold.</p>
           <div class="flex flex-col gap-3 sm:flex-row">
             <StxLink to="/record" class="inline-flex items-center justify-center gap-2 px-8 py-3.5 font-bold text-slate-900 bg-emerald-400 hover:bg-emerald-300 rounded-full shadow-lg shadow-emerald-500/30 transition">
               <Icon name="play" size="18" />
-              Start capture run
+              Start tracking
             </StxLink>
-            <StxLink to="/trails" class="px-8 py-3.5 text-center font-semibold text-white border-2 border-white/25 hover:bg-white/10 rounded-full transition">Explore trails</StxLink>
+            <StxLink to="/trails" class="px-8 py-3.5 text-center font-semibold text-white border-2 border-white/25 hover:bg-white/10 rounded-full transition">Browse trails</StxLink>
           </div>
         </div>
 
         <div class="game-dashboard-card">
-          <p class="mb-4 text-xs font-bold text-emerald-400 uppercase tracking-wider">Your empire</p>
+          <p class="mb-4 text-xs font-bold text-emerald-400 uppercase tracking-wider">Your week</p>
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <p class="text-3xl font-bold text-white">{{ myTerritories().length }}</p>
-              <p class="metric-label text-slate-400">Zones owned</p>
+              <p class="text-3xl font-bold text-white">{{ (summary?.miles ?? 0).toFixed(1) }}</p>
+              <p class="metric-label text-slate-400">Miles</p>
             </div>
             <div>
-              <p class="text-3xl font-bold text-white">{{ (totalArea() / 1000).toFixed(1) + ' km²' }}</p>
-              <p class="metric-label text-slate-400">Turf controlled</p>
+              <p class="text-3xl font-bold text-white">{{ (summary?.feet ?? 0).toLocaleString() }}</p>
+              <p class="metric-label text-slate-400">Ft climbed</p>
             </div>
             <div>
-              <p class="text-3xl font-bold text-emerald-400">{{ gameStats?.powerRating ?? 0 }}</p>
-              <p class="metric-label text-slate-400">Power rating</p>
+              <p class="text-3xl font-bold text-emerald-400">{{ summary?.zones ?? 0 }}</p>
+              <p class="metric-label text-slate-400">Zones held</p>
             </div>
             <div>
-              <p class="text-3xl font-bold text-white">{{ stats?.weeklyDistance?.toFixed(1) ?? '0' }}</p>
-              <p class="metric-label text-slate-400">Mi this week</p>
+              <p class="text-3xl font-bold text-white">{{ (summary?.km2 ?? 0).toFixed(1) + ' km²' }}</p>
+              <p class="metric-label text-slate-400">Ground held</p>
             </div>
           </div>
           <div :if="liveBattles.length > 0" class="pt-4 border-t border-white/10">
@@ -98,28 +113,28 @@
 
   <!-- How it works -->
   <section class="mx-auto px-4 py-14 sm:px-6 lg:px-8 max-w-7xl">
-    <h2 class="mb-8 font-bold font-display text-2xl text-center dark:text-white md:text-3xl">How capture runs work</h2>
+    <h2 class="mb-8 font-bold font-display text-2xl text-center dark:text-white md:text-3xl">How WildLoop works</h2>
     <div class="grid gap-6 md:grid-cols-3">
       <div class="card text-center">
         <div class="flex items-center justify-center mx-auto mb-3 h-12 w-12 text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl">
-          <Icon name="footprints" size="24" />
+          <Icon name="map" size="24" />
         </div>
-        <h3 class="mb-2 font-bold dark:text-white">1. Record</h3>
-        <p class="text-sm text-gray-500 dark:text-slate-400">Start a capture run with GPS or simulate a trail. Strava-style pace, distance, and elevation live.</p>
+        <h3 class="mb-2 font-bold dark:text-white">1. Find a trail</h3>
+        <p class="text-sm text-gray-500 dark:text-slate-400">Browse routes by distance, elevation and difficulty, with community ratings, photos and current conditions.</p>
       </div>
       <div class="card text-center">
         <div class="flex items-center justify-center mx-auto mb-3 h-12 w-12 text-purple-600 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
-          <Icon name="map" size="24" />
+          <Icon name="footprints" size="24" />
         </div>
-        <h3 class="mb-2 font-bold dark:text-white">2. Paint turf</h3>
-        <p class="text-sm text-gray-500 dark:text-slate-400">Run through enemy polygons on the map. Your path fills a capture meter, like claiming tiles in a territory game.</p>
+        <h3 class="mb-2 font-bold dark:text-white">2. Track it</h3>
+        <p class="text-sm text-gray-500 dark:text-slate-400">Record any run or hike with live GPS. Pace, splits, elevation and heart rate, saved to a feed your friends can follow.</p>
       </div>
       <div class="card text-center">
         <div class="flex items-center justify-center mx-auto mb-3 h-12 w-12 text-orange-600 bg-orange-100 dark:bg-orange-900/30 rounded-xl">
           <Icon name="trophy" size="24" />
         </div>
-        <h3 class="mb-2 font-bold dark:text-white">3. Dominate</h3>
-        <p class="text-sm text-gray-500 dark:text-slate-400">Complete the capture to flip the zone, earn XP, climb the leaderboard, and defend from rivals.</p>
+        <h3 class="mb-2 font-bold dark:text-white">3. Claim the loop</h3>
+        <p class="text-sm text-gray-500 dark:text-slate-400">Close a loop and the ground inside it becomes yours. Hold it, grow it, or take a neighboring zone on your next outing.</p>
       </div>
     </div>
   </section>
@@ -127,7 +142,7 @@
   <!-- Recent activity feed -->
   <section class="mx-auto px-4 py-12 sm:px-6 lg:px-8 max-w-7xl">
     <div class="flex items-center justify-between mb-6">
-      <h2 class="font-bold font-display text-2xl dark:text-white">Recent runs</h2>
+      <h2 class="font-bold font-display text-2xl dark:text-white">Recent activity</h2>
       <StxLink to="/feed" class="text-sm font-semibold text-emerald-600">Full feed →</StxLink>
     </div>
     <div class="space-y-4">
@@ -163,7 +178,7 @@
       <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-8">
         <div>
           <h2 class="font-bold font-display text-2xl dark:text-white">Your territories</h2>
-          <p class="text-gray-500 dark:text-slate-400">Hold ground or launch your next attack</p>
+          <p class="text-gray-500 dark:text-slate-400">The ground your loops have earned you so far</p>
         </div>
         <StxLink to="/territories" class="px-5 py-2.5 font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition">Open territory map</StxLink>
       </div>
@@ -180,9 +195,9 @@
       </div>
       <div :if="myTerritories.length === 0" class="card text-center py-12">
         <Icon name="map" size="32" class="mx-auto mb-2 text-emerald-400" />
-        <p class="font-semibold text-gray-900 dark:text-white mb-1">You don't hold any turf yet</p>
-        <p class="text-sm text-gray-500 dark:text-slate-400 max-w-sm mx-auto mb-4">Run a closed loop to claim your first territory, then defend it from rivals.</p>
-        <StxLink to="/record" class="inline-block px-5 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Claim your first zone</StxLink>
+        <p class="font-semibold text-gray-900 dark:text-white mb-1">No territory yet</p>
+        <p class="text-sm text-gray-500 dark:text-slate-400 max-w-sm mx-auto mb-4">Track any run or hike that finishes where it started, and the ground inside the loop becomes yours.</p>
+        <StxLink to="/record" class="inline-block px-5 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Track your first loop</StxLink>
       </div>
     </div>
   </section>
@@ -190,11 +205,11 @@
   <!-- CTA -->
   <section class="bg-gradient-to-r from-emerald-600 to-teal-600 py-16">
     <div class="mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl text-center">
-      <h2 class="mb-3 font-bold font-display text-3xl text-white">Rivals are on your border</h2>
-      <p class="mb-8 text-white/85">Lace up, open the map, and run the lines that matter.</p>
+      <h2 class="mb-3 font-bold font-display text-3xl text-white">Your next loop is out there</h2>
+      <p class="mb-8 text-white/85">Pick a trail, track the miles, and see how much of the map you can hold.</p>
       <StxLink to="/record" class="inline-flex items-center gap-2 px-10 py-4 font-bold text-emerald-800 bg-white hover:bg-gray-100 rounded-full shadow-xl transition">
-        <Icon name="zap" size="20" />
-        Go capture
+        <Icon name="play" size="20" />
+        Start tracking
       </StxLink>
     </div>
   </section>
