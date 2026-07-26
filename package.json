@@ -7,6 +7,7 @@
     "url": "git+https://github.com/stacksjs/wildloop.git"
   },
   "dependencies": {
+    "@iconify-json/lucide": "^1.2.120",
     "@stacksjs/components": "catalog:",
     "@stacksjs/stx": "catalog:",
     "bun-plugin-stx": "catalog:",

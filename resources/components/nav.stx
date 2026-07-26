@@ -1,13 +1,23 @@
 <script client>
   if (typeof navLinks === 'undefined') var navLinks = state([
-    { to: '/feed', label: 'Feed' },
     { to: '/trails', label: 'Trails' },
+    { to: '/feed', label: 'Feed' },
     { to: '/territories', label: 'Territory' },
-    { to: '/battles', label: 'Battles' },
     { to: '/leaderboard', label: 'Leaderboard' },
-    { to: '/athletes', label: 'Athletes' },
+    { to: '/clubs', label: 'Clubs' },
   ])
   const mobileOpen = state(false)
+
+  // Signed-in state is the presence of the bearer token the browser auth
+  // client stores. The typeof guard keeps this safe during server rendering,
+  // where the signed-out nav is also the right first paint for a visitor who
+  // has never signed in.
+  //
+  // Declared on one line without braces on purpose: stx only exposes
+  // declarations it finds at the top level of the script, so wrapping this in
+  // an `if { … }` block keeps `signedIn` out of the component scope and every
+  // `:if` that reads it silently drops its element.
+  if (typeof signedIn === 'undefined') var signedIn = state(typeof localStorage !== 'undefined' && !!localStorage.getItem('auth_token'))
 </script>
 
 <nav class="sticky top-0 z-50 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
@@ -34,22 +44,30 @@
         </div>
       </div>
 
-      <div class="hidden md:flex gap-3 items-center">
-        <StxLink to="/record" class="px-3 py-1.5 font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm shadow-emerald-600/30 transition-colors">Record</StxLink>
-        <button @click="dark.toggle()" class="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors">
+      <div class="hidden md:flex gap-2 items-center">
+        <button @click="dark.toggle()" aria-label="Toggle dark mode" class="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors">
           <Icon name="moon" size="18" class="dark:hidden" />
           <Icon name="sun" size="18" class="hidden dark:inline" />
         </button>
-        <div class="flex gap-1 items-center pl-2 border-l border-slate-200 dark:border-slate-700">
-          <StxLink to="/notifications" class="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors relative">
+
+        <!-- Signed out: the job is to get someone in, not to ask them to record
+             an activity they have not started. -->
+        <div :if="!signedIn()" class="flex gap-2 items-center">
+          <StxLink to="/login" class="px-3 py-2 font-medium text-sm text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors">Log in</StxLink>
+          <StxLink to="/register" class="px-4 py-2 font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition-colors active:scale-[0.98]">Sign up</StxLink>
+        </div>
+
+        <!-- Signed in: recording is a real intent now, but it stays secondary
+             to the account, which is what people reach for most often. -->
+        <div :if="signedIn()" class="flex gap-2 items-center">
+          <StxLink to="/record" class="px-3.5 py-2 font-medium text-sm text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-full transition-colors active:scale-[0.98]">Record</StxLink>
+          <StxLink to="/notifications" aria-label="Alerts" class="relative p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors">
             <Icon name="bell" size="20" />
-            <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            <span class="absolute top-1 right-1 h-2 w-2 bg-emerald-500 rounded-full"></span>
           </StxLink>
-          <StxLink to="/stats" class="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors">
-            <Icon name="bar-chart-3" size="20" />
-          </StxLink>
-          <StxLink to="/profile" class="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors">
-            <Icon name="user" size="20" />
+          <StxLink to="/profile" class="flex items-center gap-2 pl-1 pr-3 py-1 font-medium text-sm text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-full transition-colors">
+            <span class="flex items-center justify-center h-6 w-6 rounded-full bg-emerald-600 text-white text-xs font-bold" aria-hidden="true">Y</span>
+            Account
           </StxLink>
         </div>
       </div>
@@ -65,11 +83,17 @@
         x-to="link.to"
         class="block px-3 py-2 text-slate-500 text-sm dark:text-slate-400 rounded"
       >{{ link.label }}</StxLink>
-      <StxLink to="/record" class="block px-3 py-2 font-semibold text-emerald-600 text-sm rounded">+ Record Activity</StxLink>
-      <StxLink to="/clubs" class="block px-3 py-2 text-slate-500 text-sm dark:text-slate-400 rounded">Clubs</StxLink>
-      <StxLink to="/stats" class="block px-3 py-2 text-slate-500 text-sm dark:text-slate-400 rounded">Stats</StxLink>
-      <StxLink to="/notifications" class="block px-3 py-2 text-slate-500 text-sm dark:text-slate-400 rounded">Notifications</StxLink>
-      <StxLink to="/profile" class="block px-3 py-2 text-slate-500 text-sm dark:text-slate-400 rounded">Profile</StxLink>
+      <div :if="!signedIn()" class="pt-2 space-y-1">
+        <StxLink to="/login" class="block px-3 py-2 text-slate-600 text-sm dark:text-slate-400 rounded">Log in</StxLink>
+        <StxLink to="/register" class="block mt-1 px-4 py-2.5 text-center font-semibold text-sm text-white bg-emerald-600 rounded-full">Sign up</StxLink>
+      </div>
+
+      <div :if="signedIn()" class="pt-2 space-y-1">
+        <StxLink to="/record" class="block px-3 py-2 font-medium text-emerald-700 dark:text-emerald-400 text-sm rounded">Record an activity</StxLink>
+        <StxLink to="/stats" class="block px-3 py-2 text-slate-600 text-sm dark:text-slate-400 rounded">Stats</StxLink>
+        <StxLink to="/notifications" class="block px-3 py-2 text-slate-600 text-sm dark:text-slate-400 rounded">Alerts</StxLink>
+        <StxLink to="/profile" class="block px-3 py-2 text-slate-600 text-sm dark:text-slate-400 rounded">Account</StxLink>
+      </div>
     </div>
   </div>
 </nav>
