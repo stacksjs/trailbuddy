@@ -1,8 +1,5 @@
 import type { DnsConfig } from '@stacksjs/types'
 
-// Use direct environment variable access to avoid circular dependencies
-const envVars = typeof Bun !== 'undefined' ? Bun.env : process.env
-
 /**
  * **DNS Options**
  *
@@ -11,19 +8,17 @@ const envVars = typeof Bun !== 'undefined' ? Bun.env : process.env
  * have any questions, feel free to reach out via Discord or GitHub Discussions.
  */
 export default {
-  a: [
-    {
-      name: envVars.APP_URL || '', // Hostname (root domain)
-      address: '10.0.0.1', // IPv4 address
-      ttl: 300, // Time-to-live in seconds
-    },
-
-    {
-      name: 'www',
-      address: '@',
-      ttl: 300,
-    },
-  ],
+  // Deliberately empty. wildloop.org is registered and DNS-managed at Porkbun
+  // (see config/cloud.ts infrastructure.dns), and deploy writes the records
+  // that point the domain at the CDN distribution it provisions. Declaring
+  // records here as well would give the domain two owners that disagree.
+  //
+  // This previously carried the scaffold's placeholder row, an A record
+  // binding APP_URL to 10.0.0.1. That address is RFC 1918 private space, so
+  // syncing it would have published a record no client on the internet can
+  // reach. Add entries below only for records deploy does not manage, such as
+  // domain verification TXT or third-party mail.
+  a: [],
   aaaa: [],
   cname: [],
   mx: [],
