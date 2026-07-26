@@ -14,7 +14,7 @@
     trailsCompleted: number
   }
 
-  const tb = useStore('tb')
+  const wl = useStore('wl')
   const period = state<'weekly' | 'monthly' | 'alltime'>('weekly')
   const metric = state<'distance' | 'elevation' | 'activities'>('distance')
 
@@ -25,11 +25,11 @@
   }
 
   const leaders = derived<LeaderEntry[]>(() => {
-    if (!tb) return []
+    if (!wl) return []
     const cutoff = periodCutoff(period())
     const m = metric()
-    const list = tb.users().map((u: any) => {
-      const userActs = tb.activities().filter((a: any) =>
+    const list = wl.users().map((u: any) => {
+      const userActs = wl.activities().filter((a: any) =>
         a.user_id === u.id && new Date(a.created_at).getTime() >= cutoff)
       return {
         userId: u.id,

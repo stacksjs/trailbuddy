@@ -9,7 +9,7 @@
 
   useHead({ title: 'Athlete - WildLoop' })
 
-  const tb = useStore('tb')
+  const wl = useStore('wl')
   const profile = state<any>(null)
   const loading = state(true)
   const loadError = state(false)
@@ -18,8 +18,8 @@
   // rather than silently loading athlete 0/1 (#987).
   const athleteId = useRouteParam('id') ?? -1
 
-  const isSelf = derived(() => !!tb && athleteId === tb.currentUserId())
-  const isFollowing = derived(() => !!tb && tb.isFollowing(athleteId))
+  const isSelf = derived(() => !!wl && athleteId === wl.currentUserId())
+  const isFollowing = derived(() => !!wl && wl.isFollowing(athleteId))
 
   async function loadAthlete() {
     loading.set(true)
@@ -40,17 +40,17 @@
   onMount(() => { void loadAthlete() })
 
   async function onFollow() {
-    if (!tb || isSelf()) return
-    const was = tb.isFollowing(athleteId)
-    tb.setFollowing(athleteId, !was) // optimistic
+    if (!wl || isSelf()) return
+    const was = wl.isFollowing(athleteId)
+    wl.setFollowing(athleteId, !was) // optimistic
     const res = await toggleFollow(athleteId)
     if (res && res.success) {
-      tb.setFollowing(athleteId, !!res.following)
+      wl.setFollowing(athleteId, !!res.following)
       if (profile() && typeof res.followerCount === 'number')
         profile.set({ ...profile(), followerCount: res.followerCount })
     }
     else {
-      tb.setFollowing(athleteId, was)
+      wl.setFollowing(athleteId, was)
     }
   }
 </script>
@@ -128,7 +128,7 @@
                   <span>{{ a.activityType }}</span>
                   <span :if="a.trailName" class="text-gray-500 dark:text-slate-400"> · <span>{{ a.trailName }}</span></span>
                 </p>
-                <p class="text-gray-400 text-xs">{{ tb.timeAgo(a.completedAt) }}</p>
+                <p class="text-gray-400 text-xs">{{ wl.timeAgo(a.completedAt) }}</p>
               </div>
               <div class="text-right">
                 <p class="font-bold text-emerald-600 text-sm">{{ a.distance.toFixed(1) + ' mi' }}</p>

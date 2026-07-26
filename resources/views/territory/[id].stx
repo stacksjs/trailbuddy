@@ -9,27 +9,27 @@
 
   useHead({ title: 'Territory Details - WildLoop' })
 
-  const tb = useStore('tb')
+  const wl = useStore('wl')
   // -1 is a no-match sentinel so an unresolved param renders "not found"
   // rather than silently loading territory 1 (#987).
   const territoryId = useRouteParam('id') ?? -1
 
-  const territory = derived(() => tb ? tb.findTerritory(territoryId) : null)
+  const territory = derived(() => wl ? wl.findTerritory(territoryId) : null)
   const owner = derived(() => {
     const t = territory()
-    return tb && t ? tb.findUser(t.user_id) : null
+    return wl && t ? wl.findUser(t.user_id) : null
   })
-  const history = derived(() => tb ? tb.territoryConquests(territoryId) : [])
+  const history = derived(() => wl ? wl.territoryConquests(territoryId) : [])
   const isMine = derived(() => {
     const t = territory()
-    return tb && t ? t.user_id === tb.currentUserId() : false
+    return wl && t ? t.user_id === wl.currentUserId() : false
   })
 
   let detailMap: TrailMapHandle | null = null
 
   async function mountTerritoryDetailMap() {
-    if (!tb) return
-    const poly = tb.territoryPolygons()[territoryId]
+    if (!wl) return
+    const poly = wl.territoryPolygons()[territoryId]
     if (!poly) return
     detailMap?.destroy()
     detailMap = await createTrailMap('territory-detail-map', { scrollWheelZoom: false })
@@ -104,7 +104,7 @@
                       <span>{{ event.attackerName }}</span>
                       <span>{{ event.status === 'conquered' ? ' conquered this' : ' failed to conquer' }}</span>
                     </p>
-                    <p class="text-xs text-gray-500">{{ tb.timeAgo(event.created_at) }}</p>
+                    <p class="text-xs text-gray-500">{{ wl.timeAgo(event.created_at) }}</p>
                   </div>
                   <span class="text-xs px-2 py-1 rounded-full font-medium" x-class="event.status === 'conquered' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'">{{ event.status === 'conquered' ? 'Conquered' : 'Defended' }}</span>
                 </div>
@@ -123,7 +123,7 @@
               <div class="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 text-xl font-bold">{{ (owner?.name || 'U').charAt(0) }}</div>
               <div>
                 <p class="font-bold dark:text-white">{{ isMine ? 'You' : (owner?.name || 'Unknown') }}</p>
-                <p class="text-sm text-gray-500">{{ 'Claimed ' + tb.timeAgo(territory.claimedAt) }}</p>
+                <p class="text-sm text-gray-500">{{ 'Claimed ' + wl.timeAgo(territory.claimedAt) }}</p>
               </div>
             </div>
           </div>

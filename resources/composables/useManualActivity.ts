@@ -18,7 +18,7 @@ interface ManualStoreLike {
 
 const MANUAL_TYPES = ['Trail Run', 'Hike', 'Walk', 'Bike']
 
-export function useManualActivity(tb: ManualStoreLike | null) {
+export function useManualActivity(wl: ManualStoreLike | null) {
   const manualOpen = state(false)
   const submitting = state(false)
   const manualError = state<string | null>(null)
@@ -51,7 +51,7 @@ export function useManualActivity(tb: ManualStoreLike | null) {
   }
 
   async function submitManualEntry() {
-    if (!tb || submitting())
+    if (!wl || submitting())
       return
     const distance = Number.parseFloat(mDistance())
     const duration = mDuration().trim()
@@ -76,7 +76,7 @@ export function useManualActivity(tb: ManualStoreLike | null) {
     }
 
     const trailId = mTrailId() ? Number(mTrailId()) : null
-    const trail = trailId ? tb.findTrail(trailId) : undefined
+    const trail = trailId ? wl.findTrail(trailId) : undefined
     const pace = paceString(distance, seconds)
     // Date-only input → pin to midday local so timezone shifts can't move the day.
     const completedAt = mDate()
@@ -87,7 +87,7 @@ export function useManualActivity(tb: ManualStoreLike | null) {
     submitting.set(true)
     manualError.set(null)
     const created = await createActivity({
-      user_id: tb.currentUserId(),
+      user_id: wl.currentUserId(),
       trail_id: trailId,
       activity_type: mType(),
       distance: Number(distance.toFixed(2)),
@@ -106,11 +106,11 @@ export function useManualActivity(tb: ManualStoreLike | null) {
       return
     }
 
-    const me = tb.findUser(tb.currentUserId())
+    const me = wl.findUser(wl.currentUserId())
     const when = new Date(completedAt).toLocaleDateString()
-    tb.addActivity({
+    wl.addActivity({
       id: created.id,
-      user_id: tb.currentUserId(),
+      user_id: wl.currentUserId(),
       userName: me?.name ?? 'You',
       trail_id: trailId,
       trail_name: trail?.name ?? `${mType()} Activity`,

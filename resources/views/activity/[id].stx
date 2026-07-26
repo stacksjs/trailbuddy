@@ -12,7 +12,7 @@
 
   useHead({ title: 'Activity Details - WildLoop' })
 
-  const tb = useStore('tb')
+  const wl = useStore('wl')
   const hasKudos = state(false)
   const newComment = state('')
   const comments = state<Array<{ id: number, userName: string, body: string, createdAt: string }>>([])
@@ -21,16 +21,16 @@
   // rather than silently loading activity 1 (#987).
   const activityId = useRouteParam('id') ?? -1
 
-  const activity = derived(() => tb ? tb.findActivity(activityId) : null)
-  const isOwner = derived(() => !!(tb && activity() && activity().user_id === tb.currentUserId()))
+  const activity = derived(() => wl ? wl.findActivity(activityId) : null)
+  const isOwner = derived(() => !!(wl && activity() && activity().user_id === wl.currentUserId()))
 
-  const { mentionMatches, onCommentInput, pickMention, clearMentions, mentionSegments } = useMentions(tb, newComment)
+  const { mentionMatches, onCommentInput, pickMention, clearMentions, mentionSegments } = useMentions(wl, newComment)
 
   const {
     editing, saving, deleted, confirmingDelete, editorError,
     formType, formNotes, formDistance, formDuration, formElevation, formVisibility,
     openEditor, closeEditor, saveEdit, deleteRun, cancelDelete,
-  } = useActivityEditor(tb)
+  } = useActivityEditor(wl)
 
   // Hydrate real comments from the API on load (falls back to whatever the
   // store activity already carries).
@@ -42,20 +42,20 @@
       comments.set(activity().comments)
     // The API is authoritative for GPS-lock + notes (persisted store copies
     // from before #954 don't carry them).
-    if (detail && tb && typeof detail.hasGps === 'boolean')
-      tb.patchActivity(activityId, { hasGps: detail.hasGps, notes: detail.notes ?? '', visibility: detail.visibility ?? 'public' })
+    if (detail && wl && typeof detail.hasGps === 'boolean')
+      wl.patchActivity(activityId, { hasGps: detail.hasGps, notes: detail.notes ?? '', visibility: detail.visibility ?? 'public' })
   })
 
   const handlers = {
     async toggleKudos() {
-      if (!tb || !activity()) return
+      if (!wl || !activity()) return
       const was = hasKudos()
       hasKudos.set(!was)
-      tb.toggleKudos(activityId, was ? -1 : 1)
-      const res = await toggleKudos(activityId, tb.currentUserId())
+      wl.toggleKudos(activityId, was ? -1 : 1)
+      const res = await toggleKudos(activityId, wl.currentUserId())
       if (res && res.success) {
         hasKudos.set(!!res.kudosed)
-        if (typeof res.kudosCount === 'number') tb.setActivityKudos(activityId, res.kudosCount)
+        if (typeof res.kudosCount === 'number') wl.setActivityKudos(activityId, res.kudosCount)
       }
       else {
         hasKudos.set(was)
@@ -63,10 +63,10 @@
     },
     async submitComment() {
       const text = newComment().trim()
-      if (!text || !tb) return
+      if (!text || !wl) return
       newComment.set('')
       clearMentions()
-      const created = await postComment(activityId, tb.currentUserId(), text)
+      const created = await postComment(activityId, wl.currentUserId(), text)
       if (created)
         comments.set([...comments(), created])
     },
@@ -75,10 +75,10 @@
   let activityMap: TrailMapHandle | null = null
 
   async function mountActivityMap() {
-    if (!tb) return
-    const a = tb.findActivity(activityId)
+    if (!wl) return
+    const a = wl.findActivity(activityId)
     if (!a || !a.trail_id) return
-    const route = tb.trailRoutes()[a.trail_id]
+    const route = wl.trailRoutes()[a.trail_id]
     if (!route || route.length < 2) return
     activityMap?.destroy()
     activityMap = await createTrailMap('activity-map', { scrollWheelZoom: false })
@@ -105,7 +105,7 @@
             <p class="text-sm text-gray-500 dark:text-slate-400">
               <span>{{ activity.activityType }}</span>
               <span class="mx-1">·</span>
-              <span>{{ tb.timeAgo(activity.created_at) }}</span>
+              <span>{{ wl.timeAgo(activity.created_at) }}</span>
             </p>
           </div>
         </div>
@@ -252,7 +252,7 @@
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-1">
                 <span class="text-sm font-semibold dark:text-white">{{ comment.userName }}</span>
-                <span class="text-xs text-gray-400">{{ tb.timeAgo(comment.createdAt) }}</span>
+                <span class="text-xs text-gray-400">{{ wl.timeAgo(comment.createdAt) }}</span>
               </div>
               <p class="text-sm text-gray-600 dark:text-slate-400">
                 <template :for="seg in mentionSegments(comment.body)">

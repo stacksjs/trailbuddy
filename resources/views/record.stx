@@ -8,7 +8,7 @@
 
   useHead({ title: 'Capture Run - WildLoop' })
 
-  const tb = useStore('tb')
+  const wl = useStore('wl')
   const {
     recording,
     paused,
@@ -33,21 +33,21 @@
     stop,
     fmtDuration,
     mountRecordMap,
-  } = useRecorder({ mapElId: 'record-map', tb })
+  } = useRecorder({ mapElId: 'record-map', wl })
 
   onMount(() => mountRecordMap())
 
-  const attackable = derived(() => tb ? tb.attackableTerritories() : [])
+  const attackable = derived(() => wl ? wl.attackableTerritories() : [])
   const targetZone = derived(() => {
     const id = targetTerritoryId()
-    return id && tb ? tb.findTerritory(id) : null
+    return id && wl ? wl.findTerritory(id) : null
   })
 
   const activeCaptures = derived(() => {
     const prog = captureProgress()
     return Object.entries(prog)
       .filter(([, pct]) => pct > 0 && pct < 100)
-      .map(([id, pct]) => ({ id: Number(id), pct, name: tb?.findTerritory(Number(id))?.name ?? 'Zone' }))
+      .map(([id, pct]) => ({ id: Number(id), pct, name: wl?.findTerritory(Number(id))?.name ?? 'Zone' }))
   })
 </script>
 

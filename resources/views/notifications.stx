@@ -8,30 +8,30 @@
 
   useHead({ title: 'Notifications - WildLoop' })
 
-  const tb = useStore('tb')
+  const wl = useStore('wl')
   const filter = state<'all' | 'unread' | 'conquest' | 'kudos' | 'challenge'>('all')
 
-  const unreadCount = derived(() => tb ? tb.unreadCount() : 0)
+  const unreadCount = derived(() => wl ? wl.unreadCount() : 0)
 
   function markAll() {
-    if (!tb) return
-    tb.markAllNotificationsRead() // optimistic
+    if (!wl) return
+    wl.markAllNotificationsRead() // optimistic
     markNotificationsRead() // persist
   }
 
   function markOne(id: number) {
-    if (!tb) return
-    tb.markNotificationRead(id)
+    if (!wl) return
+    wl.markNotificationRead(id)
     markNotificationsRead(id)
   }
 
   const filtered = derived(() => {
-    if (!tb) return []
+    if (!wl) return []
     const f = filter()
-    if (f === 'all') return tb.notifications()
-    if (f === 'unread') return tb.notifications().filter((n: any) => !n.read)
-    if (f === 'conquest') return tb.notifications().filter((n: any) => n.type.startsWith('conquest'))
-    return tb.notifications().filter((n: any) => n.type === f)
+    if (f === 'all') return wl.notifications()
+    if (f === 'unread') return wl.notifications().filter((n: any) => !n.read)
+    if (f === 'conquest') return wl.notifications().filter((n: any) => n.type.startsWith('conquest'))
+    return wl.notifications().filter((n: any) => n.type === f)
   })
 
   const groupedByDay = derived(() => {
@@ -64,11 +64,11 @@
   }
 
   const filterCount = (f: string): number => {
-    if (!tb) return 0
-    if (f === 'all') return tb.notifications().length
-    if (f === 'unread') return tb.notifications().filter((n: any) => !n.read).length
-    if (f === 'conquest') return tb.notifications().filter((n: any) => n.type.startsWith('conquest')).length
-    return tb.notifications().filter((n: any) => n.type === f).length
+    if (!wl) return 0
+    if (f === 'all') return wl.notifications().length
+    if (f === 'unread') return wl.notifications().filter((n: any) => !n.read).length
+    if (f === 'conquest') return wl.notifications().filter((n: any) => n.type.startsWith('conquest')).length
+    return wl.notifications().filter((n: any) => n.type === f).length
   }
 </script>
 
@@ -136,7 +136,7 @@
                 <div class="flex-1 min-w-0">
                   <div class="flex items-start justify-between gap-3">
                     <p class="text-sm font-semibold text-gray-900 dark:text-white leading-tight">{{ notif.title }}</p>
-                    <p class="text-xs text-gray-400 dark:text-slate-500 whitespace-nowrap shrink-0 mt-0.5">{{ tb.timeAgo(notif.created_at) }}</p>
+                    <p class="text-xs text-gray-400 dark:text-slate-500 whitespace-nowrap shrink-0 mt-0.5">{{ wl.timeAgo(notif.created_at) }}</p>
                   </div>
                   <p class="text-sm text-gray-600 dark:text-slate-400 mt-1">{{ notif.message }}</p>
                 </div>

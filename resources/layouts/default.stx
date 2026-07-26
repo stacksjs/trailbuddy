@@ -10,12 +10,12 @@
   import { useFollows } from '../composables/useFollows'
   import { useNotifications } from '../composables/useNotifications'
   import { ensureSession } from '../assets/scripts/game-api'
-  const tb = useStore('tb')
-  useTrailCatalog(tb)
-  useTerritoryCatalog(tb)
-  useActivityCatalog(tb)
-  useFollows(tb)
-  useNotifications(tb)
+  const wl = useStore('wl')
+  useTrailCatalog(wl)
+  useTerritoryCatalog(wl)
+  useActivityCatalog(wl)
+  useFollows(wl)
+  useNotifications(wl)
   // Establish the demo athlete's session early so authenticated writes
   // (record/kudos/comment/claim) are instant. Idempotent + non-blocking.
   ensureSession()

@@ -19,24 +19,24 @@ interface TerritoryStore {
   trails: () => Array<{ id: number, lat: number, lng: number, difficulty: string }>
 }
 
-export function useTerritoryExplorer(tb: TerritoryStore | null) {
+export function useTerritoryExplorer(wl: TerritoryStore | null) {
   let territoryMap: TrailMapHandle | null = null
   const filter = state<'all' | 'mine' | 'contested'>('all')
 
-  const currentUserId = derived(() => tb?.currentUserId())
+  const currentUserId = derived(() => wl?.currentUserId())
 
   const filtered = derived(() => {
-    if (!tb) return []
+    if (!wl) return []
     const f = filter()
-    if (f === 'all') return tb.territories()
-    if (f === 'mine') return tb.territories().filter(t => t.user_id === currentUserId())
-    return tb.territories().filter(t => t.status === 'contested')
+    if (f === 'all') return wl.territories()
+    if (f === 'mine') return wl.territories().filter(t => t.user_id === currentUserId())
+    return wl.territories().filter(t => t.status === 'contested')
   })
 
   const leaderboard = derived(() => {
-    if (!tb) return []
-    return tb.users().map((u) => {
-      const owned = tb.territories().filter(t => t.user_id === u.id)
+    if (!wl) return []
+    return wl.users().map((u) => {
+      const owned = wl.territories().filter(t => t.user_id === u.id)
       return {
         user_id: u.id,
         userName: u.name,
@@ -53,7 +53,7 @@ export function useTerritoryExplorer(tb: TerritoryStore | null) {
   const formatArea = (area: number): string => `${(area / 1000).toFixed(1)} km²`
 
   async function mountTerritoryMap() {
-    if (!tb) return
+    if (!wl) return
     territoryMap?.destroy()
     territoryMap = await createTrailMap('territories-map', { scrollWheelZoom: true })
     if (!territoryMap) return
@@ -61,8 +61,8 @@ export function useTerritoryExplorer(tb: TerritoryStore | null) {
     const bounds: LatLng[] = []
     const uid = currentUserId()
 
-    for (const t of tb.territories()) {
-      const coords = tb.territoryPolygons()[t.id]
+    for (const t of wl.territories()) {
+      const coords = wl.territoryPolygons()[t.id]
       if (!coords) continue
       const isYours = t.user_id === uid
       const color = isYours ? '#059669' : '#f59e0b'
@@ -76,8 +76,8 @@ export function useTerritoryExplorer(tb: TerritoryStore | null) {
       bounds.push(...coords)
     }
 
-    const routes = tb.trailRoutes()
-    for (const tr of tb.trails()) {
+    const routes = wl.trailRoutes()
+    for (const tr of wl.trails()) {
       if (!tr.lat || !tr.lng) continue
       const fill = trailDifficultyColor(tr.difficulty)
       const coords = routes[tr.id]

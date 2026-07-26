@@ -1,7 +1,7 @@
 import { onMount, state } from 'stx'
 
 /**
- * Hydrate the `tb` store's activity feed from the live API
+ * Hydrate the `wl` store's activity feed from the live API
  * (`GET /api/activities`), mirroring useTrailCatalog/useTerritoryCatalog. Falls
  * back silently to seed data when the API is empty/unreachable.
  */
@@ -39,9 +39,9 @@ export const activityError = state<string | null>(null)
 
 let started = false
 
-export function useActivityCatalog(tb: ActivityStoreLike | null) {
+export function useActivityCatalog(wl: ActivityStoreLike | null) {
   onMount(async () => {
-    if (!tb || started)
+    if (!wl || started)
       return
     started = true
     try {
@@ -79,7 +79,7 @@ export function useActivityCatalog(tb: ActivityStoreLike | null) {
         created_at: a.createdAt ?? a.completedAt ?? new Date().toISOString(),
       }))
 
-      tb.hydrateActivitiesFromApi(activities)
+      wl.hydrateActivitiesFromApi(activities)
       activitySource.set('api')
     }
     catch (err) {

@@ -1,7 +1,7 @@
 import { onMount, state } from 'stx'
 
 /**
- * Hydrate the `tb` store's territories from the live API
+ * Hydrate the `wl` store's territories from the live API
  * (`GET /api/territories/map`), mirroring useTrailCatalog for trails. Falls back
  * silently to seed data when the API is empty/unreachable.
  */
@@ -43,8 +43,8 @@ let started = false
  * backend's authoritative ownership rather than any client-side guess (#943).
  * Returns true if live data was applied.
  */
-export async function loadTerritories(tb: TerritoryStoreLike | null): Promise<boolean> {
-  if (!tb)
+export async function loadTerritories(wl: TerritoryStoreLike | null): Promise<boolean> {
+  if (!wl)
     return false
   try {
     const res = await fetch('/api/territories/map?limit=500')
@@ -91,7 +91,7 @@ export async function loadTerritories(tb: TerritoryStoreLike | null): Promise<bo
       }
     }
 
-    tb.hydrateTerritoriesFromApi(territories, polygons, [...usersById.values()])
+    wl.hydrateTerritoriesFromApi(territories, polygons, [...usersById.values()])
     territorySource.set('api')
     return true
   }
@@ -102,11 +102,11 @@ export async function loadTerritories(tb: TerritoryStoreLike | null): Promise<bo
   }
 }
 
-export function useTerritoryCatalog(tb: TerritoryStoreLike | null) {
+export function useTerritoryCatalog(wl: TerritoryStoreLike | null) {
   onMount(async () => {
-    if (!tb || started)
+    if (!wl || started)
       return
     started = true
-    await loadTerritories(tb)
+    await loadTerritories(wl)
   })
 }

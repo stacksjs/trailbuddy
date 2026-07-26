@@ -9,7 +9,7 @@
 
   useHead({ title: 'Territory Game - WildLoop' })
 
-  const tb = useStore('tb')
+  const wl = useStore('wl')
   const {
     filter,
     currentUserId,
@@ -17,7 +17,7 @@
     rankedLeaderboard,
     formatArea,
     mountTerritoryMap,
-  } = useTerritoryExplorer(tb)
+  } = useTerritoryExplorer(wl)
 
   onMount(() => mountTerritoryMap())
 </script>

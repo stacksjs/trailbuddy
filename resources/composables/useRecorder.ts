@@ -65,7 +65,7 @@ interface TrailStore {
 
 interface RecorderOptions {
   mapElId: string
-  tb: TrailStore | null
+  wl: TrailStore | null
 }
 
 const YOURS = '#059669'
@@ -105,7 +105,7 @@ function pointInPolygon(pt: LatLng, poly: LatLng[]): boolean {
   return inside
 }
 
-export function useRecorder({ mapElId, tb }: RecorderOptions) {
+export function useRecorder({ mapElId, wl }: RecorderOptions) {
   const recording = state(false)
   const paused = state(false)
   const activityType = state<ActivityType>('Trail Run')
@@ -115,7 +115,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
   const distance = state(0)
   const elevation = state(0)
   const gpsStatus = state<GpsStatus>('searching')
-  const selectedTrailId = state<number>(tb?.trails()[0]?.id ?? 0)
+  const selectedTrailId = state<number>(wl?.trails()[0]?.id ?? 0)
   const conqueredIds = state<number[]>([])
   const captureProgress = state<Record<number, number>>({})
   const sessionXp = state(0)
@@ -124,7 +124,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
   const conquestToast = state<string | null>(null)
 
   const trailOptions = derived(() =>
-    tb ? tb.trails().map(t => ({ id: t.id, name: t.name, location: t.location })) : [],
+    wl ? wl.trails().map(t => ({ id: t.id, name: t.name, location: t.location })) : [],
   )
 
   const refs: {
@@ -181,9 +181,9 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
   // backend re-hydration). New/split territories appear on the next full map
   // load (the territories page); here we reflect ownership flips of what's drawn.
   function repaintTerritories() {
-    if (!tb) return
-    const uid = tb.currentUserId()
-    for (const t of tb.territories())
+    if (!wl) return
+    const uid = wl.currentUserId()
+    for (const t of wl.territories())
       paintTerritory(t.id, t.user_id === uid)
   }
 
@@ -194,10 +194,10 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
   // (#943). We no longer flip ownership client-side, which used a different
   // rule (10 proximity pings) and disagreed with the persisted result.
   function checkConquest(lat: number, lng: number) {
-    if (!tb || runMode() === 'free') return
-    const uid = tb.currentUserId()
-    const polys = tb.territoryPolygons()
-    const territories = tb.territories()
+    if (!wl || runMode() === 'free') return
+    const uid = wl.currentUserId()
+    const polys = wl.territoryPolygons()
+    const territories = wl.territories()
     const progressMap = { ...captureProgress() }
 
     for (const t of territories) {
@@ -208,7 +208,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
 
       // Fill the meter as a "you're on enemy turf" cue (capped just under full
       // so the UI doesn't promise a capture the engine hasn't confirmed).
-      const pct = Math.min(90, tb.applyCaptureSample(t.id, CAPTURE_SAMPLES_NEEDED))
+      const pct = Math.min(90, wl.applyCaptureSample(t.id, CAPTURE_SAMPLES_NEEDED))
       progressMap[t.id] = pct
       captureProgress.set(progressMap)
       paintTerritory(t.id, false, pct)
@@ -261,7 +261,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     sessionXp.set(0)
     conquestToast.set(null)
     paused.set(false)
-    if (tb) tb.resetCaptureSamples()
+    if (wl) wl.resetCaptureSamples()
     refs.routeCoords = []
     refs.samples = []
     refs.startedAtMs = null
@@ -269,9 +269,9 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
       refs.map.removeLayer(refs.routeLine)
       refs.routeLine = null
     }
-    if (tb) {
-      const uid = tb.currentUserId()
-      for (const t of tb.territories()) paintTerritory(t.id, t.user_id === uid)
+    if (wl) {
+      const uid = wl.currentUserId()
+      for (const t of wl.territories()) paintTerritory(t.id, t.user_id === uid)
     }
   }
 
@@ -282,9 +282,9 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
   }
 
   async function simulate() {
-    if (!tb || !refs.map) return
+    if (!wl || !refs.map) return
     const id = selectedTrailId()
-    const route = tb.trailRoutes()[id]
+    const route = wl.trailRoutes()[id]
     if (!route || route.length < 2) return
     resetRun()
     mode.set('simulated')
@@ -302,7 +302,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     // distributed monotonically along the route - deterministic, no random
     // values (#953). Converted to metres so addRoutePoint's single GPS-style
     // accumulation path applies to both modes.
-    const totalGainFt = tb.findTrail(id)?.elevation ?? 0
+    const totalGainFt = wl.findTrail(id)?.elevation ?? 0
     let i = 0
     startTicker()
     refs.simTimer = setInterval(() => {
@@ -379,10 +379,10 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
   // claim + route-intersection conquest). Fire-and-forget; failures (e.g. the
   // run wasn't a closed loop) are expected and surfaced only on success.
   const persistRun = async (routeSnapshot: LatLng[], trailId: number | null, metrics: RunMetrics): Promise<void> => {
-    if (!tb || routeSnapshot.length < 2) return
+    if (!wl || routeSnapshot.length < 2) return
     try {
       const result = await persistRunAndProcess({
-        user_id: tb.currentUserId(),
+        user_id: wl.currentUserId(),
         trail_id: trailId,
         activity_type: activityType(),
         distance: Number(distance().toFixed(2)),
@@ -404,7 +404,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
       // Re-hydrate territories from the backend so the map reflects the real
       // claim/conquest outcome (single source of truth), then repaint.
       if ((result.claim && result.claim.success) || (result.conquest && (result.conquest.conqueredCount ?? 0) > 0)) {
-        await loadTerritories(tb)
+        await loadTerritories(wl)
         repaintTerritories()
       }
     }
@@ -418,8 +418,8 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
     paused.set(false)
     gpsStatus.set('stopped')
     clearTimers()
-    if (distance() > 0 && tb) {
-      const trail = mode() === 'simulated' ? tb.findTrail(selectedTrailId()) : null
+    if (distance() > 0 && wl) {
+      const trail = mode() === 'simulated' ? wl.findTrail(selectedTrailId()) : null
 
       // Moving time is the pause-aware ticker; elapsed is wall-clock (#960).
       // Pace derives from moving time, splits from the timestamped samples.
@@ -442,8 +442,8 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
       const title = captures > 0
         ? `Capture Run: ${captures} zone${captures > 1 ? 's' : ''} taken`
         : `${activityType()}, ${new Date().toLocaleDateString()}`
-      tb.addActivity({
-        user_id: tb.currentUserId(),
+      wl.addActivity({
+        user_id: wl.currentUserId(),
         userName: 'You',
         trail_id: trail?.id ?? null,
         trail_name: trail?.name ?? `${activityType()} Activity`,
@@ -470,7 +470,7 @@ export function useRecorder({ mapElId, tb }: RecorderOptions) {
 
   async function initRecordMap() {
     try {
-      const store = tb ?? useStore('tb')
+      const store = wl ?? useStore('wl')
       if (!store) return
       refs.mapHandle = await createTrailMap(mapElId, { scrollWheelZoom: true })
       if (!refs.mapHandle) return

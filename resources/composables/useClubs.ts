@@ -18,7 +18,7 @@ const CLUB_TYPES = ['Running', 'Hiking', 'Mixed', 'Territory Game']
 
 let started = false
 
-export function useClubs(tb: ClubStoreLike | null) {
+export function useClubs(wl: ClubStoreLike | null) {
   const createOpen = state(false)
   const submitting = state(false)
   const createError = state<string | null>(null)
@@ -30,36 +30,36 @@ export function useClubs(tb: ClubStoreLike | null) {
   const fPrivate = state(false)
 
   onMount(async () => {
-    if (!tb || started)
+    if (!wl || started)
       return
     started = true
     const clubs = await fetchClubs()
     if (clubs)
-      tb.hydrateClubs(clubs)
+      wl.hydrateClubs(clubs)
   })
 
   function isMember(club: any): boolean {
-    if (!tb)
+    if (!wl)
       return false
-    return club.isMember ?? (club.members ?? []).includes(tb.currentUserId())
+    return club.isMember ?? (club.members ?? []).includes(wl.currentUserId())
   }
 
   async function onToggleMembership(club: any) {
-    if (!tb)
+    if (!wl)
       return
-    const club2 = tb.clubs().find(c => c.id === club.id) ?? club
+    const club2 = wl.clubs().find(c => c.id === club.id) ?? club
     const was = isMember(club2)
     // Capture the ORIGINAL count before the optimistic mutation - applyClub-
     // Membership mutates club2.memberCount in place, so reading it again on
     // failure would roll back to the optimistic value, not the original.
     const prevCount = club2.memberCount ?? 0
     const nextCount = prevCount + (was ? -1 : 1)
-    tb.applyClubMembership(club.id, !was, nextCount) // optimistic
+    wl.applyClubMembership(club.id, !was, nextCount) // optimistic
     const res = await toggleClubMembership(club.id)
     if (res && res.success)
-      tb.applyClubMembership(club.id, !!res.joined, res.memberCount ?? nextCount)
+      wl.applyClubMembership(club.id, !!res.joined, res.memberCount ?? nextCount)
     else
-      tb.applyClubMembership(club.id, was, prevCount) // rollback to original
+      wl.applyClubMembership(club.id, was, prevCount) // rollback to original
   }
 
   function openCreate() {
@@ -78,7 +78,7 @@ export function useClubs(tb: ClubStoreLike | null) {
   }
 
   async function submitCreate() {
-    if (!tb || submitting())
+    if (!wl || submitting())
       return
     const name = fName().trim()
     if (name.length < 2) {
@@ -100,7 +100,7 @@ export function useClubs(tb: ClubStoreLike | null) {
     })
     submitting.set(false)
     if (res && res.success && res.club) {
-      tb.addClub(res.club)
+      wl.addClub(res.club)
       createOpen.set(false)
     }
     else {

@@ -28,7 +28,7 @@ interface ReviewStoreLike {
 
 export const REVIEW_CONDITION_OPTIONS = ['excellent', 'good', 'fair', 'poor', 'muddy', 'icy']
 
-export function useTrailReviews(tb: ReviewStoreLike | null, trailId: () => number) {
+export function useTrailReviews(wl: ReviewStoreLike | null, trailId: () => number) {
   const reviews = state<ReviewRow[]>([])
   const reviewSource = state<'api' | 'seed'>('seed')
   const formRating = state(0)
@@ -52,9 +52,9 @@ export function useTrailReviews(tb: ReviewStoreLike | null, trailId: () => numbe
   }
 
   onMount(async () => {
-    if (!tb)
+    if (!wl)
       return
-    reviews.set(tb.reviews().filter(r => r.trail_id === trailId()))
+    reviews.set(wl.reviews().filter(r => r.trail_id === trailId()))
     const rows = await fetchTrailReviews(trailId())
     if (rows) {
       reviews.set(rows.map(mapApiReview))
@@ -63,7 +63,7 @@ export function useTrailReviews(tb: ReviewStoreLike | null, trailId: () => numbe
   })
 
   async function submitReview() {
-    if (!tb || submittingReview())
+    if (!wl || submittingReview())
       return
     const rating = formRating()
     const content = formContent().trim()
@@ -92,11 +92,11 @@ export function useTrailReviews(tb: ReviewStoreLike | null, trailId: () => numbe
 
     // Upsert semantics: replace any previous review by this user, then
     // mirror the recomputed trail aggregates into the store.
-    const me = tb.currentUserId()
-    const mine = mapApiReview({ ...res.review, userName: tb.findUser(me)?.name ?? res.review.userName })
+    const me = wl.currentUserId()
+    const mine = mapApiReview({ ...res.review, userName: wl.findUser(me)?.name ?? res.review.userName })
     reviews.set([mine, ...reviews().filter(r => r.user_id !== me)])
     if (res.trail)
-      tb.setTrailRating(res.trail.id, res.trail.rating, res.trail.reviewCount)
+      wl.setTrailRating(res.trail.id, res.trail.rating, res.trail.reviewCount)
     formContent.set('')
     formConditions.set('')
     formRating.set(0)

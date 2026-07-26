@@ -8,21 +8,21 @@
 
   useHead({ title: 'Clubs - WildLoop' })
 
-  const tb = useStore('tb')
+  const wl = useStore('wl')
   const filter = state<'all' | 'mine' | 'Running' | 'Hiking' | 'Territory Game'>('all')
 
   const {
     createOpen, submitting, createError,
     fName, fType, fLocation, fDescription, fPrivate,
     isMember, onToggleMembership, openCreate, closeCreate, submitCreate,
-  } = useClubs(tb)
+  } = useClubs(wl)
 
   const filtered = derived(() => {
-    if (!tb) return []
+    if (!wl) return []
     const f = filter()
-    if (f === 'all') return tb.clubs()
-    if (f === 'mine') return tb.clubs().filter((c: any) => isMember(c))
-    return tb.clubs().filter((c: any) => c.type === f)
+    if (f === 'all') return wl.clubs()
+    if (f === 'mine') return wl.clubs().filter((c: any) => isMember(c))
+    return wl.clubs().filter((c: any) => c.type === f)
   })
 </script>
 

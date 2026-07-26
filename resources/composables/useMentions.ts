@@ -17,13 +17,13 @@ interface TextState {
   set: (value: string) => void
 }
 
-export function useMentions(tb: MentionStoreLike | null, text: TextState) {
+export function useMentions(wl: MentionStoreLike | null, text: TextState) {
   const mentionMatches = state<MentionUser[]>([])
 
   function onCommentInput(value: string) {
     text.set(value)
     const query = extractMentionQuery(value)
-    mentionMatches.set(query === null || !tb ? [] : mentionCandidates(tb.users(), query))
+    mentionMatches.set(query === null || !wl ? [] : mentionCandidates(wl.users(), query))
   }
 
   function pickMention(name: string) {
@@ -36,7 +36,7 @@ export function useMentions(tb: MentionStoreLike | null, text: TextState) {
   }
 
   function mentionSegments(body: string): MentionSegment[] {
-    return parseMentions(body, tb ? tb.users() : [])
+    return parseMentions(body, wl ? wl.users() : [])
   }
 
   return { mentionMatches, onCommentInput, pickMention, clearMentions, mentionSegments }

@@ -8,7 +8,7 @@
 
   useHead({ title: 'Find Athletes - WildLoop' })
 
-  const tb = useStore('tb')
+  const wl = useStore('wl')
   const query = state('')
   const athletes = state<any[]>([])
   const searching = state(false)
@@ -48,12 +48,12 @@
   onMount(() => { void runSearch('') })
 
   async function onFollow(userId: number) {
-    if (!tb || userId === tb.currentUserId()) return
-    const wasFollowing = tb.isFollowing(userId)
-    tb.setFollowing(userId, !wasFollowing) // optimistic
+    if (!wl || userId === wl.currentUserId()) return
+    const wasFollowing = wl.isFollowing(userId)
+    wl.setFollowing(userId, !wasFollowing) // optimistic
     const res = await toggleFollow(userId)
-    if (res && res.success) tb.setFollowing(userId, !!res.following)
-    else tb.setFollowing(userId, wasFollowing) // rollback
+    if (res && res.success) wl.setFollowing(userId, !!res.following)
+    else wl.setFollowing(userId, wasFollowing) // rollback
   }
 
   function areaKm2(m2: number): string {
@@ -114,12 +114,12 @@
             </div>
           </StxLink>
           <button
-            :if="tb && athlete.id !== tb.currentUserId()"
+            :if="wl && athlete.id !== wl.currentUserId()"
             @click="onFollow(athlete.id)"
-            x-class="tb.isFollowing(athlete.id) ? 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'"
+            x-class="wl.isFollowing(athlete.id) ? 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'"
             class="px-4 py-2 font-semibold text-xs rounded-lg transition shrink-0"
->{{ tb.isFollowing(athlete.id) ? 'Following' : 'Follow' }}</button>
-          <span :if="tb && athlete.id === tb.currentUserId()" class="px-3 py-2 text-xs text-gray-400 shrink-0">That's you</span>
+>{{ wl.isFollowing(athlete.id) ? 'Following' : 'Follow' }}</button>
+          <span :if="wl && athlete.id === wl.currentUserId()" class="px-3 py-2 text-xs text-gray-400 shrink-0">That's you</span>
         </div>
       </template>
 

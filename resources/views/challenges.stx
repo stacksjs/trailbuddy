@@ -8,24 +8,24 @@
 
   useHead({ title: 'Challenges - WildLoop' })
 
-  const tb = useStore('tb')
+  const wl = useStore('wl')
   const tab = state<'active' | 'sent' | 'received' | 'completed'>('active')
 
-  const currentUserId = derived(() => tb?.currentUserId())
+  const currentUserId = derived(() => wl?.currentUserId())
 
   const {
     createOpen, submitting, createError, targetTerritoryId, busyId,
     rivalTerritories, openCreate, closeCreate, submitCreate, respond,
-  } = useChallenges(tb)
+  } = useChallenges(wl)
 
   const filtered = derived(() => {
-    if (!tb) return []
+    if (!wl) return []
     const t = tab()
-    const uid = tb.currentUserId()
-    if (t === 'active') return tb.challenges().filter((c: any) => c.status === 'active' || c.status === 'pending')
-    if (t === 'sent') return tb.challenges().filter((c: any) => c.challenger_id === uid)
-    if (t === 'received') return tb.challenges().filter((c: any) => c.challenged_id === uid)
-    return tb.challenges().filter((c: any) => c.status === 'completed')
+    const uid = wl.currentUserId()
+    if (t === 'active') return wl.challenges().filter((c: any) => c.status === 'active' || c.status === 'pending')
+    if (t === 'sent') return wl.challenges().filter((c: any) => c.challenger_id === uid)
+    if (t === 'received') return wl.challenges().filter((c: any) => c.challenged_id === uid)
+    return wl.challenges().filter((c: any) => c.status === 'completed')
   })
 </script>
 
@@ -50,7 +50,7 @@
         <div class="card">
           <div class="flex items-center justify-between mb-4">
             <span class="px-2 py-0.5 font-semibold text-xs rounded-full" x-class="challenge.status === 'active' ? 'bg-orange-100 text-orange-700' : challenge.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : challenge.status === 'declined' ? 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-300' : challenge.winner_id === currentUserId ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'">{{ challenge.status === 'active' ? 'IN PROGRESS' : challenge.status === 'pending' ? 'PENDING' : challenge.status === 'declined' ? 'DECLINED' : challenge.winner_id === currentUserId ? 'WON' : 'LOST' }}</span>
-            <span class="text-gray-500 text-xs dark:text-slate-400">{{ tb.timeAgo(challenge.created_at) }}</span>
+            <span class="text-gray-500 text-xs dark:text-slate-400">{{ wl.timeAgo(challenge.created_at) }}</span>
           </div>
 
           <div class="flex items-center justify-between gap-4">

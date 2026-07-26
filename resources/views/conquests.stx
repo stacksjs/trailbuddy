@@ -6,24 +6,24 @@
 <script client>
   useHead({ title: 'Conquests - WildLoop' })
 
-  const tb = useStore('tb')
+  const wl = useStore('wl')
   const filter = state<'all' | 'attacks' | 'defenses' | 'lost'>('all')
 
-  const conquestStats = derived(() => tb?.conquestStats())
-  const currentUserId = derived(() => tb?.currentUserId())
+  const conquestStats = derived(() => wl?.conquestStats())
+  const currentUserId = derived(() => wl?.currentUserId())
 
   const filtered = derived(() => {
-    if (!tb) return []
+    if (!wl) return []
     const f = filter()
-    const uid = tb.currentUserId()
-    if (f === 'all') return tb.conquests()
-    if (f === 'attacks') return tb.conquests().filter((c: any) => c.attacker_id === uid)
-    if (f === 'defenses') return tb.conquests().filter((c: any) => c.defender_id === uid)
-    return tb.conquests().filter((c: any) => c.defender_id === uid && c.status === 'conquered')
+    const uid = wl.currentUserId()
+    if (f === 'all') return wl.conquests()
+    if (f === 'attacks') return wl.conquests().filter((c: any) => c.attacker_id === uid)
+    if (f === 'defenses') return wl.conquests().filter((c: any) => c.defender_id === uid)
+    return wl.conquests().filter((c: any) => c.defender_id === uid && c.status === 'conquered')
   })
 
   const underAttack = derived(() =>
-    tb ? tb.conquests().filter((c: any) => c.defender_id === tb.currentUserId() && c.status === 'active').slice(0, 5) : []
+    wl ? wl.conquests().filter((c: any) => c.defender_id === wl.currentUserId() && c.status === 'active').slice(0, 5) : []
   )
 </script>
 
@@ -82,7 +82,7 @@
                 <div class="flex-1 min-w-0">
                   <div class="flex gap-2 items-center mb-1">
                     <span class="px-2 py-0.5 font-semibold text-xs rounded-full" x-class="conquest.attacker_id === currentUserId ? 'bg-orange-100 text-orange-700' : conquest.status === 'defended' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'">{{ conquest.attacker_id === currentUserId ? 'ATTACK' : conquest.status === 'defended' ? 'DEFENDED' : 'CONQUERED' }}</span>
-                    <span class="text-xs text-gray-500 dark:text-slate-400">{{ tb.timeAgo(conquest.created_at) }}</span>
+                    <span class="text-xs text-gray-500 dark:text-slate-400">{{ wl.timeAgo(conquest.created_at) }}</span>
                   </div>
                   <p class="font-semibold text-gray-900 dark:text-white">
                     <span>{{ conquest.attacker_id === currentUserId ? 'You conquered' : conquest.attackerName + ' attacked' }}</span>

@@ -425,7 +425,7 @@
 
   // ===== Store =====
   // defineStore is idempotent - returns existing store on re-navigation
-  const tbStore = defineStore('tb', {
+  const wlStore = defineStore('wl', {
     state: () => ({
       currentUserId: 1,
       users: seedUsers,
@@ -741,9 +741,10 @@
     // the new shape/seed actually takes effect instead of being masked.
     // History: v3 - territory status 'secure' -> 'active' (#942);
     //          v4 - added savedTrailIds for saved trails (#969).
-    // The WildLoop rebrand rotated the namespace off `trailbuddy-`, which
-    // already orphans every snapshot written under the old name, so the
-    // shape-version suffix stays at v4 rather than bumping for a rename.
-    persist: { key: 'wildloop-tb-v4' },
+    // The WildLoop rebrand rotated the namespace off `trailbuddy-tb-`, which
+    // already orphans every snapshot written under the old name. The shape is
+    // unchanged, so the suffix stays at v4 and the key drops the now-redundant
+    // store-id segment rather than reading `wildloop-wl-`.
+    persist: { key: 'wildloop-v4' },
   })
 </script>

@@ -2,7 +2,7 @@ import { onMount } from 'stx'
 import { fetchFollows } from '../assets/scripts/game-api'
 
 /**
- * Hydrate the current user's following list into the `tb` store so the feed's
+ * Hydrate the current user's following list into the `wl` store so the feed's
  * "Following" filter and follow buttons reflect real data. Silent on failure.
  */
 
@@ -13,15 +13,15 @@ interface FollowStoreLike {
 
 let started = false
 
-export function useFollows(tb: FollowStoreLike | null) {
+export function useFollows(wl: FollowStoreLike | null) {
   onMount(async () => {
-    if (!tb || started)
+    if (!wl || started)
       return
     started = true
     try {
-      const data = await fetchFollows(tb.currentUserId())
+      const data = await fetchFollows(wl.currentUserId())
       if (data && Array.isArray(data.followingIds))
-        tb.hydrateFollowing(data.followingIds)
+        wl.hydrateFollowing(data.followingIds)
     }
     catch {
       // ignore - keep empty following list

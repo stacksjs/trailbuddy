@@ -2,7 +2,7 @@ import { onMount } from 'stx'
 import { fetchSavedTrails, toggleSaveTrail } from '../assets/scripts/game-api'
 
 /**
- * Saved trails (#969): hydrate the current user's bookmarks into the `tb`
+ * Saved trails (#969): hydrate the current user's bookmarks into the `wl`
  * store once per session, and expose an optimistic save/unsave toggle the
  * trail cards + detail page share.
  */
@@ -16,26 +16,26 @@ interface SavedTrailStoreLike {
 
 let started = false
 
-export function useSavedTrails(tb: SavedTrailStoreLike | null) {
+export function useSavedTrails(wl: SavedTrailStoreLike | null) {
   onMount(async () => {
-    if (!tb || started)
+    if (!wl || started)
       return
     started = true
-    const payload = await fetchSavedTrails(tb.currentUserId())
+    const payload = await fetchSavedTrails(wl.currentUserId())
     if (payload && Array.isArray(payload.savedTrails))
-      tb.hydrateSavedTrails(payload.savedTrails.map((s: any) => s.trailId))
+      wl.hydrateSavedTrails(payload.savedTrails.map((s: any) => s.trailId))
   })
 
   async function onToggleSave(trailId: number) {
-    if (!tb)
+    if (!wl)
       return
-    const was = tb.isTrailSaved(trailId)
-    tb.setTrailSaved(trailId, !was) // optimistic
+    const was = wl.isTrailSaved(trailId)
+    wl.setTrailSaved(trailId, !was) // optimistic
     const res = await toggleSaveTrail(trailId)
     if (res && res.success)
-      tb.setTrailSaved(trailId, !!res.saved)
+      wl.setTrailSaved(trailId, !!res.saved)
     else
-      tb.setTrailSaved(trailId, was) // rollback
+      wl.setTrailSaved(trailId, was) // rollback
   }
 
   return { onToggleSave }

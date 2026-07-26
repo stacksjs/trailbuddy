@@ -26,7 +26,7 @@ export interface EditableActivity {
   hasGps?: boolean
 }
 
-export function useActivityEditor(tb: EditorStoreLike | null) {
+export function useActivityEditor(wl: EditorStoreLike | null) {
   const editing = state(false)
   const saving = state(false)
   const deleted = state(false)
@@ -58,7 +58,7 @@ export function useActivityEditor(tb: EditorStoreLike | null) {
   }
 
   async function saveEdit(a: EditableActivity) {
-    if (!tb || saving())
+    if (!wl || saving())
       return
     const payload: Record<string, unknown> = {
       activity_type: formType(),
@@ -96,7 +96,7 @@ export function useActivityEditor(tb: EditorStoreLike | null) {
     saving.set(false)
     if (res && res.success && res.activity) {
       const updated = res.activity
-      tb.patchActivity(a.id, {
+      wl.patchActivity(a.id, {
         activityType: updated.activityType,
         notes: updated.notes ?? '',
         distance: updated.distance,
@@ -118,7 +118,7 @@ export function useActivityEditor(tb: EditorStoreLike | null) {
 
   /** Two-step delete: first click arms the confirm, second click deletes. */
   async function deleteRun(a: EditableActivity) {
-    if (!tb || saving())
+    if (!wl || saving())
       return
     if (!confirmingDelete()) {
       confirmingDelete.set(true)
@@ -130,7 +130,7 @@ export function useActivityEditor(tb: EditorStoreLike | null) {
     saving.set(false)
     if (ok) {
       deleted.set(true)
-      tb.removeActivity(a.id)
+      wl.removeActivity(a.id)
     }
     else {
       editorError.set('Could not delete activity')

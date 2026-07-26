@@ -17,9 +17,9 @@ export const catalogSource = state<'api' | 'seed'>('seed')
 let catalogStarted = false
 
 /** Fetch trails once per app session (called from default layout). */
-export function useTrailCatalog(tb: TrailStoreLike | null) {
+export function useTrailCatalog(wl: TrailStoreLike | null) {
   onMount(async () => {
-    if (!tb || catalogStarted)
+    if (!wl || catalogStarted)
       return
     catalogStarted = true
     catalogLoading.set(true)
@@ -32,7 +32,7 @@ export function useTrailCatalog(tb: TrailStoreLike | null) {
       const { trails, geometryById } = normalizeTrailsPayload(payload)
       if (trails.length > 0) {
         const routes = routesFromTrails(trails, geometryById)
-        tb.hydrateTrailsFromApi(trails, routes)
+        wl.hydrateTrailsFromApi(trails, routes)
         catalogSource.set('api')
       }
     }

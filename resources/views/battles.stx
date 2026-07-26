@@ -6,28 +6,28 @@
 <script client>
   useHead({ title: 'Live Battles - WildLoop' })
 
-  const tb = useStore('tb')
+  const wl = useStore('wl')
   const period = state<'today' | 'week' | 'all'>('today')
 
-  const liveBattles = derived(() => tb ? tb.conquests().filter((c: any) => c.status === 'active') : [])
+  const liveBattles = derived(() => wl ? wl.conquests().filter((c: any) => c.status === 'active') : [])
 
   const filteredBattles = derived(() => {
-    if (!tb) return []
+    if (!wl) return []
     const p = period()
     const now = Date.now()
     if (p === 'today') {
       const start = new Date().setHours(0, 0, 0, 0)
-      return tb.conquests().filter((b: any) => new Date(b.created_at).getTime() >= start)
+      return wl.conquests().filter((b: any) => new Date(b.created_at).getTime() >= start)
     }
     if (p === 'week') {
       const weekAgo = now - 7 * 86400000
-      return tb.conquests().filter((b: any) => new Date(b.created_at).getTime() >= weekAgo)
+      return wl.conquests().filter((b: any) => new Date(b.created_at).getTime() >= weekAgo)
     }
-    return tb.conquests()
+    return wl.conquests()
   })
 
-  const conqueredCount = derived(() => tb ? tb.conquests().filter((b: any) => b.status === 'conquered').length : 0)
-  const defendedCount = derived(() => tb ? tb.conquests().filter((b: any) => b.status === 'defended').length : 0)
+  const conqueredCount = derived(() => wl ? wl.conquests().filter((b: any) => b.status === 'conquered').length : 0)
+  const defendedCount = derived(() => wl ? wl.conquests().filter((b: any) => b.status === 'defended').length : 0)
 </script>
 
   <div class="mx-auto px-4 py-6 sm:px-6 lg:px-8 max-w-7xl">
@@ -106,7 +106,7 @@
                   <span class="font-semibold">{{ battle.defenderName }}</span>
                 </p>
                 <div class="flex gap-3 mt-1 text-xs text-gray-500 dark:text-slate-400">
-                  <span>{{ tb.timeAgo(battle.created_at) }}</span>
+                  <span>{{ wl.timeAgo(battle.created_at) }}</span>
                   <span>{{ battle.areaCaptured.toLocaleString() + ' m²' }}</span>
                 </div>
               </div>

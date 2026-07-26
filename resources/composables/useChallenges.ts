@@ -35,7 +35,7 @@ function toStore(c: any): any {
 
 let started = false
 
-export function useChallenges(tb: ChallengeStoreLike | null) {
+export function useChallenges(wl: ChallengeStoreLike | null) {
   const createOpen = state(false)
   const submitting = state(false)
   const createError = state<string | null>(null)
@@ -43,20 +43,20 @@ export function useChallenges(tb: ChallengeStoreLike | null) {
   const busyId = state<number | null>(null)
 
   onMount(async () => {
-    if (!tb || started)
+    if (!wl || started)
       return
     started = true
     const rows = await fetchChallenges()
     if (rows)
-      tb.hydrateChallenges(rows.map(toStore))
+      wl.hydrateChallenges(rows.map(toStore))
   })
 
   // Rival territories you could challenge for (not your own).
   function rivalTerritories(): any[] {
-    if (!tb)
+    if (!wl)
       return []
-    const me = tb.currentUserId()
-    return tb.territories().filter((t: any) => t.user_id !== me)
+    const me = wl.currentUserId()
+    return wl.territories().filter((t: any) => t.user_id !== me)
   }
 
   function openCreate() {
@@ -72,7 +72,7 @@ export function useChallenges(tb: ChallengeStoreLike | null) {
   }
 
   async function submitCreate() {
-    if (!tb || submitting())
+    if (!wl || submitting())
       return
     const territoryId = Number(targetTerritoryId())
     if (!Number.isFinite(territoryId) || territoryId <= 0) {
@@ -84,7 +84,7 @@ export function useChallenges(tb: ChallengeStoreLike | null) {
     const res = await createChallenge(territoryId)
     submitting.set(false)
     if (res && res.success && res.challenge) {
-      tb.upsertChallenge(toStore(res.challenge))
+      wl.upsertChallenge(toStore(res.challenge))
       createOpen.set(false)
     }
     else {
@@ -93,13 +93,13 @@ export function useChallenges(tb: ChallengeStoreLike | null) {
   }
 
   async function respond(challenge: any, action: 'accept' | 'decline') {
-    if (!tb || busyId() !== null)
+    if (!wl || busyId() !== null)
       return
     busyId.set(challenge.id)
     const res = await respondToChallenge(challenge.id, action)
     busyId.set(null)
     if (res && res.success && res.challenge)
-      tb.upsertChallenge(toStore(res.challenge))
+      wl.upsertChallenge(toStore(res.challenge))
   }
 
   return {

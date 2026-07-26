@@ -10,27 +10,27 @@
 
   useHead({ title: 'Profile - WildLoop' })
 
-  const tb = useStore('tb')
-  useAchievementCatalog(tb)
-  const { onToggleSave } = useSavedTrails(tb)
+  const wl = useStore('wl')
+  useAchievementCatalog(wl)
+  const { onToggleSave } = useSavedTrails(wl)
   const activeTab = state<'activities' | 'achievements' | 'saved'>('activities')
   const followerCount = state(0)
 
-  const currentUser = derived(() => tb?.currentUser())
-  const userStats = derived(() => tb?.userStats())
-  const currentUserId = derived(() => tb?.currentUserId())
-  const followingCount = derived(() => tb ? tb.following().length : 0)
-  const myActivities = derived(() => tb ? tb.activities().filter((a: any) => a.user_id === tb.currentUserId()) : [])
-  const achievements = derived(() => tb ? tb.achievements() : [])
-  const savedTrails = derived(() => tb ? tb.trails().filter((t: any) => tb.isTrailSaved(t.id)) : [])
+  const currentUser = derived(() => wl?.currentUser())
+  const userStats = derived(() => wl?.userStats())
+  const currentUserId = derived(() => wl?.currentUserId())
+  const followingCount = derived(() => wl ? wl.following().length : 0)
+  const myActivities = derived(() => wl ? wl.activities().filter((a: any) => a.user_id === wl.currentUserId()) : [])
+  const achievements = derived(() => wl ? wl.achievements() : [])
+  const savedTrails = derived(() => wl ? wl.trails().filter((t: any) => wl.isTrailSaved(t.id)) : [])
 
   onMount(async () => {
-    if (!tb) return
+    if (!wl) return
     try {
-      const data = await fetchFollows(tb.currentUserId())
+      const data = await fetchFollows(wl.currentUserId())
       if (data) {
         followerCount.set(data.followerCount)
-        tb.hydrateFollowing(data.followingIds) // keep store in sync
+        wl.hydrateFollowing(data.followingIds) // keep store in sync
       }
     }
     catch {
@@ -94,7 +94,7 @@
           </div>
           <div class="flex-1 min-w-0">
             <p class="font-semibold text-sm truncate dark:text-white">{{ activity.title }}</p>
-            <p class="text-gray-500 text-xs dark:text-slate-400">{{ activity.activityType + ' · ' + tb.timeAgo(activity.created_at) }}</p>
+            <p class="text-gray-500 text-xs dark:text-slate-400">{{ activity.activityType + ' · ' + wl.timeAgo(activity.created_at) }}</p>
           </div>
           <div class="flex gap-4 shrink-0 text-right">
             <div>

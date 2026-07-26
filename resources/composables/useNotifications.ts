@@ -2,7 +2,7 @@ import { onMount } from 'stx'
 import { fetchNotifications } from '../assets/scripts/game-api'
 
 /**
- * Hydrate the current user's notifications from the API into the `tb` store so
+ * Hydrate the current user's notifications from the API into the `wl` store so
  * the notifications page + nav unread badge reflect real kudos/comment/follow
  * events. Falls back to seed data when the API is empty/unreachable.
  */
@@ -14,9 +14,9 @@ interface NotificationStoreLike {
 
 let started = false
 
-export function useNotifications(tb: NotificationStoreLike | null) {
+export function useNotifications(wl: NotificationStoreLike | null) {
   onMount(async () => {
-    if (!tb || started)
+    if (!wl || started)
       return
     started = true
     try {
@@ -33,7 +33,7 @@ export function useNotifications(tb: NotificationStoreLike | null) {
         read: !!n.read,
         created_at: n.createdAt,
       }))
-      tb.hydrateNotifications(mapped)
+      wl.hydrateNotifications(mapped)
     }
     catch {
       // keep seed notifications

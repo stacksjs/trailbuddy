@@ -2,7 +2,7 @@ import { onMount, state } from 'stx'
 import { fetchAchievements } from '../assets/scripts/game-api'
 
 /**
- * Hydrate the `tb` store's achievements from the live unlock engine
+ * Hydrate the `wl` store's achievements from the live unlock engine
  * (`GET /api/users/{id}/achievements`, #982), mirroring useActivityCatalog.
  * Falls back silently to seed data when the API is empty/unreachable.
  */
@@ -16,16 +16,16 @@ export const achievementSource = state<'api' | 'seed'>('seed')
 
 let started = false
 
-export function useAchievementCatalog(tb: AchievementStoreLike | null) {
+export function useAchievementCatalog(wl: AchievementStoreLike | null) {
   onMount(async () => {
-    if (!tb || started)
+    if (!wl || started)
       return
     started = true
-    const payload = await fetchAchievements(tb.currentUserId())
+    const payload = await fetchAchievements(wl.currentUserId())
     const rows = Array.isArray(payload?.achievements) ? payload.achievements : []
     if (!rows.length)
       return
-    tb.hydrateAchievements(rows.map((a: any) => ({
+    wl.hydrateAchievements(rows.map((a: any) => ({
       id: a.id,
       name: a.name,
       description: a.description,

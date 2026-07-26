@@ -6,14 +6,14 @@
 <script client>
   useHead({ title: 'Training Stats - WildLoop' })
 
-  const tb = useStore('tb')
+  const wl = useStore('wl')
   const period = state<'weekly' | 'monthly' | 'alltime'>('weekly')
 
-  const myActivities = derived(() => tb ? tb.activities().filter((a: any) => a.user_id === tb.currentUserId()) : [])
-  const userStats = derived(() => tb?.userStats())
+  const myActivities = derived(() => wl ? wl.activities().filter((a: any) => a.user_id === wl.currentUserId()) : [])
+  const userStats = derived(() => wl?.userStats())
 
   const maxWeeklyDistance = derived(() => {
-    const hist = tb?.userStats()?.weeklyHistory || []
+    const hist = wl?.userStats()?.weeklyHistory || []
     return Math.max(...hist.map((w: any) => w.distance), 1)
   })
 </script>
