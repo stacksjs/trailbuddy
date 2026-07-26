@@ -24,8 +24,27 @@ export default {
       "root": ".",
       "path": "/",
       "domain": "wildloop.org",
-      "start": "./buddy serve",
-      "port": 3049
+      "start": "bun storage/framework/core/buddy/src/cli.ts serve",
+      "port": 3049,
+      "preStart": [
+        "bun install",
+        "bun storage/framework/core/buddy/src/cli.ts migrate --force"
+      ],
+      "env": {
+        "API_URL": ""
+      }
+    },
+    "api": {
+      "root": ".",
+      "start": "bun storage/framework/core/actions/src/serve/api.ts",
+      "port": 3050,
+      "preStart": [
+        "bun install"
+      ],
+      "env": {
+        "HOST": "",
+        "APP_ENV": ""
+      }
     },
     "www": {
       "domain": "www.wildloop.org",
