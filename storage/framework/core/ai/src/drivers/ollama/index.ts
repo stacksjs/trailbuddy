@@ -141,7 +141,7 @@ export function createOllamaDriver(config: OllamaDriverConfig = {}): AIDriver {
         embeddings.push(data.embedding)
       }
 
-      return Array.isArray(input) ? embeddings : embeddings[0]
+      return Array.isArray(input) ? embeddings : embeddings[0]!
     },
   }
 }
@@ -159,7 +159,14 @@ export async function chat(
     temperature,
     topP,
     stop,
+    responseFormat,
   } = options
+
+  const format = responseFormat?.type === 'json_schema'
+    ? responseFormat.json_schema.schema
+    : responseFormat?.type === 'json_object'
+      ? 'json'
+      : undefined
 
   const response = await fetch(`${config.host}/api/chat`, {
     method: 'POST',
@@ -168,6 +175,7 @@ export async function chat(
       model,
       messages,
       stream: false,
+      format,
       options: {
         temperature,
         top_p: topP,
@@ -343,7 +351,7 @@ export async function embed(
     embeddings.push(data.embedding)
   }
 
-  return Array.isArray(input) ? embeddings : embeddings[0]
+  return Array.isArray(input) ? embeddings : embeddings[0]!
 }
 
 /**
@@ -417,7 +425,7 @@ export async function pullModel(
       try {
         const data = JSON.parse(line) as { status?: string; completed?: number; total?: number }
         if (onProgress) {
-          onProgress(data.status, data.completed, data.total)
+          onProgress(data.status ?? '', data.completed, data.total)
         }
       }
       catch {

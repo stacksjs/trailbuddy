@@ -46,15 +46,7 @@ export async function authUser(): Promise<UserModel | undefined> {
     return undefined
   }
 
-  return await Auth.getUserFromToken(token)
-}
-
-/**
- * Alias for authUser() - for backwards compatibility
- * @deprecated Use authUser() instead
- */
-export async function getCurrentUser(): Promise<UserModel | undefined> {
-  return authUser()
+  return await Auth.getUserFromToken(token) as UserModel | undefined
 }
 
 export async function check(): Promise<boolean> {

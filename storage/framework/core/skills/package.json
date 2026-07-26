@@ -1,8 +1,9 @@
 {
   "name": "@stacksjs/skills",
   "type": "module",
-  "version": "0.70.45",
-  "description": "Agent skills for the Stacks framework, following the agentskills.io standard.",
+  "sideEffects": false,
+  "version": "0.70.163",
+  "description": "Reads the Stacks framework's agent skills, following the agentskills.io standard. The skills themselves ship in storage/framework/defaults/ai/skills.",
   "author": "Chris Breuer",
   "contributors": [
     "Chris Breuer <chris@stacksjs.com>"
@@ -28,20 +29,23 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "bun": "./src/index.ts",
-      "import": "./dist/index.js"
+      "development": "./src/index.ts",
+      "bun": "./dist/index.js",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./*": {
-      "bun": "./src/*",
-      "import": "./dist/*"
+      "development": "./src/*",
+      "bun": "./dist/*",
+      "import": "./dist/*",
+      "default": "./dist/*"
     }
   },
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "README.md",
-    "dist",
-    "skills"
+    "dist"
   ],
   "scripts": {
     "build": "bun build.ts",
@@ -53,7 +57,7 @@
     "@stacksjs/storage": "workspace:*"
   },
   "devDependencies": {
-    "better-dx": "^0.2.12",
+    "better-dx": "catalog:",
     "@stacksjs/types": "workspace:*"
   }
 }

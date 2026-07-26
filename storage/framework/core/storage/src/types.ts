@@ -1,5 +1,4 @@
 import type { Buffer } from 'node:buffer'
-import type { ReadableStream } from 'node:stream/web'
 
 /**
  * File contents can be a string, Buffer, Uint8Array, or ReadableStream
@@ -335,6 +334,15 @@ export interface StorageAdapterConfig {
   region?: string
   /** S3 key prefix */
   prefix?: string
+  /**
+   * Endpoint URL for S3-compatible providers (Filebase, Backblaze B2,
+   * Cloudflare R2, Hetzner Object Storage, MinIO, ...). May include the
+   * scheme (`https://...`); the adapter passes the host on to the S3 client.
+   * Omit for AWS S3.
+   */
+  endpoint?: string
+  /** Force path-style addressing instead of virtual-hosted-style. */
+  usePathStyleEndpoint?: boolean
   /**
    * AWS credentials. When omitted the adapter falls back to the
    * standard env vars (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`,

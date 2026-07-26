@@ -1,7 +1,8 @@
 {
   "name": "@stacksjs/storage",
   "type": "module",
-  "version": "0.70.45",
+  "sideEffects": false,
+  "version": "0.70.163",
   "description": "The Stacks file system.",
   "author": "Chris Breuer",
   "contributors": [
@@ -51,11 +52,12 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@stacksjs/ts-cloud": "^0.7.10"
+    "@stacksjs/ts-cloud": "catalog:",
+    "ts-images": "^0.1.11"
   },
   "devDependencies": {
     "@stacksjs/arrays": "workspace:*",
-    "better-dx": "^0.2.12",
+    "better-dx": "catalog:",
     "@stacksjs/error-handling": "workspace:*",
     "@stacksjs/path": "workspace:*",
     "@stacksjs/strings": "workspace:*",

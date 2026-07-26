@@ -36,7 +36,13 @@ const fastCommands = [
   'scaffold:crud',
 ]
 const isRepl = !process.argv[1]
-const skipPreloader = isRepl || (args.length > 0 && fastCommands.some(cmd => args[0] === cmd || args[0].startsWith(`${cmd}:`)))
+// Dependency installation runs package lifecycle scripts before Bun has finished
+// linking every workspace package. Loading @stacksjs/env (or the wider auto-import
+// graph) from a postinstall script can therefore fail even though the install is
+// otherwise valid. Postinstall scripts are bootstrap work and must stay independent
+// of the application runtime preloader.
+const isPostinstall = process.env.npm_lifecycle_event === 'postinstall'
+const skipPreloader = isRepl || isPostinstall || (args.length > 0 && fastCommands.some(cmd => args[0] === cmd || args[0].startsWith(`${cmd}:`)))
 
 if (!skipPreloader) {
   // Detect production/deployment commands and set environment accordingly BEFORE loading env files
@@ -44,11 +50,20 @@ if (!skipPreloader) {
   const productionCommands = ['cloud:remove', 'cloud:rm', 'cloud:destroy', 'cloud:cleanup', 'cloud:clean-up', 'undeploy']
   const isProductionCommand = productionCommands.includes(args[0])
 
-  // Handle deploy command which can have an optional env argument: `deploy [env]`
+  // Handle deploy command: the env may be positional (`deploy staging`) or a
+  // flag (`deploy --staging`). CI deploys use the flag form, so detecting only
+  // the positional arg left APP_ENV wrong and loaded the wrong .env file.
   const isDeployCommand = args[0] === 'deploy'
   if (isDeployCommand) {
-    // Check if second arg is an environment (not a flag starting with -)
-    const deployEnv = args[1] && !args[1].startsWith('-') ? args[1] : 'production'
+    const flagEnv = args.includes('--production') || args.includes('--prod')
+      ? 'production'
+      : args.includes('--staging')
+        ? 'staging'
+        : args.includes('--development') || args.includes('--dev')
+          ? 'development'
+          : undefined
+    const positionalEnv = args[1] && !args[1].startsWith('-') ? args[1] : undefined
+    const deployEnv = flagEnv ?? positionalEnv ?? 'production'
     process.env.APP_ENV = deployEnv
     process.env.NODE_ENV = deployEnv
   }
@@ -56,13 +71,42 @@ if (!skipPreloader) {
     process.env.APP_ENV = 'production'
     process.env.NODE_ENV = 'production'
   }
+}
 
-  // Load .env files with encryption support using our native Bun plugin
-  const { autoLoadEnv } = await import('@stacksjs/env')
+// Decrypt and load .env files for real command invocations. This is gated on
+// isRepl / isPostinstall ONLY, not on the fast-command `skipPreloader`: fast
+// commands (migrate, build, seed, ...) DO need decrypted config, which the old
+// `skipPreloader` gate wrongly denied them (an encrypted `.env.<env>` never
+// decrypted for those commands even with the key present). See stacksjs/stacks#2048.
+//
+// Postinstall still skips: @stacksjs/env may not be linked yet mid-install, so
+// importing it there can fail (see the isPostinstall note above). The REPL keeps
+// its original skip. The heavy auto-import graph below stays gated separately via
+// `skipAutoImports`.
+if (!isRepl && !isPostinstall) {
+  // Resolve the vendored source first; the package fallback covers non-standard
+  // layouts where defaults is consumed outside the framework layout.
+  const envPackage = '@stacksjs/' + 'env'
+  const { autoLoadEnv } = await import('../../../core/env/src/plugin.ts')
+    .catch(() => import(envPackage))
 
-  // Auto-load .env files based on environment
-  // Set quiet: true to prevent duplicate logging across multiple processes
-  autoLoadEnv({ quiet: true })
+  // Pass the resolved env so deploy commands deterministically select their
+  // matching `.env.<env>` file. autoLoadEnv discovers `.env.keys` by default,
+  // replaces ciphertext that Bun preloaded, and preserves genuine shell/CI
+  // overrides while applying environment-specific file precedence. quiet: true
+  // prevents duplicate logging across multiple processes.
+  autoLoadEnv({ quiet: true, env: process.env.APP_ENV })
+
+  // Tell stx and ts-cloud where their state lives before anything imports them.
+  // Both keep it under `storage/` in a Stacks app rather than in a dot-directory
+  // at the project root, both take the location from their own config, and both
+  // read an environment variable ahead of that config — which is also what
+  // carries the answer into every process a command spawns. Setting it here
+  // means no boot order can leave a library writing to `.stx` / `.ts-cloud`.
+  const pathPkg = '@stacksjs/' + 'path'
+  const { applyRuntimeDirectoryEnv } = await import('../../../core/path/src/index.ts')
+    .catch(() => import(pathPkg))
+  applyRuntimeDirectoryEnv()
 }
 
 // stx template engine plugin
@@ -78,7 +122,9 @@ if (!skipPreloader) {
 // explicitly when needed — see #1835 root cause 3.
 export async function loadAutoImports() {
   const { Glob } = await import('bun')
-  const path = await import('@stacksjs/path')
+  const pathPackage = '@stacksjs/' + 'path'
+  const path = await import('../../../core/path/src/index.ts')
+    .catch(() => import(pathPackage))
 
   // CRITICAL: Never overwrite these built-in globals
   const protectedGlobals = new Set([
@@ -290,7 +336,8 @@ if (!skipAutoImports) {
 
   // Run package auto-discovery after all imports are loaded
   try {
-    const { discoverPackages } = await import('@stacksjs/actions')
+    const actionsPackage = '@stacksjs/' + 'actions'
+    const { discoverPackages } = await import(actionsPackage)
     await discoverPackages()
   }
   catch {

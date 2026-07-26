@@ -159,7 +159,11 @@ export function needsRehash(hash: string, options?: HashMakeOptions): boolean {
 
   // Check cost/rounds for bcrypt
   if (currentAlgorithm === 'bcrypt') {
-    const configuredRounds = options?.rounds || config.bcrypt?.rounds || 10
+    // Default must match hash creation (`bcryptEncode` uses 12). With 10
+    // here, any config that omits `bcrypt.rounds` created hashes at cost 12
+    // but compared against 10, so needsRehash returned true forever and
+    // every successful login re-hashed the password endlessly. #1985.
+    const configuredRounds = options?.rounds || config.bcrypt?.rounds || 12
     if (hashInfo.options.rounds !== configuredRounds) {
       return true
     }
@@ -263,37 +267,6 @@ export async function argon2Encode(
     memoryCost: memory,
     timeCost: time,
   })
-}
-
-/**
- * Verify a password against an Argon2 hash.
- *
- * Refuses to verify hashes that aren't actually Argon2 — `Bun.password.verify`
- * auto-detects the algorithm from the hash prefix, which means a stray
- * call `argon2Verify(password, bcryptHash)` would return `true` if the
- * password matched. The algorithm guard restores the function-name
- * contract (stacksjs/stacks#1861 H-8).
- *
- * @deprecated Use check() instead which auto-detects the algorithm
- */
-export async function argon2Verify(password: string, hash: string): Promise<boolean> {
-  const algorithm = detectAlgorithm(hash)
-  if (algorithm !== 'argon2' && algorithm !== 'argon2i' && algorithm !== 'argon2id' && algorithm !== 'argon2d')
-    return false
-  return await verifyPassword(password, hash)
-}
-
-/**
- * Verify a password against a bcrypt hash.
- *
- * Refuses to verify hashes that aren't actually bcrypt — see the note
- * on {@link argon2Verify} (stacksjs/stacks#1861 H-8).
- *
- * @deprecated Use check() instead which auto-detects the algorithm
- */
-export async function bcryptVerify(password: string, hash: string): Promise<boolean> {
-  if (detectAlgorithm(hash) !== 'bcrypt') return false
-  return await verifyPassword(password, hash)
 }
 
 /**

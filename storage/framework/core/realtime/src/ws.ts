@@ -3,16 +3,6 @@ import type { BroadcastServer } from 'ts-broadcasting'
 import { getServer, setServer } from './server-instance'
 
 /**
- * Set the broadcast server instance
- * @deprecated Use setServer from './server-instance' instead
- */
-export function setBunSocket(server: BroadcastServer | null): void {
-  if (server) {
-    setServer(server)
-  }
-}
-
-/**
  * Store WebSocket event in the database
  * Note: This function is now a no-op. WebSocket events are tracked internally by ts-broadcasting.
  */
@@ -91,7 +81,7 @@ export async function handleWebSocketRequest(req: Request, server: Server<any>):
       // Pass the auth data through to the upgraded socket so
       // downstream handlers (channel auth callbacks, presence
       // tracking) can read it via `ws.data` without re-parsing.
-      const upgraded = server.upgrade(req, result.data ? { data: result.data } : undefined)
+      const upgraded = (server.upgrade as any)(req, result.data ? { data: result.data } : undefined)
       if (upgraded) return undefined
       return new Response('WebSocket upgrade failed', { status: 400 })
     }
