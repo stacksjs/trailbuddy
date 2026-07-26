@@ -7,8 +7,9 @@
     "url": "git+https://github.com/stacksjs/wildloop.git"
   },
   "dependencies": {
-    "@stacksjs/components": "^0.2.82",
-    "@stacksjs/stx": "^0.2.82",
+    "@stacksjs/components": "catalog:",
+    "@stacksjs/stx": "catalog:",
+    "bun-plugin-stx": "catalog:",
     "stacks": "workspace:*",
     "ts-rate-limiter": "0.4.2"
   },
@@ -108,6 +109,7 @@
     "@stacksjs/ts-cloud": "^0.7.60",
     "better-dx": "^0.2.17",
     "bun-git-hooks": "^0.3.2",
+    "bun-plugin-stx": "^0.2.100",
     "bun-query-builder": "^0.1.56",
     "pickier": "^0.1.35",
     "redis": "^5.12.1",

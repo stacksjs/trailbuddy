@@ -17,32 +17,33 @@ export { default as UserNotification } from '../../../app/Models/UserNotificatio
 export { default as User } from '../../../app/Models/User'
 export { default as TerritoryStats } from '../../../app/Models/TerritoryStats'
 export { default as ClubMember } from '../../../app/Models/ClubMember'
-// Skipped 'Tag' — owned by a disabled feature bundle. Run `./buddy <feature>:install` to enable.
+export { default as Tag } from '../defaults/app/Models/Tag'
 export { default as PaymentProduct } from '../defaults/app/Models/PaymentProduct'
 export { default as FailedJob } from '../defaults/app/Models/FailedJob'
 export { default as SubscriberEmail } from '../defaults/app/Models/SubscriberEmail'
-// Skipped 'CampaignSend' — owned by a disabled feature bundle. Run `./buddy <feature>:install` to enable.
+export { default as CampaignSend } from '../defaults/app/Models/CampaignSend'
 export { default as Label } from '../defaults/app/Models/Label'
-// Skipped 'SocialPost' — owned by a disabled feature bundle. Run `./buddy <feature>:install` to enable.
-// Skipped 'EmailListSubscriber' — owned by a disabled feature bundle. Run `./buddy <feature>:install` to enable.
+export { default as SocialPost } from '../defaults/app/Models/SocialPost'
+export { default as EmailListSubscriber } from '../defaults/app/Models/EmailListSubscriber'
 export { default as PaymentMethod } from '../defaults/app/Models/PaymentMethod'
-// Skipped 'Campaign' — owned by a disabled feature bundle. Run `./buddy <feature>:install` to enable.
+export { default as Campaign } from '../defaults/app/Models/Campaign'
 export { default as BoardColumn } from '../defaults/app/Models/BoardColumn'
 export { default as Card } from '../defaults/app/Models/Card'
 export { default as PaymentTransaction } from '../defaults/app/Models/PaymentTransaction'
 export { default as Team } from '../defaults/app/Models/Team'
 // Skipped 'Request' — would shadow a built-in global. Import directly if needed.
 // export { default as Request } from '../defaults/app/Models/Request'
-// Skipped 'EmailList' — owned by a disabled feature bundle. Run `./buddy <feature>:install` to enable.
+export { default as EmailList } from '../defaults/app/Models/EmailList'
 export { default as Subscriber } from '../defaults/app/Models/Subscriber'
 export { default as Notification } from '../defaults/app/Models/Notification'
 export { default as Job } from '../defaults/app/Models/Job'
 export { default as Log } from '../defaults/app/Models/Log'
 export { default as Subscription } from '../defaults/app/Models/Subscription'
 export { default as Deployment } from '../defaults/app/Models/Deployment'
-// Skipped 'Error' — owned by a disabled feature bundle. Run `./buddy <feature>:install` to enable.
+// Skipped 'Error' — would shadow a built-in global. Import directly if needed.
+// export { default as Error } from '../defaults/app/Models/Error'
 export { default as Release } from '../defaults/app/Models/Release'
-// Skipped 'Comment' — owned by a disabled feature bundle. Run `./buddy <feature>:install` to enable.
+export { default as Comment } from '../defaults/app/Models/Comment'
 export { default as Board } from '../defaults/app/Models/Board'
 export { default as CardComment } from '../defaults/app/Models/CardComment'
 export { default as Websocket } from '../defaults/app/Models/realtime/Websocket'
