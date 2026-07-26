@@ -31,53 +31,53 @@
   })
 </script>
 
-  <!-- Hero: the trail app first, territory as the thing that sets it apart -->
-  <section class="relative bg-gradient-to-br from-slate-900 via-emerald-900 to-teal-800 overflow-hidden">
-    <div class="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_30%_20%,#34d399,transparent_50%)]"></div>
-    <div class="relative mx-auto px-4 py-16 sm:px-6 lg:px-8 lg:py-20 max-w-7xl">
-      <div class="grid gap-10 items-center lg:grid-cols-2">
+  <!-- Hero. Neutral surface in both themes: the accent earns attention on the
+       pill, the CTA and the numbers, so the background stays out of the way. -->
+  <section class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+    <div class="mx-auto px-4 py-16 sm:px-6 lg:px-8 lg:py-24 max-w-7xl">
+      <div class="grid gap-12 items-center lg:grid-cols-2">
         <div>
-          <span class="inline-flex items-center gap-1.5 mb-4 px-3 py-1 text-xs font-bold text-emerald-300 bg-emerald-500/20 rounded-full border border-emerald-400/30">
+          <span class="inline-flex items-center gap-1.5 mb-5 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 rounded-full border border-emerald-200 dark:border-emerald-500/25">
             <Icon name="map-pin" size="14" />
             Trail discovery and GPS tracking
           </span>
-          <h1 class="mb-4 font-display text-4xl font-bold text-white md:text-5xl lg:text-6xl leading-tight">Find the trail. Log the miles. Own the map.</h1>
-          <p class="mb-8 text-lg text-slate-300 max-w-lg">Search real trails with ratings, distance and elevation. Track every run and hike with live pace and splits. Then close a loop and the ground inside it is yours to hold.</p>
+          <h1 class="mb-5 font-display text-4xl font-bold text-slate-900 dark:text-white md:text-5xl lg:text-6xl tracking-tighter leading-[1.05]">Find the trail. Log the miles. Own the map.</h1>
+          <p class="mb-8 text-lg text-slate-600 dark:text-slate-400 max-w-md leading-relaxed">Real trails, live GPS tracking, and every loop you close becomes ground you hold.</p>
           <div class="flex flex-col gap-3 sm:flex-row">
-            <StxLink to="/record" class="inline-flex items-center justify-center gap-2 px-8 py-3.5 font-bold text-slate-900 bg-emerald-400 hover:bg-emerald-300 rounded-full shadow-lg shadow-emerald-500/30 transition">
+            <StxLink to="/record" class="inline-flex items-center justify-center gap-2 px-8 py-3.5 font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition active:scale-[0.98]">
               <Icon name="play" size="18" />
               Start tracking
             </StxLink>
-            <StxLink to="/trails" class="px-8 py-3.5 text-center font-semibold text-white border-2 border-white/25 hover:bg-white/10 rounded-full transition">Browse trails</StxLink>
+            <StxLink to="/trails" class="px-8 py-3.5 text-center font-semibold text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full transition active:scale-[0.98]">Browse trails</StxLink>
           </div>
         </div>
 
-        <div class="game-dashboard-card">
-          <p class="mb-4 text-xs font-bold text-emerald-400 uppercase tracking-wider">Your week</p>
-          <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-6">
+          <p class="mb-5 metric-label">Your week</p>
+          <div class="grid grid-cols-2 gap-y-6 gap-x-4">
             <div>
-              <p class="text-3xl font-bold text-white">{{ (summary?.miles ?? 0).toFixed(1) }}</p>
-              <p class="metric-label text-slate-400">Miles</p>
+              <p class="font-display text-3xl font-bold text-slate-900 dark:text-white tabular-nums">{{ (summary?.miles ?? 0).toFixed(1) }}</p>
+              <p class="metric-label mt-1">Miles</p>
             </div>
             <div>
-              <p class="text-3xl font-bold text-white">{{ (summary?.feet ?? 0).toLocaleString() }}</p>
-              <p class="metric-label text-slate-400">Ft climbed</p>
+              <p class="font-display text-3xl font-bold text-slate-900 dark:text-white tabular-nums">{{ (summary?.feet ?? 0).toLocaleString() }}</p>
+              <p class="metric-label mt-1">Ft climbed</p>
             </div>
             <div>
-              <p class="text-3xl font-bold text-emerald-400">{{ summary?.zones ?? 0 }}</p>
-              <p class="metric-label text-slate-400">Zones held</p>
+              <p class="font-display text-3xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{{ summary?.zones ?? 0 }}</p>
+              <p class="metric-label mt-1">Zones held</p>
             </div>
             <div>
-              <p class="text-3xl font-bold text-white">{{ (summary?.km2 ?? 0).toFixed(1) + ' km²' }}</p>
-              <p class="metric-label text-slate-400">Ground held</p>
+              <p class="font-display text-3xl font-bold text-slate-900 dark:text-white tabular-nums">{{ (summary?.km2 ?? 0).toFixed(1) + ' km²' }}</p>
+              <p class="metric-label mt-1">Ground held</p>
             </div>
           </div>
-          <div :if="liveBattles.length > 0" class="pt-4 border-t border-white/10">
-            <p class="flex gap-2 items-center mb-2 text-xs font-semibold text-orange-400">
-              <span class="h-2 w-2 bg-red-500 rounded-full animate-pulse"></span>
+          <div :if="liveBattles.length > 0" class="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800">
+            <p class="flex gap-2 items-center mb-1.5 text-sm font-semibold text-slate-900 dark:text-white">
+              <span class="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
               <span>{{ liveBattles.length + ' live battle' + (liveBattles.length > 1 ? 's' : '') }}</span>
             </p>
-            <StxLink to="/battles" class="text-sm text-white/80 hover:text-white underline">Watch the map →</StxLink>
+            <StxLink to="/battles" class="text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:underline">Watch the map →</StxLink>
           </div>
         </div>
       </div>
@@ -111,32 +111,36 @@
     </div>
   </section>
 
-  <!-- How it works -->
-  <section class="mx-auto px-4 py-14 sm:px-6 lg:px-8 max-w-7xl">
-    <h2 class="mb-8 font-bold font-display text-2xl text-center dark:text-white md:text-3xl">How WildLoop works</h2>
-    <div class="grid gap-6 md:grid-cols-3">
-      <div class="card text-center">
-        <div class="flex items-center justify-center mx-auto mb-3 h-12 w-12 text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl">
-          <Icon name="map" size="24" />
+  <!-- How it works.
+       A numbered list divided by rules, not three identical cards: the
+       equal-thirds card row is the most templated section on the web, and the
+       three coloured icon chips it used to carry broke the single-accent lock. -->
+  <section class="mx-auto px-4 py-16 sm:px-6 lg:px-8 max-w-5xl">
+    <h2 class="mb-10 font-bold font-display text-2xl dark:text-white md:text-3xl tracking-tight">How WildLoop works</h2>
+
+    <ol class="divide-y divide-slate-200 dark:divide-slate-700 border-t border-b border-slate-200 dark:border-slate-700">
+      <li class="grid gap-3 py-7 sm:grid-cols-[4rem_1fr] sm:gap-8">
+        <span class="font-display text-3xl font-bold text-emerald-500/70 leading-none tabular-nums">01</span>
+        <div>
+          <h3 class="mb-1.5 font-bold text-lg dark:text-white">Find a trail</h3>
+          <p class="text-gray-500 dark:text-slate-400 max-w-[60ch] leading-relaxed">Browse routes by distance, elevation and difficulty, with community ratings, photos and current conditions.</p>
         </div>
-        <h3 class="mb-2 font-bold dark:text-white">1. Find a trail</h3>
-        <p class="text-sm text-gray-500 dark:text-slate-400">Browse routes by distance, elevation and difficulty, with community ratings, photos and current conditions.</p>
-      </div>
-      <div class="card text-center">
-        <div class="flex items-center justify-center mx-auto mb-3 h-12 w-12 text-purple-600 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
-          <Icon name="footprints" size="24" />
+      </li>
+      <li class="grid gap-3 py-7 sm:grid-cols-[4rem_1fr] sm:gap-8">
+        <span class="font-display text-3xl font-bold text-emerald-500/70 leading-none tabular-nums">02</span>
+        <div>
+          <h3 class="mb-1.5 font-bold text-lg dark:text-white">Track it</h3>
+          <p class="text-gray-500 dark:text-slate-400 max-w-[60ch] leading-relaxed">Record any run or hike with live GPS. Pace, splits, elevation and heart rate, saved to a feed your friends can follow.</p>
         </div>
-        <h3 class="mb-2 font-bold dark:text-white">2. Track it</h3>
-        <p class="text-sm text-gray-500 dark:text-slate-400">Record any run or hike with live GPS. Pace, splits, elevation and heart rate, saved to a feed your friends can follow.</p>
-      </div>
-      <div class="card text-center">
-        <div class="flex items-center justify-center mx-auto mb-3 h-12 w-12 text-orange-600 bg-orange-100 dark:bg-orange-900/30 rounded-xl">
-          <Icon name="trophy" size="24" />
+      </li>
+      <li class="grid gap-3 py-7 sm:grid-cols-[4rem_1fr] sm:gap-8">
+        <span class="font-display text-3xl font-bold text-emerald-500 leading-none tabular-nums">03</span>
+        <div>
+          <h3 class="mb-1.5 font-bold text-lg dark:text-white">Claim the loop</h3>
+          <p class="text-gray-500 dark:text-slate-400 max-w-[60ch] leading-relaxed">Close a loop and the ground inside it becomes yours. Hold it, grow it, or take a neighboring zone on your next outing.</p>
         </div>
-        <h3 class="mb-2 font-bold dark:text-white">3. Claim the loop</h3>
-        <p class="text-sm text-gray-500 dark:text-slate-400">Close a loop and the ground inside it becomes yours. Hold it, grow it, or take a neighboring zone on your next outing.</p>
-      </div>
-    </div>
+      </li>
+    </ol>
   </section>
 
   <!-- Recent activity feed -->
@@ -180,7 +184,7 @@
           <h2 class="font-bold font-display text-2xl dark:text-white">Your territories</h2>
           <p class="text-gray-500 dark:text-slate-400">The ground your loops have earned you so far</p>
         </div>
-        <StxLink to="/territories" class="px-5 py-2.5 font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition">Open territory map</StxLink>
+        <StxLink to="/territories" class="px-5 py-2.5 font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition active:scale-[0.98]">Open territory map</StxLink>
       </div>
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <template :for="t in myTerritories">
@@ -203,11 +207,11 @@
   </section>
 
   <!-- CTA -->
-  <section class="bg-gradient-to-r from-emerald-600 to-teal-600 py-16">
-    <div class="mx-auto px-4 sm:px-6 lg:px-8 max-w-3xl text-center">
-      <h2 class="mb-3 font-bold font-display text-3xl text-white">Your next loop is out there</h2>
-      <p class="mb-8 text-white/85">Pick a trail, track the miles, and see how much of the map you can hold.</p>
-      <StxLink to="/record" class="inline-flex items-center gap-2 px-10 py-4 font-bold text-emerald-800 bg-white hover:bg-gray-100 rounded-full shadow-xl transition">
+  <section class="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-20">
+    <div class="mx-auto px-4 sm:px-6 lg:px-8 max-w-2xl text-center">
+      <h2 class="mb-3 font-bold font-display text-3xl text-slate-900 dark:text-white tracking-tight">Your next loop is out there</h2>
+      <p class="mb-8 text-slate-600 dark:text-slate-400 leading-relaxed">Pick a trail, track the miles, and see how much of the map you can hold.</p>
+      <StxLink to="/record" class="inline-flex items-center gap-2 px-10 py-4 font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition active:scale-[0.98]">
         <Icon name="play" size="20" />
         Start tracking
       </StxLink>

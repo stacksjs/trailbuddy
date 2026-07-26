@@ -28,13 +28,13 @@
 </script>
 
   <!-- Hero -->
-  <section class="relative overflow-hidden pb-16 pt-24 bg-gradient-to-br from-orange-600 via-red-600 to-orange-700">
-    <div class="relative mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl text-center">
-      <h1 class="mb-6 font-bold font-display text-4xl text-white md:text-5xl lg:text-6xl">Your Conquests</h1>
-      <p class="mb-8 mx-auto max-w-2xl text-white/80 text-xl">Track every territory you have taken, and every attempt on the ground you hold.</p>
-      <div class="flex flex-col gap-4 items-center justify-center sm:flex-row">
-        <StxLink to="/territories" class="px-8 py-4 w-full sm:w-auto font-semibold text-lg text-orange-700 bg-white hover:bg-gray-100 rounded-full shadow-xl transition">View Map</StxLink>
-        <StxLink to="/record" class="px-8 py-4 w-full sm:w-auto font-semibold text-lg text-white hover:bg-white/10 border-2 border-white/30 rounded-full transition">Start a Conquest Run</StxLink>
+  <section class="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 pt-14 pb-12">
+    <div class="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+      <h1 class="mb-3 font-bold font-display text-3xl text-slate-900 dark:text-white md:text-4xl tracking-tight">Your conquests</h1>
+      <p class="mb-7 max-w-xl text-slate-600 dark:text-slate-400 leading-relaxed">Track every territory you have taken, and every attempt on the ground you hold.</p>
+      <div class="flex flex-col gap-3 sm:flex-row">
+        <StxLink to="/territories" class="px-6 py-3 text-center font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition active:scale-[0.98]">View map</StxLink>
+        <StxLink to="/record" class="px-6 py-3 text-center font-semibold text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full transition active:scale-[0.98]">Start tracking</StxLink>
       </div>
     </div>
   </section>

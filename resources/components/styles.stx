@@ -1,4 +1,27 @@
 <style>
+  /* ==========================================================================
+     WildLoop design system.
+
+     Three locks the rest of the app inherits:
+       - ONE accent (emerald) on cool slate neutrals. No second hue.
+       - ONE radius scale: pill for controls, --r-card for surfaces,
+         --r-control for inputs. Nothing invents its own.
+       - Shadows are tinted toward the surface hue, never pure black.
+     ========================================================================== */
+  :root {
+    --r-card: 1rem;
+    --r-control: 0.625rem;
+
+    --accent: #059669;
+    --accent-bright: #34d399;
+
+    /* Tinted, not black: a neutral-slate cast reads as depth rather than dirt. */
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 4px 16px -4px rgba(15, 23, 42, 0.10);
+    --shadow-lg: 0 18px 40px -12px rgba(15, 23, 42, 0.18);
+    --shadow-accent: 0 10px 30px -8px rgba(5, 150, 105, 0.35);
+  }
+
   /* ts-maps */
   .ts-map-container,
   .trail-map-panel {
@@ -13,35 +36,77 @@
   .ts-map-container [class*='attribution'] {
     font-size: 9px !important;
   }
+
+  /* Geist over Inter: Inter is the default every generated site reaches for.
+     15px base because 14px body copy on a content-led product reads cramped. */
   body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    font-size: 14px;
+    font-family: 'Geist', system-ui, -apple-system, sans-serif;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
   }
 
   .font-display {
     font-family: 'Outfit', system-ui, sans-serif;
+    letter-spacing: -0.02em;
   }
 
   .nav-active {
-    color: #059669 !important;
+    color: var(--accent) !important;
     font-weight: 600;
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, #059669, #34d399);
+    background: linear-gradient(135deg, var(--accent), var(--accent-bright));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .gradient-bg {
-    background: linear-gradient(135deg, #065f46, #059669, #34d399);
+    background: linear-gradient(135deg, #065f46, var(--accent), var(--accent-bright));
   }
 
+  /* The surface primitive. Every `class="card"` in the views resolved to
+     nothing before this existed, so panels rendered as unstyled text blocks. */
+  .card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--r-card);
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .dark .card {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: none;
+  }
+
+  /* Only interactive cards lift. A static panel that moves on hover is noise. */
+  a.card:hover,
+  button.card:hover {
+    border-color: var(--accent-bright);
+    box-shadow: var(--shadow-md);
+  }
+
+  a.card:active,
+  button.card:active { transform: scale(0.995); }
+
+  .metric-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .dark .metric-label { color: #94a3b8; }
+
   /* Trail card hover */
-  .trail-card { transition: all 0.3s ease; }
-  .trail-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.12); }
-  .trail-card:hover .trail-image { transform: scale(1.05); }
+  .trail-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+  .trail-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+  .trail-card:hover .trail-image { transform: scale(1.04); }
   .trail-image { transition: transform 0.5s ease; }
 
   /* Map preview */
@@ -59,7 +124,7 @@
   .game-dashboard-card {
     background: rgba(15, 23, 42, 0.6);
     border: 1px solid rgba(52, 211, 153, 0.25);
-    border-radius: 1rem;
+    border-radius: var(--r-card);
     padding: 1.5rem;
     backdrop-filter: blur(12px);
   }
@@ -71,38 +136,55 @@
     overflow: hidden;
   }
 
-  .dark .capture-bar {
-    background: #334155;
-  }
+  .dark .capture-bar { background: #334155; }
 
+  /* Emerald ramp, not the old purple-to-green: one accent per project, and a
+     second hue here made capture progress read as a different feature. */
   .capture-bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, #a855f7, #059669);
+    background: linear-gradient(90deg, var(--accent), var(--accent-bright));
     border-radius: 9999px;
     transition: width 0.25s ease;
   }
 
-  .capture-toast {
-    animation: capture-pop 0.35s ease;
-  }
+  .capture-toast { animation: capture-pop 0.35s ease; }
 
   @keyframes capture-pop {
     0% { transform: translate(-50%, -8px) scale(0.9); opacity: 0; }
     100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
   }
 
-  .strava-stat {
+  /* Skeleton for list/stat loading, shaped by the caller so it matches the
+     final layout instead of a generic spinner. */
+  .skeleton {
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 37%, #f1f5f9 63%);
+    background-size: 400% 100%;
+    animation: skeleton-sweep 1.4s ease infinite;
+    border-radius: var(--r-control);
+  }
+
+  .dark .skeleton {
+    background: linear-gradient(90deg, #1e293b 25%, #334155 37%, #1e293b 63%);
+    background-size: 400% 100%;
+  }
+
+  @keyframes skeleton-sweep {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+  }
+
+  .stat-tile {
     text-align: center;
-    padding: 0.5rem;
-    border-radius: 0.5rem;
+    padding: 0.625rem;
+    border-radius: var(--r-control);
     background: #f8fafc;
   }
 
-  .dark .strava-stat {
-    background: #0f172a;
-  }
+  .dark .stat-tile { background: #0f172a; }
 
-  .record-btn-start {
+  .record-btn-start,
+  .record-btn-pause,
+  .record-btn-resume {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -110,30 +192,15 @@
     width: 5rem;
     font-size: 1.5rem;
     color: white;
-    background: #059669;
     border-radius: 9999px;
-    box-shadow: 0 10px 25px rgba(5, 150, 105, 0.35);
-    transition: background 0.2s;
+    transition: background 0.2s ease, transform 0.12s ease;
   }
 
+  .record-btn-start { background: var(--accent); box-shadow: var(--shadow-accent); }
   .record-btn-start:hover { background: #047857; }
-
-  .record-btn-pause, .record-btn-resume {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 5rem;
-    width: 5rem;
-    font-size: 1.5rem;
-    color: white;
-    border-radius: 9999px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-    transition: background 0.2s;
-  }
-
-  .record-btn-pause { background: #059669; }
+  .record-btn-pause { background: var(--accent); box-shadow: var(--shadow-accent); }
   .record-btn-pause:hover { background: #047857; }
-  .record-btn-resume { background: #eab308; }
+  .record-btn-resume { background: #eab308; box-shadow: 0 10px 30px -8px rgba(234, 179, 8, 0.35); }
   .record-btn-resume:hover { background: #ca8a04; }
 
   .record-btn-stop {
@@ -146,13 +213,38 @@
     color: white;
     background: #ef4444;
     border-radius: 9999px;
-    box-shadow: 0 8px 20px rgba(239, 68, 68, 0.35);
-    transition: background 0.2s;
+    box-shadow: 0 8px 20px -6px rgba(239, 68, 68, 0.35);
+    transition: background 0.2s ease, transform 0.12s ease;
   }
 
   .record-btn-stop:hover { background: #dc2626; }
 
+  /* Tactile press on every recorder control. */
+  .record-btn-start:active,
+  .record-btn-pause:active,
+  .record-btn-resume:active,
+  .record-btn-stop:active { transform: scale(0.96); }
+
+  /* Keyboard users get the same affordance mouse users do. */
+  :focus-visible {
+    outline: 2px solid var(--accent-bright);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  .dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+  /* Motion is decoration here, so it all yields to the OS preference. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    .trail-card:hover { transform: none; }
+  }
 </style>

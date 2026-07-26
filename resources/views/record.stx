@@ -124,23 +124,23 @@
         <p class="mt-1 metric-label">Elapsed</p>
       </div>
       <div class="grid gap-4 grid-cols-2 sm:grid-cols-5">
-        <div class="strava-stat">
+        <div class="stat-tile">
           <p class="font-bold text-2xl dark:text-white">{{ distance.toFixed(2) }}</p>
           <p class="metric-label">Miles</p>
         </div>
-        <div class="strava-stat">
+        <div class="stat-tile">
           <p class="font-bold text-2xl dark:text-white">{{ distance > 0.01 ? fmtDuration(Math.round(elapsed / distance)) : '--:--' }}</p>
           <p class="metric-label">Pace</p>
         </div>
-        <div class="strava-stat">
+        <div class="stat-tile">
           <p class="font-bold text-2xl dark:text-white">{{ elevation.toLocaleString() }}</p>
           <p class="metric-label">Elev ft</p>
         </div>
-        <div class="strava-stat">
+        <div class="stat-tile">
           <p class="font-bold text-2xl text-emerald-600">{{ conqueredIds.length }}</p>
           <p class="metric-label">Captured</p>
         </div>
-        <div class="strava-stat">
+        <div class="stat-tile">
           <p class="font-bold text-2xl text-purple-600">{{ sessionXp }}</p>
           <p class="metric-label">XP</p>
         </div>
