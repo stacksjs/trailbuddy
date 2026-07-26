@@ -41,8 +41,8 @@
             <Icon name="map-pin" size="14" />
             Trail discovery and GPS tracking
           </span>
-          <h1 class="mb-5 font-display text-4xl font-bold text-slate-900 dark:text-white md:text-5xl lg:text-6xl tracking-tighter leading-[1.05]">Find the trail. Log the miles. Own the map.</h1>
-          <p class="mb-8 text-lg text-slate-600 dark:text-slate-400 max-w-md leading-relaxed">Real trails, live GPS tracking, and every loop you close becomes ground you hold.</p>
+          <h1 class="mb-5 font-display text-4xl font-bold text-slate-900 dark:text-white md:text-5xl lg:text-6xl tracking-tighter leading-[1.05]">Every trail. Every mile. Every loop.</h1>
+          <p class="mb-8 text-lg text-slate-600 dark:text-slate-400 max-w-md leading-relaxed">Trail search, GPS tracking and a feed worth following. Plus the best territory game in the outdoors.</p>
           <div class="flex flex-col gap-3 sm:flex-row">
             <StxLink to="/record" class="inline-flex items-center justify-center gap-2 px-8 py-3.5 font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition active:scale-[0.98]">
               <Icon name="play" size="18" />
@@ -84,7 +84,7 @@
     </div>
   </section>
 
-  <!-- Weekly activity strip (Strava) -->
+  <!-- Weekly activity strip -->
   <section class="bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700">
     <div class="mx-auto px-4 py-8 sm:px-6 lg:px-8 max-w-7xl">
       <div class="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
@@ -107,6 +107,43 @@
           </div>
         </div>
         <StxLink to="/stats" class="text-sm font-semibold text-emerald-600 hover:text-emerald-700 whitespace-nowrap">Full stats →</StxLink>
+      </div>
+    </div>
+  </section>
+
+  <!-- What the app actually does. This sits high on purpose: the territory
+       layer is the differentiator, but discovery and tracking are the product,
+       and a visitor comparing us with AllTrails or Strava needs to see the
+       table stakes before the twist. Two columns of hairline-separated specs,
+       a different layout family from the numbered list further down. -->
+  <section class="mx-auto px-4 py-16 sm:px-6 lg:px-8 max-w-5xl">
+    <h2 class="mb-2 font-bold font-display text-2xl dark:text-white md:text-3xl tracking-tight">Everything you expect from a trail app</h2>
+    <p class="mb-10 text-slate-600 dark:text-slate-400 max-w-[60ch] leading-relaxed">Discovery and tracking are the product. The territory game is what you get on top.</p>
+
+    <div class="grid gap-x-12 gap-y-8 sm:grid-cols-2">
+      <div>
+        <h3 class="mb-1.5 font-semibold dark:text-white">Find a trail worth doing</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Search by distance, elevation and difficulty. Community ratings, photos, tags and current conditions on every route.</p>
+      </div>
+      <div>
+        <h3 class="mb-1.5 font-semibold dark:text-white">Track runs and hikes</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Live GPS with pace, mile splits, elevation gain and heart rate. Import a GPX or log it manually after the fact.</p>
+      </div>
+      <div>
+        <h3 class="mb-1.5 font-semibold dark:text-white">A feed worth following</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Follow other athletes, give kudos, comment on activities, and keep your training visible to the people you care about.</p>
+      </div>
+      <div>
+        <h3 class="mb-1.5 font-semibold dark:text-white">Segments and leaderboards</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Chase segment times on the climbs that matter, track streaks and personal records, and see where you land.</p>
+      </div>
+      <div>
+        <h3 class="mb-1.5 font-semibold dark:text-white">Clubs</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Run with a crew. Shared weekly mileage, club activity, and a reason to show up when it is raining.</p>
+      </div>
+      <div>
+        <h3 class="mb-1.5 font-semibold text-emerald-700 dark:text-emerald-400">Territory, if you want it</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Close a loop and the ground inside becomes yours to hold and defend. Ignore it entirely and everything above still works.</p>
       </div>
     </div>
   </section>
@@ -182,7 +219,7 @@
       <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-8">
         <div>
           <h2 class="font-bold font-display text-2xl dark:text-white">Your territories</h2>
-          <p class="text-gray-500 dark:text-slate-400">The ground your loops have earned you so far</p>
+          <p class="text-slate-500 dark:text-slate-400">The ground your loops have earned you so far</p>
         </div>
         <StxLink to="/territories" class="px-5 py-2.5 font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition active:scale-[0.98]">Open territory map</StxLink>
       </div>

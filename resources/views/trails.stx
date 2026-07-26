@@ -111,7 +111,7 @@
     <div :if="catalogLoading()" class="mb-4 text-sm text-emerald-600 dark:text-emerald-400">Loading trail database…</div>
     <div :if="catalogError()" class="mb-4 text-sm text-amber-600 dark:text-amber-400">{{ 'Using demo trails. ' + catalogError() }}</div>
 
-    <!-- Split: trail list + map (Strava-style) -->
+    <!-- Split: trail list + map -->
     <div class="grid gap-6 mb-6 lg:grid-cols-5">
       <div class="lg:col-span-2 space-y-3 max-h-[28rem] overflow-y-auto pr-1">
         <div class="flex overflow-x-auto gap-2 pb-2 lg:hidden">

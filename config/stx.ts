@@ -7,21 +7,21 @@ export default {
 
   app: {
     head: {
-      title: 'WildLoop - Find Trails, Track Runs, Claim Ground',
+      title: 'WildLoop - Trail Discovery and GPS Tracking for Runners and Hikers',
       meta: [
-        { name: 'description', content: 'Find and track trails for running and hiking, with live GPS, pace, splits and elevation. Every loop you close becomes territory you hold.' },
+        { name: 'description', content: 'Find and track trails for running and hiking, with live GPS, pace, splits, elevation, segments and a social feed. Every closed loop also claims territory.' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         // Open Graph
-        { property: 'og:title', content: 'WildLoop - Find Trails, Track Runs, Claim Ground' },
-        { property: 'og:description', content: 'Find and track trails for running and hiking, with live GPS, pace, splits and elevation. Every loop you close becomes territory you hold.' },
+        { property: 'og:title', content: 'WildLoop - Trail Discovery and GPS Tracking for Runners and Hikers' },
+        { property: 'og:description', content: 'Find and track trails for running and hiking, with live GPS, pace, splits, elevation, segments and a social feed. Every closed loop also claims territory.' },
         { property: 'og:type', content: 'website' },
         { property: 'og:image', content: '/images/og_image.jpeg' },
         { property: 'og:image:width', content: '1200' },
         { property: 'og:image:height', content: '630' },
         // Twitter Card
         { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:title', content: 'WildLoop - Find Trails, Track Runs, Claim Ground' },
-        { name: 'twitter:description', content: 'Find and track trails for running and hiking, with live GPS, pace, splits and elevation. Every loop you close becomes territory you hold.' },
+        { name: 'twitter:title', content: 'WildLoop - Trail Discovery and GPS Tracking for Runners and Hikers' },
+        { name: 'twitter:description', content: 'Find and track trails for running and hiking, with live GPS, pace, splits, elevation, segments and a social feed. Every closed loop also claims territory.' },
         { name: 'twitter:image', content: '/images/og_image.jpeg' },
       ],
       links: [

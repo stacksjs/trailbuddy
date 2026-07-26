@@ -117,7 +117,7 @@
       </template>
     </div>
 
-    <!-- Strava-style stats -->
+    <!-- Live activity stats -->
     <div class="mb-6 card">
       <div class="mb-4 text-center">
         <p class="font-bold font-mono text-5xl sm:text-6xl tracking-tight dark:text-white">{{ fmtDuration(elapsed) }}</p>
