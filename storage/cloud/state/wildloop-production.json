@@ -1,0 +1,8 @@
+{
+  "stackName": "wildloop-production",
+  "serverId": 133793977,
+  "serverName": "stacks-production-app",
+  "publicIp": "178.105.248.188",
+  "sshUser": "root",
+  "deployStoragePath": "/var/ts-cloud/staging"
+}

@@ -46,12 +46,43 @@ export const tsCloud: TsCloudConfig = {
     // bundle. 3049 is this project's slot on the shared box (localhost only;
     // rpx fronts it by Host). 3000-3048 are already claimed by the box owner
     // and the other tenants.
+    //
+    // `start` must name a module bun can execute: ts-cloud always builds
+    // `ExecStart=/usr/local/bin/bun <start>`. Pointing it at the root `buddy`
+    // script made bun parse a shell script as JavaScript, and the service
+    // crash-looped on `ROOT_DIR=$(...)` before it ever bound a port.
     main: {
       root: '.',
       path: '/',
       domain: 'wildloop.org',
-      start: './buddy serve',
+      start: 'bun storage/framework/core/buddy/src/cli.ts serve',
       port: 3049,
+      // The release ships without dependencies, so nothing resolves until
+      // install runs here. Migrate then creates the schema: ts-cloud provisions
+      // no tables, and serving against an empty database fails every read.
+      preStart: [
+        'bun install',
+        'bun storage/framework/core/buddy/src/cli.ts migrate --force',
+      ],
+      // Pin the proxy target. `buddy serve` otherwise falls back to
+      // 127.0.0.1:3008, which on this SHARED box is the `stacks` project's own
+      // API - every /api/trails, /api/activities and /api/territories call
+      // would silently answer from another tenant.
+      env: { API_URL: 'http://127.0.0.1:3050' },
+    },
+
+    // The API behind `buddy serve`'s same-origin proxy. Without it nothing
+    // serves routes/, so the app would fall back to seed data in the browser.
+    //
+    // Deliberately no `domain`: rpx skips domain-less sites, so this stays
+    // loopback-only. HOST pins the bind to 127.0.0.1 because the box is
+    // shared and a 0.0.0.0 bind would expose this API to every neighbour.
+    api: {
+      root: '.',
+      start: 'bun storage/framework/core/actions/src/serve/api.ts',
+      port: 3050,
+      preStart: ['bun install'],
+      env: { HOST: '127.0.0.1', APP_ENV: 'production' },
     },
 
     // www resolves to the same box, so it needs a vhost of its own or it falls
