@@ -1,10 +1,10 @@
 {
   "name": "wildloop",
   "version": "0.0.0",
-  "author": "your-name <your-email>",
+  "author": "Chris Breuer <chris@stacksjs.org>",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/stacksjs/stacks.git"
+    "url": "git+https://github.com/stacksjs/wildloop.git"
   },
   "dependencies": {
     "@stacksjs/components": "^0.2.82",
@@ -17,7 +17,7 @@
     "@stacksjs/ts-cloud-types": "^0.1.9"
   },
   "bugs": {
-    "url": "https://github.com/stacksjs/stacks/issues"
+    "url": "https://github.com/stacksjs/wildloop/issues"
   },
   "contributors": [
     "Chris Breuer <chris@stacksjs.org>"
@@ -32,7 +32,7 @@
     },
     "commit-msg": "bunx gitlint --edit .git/COMMIT_EDITMSG"
   },
-  "homepage": "https://github.com/stacksjs/stacks#readme",
+  "homepage": "https://wildloop.org",
   "license": "MIT",
   "private": true,
   "scripts": {
