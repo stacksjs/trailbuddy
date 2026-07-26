@@ -1,10 +1,10 @@
 @extends('layouts/default')
 
-@section('title', 'Conquests — TrailBuddy')
+@section('title', 'Conquests - WildLoop')
 
 @section('content')
 <script client>
-  useHead({ title: 'Conquests — TrailBuddy' })
+  useHead({ title: 'Conquests - WildLoop' })
 
   const tb = useStore('tb')
   const filter = state<'all' | 'attacks' | 'defenses' | 'lost'>('all')

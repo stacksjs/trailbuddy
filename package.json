@@ -1,5 +1,5 @@
 {
-  "name": "stacks",
+  "name": "wildloop",
   "version": "0.0.0",
   "author": "your-name <your-email>",
   "repository": {
@@ -22,7 +22,7 @@
   "contributors": [
     "Chris Breuer <chris@stacksjs.org>"
   ],
-  "description": "Your project description",
+  "description": "Trail running meets turf war. Log your miles, then close a loop to claim the ground.",
   "funding": "https://github.com/sponsors/chrisbbreuer",
   "git-hooks": {
     "pre-commit": {

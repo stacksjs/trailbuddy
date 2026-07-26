@@ -1,6 +1,6 @@
 @extends('layouts/default')
 
-@section('title', 'Explore Trails — TrailBuddy')
+@section('title', 'Explore Trails - WildLoop')
 
 @section('content')
 <script client>
@@ -15,7 +15,7 @@
     type TrailMapHandle,
   } from '../composables/useTrailMap'
 
-  useHead({ title: 'Explore Trails — TrailBuddy' })
+  useHead({ title: 'Explore Trails - WildLoop' })
 
   const tb = useStore('tb')
   const { onToggleSave } = useSavedTrails(tb)

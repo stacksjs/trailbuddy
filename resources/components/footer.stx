@@ -2,11 +2,13 @@
   <div class="mx-auto px-4 py-8 sm:px-6 lg:px-8 max-w-7xl">
     <div class="flex flex-col gap-4 items-center justify-between md:flex-row">
       <div class="flex gap-2 items-center">
-        <span class="font-bold text-emerald-500 text-lg">TB</span>
-        <span class="font-semibold gradient-text">TrailBuddy</span>
+        <span class="relative inline-block h-5 w-5 shrink-0 rounded-full border-2 border-emerald-500" aria-hidden="true">
+          <span class="absolute -top-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-emerald-400"></span>
+        </span>
+        <span class="font-semibold gradient-text">WildLoop</span>
       </div>
       <p class="text-slate-500 text-sm dark:text-slate-400">
-        Discover trails, track adventures, conquer territories.
+        Close the loop. Claim the ground.
       </p>
     </div>
   </div>

@@ -1,6 +1,6 @@
 @extends('layouts/default')
 
-@section('title', 'Profile — TrailBuddy')
+@section('title', 'Profile - WildLoop')
 
 @section('content')
 <script client>
@@ -8,7 +8,7 @@
   import { useAchievementCatalog } from '../composables/useAchievementCatalog'
   import { useSavedTrails } from '../composables/useSavedTrails'
 
-  useHead({ title: 'Profile — TrailBuddy' })
+  useHead({ title: 'Profile - WildLoop' })
 
   const tb = useStore('tb')
   useAchievementCatalog(tb)

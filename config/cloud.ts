@@ -2,21 +2,21 @@ import type { CloudConfig } from '@stacksjs/ts-cloud-types'
 
 const config: CloudConfig = {
   project: {
-    name: 'TrailBuddy',
-    slug: 'trailbuddy',
+    name: 'WildLoop',
+    slug: 'wildloop',
     region: 'us-east-1',
   },
 
   environments: {
     production: {
       type: 'production',
-      domain: 'trailbuddy.stacksjs.com',
+      domain: 'wildloop.stacksjs.com',
     },
   },
 
   sites: {
     production: {
-      domain: 'trailbuddy.stacksjs.com',
+      domain: 'wildloop.stacksjs.com',
       root: 'dist',
       build: 'bun run build:frontend',
     },
@@ -26,7 +26,7 @@ const config: CloudConfig = {
     dns: {
       provider: 'route53',
       hostedZoneId: 'Z01455702Q7952O6RCY37',
-      domain: 'trailbuddy.stacksjs.com',
+      domain: 'wildloop.stacksjs.com',
     },
   },
 }

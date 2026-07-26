@@ -1,10 +1,10 @@
 @extends('layouts/default')
 
-@section('title', 'Leaderboard — TrailBuddy')
+@section('title', 'Leaderboard - WildLoop')
 
 @section('content')
 <script client>
-  useHead({ title: 'Leaderboard — TrailBuddy' })
+  useHead({ title: 'Leaderboard - WildLoop' })
 
   interface LeaderEntry {
     userId: number

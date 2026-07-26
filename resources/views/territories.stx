@@ -1,13 +1,13 @@
 @extends('layouts/default')
 
-@section('title', 'Territory Map — TrailBuddy')
+@section('title', 'Territory Map - WildLoop')
 
 @section('content')
 <script client>
   import { useTerritoryExplorer } from '../composables/useTerritoryExplorer'
   import { territoryError } from '../composables/useTerritoryCatalog'
 
-  useHead({ title: 'Territory Game — TrailBuddy' })
+  useHead({ title: 'Territory Game - WildLoop' })
 
   const tb = useStore('tb')
   const {

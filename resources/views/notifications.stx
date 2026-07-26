@@ -1,12 +1,12 @@
 @extends('layouts/default')
 
-@section('title', 'Notifications — TrailBuddy')
+@section('title', 'Notifications - WildLoop')
 
 @section('content')
 <script client>
   import { markNotificationsRead } from '../assets/scripts/game-api'
 
-  useHead({ title: 'Notifications — TrailBuddy' })
+  useHead({ title: 'Notifications - WildLoop' })
 
   const tb = useStore('tb')
   const filter = state<'all' | 'unread' | 'conquest' | 'kudos' | 'challenge'>('all')

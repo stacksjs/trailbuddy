@@ -1,6 +1,6 @@
 @extends('layouts/default')
 
-@section('title', 'Activity Details — TrailBuddy')
+@section('title', 'Activity Details - WildLoop')
 
 @section('content')
 <script client>
@@ -10,7 +10,7 @@
   import { useRouteParam } from '../../composables/useRouteParam'
   import { fetchActivityDetail, postComment, toggleKudos } from '../../assets/scripts/game-api'
 
-  useHead({ title: 'Activity Details — TrailBuddy' })
+  useHead({ title: 'Activity Details - WildLoop' })
 
   const tb = useStore('tb')
   const hasKudos = state(false)

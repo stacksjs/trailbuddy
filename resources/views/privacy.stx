@@ -1,10 +1,10 @@
 @extends('layouts/default')
 
-@section('title', 'Privacy Policy — TrailBuddy')
+@section('title', 'Privacy Policy - WildLoop')
 
 @section('content')
 <script client>
-  useHead({ title: 'Privacy Policy — TrailBuddy' })
+  useHead({ title: 'Privacy Policy - WildLoop' })
 </script>
 
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -16,7 +16,7 @@
     <div class="space-y-8 text-gray-600 dark:text-slate-300 leading-relaxed">
       <section>
         <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">What we collect</h2>
-        <p>To run TrailBuddy we store the account details you give us (name, email), the activities you record (GPS tracks, distance, time, elevation), and the social content you create (reviews, comments, kudos, follows, saved trails). GPS tracks are precise location data — we treat them carefully.</p>
+        <p>To run WildLoop we store the account details you give us (name, email), the activities you record (GPS tracks, distance, time, elevation), and the social content you create (reviews, comments, kudos, follows, saved trails). GPS tracks are precise location data — we treat them carefully.</p>
       </section>
 
       <section>
@@ -26,7 +26,7 @@
 
       <section>
         <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">What others can see</h2>
-        <p>Your profile, activities, reviews, and the territory you hold are visible to other TrailBuddy users by default. Per-activity privacy controls are on our roadmap; until then, treat anything you post as visible to the community. Your email is never shown publicly.</p>
+        <p>Your profile, activities, reviews, and the territory you hold are visible to other WildLoop users by default. Per-activity privacy controls are on our roadmap; until then, treat anything you post as visible to the community. Your email is never shown publicly.</p>
       </section>
 
       <section>
@@ -41,7 +41,7 @@
 
       <section>
         <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">Contact</h2>
-        <p>Privacy questions? Email <a href="mailto:privacy@trailbuddy.test" class="text-emerald-600 hover:underline">privacy@trailbuddy.test</a>.</p>
+        <p>Privacy questions? Email <a href="mailto:privacy@wildloop.test" class="text-emerald-600 hover:underline">privacy@wildloop.test</a>.</p>
       </section>
     </div>
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Capture TrailBuddy UI screenshots via Bun.WebView for design review.
+ * Capture WildLoop UI screenshots via Bun.WebView for design review.
  * Usage: bun scripts/capture-ui-screenshots.ts [baseUrl]
  */
 

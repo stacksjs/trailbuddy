@@ -1,10 +1,10 @@
 @extends('layouts/default')
 
-@section('title', 'Live Battles — TrailBuddy')
+@section('title', 'Live Battles - WildLoop')
 
 @section('content')
 <script client>
-  useHead({ title: 'Live Battles — TrailBuddy' })
+  useHead({ title: 'Live Battles - WildLoop' })
 
   const tb = useStore('tb')
   const period = state<'today' | 'week' | 'all'>('today')

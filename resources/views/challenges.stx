@@ -1,12 +1,12 @@
 @extends('layouts/default')
 
-@section('title', 'Challenges — TrailBuddy')
+@section('title', 'Challenges - WildLoop')
 
 @section('content')
 <script client>
   import { useChallenges } from '../composables/useChallenges'
 
-  useHead({ title: 'Challenges — TrailBuddy' })
+  useHead({ title: 'Challenges - WildLoop' })
 
   const tb = useStore('tb')
   const tab = state<'active' | 'sent' | 'received' | 'completed'>('active')

@@ -1,12 +1,12 @@
 @extends('layouts/default')
 
-@section('title', 'Capture Run — TrailBuddy')
+@section('title', 'Capture Run - WildLoop')
 
 @section('content')
 <script client>
   import { useRecorder } from '../composables/useRecorder'
 
-  useHead({ title: 'Capture Run — TrailBuddy' })
+  useHead({ title: 'Capture Run - WildLoop' })
 
   const tb = useStore('tb')
   const {

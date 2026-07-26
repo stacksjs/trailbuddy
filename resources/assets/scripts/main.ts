@@ -1,1 +1,1 @@
-// TrailBuddy — app entry
+// WildLoop — app entry

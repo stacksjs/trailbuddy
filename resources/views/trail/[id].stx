@@ -1,6 +1,6 @@
 @extends('layouts/default')
 
-@section('title', 'Trail Details — TrailBuddy')
+@section('title', 'Trail Details - WildLoop')
 
 @section('content')
 <script client>
@@ -9,7 +9,7 @@
   import { useSavedTrails } from '../../composables/useSavedTrails'
   import { REVIEW_CONDITION_OPTIONS, useTrailReviews } from '../../composables/useTrailReviews'
 
-  useHead({ title: 'Trail Details — TrailBuddy' })
+  useHead({ title: 'Trail Details - WildLoop' })
 
   const tb = useStore('tb')
   const { onToggleSave } = useSavedTrails(tb)

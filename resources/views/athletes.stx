@@ -1,12 +1,12 @@
 @extends('layouts/default')
 
-@section('title', 'Find Athletes — TrailBuddy')
+@section('title', 'Find Athletes - WildLoop')
 
 @section('content')
 <script client>
   import { searchAthletes, toggleFollow } from '../assets/scripts/game-api'
 
-  useHead({ title: 'Find Athletes — TrailBuddy' })
+  useHead({ title: 'Find Athletes - WildLoop' })
 
   const tb = useStore('tb')
   const query = state('')

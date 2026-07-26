@@ -143,7 +143,7 @@ export function generateSampleLoopGpx(
   }
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="TrailBuddy">
+<gpx version="1.1" creator="WildLoop">
   <metadata>
     <name>${activityName}</name>
     <time>${startTime.toISOString()}</time>

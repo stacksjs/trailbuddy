@@ -214,7 +214,7 @@
     new Date(now - days * 86400000 - hours * 3600000).toISOString()
 
   const seedUsers: User[] = [
-    { id: 1, name: 'You', email: 'you@trailbuddy.app', avatar: null, joinedAt: '2025-09-15' },
+    { id: 1, name: 'You', email: 'you@wildloop.app', avatar: null, joinedAt: '2025-09-15' },
     { id: 2, name: 'Sarah Chen', email: 'sarah@example.com', avatar: null, joinedAt: '2025-06-01' },
     { id: 3, name: 'Marcus Johnson', email: 'marcus@example.com', avatar: null, joinedAt: '2025-03-20' },
     { id: 4, name: 'Emily Rodriguez', email: 'emily@example.com', avatar: null, joinedAt: '2025-07-10' },
@@ -739,8 +739,11 @@
     // older snapshots lack and code assumes — MUST bump this version suffix
     // (-v4 -> -v5 …). Bumping invalidates every stale snapshot in the wild so
     // the new shape/seed actually takes effect instead of being masked.
-    // History: v3 — territory status 'secure' -> 'active' (#942);
-    //          v4 — added savedTrailIds for saved trails (#969).
-    persist: { key: 'trailbuddy-tb-v4' },
+    // History: v3 - territory status 'secure' -> 'active' (#942);
+    //          v4 - added savedTrailIds for saved trails (#969).
+    // The WildLoop rebrand rotated the namespace off `trailbuddy-`, which
+    // already orphans every snapshot written under the old name, so the
+    // shape-version suffix stays at v4 rather than bumping for a rename.
+    persist: { key: 'wildloop-tb-v4' },
   })
 </script>

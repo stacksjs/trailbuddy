@@ -1,6 +1,6 @@
 @extends('layouts/default')
 
-@section('title', 'Activity Feed — TrailBuddy')
+@section('title', 'Activity Feed - WildLoop')
 
 @section('content')
 <script client>
@@ -8,7 +8,7 @@
   import { useManualActivity } from '../composables/useManualActivity'
   import { toggleFollow, toggleKudos } from '../assets/scripts/game-api'
 
-  useHead({ title: 'Activity Feed — TrailBuddy' })
+  useHead({ title: 'Activity Feed - WildLoop' })
 
   const tb = useStore('tb')
 

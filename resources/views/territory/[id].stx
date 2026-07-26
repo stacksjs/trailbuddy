@@ -1,13 +1,13 @@
 @extends('layouts/default')
 
-@section('title', 'Territory Details — TrailBuddy')
+@section('title', 'Territory Details - WildLoop')
 
 @section('content')
 <script client>
   import { createTrailMap, drawTerritoryPolygon, runWhenMapReady, type TrailMapHandle } from '../../composables/useTrailMap'
   import { useRouteParam } from '../../composables/useRouteParam'
 
-  useHead({ title: 'Territory Details — TrailBuddy' })
+  useHead({ title: 'Territory Details - WildLoop' })
 
   const tb = useStore('tb')
   // -1 is a no-match sentinel so an unresolved param renders "not found"

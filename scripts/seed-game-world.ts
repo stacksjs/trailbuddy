@@ -107,9 +107,9 @@ console.error('[seed] tables reset, creating users…')
 // --- users -----------------------------------------------------------------
 
 const people = [
-  { name: 'You', email: 'you@trailbuddy.test', password: 'password123' },
-  { name: 'Rival Runner', email: 'rival@trailbuddy.test', password: 'password123' },
-  { name: 'Trail Explorer', email: 'explorer@trailbuddy.test', password: 'password123' },
+  { name: 'You', email: 'you@wildloop.test', password: 'password123' },
+  { name: 'Rival Runner', email: 'rival@wildloop.test', password: 'password123' },
+  { name: 'Trail Explorer', email: 'explorer@wildloop.test', password: 'password123' },
 ]
 const users: any[] = []
 for (const p of people) {

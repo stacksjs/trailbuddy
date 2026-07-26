@@ -11,10 +11,10 @@ const envVars = typeof Bun !== 'undefined' ? Bun.env : process.env
  * you have any questions, feel free to reach out via Discord or GitHub Discussions.
  */
 export default {
-  name: envVars.APP_NAME ?? 'TrailBuddy',
+  name: envVars.APP_NAME ?? 'WildLoop',
   description: 'Discover trails, track adventures, conquer territories.',
   env: envVars.APP_ENV ?? 'local',
-  url: envVars.APP_URL ?? 'trailbuddy.localhost',
+  url: envVars.APP_URL ?? 'wildloop.localhost',
   redirectUrls: ['stacksjs.com'],
   debug: envVars.DEBUG ? envVars.DEBUG === 'true' : false,
   key: envVars.APP_KEY,

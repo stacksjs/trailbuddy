@@ -1,5 +1,5 @@
 /**
- * TrailBuddy API Client
+ * WildLoop API Client
  *
  * Client-side API initialization and data fetching utilities.
  * Import this in STX files for typed API access.
@@ -250,7 +250,7 @@ function calculatePace(distanceMiles: number, durationSeconds: number): string {
 
 // Make API available globally for non-module scripts
 if (typeof window !== 'undefined') {
-  (window as any).TrailBuddyAPI = {
+  (window as any).WildLoopAPI = {
     auth,
     Trail,
     Activity,

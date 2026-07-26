@@ -27,7 +27,7 @@ export function useNotifications(tb: NotificationStoreLike | null) {
       const mapped = data.notifications.map((n: any) => ({
         id: n.id,
         type: n.type,
-        title: n.actorName || 'TrailBuddy',
+        title: n.actorName || 'WildLoop',
         message: n.body,
         link: n.link || '#',
         read: !!n.read,

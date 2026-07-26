@@ -43,6 +43,7 @@ stacks.log
 /pantry_modules
 .stx
 .stx-serve
+/storage/framework/stx
 .env.keys
 /storage/framework/frontend-dist
 /.qb

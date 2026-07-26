@@ -46,7 +46,7 @@ const TOKEN_KEY = 'auth_token'
 // (#939), so we transparently sign this user in if there's no session yet —
 // keeps the demo frictionless while the backend still derives the acting user
 // from the token (never the request body).
-const DEMO_EMAIL = 'you@trailbuddy.test'
+const DEMO_EMAIL = 'you@wildloop.test'
 const DEMO_PASSWORD = 'password123'
 
 function authHeaders(): Record<string, string> {

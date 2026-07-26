@@ -1,4 +1,4 @@
-# trailbuddy — Catch-Up & Roadmap
+# wildloop — Catch-Up & Roadmap
 
 > Status snapshot for a solo dev returning after a break. Synthesized from per-subsystem surveys. Honest, dense, file-cited.
 
@@ -6,7 +6,7 @@
 
 ## 1. TL;DR
 
-- **It's a polished, fully-interactive demo UI sitting on top of a real-but-disconnected, unpopulated backend.** Every one of the 16 stx views renders and is clickable, but they all read from a single ~620-line client-side seed store (`resources/components/stores.stx`, `defineStore('tb')`) persisted to `localStorage` (key `trailbuddy-tb-v2`) — not from the database.
+- **It's a polished, fully-interactive demo UI sitting on top of a real-but-disconnected, unpopulated backend.** Every one of the 16 stx views renders and is clickable, but they all read from a single ~620-line client-side seed store (`resources/components/stores.stx`, `defineStore('tb')`) persisted to `localStorage` (key `wildloop-tb-v2`) — not from the database.
 - **The backend is NOT all stubs.** There are 8 real DB-querying Actions (Auth ×2, Trail ×1, Territory ×5), real Stacks ORM models + 27–29 migrations, a genuine hand-rolled geometry engine (`resources/functions/geo.ts`, `gpx.ts`), and a working OSM scraper command. All routes are wired in `routes/api.ts`. The problem is connection and data, not absence.
 - **The core territory-capture loop "works" — but only as a self-contained browser toy.** `useRecorder.ts` does real GPS (`navigator.geolocation.watchPosition`) + a simulate mode, and "capture" flips ownership in the in-memory store. It uses its OWN `pointInPolygon` + a hardcoded "10 GPS pings inside an enemy polygon" rule — it never calls the real backend conquest engine, never persists, no multiplayer.
 - **There are TWO incompatible capture designs that have never met.** Backend = run a *closed loop* to claim empty land, then *route-intersection splits* enemy land (area-based, `ClaimTerritoryAction` + `ProcessActivityConquestAction`). Client = accumulate 10 proximity pings (Paper.io-style). Wiring them is a *game-design reconciliation*, not just plumbing.
@@ -37,7 +37,7 @@ bun build.ts                      # build (buildApp from @stacksjs/stx)
 bun preview.ts                    # preview
 ```
 
-**Ports / URL (gotcha):** `config/ports.ts` says frontend 3000 / api 3008 / db 3010, **but `.env` `PORT=6700` wins** (`serve.ts` honors `process.env.PORT`). App is at **`trailbuddy.localhost` on port 6700** — easy to look in the wrong place.
+**Ports / URL (gotcha):** `config/ports.ts` says frontend 3000 / api 3008 / db 3010, **but `.env` `PORT=6700` wins** (`serve.ts` honors `process.env.PORT`). App is at **`wildloop.localhost` on port 6700** — easy to look in the wrong place.
 
 **Database — three configs disagree; only one is real:**
 
@@ -48,7 +48,7 @@ bun preview.ts                    # preview
 | `config/query-builder.ts:5-7` | **`dialect:'sqlite'`, `database/stacks.sqlite`** | **THE config the ORM actually uses** |
 
 - All 27–29 migrations are **SQLite-only DDL** (`INTEGER PRIMARY KEY AUTOINCREMENT`, `TEXT/REAL`) — they will NOT run on postgres/mysql as-is. But the alter migrations use **`ADD CONSTRAINT ... FOREIGN KEY`, which SQLite rejects** — so the migration set is internally contradictory (see Caveats).
-- **Every table is empty (0 rows)** in `database/trailbuddy.sqlite`; `database/stacks.sqlite` only has framework tables. **No seeders exist** anywhere.
+- **Every table is empty (0 rows)** in `database/wildloop.sqlite`; `database/stacks.sqlite` only has framework tables. **No seeders exist** anywhere.
 - To get data: `buddy scrape:trails` (hits live OSM Overpass — network-dependent) or manual insert.
 
 **Maps:** `public/js/ts-maps.mjs` (336KB) + `public/css/ts-maps.css` are already built/committed, so maps render now. **Rebuilding** (`bun run build:maps`) requires the `ts-maps` sibling repo at `../../Libraries/ts-maps/packages/ts-maps`, which is **currently MISSING on this machine** — `build:maps` would fail.
@@ -65,7 +65,7 @@ bun preview.ts                    # preview
 - `resources/composables/` — `useRecorder`, `useTrailMap`, `useTerritoryExplorer`, `useTrailCatalog`, `useRoutePreview`.
 - `resources/functions/` — `geo.ts`, `gpx.ts`, `scraper/*`.
 - `app/Actions/` — `Auth/`, `Trail/`, `Territory/`, and an **empty `Scraper/`** (dead scaffolding; scraper actually lives in `app/Commands/ScrapeTrails.ts`).
-- `app/Models/` — 12 ORM models. `routes/api.ts` — routes (mostly framework boilerplate; trailbuddy routes at 18-19, 378, 381-392, 395-398).
+- `app/Models/` — 12 ORM models. `routes/api.ts` — routes (mostly framework boilerplate; wildloop routes at 18-19, 378, 381-392, 395-398).
 
 **Data layer.** 12 Stacks ORM models with attributes, validation, faker factories, relations: User, Trail, Activity, Territory, TerritoryStats, TerritoryHistory, Kudos, Review (`trail_reviews`), SavedTrail, Achievement, UserAchievement, UserStats. Each has create + alter migrations and a uuid/timestamps trait. Relationship chain is end-to-end: `User → Activity (belongsTo User+Trail) → Trail`; capture path `Activity → Territory (belongsTo User+Activity) → TerritoryHistory + TerritoryStats`.
 
@@ -138,7 +138,7 @@ record.stx → useRecorder (real GPS / simulate)
 | **Activity kudos / comments** | `activity/[id].stx` toggle/submit work | `tb.toggleKudos`/`tb.addComment` mutate the local array only; no POST, no Kudos/Comment endpoint. Feed kudos buttons (`feed.stx:103-110`) have NO `@click` — decoration. |
 | **Trail reviews** | `trail/[id].stx` Reviews/Conditions tabs | Display-only from `seedReviews`; no submission form, no review API. |
 | **Auth session / logout** | `onMount` `auth.user()`; `/me`, `/logout` routes declared | `AuthUserAction`/`LogoutAction` **files don't exist** → calls throw, swallowed by empty `catch{}`; redirect silently no-ops. No logout button anywhere. |
-| **Frontend API client** | `resources/assets/scripts/api.ts` (287 lines) | Full client (`claimTerritory`/`processConquest`/`giveKudos`/`createActivity`/`fetchUserStats`…) but **zero importers** — dead code; only attaches `window.TrailBuddyAPI`. |
+| **Frontend API client** | `resources/assets/scripts/api.ts` (287 lines) | Full client (`claimTerritory`/`processConquest`/`giveKudos`/`createActivity`/`fetchUserStats`…) but **zero importers** — dead code; only attaches `window.WildLoopAPI`. |
 | **`splitPolygonByRoute`** | conquest geometry | Self-labeled "simplified - for MVP" (geo.ts L378); boundary-walk math handles only clean 2-crossing convex case; >2 crossings / concave / self-intersecting routes produce wrong/degenerate polygons. Never run on real data. |
 | **Activity save fidelity** | `useRecorder.stop()` payload | `splits:[]`, `heartRateAvg/Max:null`, `cadence:null`; no persisted link to triggered conquests (conqueredIds only used for the title string); real-GPS elevation stays 0 (sim fabricates via `Math.random()*12`). |
 
@@ -149,7 +149,7 @@ record.stx → useRecorder (real GPS / simulate)
 **Backend endpoints that don't exist at all** (models/tables exist, but no Action and no route):
 - **Activity / runs** — no create/list/show. The recorder cannot persist a run. `activity/[id].stx` renders from seed.
 - **Kudos** — model + table exist; zero routes. Feed counts come from `seedActivities.kudos_count`.
-- **Reviews** — model + `trail_reviews` exist; zero trailbuddy review routes (the `/reviews` in api.ts are unrelated Commerce boilerplate).
+- **Reviews** — model + `trail_reviews` exist; zero wildloop review routes (the `/reviews` in api.ts are unrelated Commerce boilerplate).
 - **Achievements / UserAchievements** — models + tables; zero routes. No unlock engine; progress only changes as a side effect of `conquerTerritory`.
 - **UserStats** public read — model + table; no endpoint (stats page uses seed).
 - **User-facing Leaderboard, Feed** — views exist, demo-only.
@@ -175,7 +175,7 @@ record.stx → useRecorder (real GPS / simulate)
 ## 7. Caveats & tech-debt
 
 **Environment / build**
-- **DB config trap:** trust `config/query-builder.ts` (sqlite, `stacks.sqlite`), NOT `.env` (postgres/`bench_review`) or `config/database.ts` (mysql). The active DB file is even ambiguous: `query-builder.ts` points at `stacks.sqlite` (framework tables only) while the schema-bearing `trailbuddy.sqlite` (90KB) is also present.
+- **DB config trap:** trust `config/query-builder.ts` (sqlite, `stacks.sqlite`), NOT `.env` (postgres/`bench_review`) or `config/database.ts` (mysql). The active DB file is even ambiguous: `query-builder.ts` points at `stacks.sqlite` (framework tables only) while the schema-bearing `wildloop.sqlite` (90KB) is also present.
 - **Frontend port is 6700**, not 3000.
 - **Clean checkout needs `./bootstrap`** to regenerate gitignored `pantry/` + re-vendor `bun-query-builder`. `bun.lock` still pins `^0.1.21` while vendored is `^0.1.26`.
 - **`ts-maps` sibling is missing** → `build:maps` fails; works only because output is committed. Maps silently fail (caught/logged) if the public chunks aren't served.
@@ -183,7 +183,7 @@ record.stx → useRecorder (real GPS / simulate)
 **Migrations (will break a from-scratch migrate)**
 - **Duplicate geometry column:** `1780615824-add-trails-geometry-column.sql` AND `1780619054-alter-trails-table.sql` both `ALTER TABLE trails ADD COLUMN geometry TEXT` → "duplicate column name: geometry". (The 1780615824 file even contains it twice.) One must be removed/guarded.
 - **17 SQLite-invalid `ADD CONSTRAINT` statements** across the `1780615*` alters — valid only on Postgres/MySQL. So the migration set is dialect-locked to Postgres/MySQL, yet the runtime is SQLite and the create migrations are SQLite syntax — internally contradictory.
-- **Committed `.sqlite` files are stale:** `trailbuddy.sqlite` schema for trails/activities/territories LACKS the uuid/FK/geometry columns the models expect (only the create migrations ran; alters never applied). `stacks.sqlite` has 0 tables. Don't trust either as source of truth.
+- **Committed `.sqlite` files are stale:** `wildloop.sqlite` schema for trails/activities/territories LACKS the uuid/FK/geometry columns the models expect (only the create migrations ran; alters never applied). `stacks.sqlite` has 0 tables. Don't trust either as source of truth.
 
 **Data modeling**
 - **Type sloppiness:** FK-ish ids and counts (`giver_id`, `parent_territory_id`, `review_count`, `kudos_count`…) stored as **REAL** not INTEGER; "SQLite doesn't support ALTER COLUMN" so never corrected.
@@ -198,7 +198,7 @@ record.stx → useRecorder (real GPS / simulate)
 
 **UI / dead code**
 - **Two parallel component trees** (`resources/components/` and `resources/views/components/`) with near-identical, drifting copies of ActivityCard/TrailCard/FeaturedTrailCard/DifficultyBadge/StarRating/Territory* — used by NO surveyed view (pages inline their markup). Several have **broken stx interpolation** (`TrailCard.stx:59`, `FeaturedTrailCard.stx:55`, `DifficultyBadge.stx:23`, `InputGroup.stx:28`) — latent, masked only because unused.
-- **localStorage persistence masks the stub:** key `trailbuddy-tb-v2` — captures/kudos survive reloads (looks "real"), and **seed edits won't appear until the key is cleared or bumped** (the `v2` suffix is the manual-bump mechanism).
+- **localStorage persistence masks the stub:** key `wildloop-tb-v2` — captures/kudos survive reloads (looks "real"), and **seed edits won't appear until the key is cleared or bumped** (the `v2` suffix is the manual-bump mechanism).
 - **Fragile route-param extraction:** `activity/[id].stx` reads `window.__routeParams?.id`, `trail/[id].stx` reads `window.stx._rp?.id ?? window.__stx_rp?.id` — inconsistent undocumented globals; if the router changes, detail pages silently fall back to id 1/0.
 - **Two divergent API clients:** the unused `scripts/api.ts` is the *more complete* one (conquest/kudos/stats); the used `useTrailCatalog` is raw fetch. Standardize before extending.
 
@@ -252,6 +252,6 @@ The whole point of the app (territory capture) currently has no server backing. 
 
 ### Suggested "first session back" concrete starting point
 
-1. Confirm reality in 5 minutes: `sqlite3 database/stacks.sqlite ".tables"` and `… "SELECT COUNT(*) FROM trails"` (expect 0), then load `trailbuddy.localhost:6700` and note every page is seed.
+1. Confirm reality in 5 minutes: `sqlite3 database/stacks.sqlite ".tables"` and `… "SELECT COUNT(*) FROM trails"` (expect 0), then load `wildloop.localhost:6700` and note every page is seed.
 2. **Fix the duplicate geometry migration** (`1780615824` / `1780619054`) and make migrations run clean on SQLite (neutralize the `ADD CONSTRAINT` alters).
 3. **Get ONE trail into the DB** — run `buddy scrape:trails` (or hand-insert a row) and watch `GET /api/trails` return it and `trails.stx` flip to the "live data" badge. That single green light proves the migration/seed/ORM/route/fetch chain is healthy and is the foundation every P0 step builds on.
