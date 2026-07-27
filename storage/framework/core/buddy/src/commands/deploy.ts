@@ -1493,6 +1493,22 @@ function resolveMailboxes(mailboxes: unknown, domain: string): ResolvedMailbox[]
   return out
 }
 
+/**
+ * Encode the resolved mailboxes as `address<TAB>password` lines, base64'd into
+ * one blob so it survives the SSH shell hop untouched.
+ *
+ * The TRAILING newline is load-bearing. The remote side consumes this with
+ * `while read`, which returns false on a final line that carries no newline —
+ * and then drops it. So the LAST mailbox in `config/email.ts` was silently
+ * never created: no `MADE:`, no `FAIL:`, just quietly absent, on every deploy,
+ * for whichever mailbox happened to be listed last.
+ */
+export function encodeMailboxPayload(boxes: ReadonlyArray<{ address: string, password: string }>): string {
+  if (!boxes.length)
+    return ''
+  return Buffer.from(`${boxes.map(b => `${b.address}\t${b.password}`).join('\n')}\n`).toString('base64')
+}
+
 /** What a mail-tenant reconcile resolved + provisioned, for the DNS step. */
 export interface MailTenantResult {
   domain: string
@@ -1604,8 +1620,7 @@ export async function provisionMailTenant(ip: string, logger: typeof log): Promi
     + 'domain are written straight to that mailbox Maildir, external targets are relayed. Managed by buddy deploy '
     + 'from config/email.ts (merge-based — hand edits to other keys are preserved).'
   const readmeB64 = Buffer.from(readme).toString('base64')
-  // address<TAB>password per mailbox, base64'd as one blob for the shell hop.
-  const boxesB64 = boxes.length ? Buffer.from(boxes.map(b => `${b.address}\t${b.password}`).join('\n')).toString('base64') : ''
+  const boxesB64 = encodeMailboxPayload(boxes)
 
   // One idempotent, merge-based reconcile script. Emits keyed lines the caller
   // parses: MAILHOST:, DKIMPUB:, MADE:<addr>, and a final MAILTENANT:<state>.
@@ -1763,6 +1778,23 @@ if [ "$ENV_CHANGED" = 1 ]; then systemctl restart mail 2>/dev/null || true; echo
     const created = boxes.filter(b => madeAddrs.has(b.address)).map(b => ({ address: b.address, password: b.password }))
 
     logger.success(`Mail routing reconciled (${line.replace('MAILTENANT:', '')})`)
+
+    // A mailbox the server refused to create used to vanish from the report
+    // entirely: only MADE: was read, so a failure was indistinguishable from a
+    // mailbox that was never configured. Say so — the operator is one `ssh`
+    // away from the reason, but only if they know to look.
+    const failedAddrs = [...out.matchAll(/FAIL:([^\n]+)/g)].flatMap(m => m[1] ? [m[1].trim()] : [])
+    if (failedAddrs.length)
+      logger.warn(`Mail: could not create ${failedAddrs.length} mailbox(es): ${failedAddrs.join(', ')}`)
+
+    // Configured, not created, and not reported either way — the reconcile
+    // never saw it. Surfacing the gap is what turns a silent skip into a bug
+    // report instead of a mailbox someone discovers is missing months later.
+    const accountedFor = new Set([...madeAddrs, ...failedAddrs, ...[...out.matchAll(/EXISTS:([^\n]+)/g)].flatMap(m => m[1] ? [m[1].trim()] : [])])
+    const unaccounted = boxes.filter(b => !accountedFor.has(b.address)).map(b => b.address)
+    if (unaccounted.length)
+      logger.warn(`Mail: ${unaccounted.length} configured mailbox(es) were not reconciled: ${unaccounted.join(', ')}`)
+
     if (created.length) {
       logger.info(`Mail: created ${created.length} mailbox(es) — credentials below (save them; shown once):`)
       for (const b of created)

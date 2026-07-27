@@ -55,7 +55,27 @@ export function mailCommands(buddy: CLI): void {
   buddy
     .command('mail:provision', 'Provision this app\'s mail from config/email.ts onto the shared mail server (domain + DKIM + mailboxes + MX/SPF/DKIM/DMARC DNS). Reusable + idempotent; the same reconcile buddy deploy runs.')
     .option('--ip <ip>', 'Mail server IP (defaults to the A record of config.email.domain)')
-    .action(async (options: { ip?: string }) => {
+    .action(async (options: { ip?: string, env?: string }) => {
+      // Mailbox passwords come from `MAIL_PASSWORD_<LOCALPART>`, which belong in
+      // the target environment's encrypted env file — but nothing here loaded
+      // that file, so `mail:provision --env production` read the development
+      // env, found no passwords, and skipped every mailbox while still
+      // reporting success and advising you to set the very variables it had
+      // just ignored. Load the target environment's decrypted secrets first,
+      // exactly as `buddy deploy` does, so the two paths provision alike.
+      const environment = options.env || process.env.APP_ENV || 'production'
+      process.env.APP_ENV = environment
+      const envFile = `.env.${environment}`
+      if (existsSync(envFile)) {
+        try {
+          const { loadEnv } = await import('@stacksjs/env')
+          loadEnv({ path: envFile, env: environment, keysFile: '.env.keys', overload: true, quiet: true })
+        }
+        catch (err) {
+          log.warn(`Could not load ${envFile}: ${getErrorMessage(err)}`)
+        }
+      }
+
       const { email: emailConfig } = await import('@stacksjs/config')
       const domain: string | undefined = (emailConfig as any)?.domain
       if (!domain) {
