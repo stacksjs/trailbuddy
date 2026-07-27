@@ -66,6 +66,13 @@
       error.set('Those passwords do not match.')
       return
     }
+    // The checkbox is `required`, so the browser blocks submit on its own.
+    // Checked here too, from the field rather than the signal, so the reason
+    // is stated rather than left to a native tooltip.
+    if (fields?.terms && !fields.terms.checked) {
+      error.set('Accept the terms to create your account.')
+      return
+    }
 
     loading.set(true)
 
