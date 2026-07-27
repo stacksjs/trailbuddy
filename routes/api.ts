@@ -120,6 +120,10 @@ route.group({ prefix: '/queries' }, () => {
   route.post('/prune', 'Controllers/QueryController@pruneQueryLogs')
 })
 
+// Admin dashboard. The action re-checks the admin role itself; `auth` here
+// only guarantees there is a session to check.
+route.get('/admin/overview', 'Actions/Admin/AdminOverviewAction').middleware('auth')
+
 // Dashboard routes
 route.group({ prefix: '/dashboard' }, () => {
   route.get('/stats', 'Actions/Dashboard/DashboardStatsAction')

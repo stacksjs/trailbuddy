@@ -28,6 +28,11 @@
   // finds at the top level of the script.
   if (typeof accountInitial === 'undefined') var accountInitial = state('\u00B7')
 
+  // Offer the Admin link only to an admin. This is presentation only: the
+  // dashboard and its endpoint both re-check the role server-side, so a
+  // visitor who edits this flag in devtools gains a link that refuses them.
+  if (typeof isAdmin === 'undefined') var isAdmin = state(false)
+
   onMount(() => {
     const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_user') : null
     if (!raw) return
@@ -35,6 +40,7 @@
       const account = JSON.parse(raw)
       const source = (account?.name || account?.email || '').trim()
       if (source) accountInitial.set(source.charAt(0).toUpperCase())
+      if (Array.isArray(account?.roles) && account.roles.includes('admin')) isAdmin.set(true)
     } catch {}
   })
 </script>
@@ -79,6 +85,7 @@
         <!-- Signed in: recording is a real intent now, but it stays secondary
              to the account, which is what people reach for most often. -->
         <div :if="signedIn()" class="flex gap-2 items-center">
+          <StxLink :if="isAdmin()" to="/admin" class="px-3 py-2 font-medium text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors">Admin</StxLink>
           <StxLink to="/record" class="px-3.5 py-2 font-medium text-sm text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-full transition-colors active:scale-[0.98]">Record</StxLink>
           <StxLink to="/notifications" aria-label="Alerts" class="relative p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors">
             <Icon name="bell" size="20" />

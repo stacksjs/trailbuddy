@@ -1,5 +1,28 @@
 // No imports needed - everything is auto-imported!
 
+/**
+ * The signed-in user's role names, for the UI to decide what to offer.
+ *
+ * Never load-bearing: every admin endpoint re-checks the role itself, because
+ * anything handed to the client is something the client can edit. A failure
+ * here degrades to "no roles", which shows a plain account rather than
+ * blocking sign-in over a dashboard affordance.
+ */
+async function roleNamesFor(userId?: number): Promise<string[]> {
+  if (!userId)
+    return []
+
+  try {
+    const { createBqbRbacStore, Rbac } = await import('@stacksjs/auth')
+    Rbac.setStore(createBqbRbacStore())
+    const roles = await Rbac.getUserRoles(userId)
+    return (roles ?? []).map((role: any) => String(role?.name ?? '')).filter(Boolean)
+  }
+  catch {
+    return []
+  }
+}
+
 export default new Action({
   name: 'LoginAction',
   description: 'Login to the application',
@@ -31,6 +54,12 @@ export default new Action({
           id: user?.id,
           email: user?.email,
           name: user?.name,
+          // Roles ride along so the UI can decide what to offer (an Admin link
+          // for an admin, nothing for everyone else) without a second request
+          // on every page load. This is a HINT, never the gate: every admin
+          // endpoint re-checks the role server-side, because anything the
+          // client holds is something the client can edit.
+          roles: await roleNamesFor(user?.id),
         },
       })
     }

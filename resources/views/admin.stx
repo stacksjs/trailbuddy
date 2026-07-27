@@ -1,0 +1,134 @@
+@extends('layouts/default')
+
+@section('title', 'Admin - WildLoop')
+
+@section('content')
+<script client>
+  import { isSignedIn, token } from '../assets/scripts/auth'
+  import { describeResponseError, describeThrownError } from '../assets/scripts/request-error'
+
+  useHead({ title: 'Admin - WildLoop' })
+
+  const loading = state(true)
+  const error = state('')
+  const viewer = state(null)
+  const counts = state({ users: 0, trails: 0, activities: 0, admins: 0 })
+  const accounts = state([])
+
+  function initial(account) {
+    const source = (account?.name || account?.email || '').trim()
+    return source ? source.charAt(0).toUpperCase() : '·'
+  }
+
+  function roleLabel(account) {
+    return account?.roles?.length ? account.roles.join(', ') : 'no role'
+  }
+
+  onMount(async () => {
+    // The endpoint enforces this too. Checking here just avoids a pointless
+    // round trip and sends a signed-out visitor somewhere useful.
+    if (!isSignedIn()) {
+      navigate('/login')
+      return
+    }
+
+    try {
+      const res = await fetch('/api/admin/overview', {
+        headers: { Authorization: `Bearer ${token()}`, Accept: 'application/json' },
+      })
+      const payload = await res.json().catch(() => null)
+
+      if (!res.ok) {
+        const failure = describeResponseError(res.status, payload)
+        if (failure.unexpected) console.error('[admin]', res.status, failure.cause)
+        error.set(failure.message)
+        loading.set(false)
+        return
+      }
+
+      viewer.set(payload.viewer)
+      counts.set(payload.counts)
+      accounts.set(payload.accounts)
+      loading.set(false)
+    }
+    catch (err) {
+      const failure = describeThrownError(err)
+      if (failure.unexpected) console.error('[admin]', failure.cause)
+      error.set(failure.message)
+      loading.set(false)
+    }
+  })
+</script>
+
+<div class="mx-auto px-4 sm:px-6 lg:px-8 py-12 max-w-6xl">
+  <header class="mb-10">
+    <h1 class="font-bold text-3xl text-slate-900 dark:text-white tracking-tight">Admin</h1>
+    <p class="mt-1 text-slate-500 text-sm dark:text-slate-400">Accounts, roles and what the app currently holds.</p>
+  </header>
+
+  <div :if="error" role="alert" aria-live="assertive" class="flex gap-3 items-start mb-8 p-4 text-red-700 text-sm dark:text-red-300 bg-red-50 dark:bg-red-950/40 border border-red-200 rounded-xl dark:border-red-900">
+    <i class="i-hugeicons-alert-circle h-5 w-5 shrink-0 mt-px" aria-hidden="true"></i>
+    <span>{{ error }}</span>
+  </div>
+
+  <!-- Skeletons match the shape of the real content, so the page does not jump. -->
+  <div :if="loading" class="grid gap-4 grid-cols-2 lg:grid-cols-4 mb-12">
+    <div class="p-5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 rounded-xl dark:border-slate-700 animate-pulse">
+      <div class="h-8 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+      <div class="mt-3 h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded"></div>
+    </div>
+    <div class="p-5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 rounded-xl dark:border-slate-700 animate-pulse">
+      <div class="h-8 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+      <div class="mt-3 h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded"></div>
+    </div>
+    <div class="p-5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 rounded-xl dark:border-slate-700 animate-pulse">
+      <div class="h-8 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+      <div class="mt-3 h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded"></div>
+    </div>
+    <div class="p-5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 rounded-xl dark:border-slate-700 animate-pulse">
+      <div class="h-8 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+      <div class="mt-3 h-3 w-20 bg-slate-200 dark:bg-slate-700 rounded"></div>
+    </div>
+  </div>
+
+  <div :if="!loading && !error">
+    <div class="grid gap-4 grid-cols-2 lg:grid-cols-4 mb-12">
+      <div class="p-5 bg-white dark:bg-slate-800 border border-slate-200 rounded-xl dark:border-slate-700">
+        <div class="font-bold text-3xl text-slate-900 dark:text-white tabular-nums">{{ counts().users }}</div>
+        <div class="mt-1 text-slate-500 text-xs dark:text-slate-400 uppercase tracking-wide">Accounts</div>
+      </div>
+      <div class="p-5 bg-white dark:bg-slate-800 border border-slate-200 rounded-xl dark:border-slate-700">
+        <div class="font-bold text-3xl text-emerald-600 tabular-nums">{{ counts().admins }}</div>
+        <div class="mt-1 text-slate-500 text-xs dark:text-slate-400 uppercase tracking-wide">Admins</div>
+      </div>
+      <div class="p-5 bg-white dark:bg-slate-800 border border-slate-200 rounded-xl dark:border-slate-700">
+        <div class="font-bold text-3xl text-slate-900 dark:text-white tabular-nums">{{ counts().trails }}</div>
+        <div class="mt-1 text-slate-500 text-xs dark:text-slate-400 uppercase tracking-wide">Trails</div>
+      </div>
+      <div class="p-5 bg-white dark:bg-slate-800 border border-slate-200 rounded-xl dark:border-slate-700">
+        <div class="font-bold text-3xl text-slate-900 dark:text-white tabular-nums">{{ counts().activities }}</div>
+        <div class="mt-1 text-slate-500 text-xs dark:text-slate-400 uppercase tracking-wide">Activities</div>
+      </div>
+    </div>
+
+    <section>
+      <h2 class="mb-4 font-semibold text-slate-900 text-lg dark:text-white">Accounts</h2>
+
+      <div :if="accounts().length === 0" class="p-8 text-center text-slate-500 text-sm dark:text-slate-400 border border-slate-200 border-dashed rounded-xl dark:border-slate-700">
+        No accounts yet. Create one with <code class="font-mono text-xs">buddy user:add &lt;email&gt; --role admin</code>.
+      </div>
+
+      <ul :if="accounts().length > 0" class="divide-y divide-slate-200 dark:divide-slate-700 border border-slate-200 rounded-xl dark:border-slate-700 overflow-hidden">
+        <li :for="account in accounts()" class="flex gap-4 items-center px-5 py-4 bg-white dark:bg-slate-800">
+          <span class="flex items-center justify-center h-9 w-9 shrink-0 rounded-full bg-emerald-600 font-bold text-white text-sm" aria-hidden="true">{{ initial(account) }}</span>
+          <div class="min-w-0 flex-1">
+            <div class="font-medium text-slate-900 text-sm dark:text-white truncate">{{ account.name || account.email }}</div>
+            <div class="text-slate-500 text-xs dark:text-slate-400 truncate">{{ account.email }}</div>
+          </div>
+          <span class="shrink-0 px-2.5 py-1 text-xs font-medium rounded-full" :class="account.roles.includes('admin') ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'">{{ roleLabel(account) }}</span>
+        </li>
+      </ul>
+    </section>
+  </div>
+</div>
+@endsection
