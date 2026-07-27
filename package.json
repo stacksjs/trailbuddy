@@ -11,6 +11,8 @@
     "stacks": "^0.70.193"
   },
   "devDependencies": {
+    "@stacksjs/stx": "^0.2.110",
+    "bun-plugin-stx": "^0.2.110",
     "ts-maps": "^0.2.7"
   },
   "bugs": {
