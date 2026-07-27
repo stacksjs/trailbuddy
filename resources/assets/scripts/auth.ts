@@ -152,6 +152,22 @@ async function submit(path: string, body: Record<string, unknown>, context: stri
   }
 }
 
+/**
+ * Land on `path` with the new session applied everywhere.
+ *
+ * A client-side navigate leaves already-mounted components holding the state
+ * they read at init: the nav reads `auth_token` once, so after signing in it
+ * still offered "Log in" and "Sign up" until the visitor happened to reload.
+ * Signing in is exactly the moment the whole page should agree about who you
+ * are, and it happens once per session, so a real navigation is the honest
+ * way to get there.
+ */
+export function redirectAfterAuth(path: string): void {
+  if (typeof location === 'undefined')
+    return
+  location.assign(path)
+}
+
 export function signIn(email: string, password: string): Promise<AuthResult> {
   return submit('/api/login', { email, password }, 'auth:signIn')
 }

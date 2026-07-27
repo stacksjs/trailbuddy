@@ -4,7 +4,7 @@
 
 @section('content')
 <script client>
-  import { isSignedIn, signUp } from '../assets/scripts/auth'
+  import { isSignedIn, redirectAfterAuth, signUp } from '../assets/scripts/auth'
 
   useHead({ title: 'Sign Up - WildLoop' })
 
@@ -82,7 +82,7 @@
 
     if (result.ok) {
       success.set('Account created. Taking you to your feed.')
-      navigate('/')
+      redirectAfterAuth('/')
       return
     }
 
