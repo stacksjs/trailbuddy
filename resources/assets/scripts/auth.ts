@@ -163,9 +163,21 @@ async function submit(path: string, body: Record<string, unknown>, context: stri
  * way to get there.
  */
 export function redirectAfterAuth(path: string): void {
+  redirectTo(path)
+}
+
+/**
+ * Leave the app for another address.
+ *
+ * A real navigation, not client-side routing: an OAuth handoff has to put the
+ * provider's own domain in the address bar, because that is the only way
+ * someone can tell they are approving on Garmin's site and not typing into a
+ * convincing copy of it.
+ */
+export function redirectTo(url: string): void {
   if (typeof location === 'undefined')
     return
-  location.assign(path)
+  location.assign(url)
 }
 
 export function signIn(email: string, password: string): Promise<AuthResult> {

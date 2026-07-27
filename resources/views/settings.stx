@@ -1,0 +1,222 @@
+@extends('layouts/default')
+
+@section('title', 'Settings - WildLoop')
+
+@section('content')
+<script client>
+  import { isSignedIn, redirectTo, token } from '../assets/scripts/auth'
+  import { describeResponseError, describeThrownError } from '../assets/scripts/request-error'
+
+  useHead({ title: 'Settings - WildLoop' })
+
+  const loading = state(true)
+  const error = state('')
+  const notice = state('')
+  const configured = state(false)
+  const connected = state(false)
+  const connectedAt = state('')
+  const lastSyncAt = state('')
+  const working = state(false)
+
+  // The callback lands back here with the outcome in the query string, since
+  // a redirect from garmin.com cannot hand us anything else.
+  const OUTCOMES = {
+    connected: ['success', 'Garmin connected. New activities will appear here automatically.'],
+    denied: ['error', 'Garmin access was declined, so nothing was connected.'],
+    expired: ['error', 'That connection attempt timed out. Please try again.'],
+    unavailable: ['error', 'Garmin syncing is not switched on for WildLoop yet.'],
+    failed: ['error', 'Garmin could not complete the connection. Please try again.'],
+  }
+
+  function formatDate(value) {
+    if (!value) return ''
+    const parsed = new Date(value)
+    return Number.isNaN(parsed.getTime()) ? '' : parsed.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+  }
+
+  async function loadStatus() {
+    try {
+      const res = await fetch('/api/garmin/status', {
+        headers: { Authorization: `Bearer ${token()}`, Accept: 'application/json' },
+      })
+      const payload = await res.json().catch(() => null)
+
+      if (!res.ok) {
+        const failure = describeResponseError(res.status, payload)
+        if (failure.unexpected) console.error('[settings]', res.status, failure.cause)
+        error.set(failure.message)
+        loading.set(false)
+        return
+      }
+
+      configured.set(!!payload.configured)
+      connected.set(!!payload.connected)
+      connectedAt.set(payload.connectedAt || '')
+      lastSyncAt.set(payload.lastSyncAt || '')
+      loading.set(false)
+    }
+    catch (err) {
+      const failure = describeThrownError(err)
+      if (failure.unexpected) console.error('[settings]', failure.cause)
+      error.set(failure.message)
+      loading.set(false)
+    }
+  }
+
+  onMount(() => {
+    if (!isSignedIn()) {
+      navigate('/login')
+      return
+    }
+
+    const outcome = useRoute().query.garmin
+    if (outcome && OUTCOMES[outcome]) {
+      const [kind, message] = OUTCOMES[outcome]
+      if (kind === 'success') notice.set(message)
+      else error.set(message)
+    }
+
+    loadStatus()
+  })
+
+  async function connectGarmin() {
+    error.set('')
+    notice.set('')
+    working.set(true)
+
+    try {
+      // Two steps on purpose. The session is a bearer token, which a top-level
+      // navigation cannot send, so the token fetches the authorize URL (and
+      // receives the state cookie), and only then does the browser leave for
+      // Garmin's own consent screen at Garmin's own address.
+      const res = await fetch('/api/garmin/connect', {
+        credentials: 'same-origin',
+        headers: { Authorization: `Bearer ${token()}`, Accept: 'application/json' },
+      })
+      const payload = await res.json().catch(() => null)
+
+      if (!res.ok || !payload?.url) {
+        const failure = describeResponseError(res.status, payload)
+        if (failure.unexpected) console.error('[settings]', res.status, failure.cause)
+        error.set(failure.message)
+        working.set(false)
+        return
+      }
+
+      redirectTo(payload.url)
+    }
+    catch (err) {
+      const failure = describeThrownError(err)
+      if (failure.unexpected) console.error('[settings]', failure.cause)
+      error.set(failure.message)
+      working.set(false)
+    }
+  }
+
+  async function disconnectGarmin() {
+    error.set('')
+    notice.set('')
+    working.set(true)
+
+    try {
+      const res = await fetch('/api/garmin/disconnect', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token()}`, Accept: 'application/json' },
+      })
+
+      if (!res.ok) {
+        const failure = describeResponseError(res.status, await res.json().catch(() => null))
+        if (failure.unexpected) console.error('[settings]', res.status, failure.cause)
+        error.set(failure.message)
+        working.set(false)
+        return
+      }
+
+      connected.set(false)
+      lastSyncAt.set('')
+      notice.set('Garmin disconnected. No further activities will be imported.')
+      working.set(false)
+    }
+    catch (err) {
+      const failure = describeThrownError(err)
+      if (failure.unexpected) console.error('[settings]', failure.cause)
+      error.set(failure.message)
+      working.set(false)
+    }
+  }
+</script>
+
+<div class="mx-auto px-4 sm:px-6 lg:px-8 py-12 max-w-3xl">
+  <header class="mb-10">
+    <h1 class="font-bold text-3xl text-slate-900 dark:text-white tracking-tight">Settings</h1>
+    <p class="mt-1 text-slate-500 text-sm dark:text-slate-400">Connect a watch so your runs record themselves.</p>
+  </header>
+
+  <div :if="error" role="alert" aria-live="assertive" class="flex gap-3 items-start mb-6 p-4 text-red-700 text-sm dark:text-red-300 bg-red-50 dark:bg-red-950/40 border border-red-200 rounded-xl dark:border-red-900">
+    <i class="i-hugeicons-alert-circle h-5 w-5 shrink-0 mt-px" aria-hidden="true"></i>
+    <span>{{ error }}</span>
+  </div>
+
+  <div :if="notice" role="status" aria-live="polite" class="flex gap-3 items-start mb-6 p-4 text-emerald-700 text-sm dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 rounded-xl dark:border-emerald-900">
+    <i class="i-hugeicons-checkmark-circle-02 h-5 w-5 shrink-0 mt-px" aria-hidden="true"></i>
+    <span>{{ notice }}</span>
+  </div>
+
+  <section class="p-6 bg-white dark:bg-slate-800 border border-slate-200 rounded-2xl dark:border-slate-700">
+    <div class="flex gap-4 items-start">
+      <span class="flex items-center justify-center h-12 w-12 shrink-0 rounded-xl bg-slate-100 dark:bg-slate-700" aria-hidden="true">
+        <i class="i-hugeicons-watch-01 h-6 w-6 text-slate-700 dark:text-slate-200"></i>
+      </span>
+
+      <div class="min-w-0 flex-1">
+        <h2 class="font-semibold text-slate-900 dark:text-white">Garmin</h2>
+        <p class="mt-1 text-slate-500 text-sm dark:text-slate-400 max-w-[52ch]">
+          Finish a run on your watch and it appears here on its own, usually within seconds of your watch syncing. Imports stay private until you publish them.
+        </p>
+
+        <div :if="loading" class="mt-5 h-9 w-40 bg-slate-100 dark:bg-slate-700 rounded-full animate-pulse"></div>
+
+        <div :if="!loading && !configured" class="mt-5">
+          <p class="text-slate-500 text-sm dark:text-slate-400">
+            Not available yet. Garmin reviews every app before granting Activity API access, and this turns on the day they approve WildLoop.
+          </p>
+        </div>
+
+        <div :if="!loading && configured && !connected" class="mt-5">
+          <button
+            type="button"
+            @click="connectGarmin()"
+            x-disabled="working()"
+            class="px-5 py-2.5 font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-full disabled:opacity-50 transition-colors active:scale-[0.98]"
+          >
+            Connect Garmin
+          </button>
+          <p class="mt-3 text-slate-400 text-xs dark:text-slate-500">
+            You approve this on Garmin's own site. WildLoop never sees your Garmin password, and you can revoke access at any time.
+          </p>
+        </div>
+
+        <div :if="!loading && connected" class="mt-5">
+          <div class="flex flex-wrap gap-x-6 gap-y-1 mb-4 text-sm">
+            <span class="inline-flex gap-2 items-center font-medium text-emerald-700 dark:text-emerald-400">
+              <i class="i-hugeicons-checkmark-circle-02 h-4 w-4" aria-hidden="true"></i>
+              Connected
+            </span>
+            <span :if="lastSyncAt" class="text-slate-500 dark:text-slate-400">Last activity {{ formatDate(lastSyncAt) }}</span>
+            <span :if="!lastSyncAt" class="text-slate-500 dark:text-slate-400">Waiting for your first activity</span>
+          </div>
+
+          <button
+            type="button"
+            @click="disconnectGarmin()"
+            x-disabled="working()"
+            class="px-5 py-2.5 font-medium text-sm text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-full disabled:opacity-50 transition-colors active:scale-[0.98]"
+          >
+            Disconnect
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+@endsection

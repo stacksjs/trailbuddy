@@ -120,6 +120,21 @@ route.group({ prefix: '/queries' }, () => {
   route.post('/prune', 'Controllers/QueryController@pruneQueryLogs')
 })
 
+// Garmin Connect. The watch syncs to Garmin, Garmin pushes here.
+//
+// `connect` and `callback` are browser navigations, so callback carries no
+// bearer token: it identifies the athlete from the signed cookie that connect
+// set. The webhook is Garmin calling us, authenticated by a shared secret
+// rather than a session, and it opts out of CSRF because a third party cannot
+// carry our cookie.
+route.group({ prefix: '/garmin' }, () => {
+  route.get('/status', 'Actions/Garmin/GarminStatusAction').middleware('auth')
+  route.get('/connect', 'Actions/Garmin/GarminConnectAction').middleware('auth')
+  route.get('/callback', 'Actions/Garmin/GarminCallbackAction')
+  route.post('/disconnect', 'Actions/Garmin/GarminDisconnectAction').middleware('auth')
+  route.post('/webhook', 'Actions/Garmin/GarminWebhookAction')
+})
+
 // Admin dashboard. The action re-checks the admin role itself; `auth` here
 // only guarantees there is a session to check.
 route.get('/admin/overview', 'Actions/Admin/AdminOverviewAction').middleware('auth')
