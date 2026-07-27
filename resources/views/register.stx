@@ -49,17 +49,21 @@
     error.set('')
     success.set('')
 
-    // Answer what we can already see, rather than spending a round trip on it.
-    if (!name().trim() || !email().trim() || !password()) {
+    // Read the fields themselves, not the signal mirror. A password manager
+    // or browser autofill sets `value` without firing an input event, so the
+    // signals stay empty while the boxes visibly hold details.
+    const fields = e.target?.elements
+    const nameValue = (fields?.name?.value ?? name()).trim()
+    const emailValue = (fields?.email?.value ?? email()).trim()
+    const passwordValue = fields?.password?.value ?? password()
+    const confirmValue = fields?.password_confirmation?.value ?? passwordConfirm()
+
+    if (!nameValue || !emailValue || !passwordValue) {
       error.set('Fill in your name, email and a password.')
       return
     }
-    if (!passwordsMatch()) {
+    if (confirmValue && passwordValue !== confirmValue) {
       error.set('Those passwords do not match.')
-      return
-    }
-    if (!terms()) {
-      error.set('Accept the terms to create your account.')
       return
     }
 
@@ -67,7 +71,7 @@
 
     // signUp never throws: every outcome comes back as a result, already
     // phrased for a person.
-    const result = await signUp({ name: name().trim(), email: email().trim(), password: password() })
+    const result = await signUp({ name: nameValue, email: emailValue, password: passwordValue })
 
     if (result.ok) {
       success.set('Account created. Taking you to your feed.')

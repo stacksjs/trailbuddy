@@ -25,9 +25,16 @@
     error.set('')
     success.set('')
 
-    // Catch the empty case here rather than spending a round trip to be told
-    // the password is too short.
-    if (!email().trim() || !password()) {
+    // Read the fields themselves, not the signal mirror. A password manager
+    // or browser autofill sets `value` without firing an input event, so the
+    // signals stay empty while the boxes visibly hold credentials - and the
+    // form answered "Enter your email and password" to someone looking at
+    // both. The event gives us the form directly, no globals needed.
+    const fields = e.target?.elements
+    const emailValue = (fields?.email?.value ?? email()).trim()
+    const passwordValue = fields?.password?.value ?? password()
+
+    if (!emailValue || !passwordValue) {
       error.set('Enter your email and password.')
       return
     }
@@ -37,7 +44,7 @@
     // signIn never throws: every outcome comes back as a result, already
     // phrased for a person. That is what stops a runtime error from being
     // rendered as if it were advice.
-    const result = await signIn(email().trim(), password())
+    const result = await signIn(emailValue, passwordValue)
 
     if (result.ok) {
       success.set('Signed in. Taking you to your feed.')
