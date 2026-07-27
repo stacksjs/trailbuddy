@@ -28,10 +28,12 @@ export default {
       "port": 3049,
       "preStart": [
         "bun install",
+        "mkdir -p /var/www/wildloop-shared/database",
         "bun storage/framework/core/buddy/src/cli.ts migrate --force"
       ],
       "env": {
-        "API_URL": ""
+        "API_URL": "",
+        "DB_DATABASE_PATH": ""
       }
     },
     "api": {
@@ -39,11 +41,13 @@ export default {
       "start": "bun storage/framework/core/actions/src/serve/api.ts",
       "port": 3050,
       "preStart": [
-        "bun install"
+        "bun install",
+        "mkdir -p /var/www/wildloop-shared/database"
       ],
       "env": {
         "HOST": "",
-        "APP_ENV": ""
+        "APP_ENV": "",
+        "DB_DATABASE_PATH": ""
       }
     },
     "www": {

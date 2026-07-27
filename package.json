@@ -8,14 +8,9 @@
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.120",
-    "@stacksjs/components": "catalog:",
-    "@stacksjs/stx": "catalog:",
-    "bun-plugin-stx": "catalog:",
-    "stacks": "workspace:*",
-    "ts-rate-limiter": "0.4.2"
+    "stacks": "^0.70.193"
   },
   "devDependencies": {
-    "@stacksjs/ts-cloud-types": "^0.1.9",
     "ts-maps": "^0.2.7"
   },
   "bugs": {
@@ -89,10 +84,6 @@
     "bud": "./buddy",
     "stx": "./buddy"
   },
-  "system": {
-    "bun": "^1.3.0",
-    "sqlite": "^3.47.2"
-  },
   "type": "module",
   "workspaces": [
     "storage/framework/**",
@@ -101,19 +92,5 @@
     "!**/docs/deps/**",
     "!storage/framework/server/storage/**",
     "!storage/framework/cache/**"
-  ],
-  "catalog": {
-    "@stacksjs/clapp": "^0.2.12",
-    "@stacksjs/components": "^0.2.82",
-    "@stacksjs/gitlint": "^0.1.7",
-    "@stacksjs/stx": "^0.2.108",
-    "@stacksjs/ts-cloud": "^0.7.60",
-    "better-dx": "^0.2.17",
-    "bun-git-hooks": "^0.3.2",
-    "bun-plugin-stx": "^0.2.108",
-    "bun-query-builder": "^0.1.56",
-    "pickier": "^0.1.35",
-    "redis": "^5.12.1",
-    "web-ext": "^10.5.0"
-  }
+  ]
 }
