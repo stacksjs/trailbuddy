@@ -12,11 +12,14 @@ const envVars = typeof Bun !== 'undefined' ? Bun.env : process.env
  */
 export default {
   from: {
-    name: envVars.MAIL_FROM_NAME || 'Stacks',
-    address: envVars.MAIL_FROM_ADDRESS || 'no-reply@stacksjs.com',
+    name: envVars.MAIL_FROM_NAME || 'WildLoop',
+    address: envVars.MAIL_FROM_ADDRESS || 'no-reply@wildloop.org',
   },
 
-  domain: envVars.MAIL_DOMAIN || 'stacksjs.com',
+  // The domain this app owns. `buddy deploy` reconciles MX/SPF/DKIM/DMARC for
+  // whatever is set here, so leaving the scaffold default in place means an
+  // app publishes mail DNS for a domain belonging to somebody else.
+  domain: envVars.MAIL_DOMAIN || 'wildloop.org',
 
   /**
    * Mailbox users for IMAP/SMTP access.
@@ -30,17 +33,19 @@ export default {
    */
   mailboxes: [
     'chris',
-    'blake',
+    'pawel',
+    'adelino',
     'glenn',
+    'no-reply',
   ],
 
-  url: envVars.APP_URL || 'https://stacksjs.com',
+  url: envVars.APP_URL || 'https://wildloop.org',
   charset: 'UTF-8',
 
   server: {
     enabled: true,
     scan: true, // scans for spam and viruses
-    subdomain: 'mail', // mail.stacksjs.com
+    subdomain: 'mail', // mail.wildloop.org
 
     /**
      * Server mode:
