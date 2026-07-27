@@ -4,6 +4,11 @@ import { defineProps } from 'stx'
 /**
  * A form or page message: an error, a warning, a confirmation.
  *
+ * Named FormMessage, not Alert: the framework already ships an `Alert` under
+ * Dashboard/Modals/Popups that is a blocking confirm dialog defaulting to
+ * `show = true`. A page that wrote `<Alert>` meaning "show this sentence" got
+ * that modal instead, empty, covering the form.
+ *
  * This exists because every page that needed to say something to the user was
  * hand-rolling the same coloured div with a slightly different border radius
  * and no accessibility semantics at all. A screen reader announced none of

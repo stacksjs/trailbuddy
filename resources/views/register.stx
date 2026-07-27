@@ -93,10 +93,10 @@
         </div>
 
         <!-- Error Alert -->
-        <Alert :if="error" tone="error">{{ error }}</Alert>
+        <FormMessage :if="error" tone="error">{{ error }}</FormMessage>
 
         <!-- Success Alert -->
-        <Alert :if="success" tone="success">{{ success }}</Alert>
+        <FormMessage :if="success" tone="success">{{ success }}</FormMessage>
 
         <!-- Register Form -->
         <form @submit="handleRegister" class="space-y-5">
