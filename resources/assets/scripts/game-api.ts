@@ -49,11 +49,39 @@ const TOKEN_KEY = 'auth_token'
 const DEMO_EMAIL = 'you@wildloop.test'
 const DEMO_PASSWORD = 'password123'
 
+/**
+ * Read the double-submit CSRF cookie the framework middleware plants on safe
+ * responses. Returns null off-browser or before the first GET has landed.
+ */
+function csrfToken(): string | null {
+  if (typeof document === 'undefined')
+    return null
+  for (const part of document.cookie.split(';')) {
+    const separator = part.indexOf('=')
+    if (separator === -1)
+      continue
+    if (part.slice(0, separator).trim() !== 'X-CSRF-Token')
+      continue
+    const value = part.slice(separator + 1).trim()
+    return value ? decodeURIComponent(value) : null
+  }
+  return null
+}
+
 function authHeaders(): Record<string, string> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null
   if (token)
     headers.Authorization = `Bearer ${token}`
+
+  // CSRF is default-on for unsafe methods. A bearer token exempts the request
+  // server-side, but the very first call is the sign-in that mints that token,
+  // so without the echoed cookie every session started with a 403 and the app
+  // silently fell back to read-only seed data.
+  const csrf = csrfToken()
+  if (csrf)
+    headers['X-CSRF-Token'] = csrf
+
   return headers
 }
 
@@ -75,7 +103,7 @@ export function ensureSession(): Promise<void> {
     try {
       const res = await fetch('/api/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD }),
       })
       if (res.ok) {
