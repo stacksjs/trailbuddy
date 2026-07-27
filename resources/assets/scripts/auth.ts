@@ -1,0 +1,161 @@
+/**
+ * The browser-side auth client.
+ *
+ * The sign-in and sign-up pages used to call a bare `auth` global that nothing
+ * ever defined, so submitting the form threw a ReferenceError and the page
+ * printed `auth is not defined` where the error message goes. Nobody could
+ * sign in through the UI at all.
+ *
+ * This is the missing piece, built on the conventions the rest of the app
+ * already uses: the bearer token lives in `auth_token` (shared with
+ * `game-api.ts`, so a session started here authenticates activity writes too),
+ * and unsafe requests echo the CSRF double-submit cookie the server plants on
+ * page loads.
+ */
+
+import { describeResponseError, describeThrownError, type UserFacingError } from './request-error'
+
+/** Where the bearer token lives. `game-api.ts` reads the same key. */
+export const TOKEN_KEY = 'auth_token'
+
+/** Where the signed-in user is cached. There is no `/me` endpoint to re-fetch from. */
+const USER_KEY = 'auth_user'
+
+export interface AuthUser {
+  id: number
+  email: string
+  name?: string
+}
+
+export interface AuthResult {
+  ok: boolean
+  user?: AuthUser
+  /** Present when `ok` is false. Already safe to render. */
+  failure?: UserFacingError
+}
+
+/**
+ * Read the double-submit CSRF cookie the server sets on safe responses.
+ * Returns null off-browser, or before any page load has landed.
+ */
+export function csrfToken(): string | null {
+  if (typeof document === 'undefined')
+    return null
+
+  for (const part of document.cookie.split(';')) {
+    const separator = part.indexOf('=')
+    if (separator === -1)
+      continue
+    if (part.slice(0, separator).trim() !== 'X-CSRF-Token')
+      continue
+    const value = part.slice(separator + 1).trim()
+    return value ? decodeURIComponent(value) : null
+  }
+  return null
+}
+
+function headers(): Record<string, string> {
+  const out: Record<string, string> = { 'Content-Type': 'application/json' }
+  const csrf = csrfToken()
+  if (csrf)
+    out['X-CSRF-Token'] = csrf
+  return out
+}
+
+export function token(): string | null {
+  return typeof localStorage === 'undefined' ? null : localStorage.getItem(TOKEN_KEY)
+}
+
+export function isSignedIn(): boolean {
+  return !!token()
+}
+
+/** The signed-in user, from the session established at sign-in. */
+export function currentUser(): AuthUser | null {
+  if (typeof localStorage === 'undefined')
+    return null
+  const raw = localStorage.getItem(USER_KEY)
+  if (!raw)
+    return null
+  try {
+    return JSON.parse(raw) as AuthUser
+  }
+  catch {
+    // A corrupted entry should not wedge every page that checks for a user.
+    localStorage.removeItem(USER_KEY)
+    return null
+  }
+}
+
+function persist(data: { token?: string, user?: AuthUser }): void {
+  if (typeof localStorage === 'undefined')
+    return
+  if (data.token)
+    localStorage.setItem(TOKEN_KEY, data.token)
+  if (data.user)
+    localStorage.setItem(USER_KEY, JSON.stringify(data.user))
+}
+
+export function signOut(): void {
+  if (typeof localStorage === 'undefined')
+    return
+  localStorage.removeItem(TOKEN_KEY)
+  localStorage.removeItem(USER_KEY)
+}
+
+/**
+ * POST credentials and normalise every outcome into an `AuthResult`.
+ *
+ * This never throws. A caller that has to wrap the call in try/catch to avoid
+ * showing a raw exception is exactly the shape that produced
+ * `auth is not defined`, so the failure is part of the return type instead.
+ */
+async function submit(path: string, body: Record<string, unknown>, context: string): Promise<AuthResult> {
+  try {
+    const response = await fetch(path, {
+      method: 'POST',
+      // The CSRF cookie has to ride along for the double-submit check.
+      credentials: 'same-origin',
+      headers: headers(),
+      body: JSON.stringify(body),
+    })
+
+    // A non-JSON body (a proxy's HTML error page, an empty 502) must not throw
+    // a SyntaxError that reads as a bug to the person waiting on the form.
+    const payload = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      const failure = describeResponseError(response.status, payload)
+      if (failure.unexpected)
+        console.error(`[${context}]`, response.status, failure.cause)
+      return { ok: false, failure }
+    }
+
+    if (!payload?.token) {
+      // A 200 with no token means the contract changed under us. Say something
+      // useful and leave the detail in the console.
+      console.error(`[${context}] response carried no token`, payload)
+      return {
+        ok: false,
+        failure: { message: 'Something went wrong on our end. Try again in a moment.', unexpected: true, cause: payload },
+      }
+    }
+
+    persist({ token: payload.token, user: payload.user })
+    return { ok: true, user: payload.user }
+  }
+  catch (error) {
+    const failure = describeThrownError(error)
+    if (failure.unexpected)
+      console.error(`[${context}]`, failure.cause)
+    return { ok: false, failure }
+  }
+}
+
+export function signIn(email: string, password: string): Promise<AuthResult> {
+  return submit('/api/login', { email, password }, 'auth:signIn')
+}
+
+export function signUp(input: { name: string, email: string, password: string }): Promise<AuthResult> {
+  return submit('/api/register', input, 'auth:signUp')
+}
