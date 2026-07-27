@@ -10,6 +10,25 @@ import type { CloudConfig } from '@stacksjs/ts-cloud-types'
  * instead, where the deploy never looked, so the domain and the DNS provider
  * had no effect on an actual deployment.
  */
+/**
+ * The production SQLite file, deliberately outside every release directory.
+ *
+ * A release is disposable: ts-cloud unpacks each deploy into
+ * `releases/<sha>/` and prunes old ones. The database defaults to the
+ * relative `database/stacks.sqlite`, which put it INSIDE that directory —
+ * so every account, trail and activity written by the running site was
+ * discarded the moment the next release cut over, and replaced by whatever
+ * happened to be in the developer's local checkout.
+ *
+ * The two sites also ran as separate deployments with separate release dirs,
+ * so `main` and `api` were reading and writing two different files: an account
+ * created through the API was invisible to anything the page server did.
+ *
+ * One absolute path outside both fixes both problems. `DB_DATABASE_PATH` is
+ * what `config/database.ts` reads for the sqlite connection.
+ */
+const SHARED_DATABASE = '/var/www/wildloop-shared/database/stacks.sqlite'
+
 export const tsCloud: TsCloudConfig = {
   project: {
     name: 'WildLoop',
@@ -62,13 +81,21 @@ export const tsCloud: TsCloudConfig = {
       // no tables, and serving against an empty database fails every read.
       preStart: [
         'bun install',
+        // The database lives OUTSIDE the release, so create its directory
+        // before migrate runs — on a fresh box nothing else would.
+        'mkdir -p /var/www/wildloop-shared/database',
         'bun storage/framework/core/buddy/src/cli.ts migrate --force',
       ],
       // Pin the proxy target. `buddy serve` otherwise falls back to
       // 127.0.0.1:3008, which on this SHARED box is the `stacks` project's own
       // API - every /api/trails, /api/activities and /api/territories call
       // would silently answer from another tenant.
-      env: { API_URL: 'http://127.0.0.1:3050' },
+      env: {
+        API_URL: 'http://127.0.0.1:3050',
+        // See the note on the api site below — both processes must open the
+        // SAME file or they disagree about who exists.
+        DB_DATABASE_PATH: SHARED_DATABASE,
+      },
     },
 
     // The API behind `buddy serve`'s same-origin proxy. Without it nothing
@@ -81,8 +108,8 @@ export const tsCloud: TsCloudConfig = {
       root: '.',
       start: 'bun storage/framework/core/actions/src/serve/api.ts',
       port: 3050,
-      preStart: ['bun install'],
-      env: { HOST: '127.0.0.1', APP_ENV: 'production' },
+      preStart: ['bun install', 'mkdir -p /var/www/wildloop-shared/database'],
+      env: { HOST: '127.0.0.1', APP_ENV: 'production', DB_DATABASE_PATH: SHARED_DATABASE },
     },
 
     // www resolves to the same box, so it needs a vhost of its own or it falls
