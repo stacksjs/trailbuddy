@@ -46,7 +46,6 @@ stacks.log
 /storage/framework/stx
 .env.keys
 /storage/framework/frontend-dist
-/.qb
 
 # Stub workspace packages (temporary)
 /ts-auth
