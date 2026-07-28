@@ -60,7 +60,12 @@ stacks.log
 /bun-plugin-stx
 pantry
 
-# Model snapshot. Belongs in storage/framework/database (stacks sets
-# snapshotDir), but a bundled copy of the query-builder config still writes it
-# here; ignore it until that is resolved rather than committing generated state.
+# Model snapshot — generated state, so ignored rather than committed.
+#
+# It now lands in storage/framework/database, where stacks points snapshotDir.
+# The bundled copy of the query-builder that used to ignore that setting and
+# write /.qb at the project root is fixed (stacks 0.70.206 stopped inlining the
+# library, bun-query-builder 0.1.63 stopped clobbering the configured value), so
+# the old root path is kept here only to catch a stale install.
+/storage/framework/database
 /.qb
