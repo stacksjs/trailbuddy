@@ -59,3 +59,8 @@ stacks.log
 /headwind
 /bun-plugin-stx
 pantry
+
+# Model snapshot. Belongs in storage/framework/database (stacks sets
+# snapshotDir), but a bundled copy of the query-builder config still writes it
+# here; ignore it until that is resolved rather than committing generated state.
+/.qb
