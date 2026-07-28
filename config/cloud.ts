@@ -74,13 +74,15 @@ export const tsCloud: TsCloudConfig = {
       root: '.',
       path: '/',
       domain: 'wildloop.org',
-      start: 'bun storage/framework/core/buddy/src/cli.ts serve',
+      start: 'bun storage/framework/runtime/production/serve.js',
       port: 3049,
       // The release ships without dependencies, so nothing resolves until
       // install runs here. Migrate then creates the schema: ts-cloud provisions
       // no tables, and serving against an empty database fails every read.
       preStart: [
         'bun install',
+        'mkdir -p storage/framework/runtime/production',
+        'bun build --production --target=bun --packages=external app/ProductionServer.ts --outfile storage/framework/runtime/production/serve.js',
         // The database lives OUTSIDE the release, so create its directory
         // before migrate runs — on a fresh box nothing else would.
         'mkdir -p /var/www/wildloop-shared/database',
@@ -91,6 +93,8 @@ export const tsCloud: TsCloudConfig = {
       // API - every /api/trails, /api/activities and /api/territories call
       // would silently answer from another tenant.
       env: {
+        APP_ENV: 'production',
+        NODE_ENV: 'production',
         API_URL: 'http://127.0.0.1:3050',
         // See the note on the api site below — both processes must open the
         // SAME file or they disagree about who exists.
@@ -106,10 +110,20 @@ export const tsCloud: TsCloudConfig = {
     // shared and a 0.0.0.0 bind would expose this API to every neighbour.
     api: {
       root: '.',
-      start: 'bun storage/framework/core/actions/src/serve/api.ts',
+      start: 'bun storage/framework/runtime/production/api.js',
       port: 3050,
-      preStart: ['bun install', 'mkdir -p /var/www/wildloop-shared/database'],
-      env: { HOST: '127.0.0.1', APP_ENV: 'production', DB_DATABASE_PATH: SHARED_DATABASE },
+      preStart: [
+        'bun install',
+        'mkdir -p storage/framework/runtime/production',
+        'bun build --production --target=bun --packages=external node_modules/@stacksjs/actions/dist/serve/api.js --outfile storage/framework/runtime/production/api.js',
+        'mkdir -p /var/www/wildloop-shared/database',
+      ],
+      env: {
+        HOST: '127.0.0.1',
+        APP_ENV: 'production',
+        NODE_ENV: 'production',
+        DB_DATABASE_PATH: SHARED_DATABASE,
+      },
     },
 
     // www resolves to the same box, so it needs a vhost of its own or it falls
