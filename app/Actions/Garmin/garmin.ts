@@ -1,40 +1,20 @@
 /**
- * Garmin Activity API: the pure parts.
+ * Garmin, the WildLoop-specific parts.
  *
- * Everything here is a plain function over plain data so the tricky bits (unit
- * conversion, PKCE, deciding which Garmin activity types we even accept) can
+ * The protocol itself - PKCE, the authorize URL, reading a push payload,
+ * authenticating a webhook - lives in `ts-watches`, which owns the Activity API
+ * and its tests. What stays here is the part no library can know: how a Garmin
+ * summary becomes a WildLoop Activity, in the units and shapes this app stores.
+ *
+ * Everything below is a plain function over plain data, so the conversions can
  * be tested without a Garmin account, a network, or a database.
  */
 
-import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
+import { createHmac, timingSafeEqual } from 'node:crypto'
+import { createPkcePair, extractActivitySummaries, GarminActivityApiClient, isAuthenticWebhook } from 'ts-watches'
 
-/** An activity summary as Garmin pushes it. Only the fields we consume. */
-export interface GarminActivitySummary {
-  /** Stable across redeliveries of the same activity. Our idempotency key. */
-  summaryId: string
-  activityId?: number
-  userId?: string
-  activityType?: string
-  activityName?: string
-  startTimeInSeconds?: number
-  startTimeOffsetInSeconds?: number
-  durationInSeconds?: number
-  distanceInMeters?: number
-  activeKilocalories?: number
-  averageHeartRateInBeatsPerMinute?: number
-  maxHeartRateInBeatsPerMinute?: number
-  averageSpeedInMetersPerSecond?: number
-  totalElevationGainInMeters?: number
-  startingLatitudeInDegree?: number
-  startingLongitudeInDegree?: number
-  steps?: number
-  deviceName?: string
-  /** Garmin marks a manually entered activity; it carries no GPS worth importing. */
-  manual?: boolean
-  /** A multisport parent wraps its children, which arrive as their own summaries. */
-  isParent?: boolean
-  parentSummaryId?: string
-}
+export type { GarminActivitySummary } from 'ts-watches'
+export { createPkcePair, isAuthenticWebhook }
 
 /**
  * Garmin's activity types mapped onto the four WildLoop records.
@@ -176,27 +156,12 @@ export function mapActivity(summary: GarminActivitySummary): MappedActivity | nu
   }
 }
 
-/** A PKCE verifier and its S256 challenge. */
-export interface PkcePair {
-  verifier: string
-  challenge: string
-}
-
 /**
- * Create a PKCE pair.
+ * Build the URL the athlete approves at.
  *
- * The verifier stays on our server; only its SHA-256 hash travels to Garmin.
- * The authorization code comes back through the athlete's browser, so anyone
- * able to read it there still cannot redeem it without the verifier.
+ * Delegates to the library's client so the parameter set stays correct as
+ * Garmin's spec moves, rather than being re-derived here.
  */
-export function createPkcePair(): PkcePair {
-  // 64 bytes of base64url is 86 characters, inside RFC 7636's 43-128 range.
-  const verifier = randomBytes(64).toString('base64url')
-  const challenge = createHash('sha256').update(verifier).digest('base64url')
-  return { verifier, challenge }
-}
-
-/** Build the URL the athlete is sent to in order to approve the connection. */
 export function buildAuthorizeUrl(options: {
   authorizeEndpoint: string
   clientId: string
@@ -205,18 +170,15 @@ export function buildAuthorizeUrl(options: {
   challenge: string
   scope?: string
 }): string {
-  const params = new URLSearchParams({
-    client_id: options.clientId,
-    response_type: 'code',
-    redirect_uri: options.redirectUri,
-    code_challenge: options.challenge,
-    code_challenge_method: 'S256',
-    state: options.state,
+  const client = new GarminActivityApiClient({
+    clientId: options.clientId,
+    clientSecret: 'unused-for-url-building',
+    redirectUri: options.redirectUri,
+    scope: options.scope,
+    endpoints: { authorize: options.authorizeEndpoint },
   })
-  if (options.scope)
-    params.set('scope', options.scope)
 
-  return `${options.authorizeEndpoint}?${params.toString()}`
+  return client.buildAuthorizationUrl({ state: options.state, challenge: options.challenge })
 }
 
 /**
@@ -229,23 +191,9 @@ export function isConfigured(config: { clientId?: string, clientSecret?: string 
   return Boolean(config?.clientId && config?.clientSecret)
 }
 
-/**
- * Pull activity summaries out of a push payload.
- *
- * Garmin posts `{ activities: [...] }`, and has historically also posted a
- * bare array. Accepting both costs nothing and avoids dropping a day of
- * activities over a shape we did not anticipate.
- */
+/** Pull activity summaries out of a push payload. */
 export function extractSummaries(body: unknown): GarminActivitySummary[] {
-  const candidates = Array.isArray(body)
-    ? body
-    : Array.isArray((body as any)?.activities)
-      ? (body as any).activities
-      : Array.isArray((body as any)?.activityDetails)
-        ? (body as any).activityDetails
-        : []
-
-  return candidates.filter((entry: any) => entry && typeof entry.summaryId === 'string')
+  return extractActivitySummaries(body)
 }
 
 /** What has to survive the round trip to Garmin and back. */
@@ -316,17 +264,3 @@ export function openOAuthState(token: string | undefined, secret: string, now = 
   }
 }
 
-/**
- * Does a webhook request carry the shared secret?
- *
- * The push endpoint is a public URL that writes activities, so it has to
- * establish that a request is Garmin's before trusting a word of it.
- * Constant-time for the same reason as above.
- */
-export function isAuthenticWebhook(presented: string | null | undefined, secret: string): boolean {
-  if (!secret || !presented)
-    return false
-  const given = Buffer.from(presented)
-  const want = Buffer.from(secret)
-  return given.length === want.length && timingSafeEqual(given, want)
-}
