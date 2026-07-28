@@ -8,10 +8,10 @@
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.120",
-    "@stacksjs/buddy": "^0.70.206",
+    "@stacksjs/buddy": "^0.70.207",
     "@stacksjs/ts-cloud": "^0.7.86",
     "bun-query-builder": "^0.1.63",
-    "stacks": "^0.70.206",
+    "stacks": "^0.70.207",
     "ts-watches": "^0.1.0"
   },
   "devDependencies": {
