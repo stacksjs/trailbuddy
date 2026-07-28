@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.120",
+    "@stacksjs/buddy": "^0.70.196",
     "@stacksjs/ts-cloud": "^0.7.78",
     "stacks": "^0.70.193"
   },
