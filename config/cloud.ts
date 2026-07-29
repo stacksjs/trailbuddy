@@ -86,7 +86,7 @@ export const tsCloud: TsCloudConfig = {
         // The database lives OUTSIDE the release, so create its directory
         // before migrate runs — on a fresh box nothing else would.
         'mkdir -p /var/www/wildloop-shared/database',
-        'bun storage/framework/core/buddy/src/cli.ts migrate --force',
+        'bun node_modules/@stacksjs/buddy/dist/cli.js migrate --force',
       ],
       // Pin the proxy target. `buddy serve` otherwise falls back to
       // 127.0.0.1:3008, which on this SHARED box is the `stacks` project's own
