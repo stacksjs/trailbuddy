@@ -31,6 +31,12 @@ jobs:
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          # The lockfile is written by a canary Bun (lockfileVersion 2); stable
+          # 1.3.14 cannot read it and silently resolves fresh instead, which
+          # is how a deploy ended up installing a half-published dependency
+          # set. Pin the runner to the Bun that wrote the lockfile.
+          bun-version: canary
 
       - name: Use cached node_modules
         uses: actions/cache@v5
@@ -60,6 +66,12 @@ jobs:
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          # The lockfile is written by a canary Bun (lockfileVersion 2); stable
+          # 1.3.14 cannot read it and silently resolves fresh instead, which
+          # is how a deploy ended up installing a half-published dependency
+          # set. Pin the runner to the Bun that wrote the lockfile.
+          bun-version: canary
 
       - name: Use cached node_modules
         uses: actions/cache@v5
@@ -112,6 +124,12 @@ jobs:
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          # The lockfile is written by a canary Bun (lockfileVersion 2); stable
+          # 1.3.14 cannot read it and silently resolves fresh instead, which
+          # is how a deploy ended up installing a half-published dependency
+          # set. Pin the runner to the Bun that wrote the lockfile.
+          bun-version: canary
 
       - name: Use cached node_modules
         uses: actions/cache@v5
@@ -180,6 +198,12 @@ jobs:
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          # The lockfile is written by a canary Bun (lockfileVersion 2); stable
+          # 1.3.14 cannot read it and silently resolves fresh instead, which
+          # is how a deploy ended up installing a half-published dependency
+          # set. Pin the runner to the Bun that wrote the lockfile.
+          bun-version: canary
 
       - name: Use cached node_modules
         uses: actions/cache@v5
@@ -254,6 +278,12 @@ jobs:
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          # The lockfile is written by a canary Bun (lockfileVersion 2); stable
+          # 1.3.14 cannot read it and silently resolves fresh instead, which
+          # is how a deploy ended up installing a half-published dependency
+          # set. Pin the runner to the Bun that wrote the lockfile.
+          bun-version: canary
 
       - name: Use cached node_modules
         uses: actions/cache@v5
@@ -278,6 +308,12 @@ jobs:
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          # The lockfile is written by a canary Bun (lockfileVersion 2); stable
+          # 1.3.14 cannot read it and silently resolves fresh instead, which
+          # is how a deploy ended up installing a half-published dependency
+          # set. Pin the runner to the Bun that wrote the lockfile.
+          bun-version: canary
 
       - name: Use cached node_modules
         uses: actions/cache@v5
@@ -298,6 +334,12 @@ jobs:
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          # The lockfile is written by a canary Bun (lockfileVersion 2); stable
+          # 1.3.14 cannot read it and silently resolves fresh instead, which
+          # is how a deploy ended up installing a half-published dependency
+          # set. Pin the runner to the Bun that wrote the lockfile.
+          bun-version: canary
 
       - name: Use cached node_modules
         uses: actions/cache@v5
@@ -313,5 +355,43 @@ jobs:
       - name: Build
         run: bun run build
 
+      # Pantry ships commit publishing itself — `publish:commit` is its
+      # pkg-pr-new equivalent, and it is what this project should be using.
+      #
+      # pkg-pr-new could never have worked here anyway: it skips private
+      # packages, and wildloop is `"private": true` because it is an
+      # application rather than a library. With nothing left to send it, the
+      # service answered `400 {"message":"No packages"}` on every run.
+      #
+      # The installer action lives inside the pantry monorepo (packages/action)
+      # and is not published as `pantry-pm/pantry-installer` yet, so the
+      # release binary is fetched directly. Swap this step for the action once
+      # that repo exists.
+      - name: Install Pantry
+        run: |
+          tmp=$(mktemp -d)
+          curl -fsSL -o "$tmp/pantry.zip" \
+            https://github.com/pantry-pm/pantry/releases/latest/download/pantry-linux-x64.zip
+          # The archive holds a bare `pantry` binary, no wrapping directory.
+          unzip -oq "$tmp/pantry.zip" -d "$tmp"
+          sudo install -m 755 "$tmp/pantry" /usr/local/bin/pantry
+          rm -rf "$tmp"
+          pantry --version
+
+      # `publish:commit` derives the version from the commit SHA itself, so
+      # each build is separately installable without anyone stamping
+      # package.json. Skipped rather than failed when no token is configured:
+      # a missing credential is a setup gap, and a permanently red job teaches
+      # everyone to ignore CI.
       - name: Publish Commit
-        run: bunx pkg-pr-new publish
+        env:
+          PANTRY_TOKEN: ${{ secrets.PANTRY_TOKEN }}
+          PANTRY_REGISTRY_TOKEN: ${{ secrets.PANTRY_TOKEN }}
+        run: |
+          if [ -z "${PANTRY_TOKEN}" ]; then
+            echo "PANTRY_TOKEN is not set — skipping the commit publish."
+            echo "Add it to the repository secrets to publish this commit to the pantry registry."
+            pantry publish:commit --dry-run --compact
+            exit 0
+          fi
+          pantry publish:commit --compact
