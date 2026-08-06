@@ -3,6 +3,27 @@ import { schema } from '@stacksjs/validation'
 
 const difficulties = ['easy', 'moderate', 'hard'] as const
 
+/**
+ * Where a trail row came from.
+ *
+ * Every row in this table is ingested from a public dataset rather than typed
+ * in by hand, so the provenance has to travel with the row: it is what makes
+ * a re-sync an UPDATE instead of a duplicate INSERT, and it is what lets us
+ * attribute (and re-licence) the data correctly per source.
+ *
+ * - `osm`  — OpenStreetMap via Overpass (ODbL). The broadest coverage.
+ * - `usfs` — USDA Forest Service EDW National Forest System Trails (public domain).
+ * - `nps`  — National Park Service public trails (public domain).
+ * - `manual` — created in-app.
+ */
+const sources = ['osm', 'usfs', 'nps', 'manual'] as const
+
+/**
+ * Shape of the trail as a route, which is what decides whether a run on it can
+ * ever close a loop (and therefore claim territory).
+ */
+const routeTypes = ['loop', 'out-and-back', 'point-to-point', 'network'] as const
+
 export default defineModel({
   name: 'Trail',
   table: 'trails',
@@ -13,10 +34,10 @@ export default defineModel({
     useUuid: true,
     useTimestamps: true,
     useSearch: {
-      displayable: ['id', 'name', 'location', 'difficulty', 'rating', 'distance'],
-      searchable: ['name', 'location', 'tags'],
-      sortable: ['createdAt', 'rating', 'distance', 'elevation'],
-      filterable: ['difficulty', 'rating'],
+      displayable: ['id', 'name', 'location', 'state', 'difficulty', 'rating', 'distance', 'routeType', 'source'],
+      searchable: ['name', 'location', 'state', 'stateName', 'managedBy', 'tags'],
+      sortable: ['createdAt', 'rating', 'distance', 'elevation', 'elevationHigh'],
+      filterable: ['difficulty', 'rating', 'state', 'source', 'routeType', 'dogsAllowed', 'wheelchairAccessible', 'nationalTrail'],
     },
     useApi: {
       uri: 'trails',
@@ -25,6 +46,21 @@ export default defineModel({
   },
 
   hasMany: ['Activity', 'Review'],
+
+  indexes: [
+    // The ingest is idempotent: a re-sync of the same upstream feature has to
+    // find the existing row rather than insert a second copy. `source` alone
+    // is not enough (ids only unique within a source) and neither is
+    // `source_id` alone (OSM way 12345 and USFS trail 12345 are unrelated).
+    { name: 'trails_source_source_id_unique', columns: ['source', 'source_id'], unique: true },
+    // The catalog is browsed by state far more than any other way.
+    { name: 'trails_state_index', columns: ['state'] },
+    // Bounding-box prefilter for "trails near me" and for the territory engine,
+    // which otherwise full-scans a table that is heading for millions of rows.
+    { name: 'trails_bbox_index', columns: ['min_lat', 'max_lat', 'min_lng', 'max_lng'] },
+    // Lets the ingest walk rows that have not been refreshed recently.
+    { name: 'trails_synced_at_index', columns: ['synced_at'] },
+  ],
 
   attributes: {
     name: {
@@ -38,7 +74,7 @@ export default defineModel({
           max: 'Trail name must have at most 200 characters',
         },
       },
-      factory: (faker) => faker.location.street() + ' Trail',
+      factory: faker => `${faker.location.street()} Trail`,
     },
 
     location: {
@@ -50,7 +86,7 @@ export default defineModel({
           required: 'Location is required',
         },
       },
-      factory: (faker) => `${faker.location.city()}, ${faker.location.state({ abbreviated: true })}`,
+      factory: faker => `${faker.location.city()}, ${faker.location.state({ abbreviated: true })}`,
     },
 
     distance: {
@@ -63,7 +99,7 @@ export default defineModel({
           min: 'Distance must be positive',
         },
       },
-      factory: (faker) => faker.number.float({ min: 0.5, max: 25, fractionDigits: 1 }),
+      factory: faker => faker.number.float({ min: 0.5, max: 25, fractionDigits: 1 }),
     },
 
     elevation: {
@@ -75,7 +111,7 @@ export default defineModel({
           required: 'Elevation is required',
         },
       },
-      factory: (faker) => faker.number.int({ min: 100, max: 5000 }),
+      factory: faker => faker.number.int({ min: 100, max: 5000 }),
     },
 
     difficulty: {
@@ -96,7 +132,7 @@ export default defineModel({
       validation: {
         rule: schema.float().min(0).max(5),
       },
-      factory: (faker) => faker.number.float({ min: 3.5, max: 5, fractionDigits: 1 }),
+      factory: faker => faker.number.float({ min: 3.5, max: 5, fractionDigits: 1 }),
     },
 
     reviewCount: {
@@ -105,7 +141,7 @@ export default defineModel({
       validation: {
         rule: schema.number().min(0),
       },
-      factory: (faker) => faker.number.int({ min: 50, max: 10000 }),
+      factory: faker => faker.number.int({ min: 50, max: 10000 }),
     },
 
     estimatedTime: {
@@ -136,7 +172,7 @@ export default defineModel({
       validation: {
         rule: schema.string(),
       },
-      factory: (faker) => faker.helpers.arrayElements(['forest', 'waterfall', 'wildlife', 'coastal', 'views', 'dog-friendly', 'summit', 'running', 'family', 'accessible'], 3).join(','),
+      factory: faker => faker.helpers.arrayElements(['forest', 'waterfall', 'wildlife', 'coastal', 'views', 'dog-friendly', 'summit', 'running', 'family', 'accessible'], 3).join(','),
     },
 
     latitude: {
@@ -145,7 +181,7 @@ export default defineModel({
       validation: {
         rule: schema.float(),
       },
-      factory: (faker) => faker.location.latitude(),
+      factory: faker => faker.location.latitude(),
     },
 
     longitude: {
@@ -154,7 +190,7 @@ export default defineModel({
       validation: {
         rule: schema.float(),
       },
-      factory: (faker) => faker.location.longitude(),
+      factory: faker => faker.location.longitude(),
     },
 
     description: {
@@ -163,7 +199,7 @@ export default defineModel({
       validation: {
         rule: schema.string(),
       },
-      factory: (faker) => faker.lorem.paragraphs(2),
+      factory: faker => faker.lorem.paragraphs(2),
     },
 
     geometry: {
@@ -173,6 +209,194 @@ export default defineModel({
         rule: schema.string(),
       },
       factory: () => '',
+    },
+
+    // ---------------------------------------------------------------------
+    // Provenance. Written by the ingest, never by a user.
+    // ---------------------------------------------------------------------
+
+    source: {
+      order: 15,
+      fillable: true,
+      default: 'manual',
+      validation: {
+        rule: schema.enum(sources),
+      },
+      factory: (): typeof sources[number] => 'manual',
+    },
+
+    /**
+     * The upstream primary key, as a string because the sources disagree on
+     * type: OSM uses numeric way/relation ids, USFS a `trail_cn` control
+     * number, NPS a GUID-ish `GEOMETRYID`.
+     */
+    sourceId: {
+      order: 16,
+      fillable: true,
+      validation: {
+        rule: schema.string().max(120),
+      },
+      factory: faker => faker.string.uuid(),
+    },
+
+    /** Canonical upstream URL, so a trail page can credit where it came from. */
+    sourceUrl: {
+      order: 17,
+      fillable: true,
+      validation: {
+        rule: schema.string().max(400),
+      },
+      factory: () => '',
+    },
+
+    /** Last time the ingest saw this feature upstream. Drives re-sync order. */
+    syncedAt: {
+      order: 18,
+      fillable: true,
+      validation: {
+        rule: schema.string(),
+      },
+      factory: () => new Date().toISOString(),
+    },
+
+    // ---------------------------------------------------------------------
+    // Geography
+    // ---------------------------------------------------------------------
+
+    /** Two-letter USPS code, resolved from the centroid against state polygons. */
+    state: {
+      order: 19,
+      fillable: true,
+      validation: {
+        rule: schema.string().max(2),
+      },
+      factory: faker => faker.location.state({ abbreviated: true }),
+    },
+
+    stateName: {
+      order: 20,
+      fillable: true,
+      validation: {
+        rule: schema.string().max(60),
+      },
+      factory: faker => faker.location.state(),
+    },
+
+    /** Forest, park or district that administers the trail, when known. */
+    managedBy: {
+      order: 21,
+      fillable: true,
+      validation: {
+        rule: schema.string().max(200),
+      },
+      factory: () => '',
+    },
+
+    minLat: {
+      order: 22,
+      fillable: true,
+      validation: {
+        rule: schema.float(),
+      },
+      factory: faker => faker.location.latitude(),
+    },
+
+    maxLat: {
+      order: 23,
+      fillable: true,
+      validation: {
+        rule: schema.float(),
+      },
+      factory: faker => faker.location.latitude(),
+    },
+
+    minLng: {
+      order: 24,
+      fillable: true,
+      validation: {
+        rule: schema.float(),
+      },
+      factory: faker => faker.location.longitude(),
+    },
+
+    maxLng: {
+      order: 25,
+      fillable: true,
+      validation: {
+        rule: schema.float(),
+      },
+      factory: faker => faker.location.longitude(),
+    },
+
+    // ---------------------------------------------------------------------
+    // Trail characteristics
+    // ---------------------------------------------------------------------
+
+    routeType: {
+      order: 26,
+      fillable: true,
+      validation: {
+        rule: schema.enum(routeTypes),
+      },
+      factory: (faker): typeof routeTypes[number] => faker.helpers.arrayElement([...routeTypes]),
+    },
+
+    /** Normalized tread surface: dirt, gravel, paved, boardwalk, sand, snow, water. */
+    surface: {
+      order: 27,
+      fillable: true,
+      validation: {
+        rule: schema.string().max(40),
+      },
+      factory: faker => faker.helpers.arrayElement(['dirt', 'gravel', 'paved', 'boardwalk']),
+    },
+
+    /** Highest point on the trail in feet, where the source reports it. */
+    elevationHigh: {
+      order: 28,
+      fillable: true,
+      validation: {
+        rule: schema.float(),
+      },
+      factory: faker => faker.number.int({ min: 0, max: 14000 }),
+    },
+
+    /** Comma-separated normalized uses: hiking, running, bike, horse, ski, atv, motorcycle. */
+    allowedUses: {
+      order: 29,
+      fillable: true,
+      validation: {
+        rule: schema.string().max(200),
+      },
+      factory: () => 'hiking,running',
+    },
+
+    dogsAllowed: {
+      order: 30,
+      fillable: true,
+      validation: {
+        rule: schema.boolean(),
+      },
+      factory: faker => faker.datatype.boolean(),
+    },
+
+    wheelchairAccessible: {
+      order: 31,
+      fillable: true,
+      validation: {
+        rule: schema.boolean(),
+      },
+      factory: () => false,
+    },
+
+    /** Part of a National Scenic/Historic Trail (PCT, AT, CDT, …). */
+    nationalTrail: {
+      order: 32,
+      fillable: true,
+      validation: {
+        rule: schema.boolean(),
+      },
+      factory: () => false,
     },
   },
 

@@ -395,6 +395,8 @@ route.group({ prefix: '/shipping' }, () => {
 
 // Trail catalog (explore map + OSM geometry)
 route.get('/trails', 'Actions/Trail/TrailIndexAction')
+// Registered BEFORE `/trails/{id}/...` so `stats` is not captured as an id.
+route.get('/trails/stats', 'Actions/Trail/TrailStatsAction')
 route.get('/trails/{id}/reviews', 'Actions/Trail/TrailReviewIndexAction')
 
 // Public reads - feed, activity detail, territory map/leaderboard/profile, follows.

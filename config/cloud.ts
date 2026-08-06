@@ -126,6 +126,42 @@ export const tsCloud: TsCloudConfig = {
       },
     },
 
+    // The trail ingest worker.
+    //
+    // Building the US trail catalog is a multi-day job — ~1,400 Overpass tiles
+    // at two requests a minute, plus 466 Forest Service and Park Service
+    // shards — and it has to keep running between deploys and re-sync itself
+    // afterwards. Neither request-driven service above would ever run it, so
+    // it gets a systemd unit of its own.
+    //
+    // Loopback-only like `api`, for the same reason: no `domain` keeps rpx
+    // from publishing it, and HOST pins the bind so the neighbours on this
+    // shared box cannot reach it. Port 3051 is this project's third slot.
+    //
+    // The port exists because a `start` site needs one, but it is not wasted:
+    // it answers `/` with the live shard counts and per-source trail totals,
+    // which is the only practical way to check on a job this long.
+    ingest: {
+      root: '.',
+      start: 'bun storage/framework/runtime/production/ingest.js',
+      port: 3051,
+      preStart: [
+        'bun install',
+        'mkdir -p storage/framework/runtime/production',
+        'bun build --production --target=bun --packages=external app/TrailIngestWorker.ts --outfile storage/framework/runtime/production/ingest.js',
+        'mkdir -p /var/www/wildloop-shared/database',
+      ],
+      env: {
+        HOST: '127.0.0.1',
+        PORT: '3051',
+        APP_ENV: 'production',
+        NODE_ENV: 'production',
+        // The same file the site and the API open. An ingest writing to its
+        // own copy would build a catalog nobody could read.
+        DB_DATABASE_PATH: SHARED_DATABASE,
+      },
+    },
+
     // www resolves to the same box, so it needs a vhost of its own or it falls
     // through to rpx's default and 404s. Redirecting keeps one canonical host.
     www: {

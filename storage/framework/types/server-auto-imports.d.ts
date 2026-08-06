@@ -64,6 +64,7 @@ declare global {
   const Kudos: typeof import('../../../app/Models/Kudos')['default']
   const TerritoryHistory: typeof import('../../../app/Models/TerritoryHistory')['default']
   const Review: typeof import('../../../app/Models/Review')['default']
+  const TrailIngestShard: typeof import('../../../app/Models/TrailIngestShard')['default']
   const Trail: typeof import('../../../app/Models/Trail')['default']
   const Activity: typeof import('../../../app/Models/Activity')['default']
   const Achievement: typeof import('../../../app/Models/Achievement')['default']

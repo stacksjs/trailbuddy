@@ -12,7 +12,8 @@
     "@stacksjs/ts-cloud": "^0.7.86",
     "bun-query-builder": "^0.1.63",
     "stacks": "^0.70.207",
-    "ts-watches": "^0.1.0"
+    "ts-watches": "^0.1.0",
+    "ts-web-scraper": "^0.1.6"
   },
   "devDependencies": {
     "@stacksjs/stx": "^0.2.111",

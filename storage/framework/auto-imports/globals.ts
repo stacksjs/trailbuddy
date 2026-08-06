@@ -69,13 +69,6 @@ declare global {
   const findLinePolygonIntersections: typeof autoImports.findLinePolygonIntersections
   const splitPolygonByRoute: typeof autoImports.splitPolygonByRoute
   const generateLoopCoordinates: typeof autoImports.generateLoopCoordinates
-  const normalizeElement: typeof autoImports.normalizeElement
-  const getTrailCentroid: typeof autoImports.getTrailCentroid
-  const generateTiles: typeof autoImports.generateTiles
-  const getRegion: typeof autoImports.getRegion
-  const regions: typeof autoImports.regions
-  const fetchTile: typeof autoImports.fetchTile
-  const deduplicateTrails: typeof autoImports.deduplicateTrails
 }
 
 export {}

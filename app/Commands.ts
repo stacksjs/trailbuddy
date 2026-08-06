@@ -27,8 +27,13 @@ export type CommandRegistry = Record<string, string | CommandConfig>
  * },
  */
 export default {
-  'scrape:trails': {
-    file: 'ScrapeTrails',
+  // `ingest:trails` is registered as a command-level alias inside the command
+  // file itself. The registry's own `aliases` key is not used: the loader in
+  // @stacksjs/buddy 0.70.207 applies it with `cli.alias()`, which does not
+  // exist, so any registry alias makes the whole command fail to load. Fixed
+  // upstream in 0.70.279 (`applyAliases`); move them here after that upgrade.
+  'trails:ingest': {
+    file: 'IngestTrails',
     enabled: true,
   },
   'territory:ranks': {
