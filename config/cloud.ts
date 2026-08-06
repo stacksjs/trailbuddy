@@ -45,6 +45,36 @@ const SHARED_DATABASE = '/var/www/wildloop-shared/database/stacks.sqlite'
  */
 const LINK_ENV_KEYS = 'ln -sf ../../shared/.env.keys .env.keys 2>/dev/null || true'
 
+/**
+ * Install dependencies with the Bun that wrote the lockfile.
+ *
+ * `bun.lock` here is `lockfileVersion: 2`, which only a canary Bun can read —
+ * 1.3.14 is the latest stable and rejects it. The box runs 1.3.14, so it was
+ * discarding the lockfile on every deploy ("Unknown lockfile version") and
+ * resolving fresh against a monorepo that publishes ~100 packages in a rolling
+ * window. Whichever sibling had not landed yet failed the deploy:
+ * `@stacksjs/composables@0.70.282` one minute, `@stacksjs/dns@^0.70.283` the
+ * next. Nothing about the release was at fault; the install simply was not
+ * reproducible.
+ *
+ * So the install runs under a project-local canary Bun kept outside every
+ * release, fetched once and reused. The system `/usr/local/bin/bun` is left
+ * alone: 27 services from other projects share it, and upgrading it is the box
+ * owner's call, not a side effect of a WildLoop deploy.
+ *
+ * `--frozen-lockfile` is the point of the exercise. If the lockfile ever
+ * cannot satisfy the manifest the deploy stops instead of silently installing
+ * something nobody tested.
+ */
+const INSTALL_BUN = '/var/www/wildloop-shared/bin/bun'
+
+const ENSURE_INSTALL_BUN = `test -x ${INSTALL_BUN} || (mkdir -p /var/www/wildloop-shared/bin && cd /tmp `
+  + '&& curl -fsSL -o bun-canary.zip https://github.com/oven-sh/bun/releases/download/canary/bun-linux-x64.zip '
+  + `&& unzip -oq bun-canary.zip && mv bun-linux-x64/bun ${INSTALL_BUN} && chmod +x ${INSTALL_BUN} `
+  + '&& rm -rf bun-canary.zip bun-linux-x64)'
+
+const INSTALL_DEPS = `${INSTALL_BUN} install --frozen-lockfile`
+
 export const tsCloud: TsCloudConfig = {
   project: {
     name: 'WildLoop',
@@ -97,7 +127,8 @@ export const tsCloud: TsCloudConfig = {
       // no tables, and serving against an empty database fails every read.
       preStart: [
         LINK_ENV_KEYS,
-        'bun install',
+        ENSURE_INSTALL_BUN,
+        INSTALL_DEPS,
         'mkdir -p storage/framework/runtime/production',
         'bun build --production --target=bun --packages=external app/ProductionServer.ts --outfile storage/framework/runtime/production/serve.js',
         // The database lives OUTSIDE the release, so create its directory
@@ -131,7 +162,8 @@ export const tsCloud: TsCloudConfig = {
       port: 3050,
       preStart: [
         LINK_ENV_KEYS,
-        'bun install',
+        ENSURE_INSTALL_BUN,
+        INSTALL_DEPS,
         'mkdir -p storage/framework/runtime/production',
         'bun build --production --target=bun --packages=external node_modules/@stacksjs/actions/dist/serve/api.js --outfile storage/framework/runtime/production/api.js',
         'mkdir -p /var/www/wildloop-shared/database',
@@ -165,7 +197,8 @@ export const tsCloud: TsCloudConfig = {
       port: 3051,
       preStart: [
         LINK_ENV_KEYS,
-        'bun install',
+        ENSURE_INSTALL_BUN,
+        INSTALL_DEPS,
         'mkdir -p storage/framework/runtime/production',
         'bun build --production --target=bun --packages=external app/TrailIngestWorker.ts --outfile storage/framework/runtime/production/ingest.js',
         'mkdir -p /var/www/wildloop-shared/database',
