@@ -1,3 +1,10 @@
+/*
+ * The analytics snippet below is emitted as minified JavaScript inside a
+ * template literal. The linter parses that string as code and reports its
+ * one-letter locals (`d`, `w`, `n`, `e`, `t`, `u`, `r`) as unused parameters.
+ * They are not parameters and they are not unused; it is a parse artifact.
+ */
+/* eslint-disable pickier/no-unused-vars */
 import type { DocsConfig } from '@stacksjs/types'
 import type { HeadConfig } from 'vitepress'
 import { SocialLinkIcon } from '@stacksjs/types'

@@ -17,6 +17,11 @@ const config: PickierOptions = {
     '**/storage/framework/types/**',
     '**/storage/framework/orm/**',
     '**/storage/framework/actions/**',
+    // Written by the auto-import generator, and its `declare global` block of
+    // `const x: typeof autoImports.x` reads to the linter as ~70 unused
+    // variables. Regenerated on every build, so editing it to satisfy the
+    // linter would not survive.
+    '**/storage/framework/auto-imports/**',
     '**/bun-queue/**',
     // Generated declaration files
     '**/*.d.ts',
