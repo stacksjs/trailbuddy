@@ -355,13 +355,12 @@ jobs:
       - name: Build
         run: bun run build
 
-      # Pantry ships commit publishing itself — `publish:commit` is its
-      # pkg-pr-new equivalent, and it is what this project should be using.
-      #
-      # pkg-pr-new could never have worked here anyway: it skips private
-      # packages, and wildloop is `"private": true` because it is an
-      # application rather than a library. With nothing left to send it, the
-      # service answered `400 {"message":"No packages"}` on every run.
+      # Commit builds go to the pantry registry, which is where this project
+      # gets its dependencies and which ships `publish:commit` for exactly
+      # this. The third-party service used here before refused the repo
+      # outright — it skips private packages, and wildloop is
+      # `"private": true` because it is an application rather than a library,
+      # so it answered `400 {"message":"No packages"}` on every run.
       #
       # The installer action lives inside the pantry monorepo (packages/action)
       # and is not published as `pantry-pm/pantry-installer` yet, so the
