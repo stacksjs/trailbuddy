@@ -142,13 +142,23 @@ jobs:
           fetch-depth: 2
       - name: Release Check
         id: check_release
+        # Two fixes here.
+        #
         # `$GITHUB_ENV` only takes effect in LATER steps, so the previous
         # version wrote CONTAINS_RELEASE and then read `env.CONTAINS_RELEASE`
         # in the same step, where it was always empty. The output was
         # therefore always '' — never '0' — which is half of why the deploy
-        # below never ran. Write the output directly instead.
+        # below never ran. It writes the output directly now.
+        #
+        # And it reads the SUBJECT (%s), not the whole body (%B). A release
+        # commit announces itself in its subject: `chore: release v1.2.3`.
+        # Grepping the body caught any commit that so much as mentioned the
+        # word — including the one that fixed this deploy pipeline, whose body
+        # explains what ships in a release. That silently skipped the deploy.
         run: |
-          count=$(git log --format=%B -n 1 HEAD | grep -ci 'release' || true)
+          subject=$(git log --format=%s -n 1 HEAD)
+          count=$(printf '%s' "$subject" | grep -ci 'release' || true)
+          echo "subject: ${subject}"
           echo "contains_release=${count}" >> "$GITHUB_OUTPUT"
 
   deploy-prod:
