@@ -29,6 +29,22 @@ import type { CloudConfig } from '@stacksjs/ts-cloud-types'
  */
 const SHARED_DATABASE = '/var/www/wildloop-shared/database/stacks.sqlite'
 
+/**
+ * Link `.env.keys` into a release from the site's persistent `shared/` dir.
+ *
+ * `.env.production` is committed with its sensitive values encrypted, so it
+ * ships with every release. The private half that decrypts them lives in
+ * `.env.keys`, which is gitignored — and ts-cloud builds the release tarball
+ * from git-tracked files, so it can never ride along. Without this the box
+ * runs with `APP_KEY="encrypted:…"` as a literal string.
+ *
+ * `scripts/push-env-keys.ts` puts the file in `shared/` (see `bun run deploy`),
+ * which survives releases exactly as `shared/.env` does. This links it in.
+ * Non-fatal: a first deploy runs before the file exists, and failing the whole
+ * release for a missing symlink would be worse than starting without it.
+ */
+const LINK_ENV_KEYS = 'ln -sf ../../shared/.env.keys .env.keys 2>/dev/null || true'
+
 export const tsCloud: TsCloudConfig = {
   project: {
     name: 'WildLoop',
@@ -80,6 +96,7 @@ export const tsCloud: TsCloudConfig = {
       // install runs here. Migrate then creates the schema: ts-cloud provisions
       // no tables, and serving against an empty database fails every read.
       preStart: [
+        LINK_ENV_KEYS,
         'bun install',
         'mkdir -p storage/framework/runtime/production',
         'bun build --production --target=bun --packages=external app/ProductionServer.ts --outfile storage/framework/runtime/production/serve.js',
@@ -113,6 +130,7 @@ export const tsCloud: TsCloudConfig = {
       start: 'bun storage/framework/runtime/production/api.js',
       port: 3050,
       preStart: [
+        LINK_ENV_KEYS,
         'bun install',
         'mkdir -p storage/framework/runtime/production',
         'bun build --production --target=bun --packages=external node_modules/@stacksjs/actions/dist/serve/api.js --outfile storage/framework/runtime/production/api.js',
@@ -146,6 +164,7 @@ export const tsCloud: TsCloudConfig = {
       start: 'bun storage/framework/runtime/production/ingest.js',
       port: 3051,
       preStart: [
+        LINK_ENV_KEYS,
         'bun install',
         'mkdir -p storage/framework/runtime/production',
         'bun build --production --target=bun --packages=external app/TrailIngestWorker.ts --outfile storage/framework/runtime/production/ingest.js',

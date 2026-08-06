@@ -184,10 +184,23 @@ jobs:
 
       # `.env` is only here so config loading has a file to read. Every value
       # that matters in production comes from the encrypted `.env.production`
-      # in the repo plus the secrets injected below.
+      # in the repo, decrypted with the keys written below.
       - name: Ensure .env Set
         run: |
           cp .env.example .env
+
+      # `.env.keys` holds the private half that decrypts `.env.production`. It
+      # is gitignored, so it is not in the checkout and not in the release
+      # tarball (ts-cloud packages git-tracked files only). Reconstructing it
+      # here from one secret gives `scripts/push-env-keys.ts` the file it
+      # copies to each site's `shared/` directory.
+      - name: Write .env.keys
+        run: |
+          umask 077
+          {
+            printf 'DOTENV_PUBLIC_KEY_PRODUCTION=%s\n' "${{ secrets.DOTENV_PUBLIC_KEY_PRODUCTION }}"
+            printf 'DOTENV_PRIVATE_KEY_PRODUCTION=%s\n' "${{ secrets.DOTENV_PRIVATE_KEY_PRODUCTION }}"
+          } > .env.keys
 
       # ts-cloud reaches the shared Hetzner box over ssh, so the key has to be
       # on disk before the deploy runs. `config/cloud.ts` resolves it from
@@ -208,13 +221,16 @@ jobs:
       # config/cloud.ts). The AWS credentials this step used to pass were
       # inert; what ts-cloud actually needs is the hcloud token to read the
       # shared box and the Porkbun pair to write DNS for wildloop.org.
+      # `bun run deploy` copies `.env.keys` to each site's `shared/` directory
+      # first, then deploys. Both halves have to land: the release carries
+      # `.env.production`, `shared/` carries the keys that decrypt it.
       - name: Deploy
         env:
           HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
           PORKBUN_API_KEY: ${{ secrets.PORKBUN_API_KEY }}
           PORKBUN_SECRET_KEY: ${{ secrets.PORKBUN_SECRET_KEY }}
           DOTENV_PRIVATE_KEY_PRODUCTION: ${{ secrets.DOTENV_PRIVATE_KEY_PRODUCTION }}
-        run: bun buddy deploy production
+        run: bun run deploy
 
   deploy-stage:
     if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (startsWith(github.ref, 'refs/tags/') && contains(github.ref, '-beta.'))

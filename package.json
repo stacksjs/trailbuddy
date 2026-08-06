@@ -20,6 +20,9 @@
     "bun-plugin-stx": "^0.2.111",
     "ts-maps": "^0.2.7"
   },
+  "overrides": {
+    "@stacksjs/browser": "0.70.281"
+  },
   "bugs": {
     "url": "https://github.com/stacksjs/wildloop/issues"
   },
@@ -57,8 +60,9 @@
     "preview": "./buddy preview",
     "start": "./buddy serve",
     "prod": "./buddy build",
-    "deploy": "cloud deploy --env production --skip-security-scan",
-    "deploy:staging": "cloud deploy --env staging --skip-security-scan",
+    "deploy": "bun scripts/push-env-keys.ts --env production && ./buddy deploy production",
+    "deploy:env-keys": "bun scripts/push-env-keys.ts",
+    "deploy:staging": "bun scripts/push-env-keys.ts --env staging && ./buddy deploy staging",
     "deploy:dry": "cloud deploy --env production --dry-run --skip-security-scan",
     "deploy:staging:dry": "cloud deploy --env staging --dry-run --skip-security-scan",
     "deploy:stacks": "./buddy deploy",
