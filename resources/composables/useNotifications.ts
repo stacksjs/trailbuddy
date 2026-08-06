@@ -12,13 +12,13 @@ interface NotificationStoreLike {
   hydrateNotifications: (list: unknown[]) => void
 }
 
-let started = false
+let notificationsStarted = false
 
 export function useNotifications(wl: NotificationStoreLike | null) {
   onMount(async () => {
-    if (!wl || started)
+    if (!wl || notificationsStarted)
       return
-    started = true
+    notificationsStarted = true
     try {
       const data = await fetchNotifications()
       if (!data || !Array.isArray(data.notifications) || data.notifications.length === 0)

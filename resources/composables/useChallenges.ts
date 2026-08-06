@@ -33,7 +33,7 @@ function toStore(c: any): any {
   }
 }
 
-let started = false
+let challengesStarted = false
 
 export function useChallenges(wl: ChallengeStoreLike | null) {
   const createOpen = state(false)
@@ -43,9 +43,9 @@ export function useChallenges(wl: ChallengeStoreLike | null) {
   const busyId = state<number | null>(null)
 
   onMount(async () => {
-    if (!wl || started)
+    if (!wl || challengesStarted)
       return
-    started = true
+    challengesStarted = true
     const rows = await fetchChallenges()
     if (rows)
       wl.hydrateChallenges(rows.map(toStore))

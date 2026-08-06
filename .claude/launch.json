@@ -4,7 +4,7 @@
     {
       "name": "frontend",
       "runtimeExecutable": "./buddy",
-      "runtimeArgs": ["dev:frontend"],
+      "runtimeArgs": ["serve"],
       "port": 3100,
       "autoPort": true
     }

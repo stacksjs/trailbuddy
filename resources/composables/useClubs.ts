@@ -16,7 +16,7 @@ interface ClubStoreLike {
 
 const CLUB_TYPES = ['Running', 'Hiking', 'Mixed', 'Territory Game']
 
-let started = false
+let clubsStarted = false
 
 export function useClubs(wl: ClubStoreLike | null) {
   const createOpen = state(false)
@@ -30,9 +30,9 @@ export function useClubs(wl: ClubStoreLike | null) {
   const fPrivate = state(false)
 
   onMount(async () => {
-    if (!wl || started)
+    if (!wl || clubsStarted)
       return
-    started = true
+    clubsStarted = true
     const clubs = await fetchClubs()
     if (clubs)
       wl.hydrateClubs(clubs)

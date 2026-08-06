@@ -11,13 +11,13 @@ interface FollowStoreLike {
   hydrateFollowing: (ids: number[]) => void
 }
 
-let started = false
+let followsStarted = false
 
 export function useFollows(wl: FollowStoreLike | null) {
   onMount(async () => {
-    if (!wl || started)
+    if (!wl || followsStarted)
       return
-    started = true
+    followsStarted = true
     try {
       const data = await fetchFollows(wl.currentUserId())
       if (data && Array.isArray(data.followingIds))

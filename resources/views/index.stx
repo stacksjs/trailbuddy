@@ -4,9 +4,17 @@
 
 @section('content')
 <script client>
+  import { fetchCoverage } from '../composables/useTrailCatalog'
+
   useHead({ title: 'Home - WildLoop' })
 
   const wl = useStore('wl')
+
+  /** Live catalog size. 0 until it lands, which the eyebrow handles. */
+  const catalogTotal = state(0)
+  onMount(() => {
+    fetchCoverage().then(value => catalogTotal.set(value.total))
+  })
 
   const myTerritories = derived(() => wl ? wl.myTerritories() : [])
   const totalArea = derived(() => myTerritories().reduce((s: number, t: any) => s + t.areaSize, 0))
@@ -37,12 +45,16 @@
     <div class="mx-auto px-4 py-16 sm:px-6 lg:px-8 lg:py-24 max-w-7xl">
       <div class="grid gap-12 items-center lg:grid-cols-2">
         <div>
+          <!-- The eyebrow now carries the live catalog size. It is the one
+               number that distinguishes this from every other trail app, and
+               it comes from the database rather than from a marketing claim. -->
           <span class="inline-flex items-center gap-1.5 mb-5 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 rounded-full border border-emerald-200 dark:border-emerald-500/25">
             <Icon name="map-pin" size="14" />
-            Trail discovery and GPS tracking
+            <span :if="catalogTotal() > 0">{{ catalogTotal().toLocaleString() + ' US trails mapped' }}</span>
+            <span :if="catalogTotal() === 0">Trail discovery and GPS tracking</span>
           </span>
           <h1 class="mb-5 font-display text-4xl font-bold text-slate-900 dark:text-white md:text-5xl lg:text-6xl tracking-tighter leading-[1.05]">Every trail. Every mile. Every loop.</h1>
-          <p class="mb-8 text-lg text-slate-600 dark:text-slate-400 max-w-md leading-relaxed">Trail search, GPS tracking and a feed worth following. Plus the best territory game in the outdoors.</p>
+          <p class="mb-8 text-lg text-slate-600 dark:text-slate-400 max-w-md leading-relaxed">Every public trail in the United States, live GPS tracking and a feed worth following. Every closed loop claims ground.</p>
           <div class="flex flex-col gap-3 sm:flex-row">
             <StxLink to="/record" class="inline-flex items-center justify-center gap-2 px-8 py-3.5 font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition active:scale-[0.98]">
               <Icon name="play" size="18" />

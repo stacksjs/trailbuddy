@@ -35,7 +35,7 @@ interface MapFeature {
 export const territorySource = state<'api' | 'seed'>('seed')
 export const territoryError = state<string | null>(null)
 
-let started = false
+let territoriesStarted = false
 
 /**
  * Fetch territories from the API and hydrate the store. Callable any time -
@@ -104,9 +104,9 @@ export async function loadTerritories(wl: TerritoryStoreLike | null): Promise<bo
 
 export function useTerritoryCatalog(wl: TerritoryStoreLike | null) {
   onMount(async () => {
-    if (!wl || started)
+    if (!wl || territoriesStarted)
       return
-    started = true
+    territoriesStarted = true
     await loadTerritories(wl)
   })
 }

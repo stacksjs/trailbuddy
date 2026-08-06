@@ -14,13 +14,13 @@ interface AchievementStoreLike {
 
 export const achievementSource = state<'api' | 'seed'>('seed')
 
-let started = false
+let achievementsStarted = false
 
 export function useAchievementCatalog(wl: AchievementStoreLike | null) {
   onMount(async () => {
-    if (!wl || started)
+    if (!wl || achievementsStarted)
       return
-    started = true
+    achievementsStarted = true
     const payload = await fetchAchievements(wl.currentUserId())
     const rows = Array.isArray(payload?.achievements) ? payload.achievements : []
     if (!rows.length)

@@ -37,13 +37,13 @@ interface ApiActivity {
 export const activitySource = state<'api' | 'seed'>('seed')
 export const activityError = state<string | null>(null)
 
-let started = false
+let activitiesStarted = false
 
 export function useActivityCatalog(wl: ActivityStoreLike | null) {
   onMount(async () => {
-    if (!wl || started)
+    if (!wl || activitiesStarted)
       return
-    started = true
+    activitiesStarted = true
     try {
       const res = await fetch('/api/activities?limit=200')
       if (!res.ok)

@@ -9,7 +9,9 @@ export interface UiTrail {
   name: string
   location: string
   difficulty: 'easy' | 'moderate' | 'hard'
+  /** Miles. Stored in miles too - see the note on `normalizeTrailRow`. */
   distance: number
+  /** Feet of ascent. */
   elevation: number
   estimatedTime: string
   rating: number
@@ -20,17 +22,16 @@ export interface UiTrail {
   image: string | null
   tags: string[]
   conditions: string
-}
-
-const KM_TO_MI = 0.621371
-const M_TO_FT = 3.28084
-
-export function kmToMi(km: number): number {
-  return Math.round(km * KM_TO_MI * 10) / 10
-}
-
-export function metersToFt(m: number): number {
-  return Math.round(m * M_TO_FT)
+  /** Two-letter USPS code, from the national ingest. Empty for older rows. */
+  state: string
+  /** Park, forest or district that administers the trail. */
+  managedBy: string
+  routeType: 'loop' | 'out-and-back' | 'point-to-point' | 'network' | ''
+  surface: string
+  /** Which public dataset this row came from, for attribution. */
+  source: string
+  sourceUrl: string
+  nationalTrail: boolean
 }
 
 /** Parse stored geometry JSON: [[lat,lng],...] */
@@ -76,8 +77,13 @@ export function normalizeTrailRow(row: Record<string, unknown>): UiTrail | null 
   if (!Number.isFinite(lat) || !Number.isFinite(lng))
     return null
 
-  const distanceKm = Number(row.distance) || 0
-  const elevationM = Number(row.elevation) || 0
+  // Distance and elevation pass through unconverted. The national ingest
+  // normalizes to miles and feet at write time (see app/Ingest/types.ts), so
+  // the column IS the display unit. This used to call kmToMi/metersToFt on the
+  // way in, which quietly reported every 8.4-mile trail as 5.2 miles once the
+  // ingest started writing miles.
+  const distanceMiles = Number(row.distance) || 0
+  const elevationFeet = Number(row.elevation) || 0
   const tagsRaw = row.tags
   const tags = typeof tagsRaw === 'string'
     ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean)
@@ -93,8 +99,8 @@ export function normalizeTrailRow(row: Record<string, unknown>): UiTrail | null 
     name: String(row.name ?? 'Unnamed trail'),
     location: String(row.location ?? ''),
     difficulty: diff,
-    distance: kmToMi(distanceKm),
-    elevation: metersToFt(elevationM),
+    distance: Math.round(distanceMiles * 10) / 10,
+    elevation: Math.round(elevationFeet),
     estimatedTime: String(row.estimatedTime ?? row.estimated_time ?? ''),
     rating: Number(row.rating) || 0,
     reviewCount: Number(row.reviewCount ?? row.review_count) || 0,
@@ -104,7 +110,20 @@ export function normalizeTrailRow(row: Record<string, unknown>): UiTrail | null 
     image: row.image ? String(row.image) : null,
     tags,
     conditions: String(row.conditions ?? 'Conditions reported by the community.'),
+    state: String(row.state ?? ''),
+    managedBy: String(row.managedBy ?? row.managed_by ?? ''),
+    routeType: normalizeRouteType(row.routeType ?? row.route_type),
+    surface: String(row.surface ?? ''),
+    source: String(row.source ?? ''),
+    sourceUrl: String(row.sourceUrl ?? row.source_url ?? ''),
+    nationalTrail: Boolean(row.nationalTrail ?? row.national_trail),
   }
+}
+
+function normalizeRouteType(raw: unknown): UiTrail['routeType'] {
+  return raw === 'loop' || raw === 'out-and-back' || raw === 'point-to-point' || raw === 'network'
+    ? raw
+    : ''
 }
 
 export function extractApiTrailRows(payload: unknown): Record<string, unknown>[] {

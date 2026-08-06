@@ -14,13 +14,13 @@ interface SavedTrailStoreLike {
   setTrailSaved: (trailId: number, saved: boolean) => void
 }
 
-let started = false
+let savedTrailsStarted = false
 
 export function useSavedTrails(wl: SavedTrailStoreLike | null) {
   onMount(async () => {
-    if (!wl || started)
+    if (!wl || savedTrailsStarted)
       return
-    started = true
+    savedTrailsStarted = true
     const payload = await fetchSavedTrails(wl.currentUserId())
     if (payload && Array.isArray(payload.savedTrails))
       wl.hydrateSavedTrails(payload.savedTrails.map((s: any) => s.trailId))

@@ -4,7 +4,7 @@
 
 @section('content')
 <script client>
-  import { catalogError, catalogLoading, catalogSource } from '../composables/useTrailCatalog'
+  import { catalogError, EMPTY_COVERAGE, fetchCoverage, queryTrails } from '../composables/useTrailCatalog'
   import { useSavedTrails } from '../composables/useSavedTrails'
   import {
     createTrailMap,
@@ -19,50 +19,146 @@
 
   const wl = useStore('wl')
   const { onToggleSave } = useSavedTrails(wl)
+
   const search = state('')
   const difficulty = state<'all' | 'easy' | 'moderate' | 'hard'>('all')
+  const routeType = state<'all' | 'loop' | 'out-and-back'>('all')
+  const activeState = state('')
   const selectedTrailId = state<number | null>(null)
+
+  // Results come from the API, not from filtering the store. The store holds a
+  // couple of hundred featured trails; the catalog holds tens of thousands, and
+  // the only honest way to search it is server-side.
+  const results = state<any[]>([])
+  const routes = state<Record<number, [number, number][]>>({})
+  const matchCount = state(0)
+  const searching = state(false)
+  const searchFailed = state(false)
+
+  // How many trails the catalog holds nationally, and where.
+  const coverage = state(EMPTY_COVERAGE)
+  const topStates = derived(() => coverage().states.slice(0, 12))
+
+  const heading = derived(() => {
+    const code = activeState()
+    if (!code)
+      return 'Every trail in the country'
+    const match = coverage().states.find((s: any) => s.code === code)
+    return match ? `Trails in ${match.name}` : 'Trails'
+  })
+
   let exploreMap: TrailMapHandle | null = null
+  let searchToken = 0
+  let debounce: ReturnType<typeof setTimeout> | null = null
 
-  const filtered = derived(() => {
-    if (!wl) return []
-    const q = search().toLowerCase()
-    const d = difficulty()
-    return wl.trails().filter((t: any) =>
-      (q === '' || t.name.toLowerCase().includes(q) || t.location.toLowerCase().includes(q))
-      && (d === 'all' || t.difficulty === d)
-    )
-  })
+  async function runSearch() {
+    const token = ++searchToken
+    searching.set(true)
+    searchFailed.set(false)
 
-  const trailCount = derived(() => wl ? wl.trails().length : 0)
-  const routeCount = derived(() => {
-    if (!wl) return 0
-    const routes = wl.trailRoutes()
-    return wl.trails().filter((t: any) => (routes[t.id]?.length ?? 0) > 1).length
-  })
+    try {
+      const res = await queryTrails({
+        q: search(),
+        state: activeState(),
+        difficulty: difficulty(),
+        routeType: routeType(),
+        sort: search() ? 'featured' : 'longest',
+        limit: 60,
+      })
+
+      // A slower earlier request must not overwrite a newer result.
+      if (token !== searchToken)
+        return
+
+      results.set(res.trails)
+      routes.set(res.geometryById)
+      matchCount.set(res.total)
+    }
+    catch {
+      if (token !== searchToken)
+        return
+      searchFailed.set(true)
+      results.set([])
+      matchCount.set(0)
+    }
+    finally {
+      if (token === searchToken)
+        searching.set(false)
+    }
+  }
+
+  /**
+   * Typing fires a request per keystroke without the debounce.
+   *
+   * A named handler rather than a block-bodied arrow in the template: stx
+   * parses `@input` expressions, and a multi-statement arrow body silently
+   * did not update the signal, so typing changed nothing.
+   */
+  function onSearchInput(value: string) {
+    search.set(value)
+    if (debounce)
+      clearTimeout(debounce)
+    debounce = setTimeout(() => runSearch(), 250)
+  }
+
+  function selectState(code: string) {
+    activeState.set(activeState() === code ? '' : code)
+    runSearch()
+  }
+
+  // `createTrailMap` is async, so two overlapping refreshes both see a live
+  // container and the second throws "Map container is already initialized".
+  // Results change on every keystroke, so overlap is the normal case.
+  let mapBusy = false
+  let mapDirty = false
 
   async function refreshExploreMap() {
-    if (!wl) return
+    if (mapBusy) {
+      mapDirty = true
+      return
+    }
+    mapBusy = true
+
+    try {
+      await drawExploreMap()
+    }
+    finally {
+      mapBusy = false
+      if (mapDirty) {
+        mapDirty = false
+        refreshExploreMap()
+      }
+    }
+  }
+
+  async function drawExploreMap() {
     exploreMap?.destroy()
-    exploreMap = await createTrailMap('trails-explore-map', { scrollWheelZoom: true, zoom: 5 })
-    if (!exploreMap) return
+    exploreMap = null
+    exploreMap = await createTrailMap('trails-explore-map', { scrollWheelZoom: true, zoom: 4 })
+    if (!exploreMap)
+      return
+
     const { map } = exploreMap
     const bounds: [number, number][] = []
-    const routes = wl.trailRoutes()
+    const geometry = routes()
 
-    for (const tr of filtered()) {
-      const coords = routes[tr.id]
-      const color = trailDifficultyColor(tr.difficulty)
+    // Only the first 40 routes are drawn. Beyond that the map is an unreadable
+    // thicket and every extra polyline costs a frame.
+    for (const trail of results().slice(0, 40)) {
+      const coords = geometry[trail.id]
+      const color = trailDifficultyColor(trail.difficulty)
+
       if (coords && coords.length > 1) {
         await drawTrailRoute(map, coords, { color, weight: 3, opacity: 0.8 })
         bounds.push(...coords)
       }
-      await drawTrailMarker(map, tr.lat, tr.lng, {
-        difficulty: tr.difficulty,
-        popupHtml: `<b>${tr.name}</b><br>${tr.location}<br>${tr.distance} mi · ${tr.difficulty}`,
-        onClick: () => selectedTrailId.set(tr.id),
+
+      await drawTrailMarker(map, trail.lat, trail.lng, {
+        difficulty: trail.difficulty,
+        popupHtml: `<b>${trail.name}</b><br>${trail.location}<br>${trail.distance} mi · ${trail.difficulty}`,
+        onClick: () => selectedTrailId.set(trail.id),
       })
-      bounds.push([tr.lat, tr.lng])
+      bounds.push([trail.lat, trail.lng])
     }
 
     if (bounds.length)
@@ -70,12 +166,12 @@
   }
 
   onMount(() => {
+    runSearch()
+    fetchCoverage().then(value => coverage.set(value))
     const cancelMap = runWhenMapReady('trails-explore-map', () => refreshExploreMap())
     const stop = effect(() => {
-      filtered()
-      catalogLoading()
-      if (!catalogLoading())
-        refreshExploreMap()
+      results()
+      refreshExploreMap()
     })
     return () => {
       cancelMap()
@@ -84,43 +180,90 @@
   })
 
   onDestroy(() => {
+    if (debounce)
+      clearTimeout(debounce)
     exploreMap?.destroy()
     exploreMap = null
   })
 </script>
 
-  <div class="mx-auto px-4 py-6 sm:px-6 lg:px-8 max-w-7xl">
-    <div class="flex flex-col gap-4 items-start justify-between sm:flex-row sm:items-center mb-4">
-      <div>
-        <h1 class="font-bold text-2xl dark:text-white">Explore Trails</h1>
-        <p class="text-sm text-gray-500 dark:text-slate-400 mt-1">
-          <span>{{ trailCount() + ' trails' }}</span>
-          <span :if="routeCount() > 0"> · <span>{{ routeCount() + ' with GPS paths' }}</span></span>
-          <span :if="catalogSource() === 'api'" class="text-emerald-600 dark:text-emerald-400"> · live data</span>
-        </p>
-      </div>
-      <input
-        type="search"
-        x-value="search"
-        @input="e => search.set(e.target.value)"
-        placeholder="Search trails..."
-        class="flex-1 px-4 py-2 sm:w-64 text-gray-900 text-sm dark:text-white bg-white dark:bg-slate-700 border border-gray-200 rounded-lg dark:border-slate-600 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500 transition"
-      />
+  <div class="mx-auto px-4 py-8 sm:px-6 lg:px-8 max-w-7xl">
+    <!-- Catalog header. The count is the product: it is what tells someone
+         this is a national database rather than a demo list. -->
+    <div class="mb-6">
+      <h1 class="font-display text-3xl font-bold tracking-tight text-slate-900 dark:text-white md:text-4xl">{{ heading() }}</h1>
+      <p class="mt-2 text-slate-600 dark:text-slate-400">
+        <span :if="coverage().total > 0" class="font-semibold text-slate-900 dark:text-white tabular-nums">{{ coverage().total.toLocaleString() }}</span>
+        <span :if="coverage().total > 0"> trails across {{ coverage().states.length }} states, from OpenStreetMap, the Forest Service and the Park Service.</span>
+        <span :if="coverage().total === 0">Trail search across the United States.</span>
+      </p>
     </div>
 
-    <div :if="catalogLoading()" class="mb-4 text-sm text-emerald-600 dark:text-emerald-400">Loading trail database…</div>
+    <!-- Search + filters -->
+    <div class="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center">
+      <div class="relative flex-1">
+        <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+          <Icon name="search" size="18" />
+        </span>
+        <input
+          type="search"
+          x-value="search"
+          @input="onSearchInput($event.target.value)"
+          placeholder="Search 40,000+ trails by name, park or forest"
+          class="w-full py-3 pl-11 pr-4 text-slate-900 dark:text-white bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition"
+        />
+      </div>
+
+      <div class="flex gap-2 overflow-x-auto pb-1">
+        <button @click="difficulty.set('all'); runSearch()" x-class="difficulty === 'all' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 dark:text-slate-300 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-full transition active:scale-[0.98]">All levels</button>
+        <button @click="difficulty.set('easy'); runSearch()" x-class="difficulty === 'easy' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 dark:text-slate-300 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-full transition active:scale-[0.98]">Easy</button>
+        <button @click="difficulty.set('moderate'); runSearch()" x-class="difficulty === 'moderate' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 dark:text-slate-300 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-full transition active:scale-[0.98]">Moderate</button>
+        <button @click="difficulty.set('hard'); runSearch()" x-class="difficulty === 'hard' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 dark:text-slate-300 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-full transition active:scale-[0.98]">Hard</button>
+        <button @click="routeType.set(routeType() === 'loop' ? 'all' : 'loop'); runSearch()" x-class="routeType === 'loop' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 dark:text-slate-300 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-full transition active:scale-[0.98]">Loops only</button>
+      </div>
+    </div>
+
+    <!-- Browse by state. Horizontal pills rather than a 48-row list: the
+         catalog covers every state, and a dropdown of 48 hides that fact. -->
+    <div :if="topStates().length > 0" class="mb-8 flex gap-2 overflow-x-auto pb-2">
+      <button
+        @click="activeState.set(''); runSearch()"
+        x-class="activeState === '' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'"
+        class="shrink-0 px-4 py-2 text-sm font-medium border rounded-full transition hover:border-emerald-400">
+        All states
+      </button>
+      <template :for="s in topStates">
+        <button
+          @click="selectState(s.code)"
+          x-class="activeState === s.code ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'"
+          class="shrink-0 px-4 py-2 text-sm font-medium border rounded-full transition hover:border-emerald-400">
+          <span>{{ s.name }}</span>
+          <span class="ml-1.5 text-xs tabular-nums opacity-60">{{ s.count.toLocaleString() }}</span>
+        </button>
+      </template>
+    </div>
+
     <div :if="catalogError()" class="mb-4 text-sm text-amber-600 dark:text-amber-400">{{ 'Using demo trails. ' + catalogError() }}</div>
 
-    <!-- Split: trail list + map -->
-    <div class="grid gap-6 mb-6 lg:grid-cols-5">
+    <!-- Split: result list + map -->
+    <div class="grid gap-6 mb-8 lg:grid-cols-5">
       <div class="lg:col-span-2 space-y-3 max-h-[28rem] overflow-y-auto pr-1">
-        <div class="flex overflow-x-auto gap-2 pb-2 lg:hidden">
-          <button @click="difficulty.set('all')" x-class="difficulty === 'all' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-3 py-1.5 font-medium text-xs whitespace-nowrap rounded-lg transition">All</button>
-          <button @click="difficulty.set('easy')" x-class="difficulty === 'easy' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-3 py-1.5 font-medium text-xs whitespace-nowrap rounded-lg transition">Easy</button>
-          <button @click="difficulty.set('moderate')" x-class="difficulty === 'moderate' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-3 py-1.5 font-medium text-xs whitespace-nowrap rounded-lg transition">Moderate</button>
-          <button @click="difficulty.set('hard')" x-class="difficulty === 'hard' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-3 py-1.5 font-medium text-xs whitespace-nowrap rounded-lg transition">Hard</button>
-        </div>
-        <template :for="trail in filtered">
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          <span :if="searching()">Searching…</span>
+          <span :if="!searching()">{{ matchCount().toLocaleString() + (matchCount() === 1 ? ' trail' : ' trails') }}</span>
+          <span :if="!searching() && matchCount() > results().length" class="opacity-70">{{ ' · showing first ' + results().length }}</span>
+        </p>
+
+        <!-- Skeletons match the row shape so the list does not jump. -->
+        <template :if="searching() && results().length === 0">
+          <div class="space-y-3">
+            <div class="flex gap-3 items-center p-3 card animate-pulse"><div class="h-14 w-14 shrink-0 rounded-lg bg-slate-200 dark:bg-slate-700"></div><div class="flex-1 space-y-2"><div class="h-3 w-2/3 rounded bg-slate-200 dark:bg-slate-700"></div><div class="h-3 w-1/2 rounded bg-slate-200 dark:bg-slate-700"></div></div></div>
+            <div class="flex gap-3 items-center p-3 card animate-pulse"><div class="h-14 w-14 shrink-0 rounded-lg bg-slate-200 dark:bg-slate-700"></div><div class="flex-1 space-y-2"><div class="h-3 w-1/2 rounded bg-slate-200 dark:bg-slate-700"></div><div class="h-3 w-2/3 rounded bg-slate-200 dark:bg-slate-700"></div></div></div>
+            <div class="flex gap-3 items-center p-3 card animate-pulse"><div class="h-14 w-14 shrink-0 rounded-lg bg-slate-200 dark:bg-slate-700"></div><div class="flex-1 space-y-2"><div class="h-3 w-3/5 rounded bg-slate-200 dark:bg-slate-700"></div><div class="h-3 w-2/5 rounded bg-slate-200 dark:bg-slate-700"></div></div></div>
+          </div>
+        </template>
+
+        <template :for="trail in results">
           <StxLink
             x-to="'/trail/' + trail.id"
             @click="selectedTrailId.set(trail.id)"
@@ -128,12 +271,12 @@
             class="flex gap-3 items-center p-3 card hover:shadow-md transition"
           >
             <div class="shrink-0 overflow-hidden h-14 w-14 rounded-lg">
-              <img x-src="trail.image || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=200&h=200&fit=crop'" x-alt="trail.name" class="object-cover h-full w-full" />
+              <img x-src="trail.image || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=200&h=200&fit=crop'" x-alt="trail.name" width="56" height="56" loading="lazy" class="object-cover h-full w-full" />
             </div>
             <div class="min-w-0 flex-1">
               <p class="font-semibold text-sm dark:text-white truncate">{{ trail.name }}</p>
-              <p class="text-xs text-gray-500 dark:text-slate-400 truncate">{{ trail.location }}</p>
-              <p class="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+              <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ trail.location }}</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 <span>{{ trail.distance + ' mi' }}</span>
                 <span class="mx-1">·</span>
                 <span x-class="'capitalize difficulty-' + trail.difficulty">{{ trail.difficulty }}</span>
@@ -141,7 +284,8 @@
             </div>
           </StxLink>
         </template>
-        <div :if="filtered().length === 0 && !catalogLoading()" class="py-8 text-center text-sm text-gray-500 dark:text-slate-400">
+
+        <div :if="!searching() && results().length === 0" class="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
           No trails match your filters.
         </div>
       </div>
@@ -151,22 +295,15 @@
       </div>
     </div>
 
-    <!-- Filters (desktop) -->
-    <div class="hidden lg:flex overflow-x-auto gap-2 mb-6 pb-2">
-      <button @click="difficulty.set('all')" x-class="difficulty === 'all' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">All Levels</button>
-      <button @click="difficulty.set('easy')" x-class="difficulty === 'easy' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Easy</button>
-      <button @click="difficulty.set('moderate')" x-class="difficulty === 'moderate' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Moderate</button>
-      <button @click="difficulty.set('hard')" x-class="difficulty === 'hard' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600 dark:text-slate-400 dark:bg-slate-800'" class="px-4 py-2 font-medium text-sm whitespace-nowrap rounded-lg transition">Hard</button>
-    </div>
-
-    <!-- Trail cards grid -->
+    <!-- Trail cards -->
     <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      <template :for="trail in filtered">
+      <template :for="trail in results">
         <StxLink x-to="'/trail/' + trail.id" class="block overflow-hidden p-0 hover:shadow-lg transition card group" @click="selectedTrailId.set(trail.id)">
           <div class="overflow-hidden relative h-48">
-            <img x-src="trail.image || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&h=600&fit=crop'" x-alt="trail.name" class="object-cover h-full w-full duration-300 transition-transform group-hover:scale-105" />
-            <div class="absolute left-3 top-3">
+            <img x-src="trail.image || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&h=600&fit=crop'" x-alt="trail.name" width="800" height="600" loading="lazy" class="object-cover h-full w-full duration-300 transition-transform group-hover:scale-105" />
+            <div class="absolute left-3 top-3 flex gap-2">
               <span x-class="'px-2 py-1 capitalize font-semibold text-xs rounded-full difficulty-' + trail.difficulty">{{ trail.difficulty }}</span>
+              <span :if="trail.nationalTrail" class="px-2 py-1 font-semibold text-xs rounded-full bg-white/90 text-emerald-700">National Trail</span>
             </div>
             <button
               @click.stop.prevent="onToggleSave(trail.id)"
@@ -178,30 +315,28 @@
           </div>
           <div class="p-4">
             <div class="flex items-start justify-between mb-1">
-              <h3 class="font-bold text-gray-900 dark:text-white group-hover:text-emerald-600 transition">{{ trail.name }}</h3>
-              <div class="flex gap-1 items-center shrink-0 text-sm">
-                <Icon name="star" size="16" class="text-yellow-400" />
-                <span class="font-semibold">{{ trail.rating || '-' }}</span>
-              </div>
+              <h3 class="font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 transition">{{ trail.name }}</h3>
+              <span :if="trail.routeType === 'loop'" class="shrink-0 text-xs font-semibold text-emerald-600 dark:text-emerald-400">Loop</span>
             </div>
-            <p class="mb-3 text-gray-500 text-sm dark:text-slate-400">{{ trail.location }}</p>
-            <div class="flex gap-4 items-center pt-3 text-gray-500 text-xs dark:text-slate-400 border-gray-100 border-t dark:border-slate-700">
-              <span>{{ trail.distance + ' mi' }}</span>
-              <span>{{ trail.elevation.toLocaleString() + ' ft elev' }}</span>
-              <span>{{ '~' + trail.estimatedTime }}</span>
+            <p class="mb-3 text-slate-500 text-sm dark:text-slate-400">{{ trail.location }}</p>
+            <div class="flex gap-4 items-center pt-3 text-slate-500 text-xs dark:text-slate-400 border-slate-100 border-t dark:border-slate-700">
+              <span class="tabular-nums">{{ trail.distance + ' mi' }}</span>
+              <span :if="trail.elevation > 0" class="tabular-nums">{{ trail.elevation.toLocaleString() + ' ft' }}</span>
+              <span :if="trail.estimatedTime">{{ '~' + trail.estimatedTime }}</span>
+              <span :if="trail.surface" class="capitalize ml-auto">{{ trail.surface }}</span>
             </div>
           </div>
         </StxLink>
       </template>
     </div>
 
-    <div :if="filtered().length === 0 && !catalogLoading()" class="py-20 text-center">
+    <div :if="!searching() && results().length === 0" class="py-20 text-center">
       <div class="w-20 h-20 mx-auto mb-6 bg-emerald-100 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center">
         <Icon name="mountain" size="40" class="text-emerald-400" />
       </div>
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">No trails found</h3>
-      <p class="text-gray-500 dark:text-slate-400 max-w-sm mx-auto mb-6">Run <code class="text-xs bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">./buddy scrape:trails</code> to import real OSM trails, or clear filters.</p>
-      <button @click="search.set(''); difficulty.set('all')" class="px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Clear Filters</button>
+      <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">No trails found</h3>
+      <p class="text-slate-500 dark:text-slate-400 max-w-sm mx-auto mb-6">Try a wider search, or clear the filters to browse the whole catalog.</p>
+      <button @click="search.set(''); difficulty.set('all'); routeType.set('all'); activeState.set(''); runSearch()" class="px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-full hover:bg-emerald-700 transition active:scale-[0.98]">Clear filters</button>
     </div>
   </div>
 @endsection
