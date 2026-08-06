@@ -138,15 +138,29 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
       - name: Release Check
         id: check_release
+        # `$GITHUB_ENV` only takes effect in LATER steps, so the previous
+        # version wrote CONTAINS_RELEASE and then read `env.CONTAINS_RELEASE`
+        # in the same step, where it was always empty. The output was
+        # therefore always '' — never '0' — which is half of why the deploy
+        # below never ran. Write the output directly instead.
         run: |
-          echo "CONTAINS_RELEASE=$(git log --format=%B -n 1 ${{ github.event.after }} | grep -ci 'release')" >> $GITHUB_ENV
-          echo "contains_release=${{ env.CONTAINS_RELEASE }}" >> $GITHUB_OUTPUT
+          count=$(git log --format=%B -n 1 HEAD | grep -ci 'release' || true)
+          echo "contains_release=${count}" >> "$GITHUB_OUTPUT"
 
   deploy-prod:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.check_commit_message.outputs.contains_release == '0'
-    needs: [lint, typecheck, test]
+    # Was gated on `needs.check_commit_message.outputs.contains_release`.
+    # There is no `check_commit_message` job — the job is `release-check` — and
+    # it was not in `needs` either, so the expression evaluated to null, the
+    # `== '0'` comparison was always false, and production has never once been
+    # deployed by this workflow.
+    # Bracket notation is required: `needs.release-check` would parse the
+    # hyphen as subtraction.
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs['release-check'].outputs.contains_release == '0'
+    needs: [lint, typecheck, test, release-check]
     runs-on: ubuntu-latest
     environment: production
 
@@ -168,15 +182,33 @@ jobs:
       - name: Install Dependencies
         run: bun install
 
-      # set the .env file
+      # `.env` is only here so config loading has a file to read. Every value
+      # that matters in production comes from the encrypted `.env.production`
+      # in the repo plus the secrets injected below.
       - name: Ensure .env Set
         run: |
           cp .env.example .env
 
+      # ts-cloud reaches the shared Hetzner box over ssh, so the key has to be
+      # on disk before the deploy runs. `config/cloud.ts` resolves it from
+      # `~/.ssh/id_ed25519` by default (see resolveHetznerSshPrivateKeyPath).
+      - name: Load deploy key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.HETZNER_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.HETZNER_SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      # WildLoop deploys to Hetzner, not AWS (`cloud.provider: 'hetzner'` in
+      # config/cloud.ts). The AWS credentials this step used to pass were
+      # inert; what ts-cloud actually needs is the hcloud token to read the
+      # shared box and the Porkbun pair to write DNS for wildloop.org.
       - name: Deploy
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
+          PORKBUN_API_KEY: ${{ secrets.PORKBUN_API_KEY }}
+          PORKBUN_SECRET_KEY: ${{ secrets.PORKBUN_SECRET_KEY }}
+          DOTENV_PRIVATE_KEY_PRODUCTION: ${{ secrets.DOTENV_PRIVATE_KEY_PRODUCTION }}
         run: bun buddy deploy production
 
   deploy-stage:
