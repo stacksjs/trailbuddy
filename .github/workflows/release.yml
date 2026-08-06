@@ -80,10 +80,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      # `needs.release` names a job that does not exist — the job this one
+      # depends on is `npm`. The expression resolved to nothing, so this line
+      # has always printed an empty version.
       - name: Debug Tag
         run: |
           echo "Tag: ${GITHUB_REF#refs/tags/}"
-          echo "Version from previous job: ${{ needs.release.outputs.version }}"
+          echo "Version from previous job: ${{ needs.npm.outputs.version }}"
 
       - name: Generate GitHub App Token
         id: generate-token
