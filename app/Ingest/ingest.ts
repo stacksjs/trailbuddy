@@ -167,9 +167,21 @@ export async function claimShard(only?: TrailSource[]): Promise<ShardRow | null>
   const resyncBefore = new Date(now - RESYNC_AFTER_MS).toISOString()
   const sourceFilter = only?.length ? only : sources.map(source => source.source)
 
+  // Stale claims come FIRST, ahead of untouched work.
+  //
+  // They used to sit behind `pending`, and since the pending queue is
+  // continuously replenished by re-seeding, a shard orphaned by a killed
+  // worker was only reclaimed once every other shard was done. One sat in
+  // `running` for 21 hours — counted as neither pending nor failed, and
+  // showing in the progress readout as though a worker were on it, which is
+  // exactly the state that hides a problem instead of surfacing it.
+  //
+  // `attempts` is what makes this safe to prioritise: a shard that kills its
+  // worker gets reclaimed, charged an attempt, and eventually stops being
+  // retried rather than looping ahead of real progress forever.
   const candidates = [
+    { status: 'running', where: `status = 'running' AND attempts < ${MAX_ATTEMPTS} AND (started_at IS NULL OR started_at < '${staleBefore}')`, chargeAttempt: true },
     { status: 'pending', where: 'status = \'pending\'' },
-    { status: 'running', where: `status = 'running' AND (started_at IS NULL OR started_at < '${staleBefore}')` },
     { status: 'failed', where: `status = 'failed' AND attempts < ${MAX_ATTEMPTS}` },
     { status: 'done', where: `status = 'done' AND (completed_at IS NULL OR completed_at < '${resyncBefore}')` },
   ]
@@ -189,9 +201,15 @@ export async function claimShard(only?: TrailSource[]): Promise<ShardRow | null>
     if (!row)
       continue
 
+    // Reclaiming an orphan charges an attempt; a first claim does not. Without
+    // it a shard that kills its worker would be reclaimed forever at the front
+    // of the queue, never reaching MAX_ATTEMPTS because nothing survives long
+    // enough to record the failure.
+    const attemptBump = candidate.chargeAttempt ? db.unsafe(', attempts = attempts + 1') : db.unsafe('')
+
     const claimed = await db.sql`
       UPDATE trail_ingest_shards
-      SET status = 'running', started_at = ${new Date().toISOString()}, updated_at = ${new Date().toISOString()}
+      SET status = 'running', started_at = ${new Date().toISOString()}, updated_at = ${new Date().toISOString()}${attemptBump}
       WHERE id = ${row.id} AND status = ${row.status}
     `.execute()
 
