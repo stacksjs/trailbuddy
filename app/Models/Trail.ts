@@ -56,7 +56,13 @@ export default defineModel({
     // The catalog is browsed by region far more than any other way. Region
     // codes only disambiguate within a country, so the country leads: it
     // serves "everything in Germany" and "Bayern" from the one index.
-    { name: 'trails_country_state_index', columns: ['country', 'state'] },
+    //
+    // `state_name` is carried as a third column purely to make this COVERING
+    // for the region breakdown on the explore page. Grouped by
+    // (country, state, state_name) against a two-column index, SQLite had to
+    // fetch the name from the table for all 593,000 rows and then sort — 4.7s
+    // for a query that reads 0.1s once the name is in the index itself.
+    { name: 'trails_country_state_name_index', columns: ['country', 'state', 'state_name'] },
     // Kept alongside the composite because a region code is often enough on
     // its own, and a leading-column-only lookup cannot use the index above.
     { name: 'trails_state_index', columns: ['state'] },
@@ -65,6 +71,19 @@ export default defineModel({
     { name: 'trails_bbox_index', columns: ['min_lat', 'max_lat', 'min_lng', 'max_lng'] },
     // Lets the ingest walk rows that have not been refreshed recently.
     { name: 'trails_synced_at_index', columns: ['synced_at'] },
+    // Every explore page load sorts, and none of the sort columns were
+    // indexed. At 593,000 rows `ORDER BY distance DESC LIMIT 60` planned as
+    // SCAN plus a temp B-tree — sorting the entire table to return 60 rows,
+    // which put the API at five to seven seconds a request.
+    //
+    // `national_trail` leads its own index because it is the DEFAULT sort, so
+    // it runs on every first paint.
+    { name: 'trails_national_trail_index', columns: ['national_trail'] },
+    { name: 'trails_distance_index', columns: ['distance'] },
+    // Sorting inside a country filter is the common case once more than one
+    // country is in the catalog: the composite serves "longest in Germany"
+    // without falling back to a sort of everything German.
+    { name: 'trails_country_distance_index', columns: ['country', 'distance'] },
   ],
 
   attributes: {
