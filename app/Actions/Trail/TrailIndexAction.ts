@@ -87,8 +87,15 @@ function applyFilters(query: any, request: { get: (key: string) => any }): any {
       .orWhereLike('state_name', pattern))
   }
 
+  const country = readString(request, 'country')
+  if (country && /^[a-z]{2}$/i.test(country))
+    query = query.where('country', country.toUpperCase())
+
+  // Two letters for a US state (`CO`), ISO 3166-2 elsewhere (`DE-BY`). The
+  // old two-letter-only pattern silently ignored every DACH region, so
+  // `?state=DE-BY` quietly returned the whole catalog instead of Bayern.
   const state = readString(request, 'state')
-  if (state && /^[a-z]{2}$/i.test(state))
+  if (state && /^[a-z]{2}(?:-[a-z0-9]{1,3})?$/i.test(state))
     query = query.where('state', state.toUpperCase())
 
   const difficulty = readString(request, 'difficulty')

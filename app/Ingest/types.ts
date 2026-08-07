@@ -35,6 +35,9 @@ export interface NormalizedTrail {
   maxLat: number
   minLng: number
   maxLng: number
+  /** ISO 3166-1 alpha-2: `US`, `DE`, `AT`, `CH`. */
+  country: string
+  /** USPS code for US states, ISO 3166-2 elsewhere. Unique only within `country`. */
   state: string
   stateName: string
   managedBy: string

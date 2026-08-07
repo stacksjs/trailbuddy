@@ -34,10 +34,10 @@ export default defineModel({
     useUuid: true,
     useTimestamps: true,
     useSearch: {
-      displayable: ['id', 'name', 'location', 'state', 'difficulty', 'rating', 'distance', 'routeType', 'source'],
-      searchable: ['name', 'location', 'state', 'stateName', 'managedBy', 'tags'],
+      displayable: ['id', 'name', 'location', 'country', 'state', 'difficulty', 'rating', 'distance', 'routeType', 'source'],
+      searchable: ['name', 'location', 'state', 'stateName', 'country', 'managedBy', 'tags'],
       sortable: ['createdAt', 'rating', 'distance', 'elevation', 'elevationHigh'],
-      filterable: ['difficulty', 'rating', 'state', 'source', 'routeType', 'dogsAllowed', 'wheelchairAccessible', 'nationalTrail'],
+      filterable: ['difficulty', 'rating', 'country', 'state', 'source', 'routeType', 'dogsAllowed', 'wheelchairAccessible', 'nationalTrail'],
     },
     useApi: {
       uri: 'trails',
@@ -53,7 +53,12 @@ export default defineModel({
     // is not enough (ids only unique within a source) and neither is
     // `source_id` alone (OSM way 12345 and USFS trail 12345 are unrelated).
     { name: 'trails_source_source_id_unique', columns: ['source', 'source_id'], unique: true },
-    // The catalog is browsed by state far more than any other way.
+    // The catalog is browsed by region far more than any other way. Region
+    // codes only disambiguate within a country, so the country leads: it
+    // serves "everything in Germany" and "Bayern" from the one index.
+    { name: 'trails_country_state_index', columns: ['country', 'state'] },
+    // Kept alongside the composite because a region code is often enough on
+    // its own, and a leading-column-only lookup cannot use the index above.
     { name: 'trails_state_index', columns: ['state'] },
     // Bounding-box prefilter for "trails near me" and for the territory engine,
     // which otherwise full-scans a table that is heading for millions of rows.
@@ -263,18 +268,40 @@ export default defineModel({
     // Geography
     // ---------------------------------------------------------------------
 
-    /** Two-letter USPS code, resolved from the centroid against state polygons. */
-    state: {
+    /**
+     * ISO 3166-1 alpha-2, resolved from the centroid alongside the region.
+     *
+     * `US` for everything the Forest Service and Park Service supply; OSM adds
+     * `DE`, `AT` and `CH`. Region codes are only unique within a country —
+     * `BE` is both Berlin and the Swiss canton of Bern — so anything grouping
+     * or filtering by region has to carry this too.
+     */
+    country: {
       order: 19,
       fillable: true,
       validation: {
         rule: schema.string().max(2),
       },
+      factory: () => 'US',
+    },
+
+    /**
+     * Region within the country, resolved from the centroid against polygons.
+     *
+     * Two-letter USPS code for US states (`CO`), ISO 3166-2 elsewhere
+     * (`DE-BY`, `CH-ZH`) — hence six characters rather than two.
+     */
+    state: {
+      order: 20,
+      fillable: true,
+      validation: {
+        rule: schema.string().max(6),
+      },
       factory: faker => faker.location.state({ abbreviated: true }),
     },
 
     stateName: {
-      order: 20,
+      order: 21,
       fillable: true,
       validation: {
         rule: schema.string().max(60),
@@ -284,7 +311,7 @@ export default defineModel({
 
     /** Forest, park or district that administers the trail, when known. */
     managedBy: {
-      order: 21,
+      order: 22,
       fillable: true,
       validation: {
         rule: schema.string().max(200),
@@ -293,15 +320,6 @@ export default defineModel({
     },
 
     minLat: {
-      order: 22,
-      fillable: true,
-      validation: {
-        rule: schema.float(),
-      },
-      factory: faker => faker.location.latitude(),
-    },
-
-    maxLat: {
       order: 23,
       fillable: true,
       validation: {
@@ -310,8 +328,17 @@ export default defineModel({
       factory: faker => faker.location.latitude(),
     },
 
-    minLng: {
+    maxLat: {
       order: 24,
+      fillable: true,
+      validation: {
+        rule: schema.float(),
+      },
+      factory: faker => faker.location.latitude(),
+    },
+
+    minLng: {
+      order: 25,
       fillable: true,
       validation: {
         rule: schema.float(),
@@ -320,7 +347,7 @@ export default defineModel({
     },
 
     maxLng: {
-      order: 25,
+      order: 26,
       fillable: true,
       validation: {
         rule: schema.float(),
@@ -333,7 +360,7 @@ export default defineModel({
     // ---------------------------------------------------------------------
 
     routeType: {
-      order: 26,
+      order: 27,
       fillable: true,
       validation: {
         rule: schema.enum(routeTypes),
@@ -343,7 +370,7 @@ export default defineModel({
 
     /** Normalized tread surface: dirt, gravel, paved, boardwalk, sand, snow, water. */
     surface: {
-      order: 27,
+      order: 28,
       fillable: true,
       validation: {
         rule: schema.string().max(40),
@@ -353,7 +380,7 @@ export default defineModel({
 
     /** Highest point on the trail in feet, where the source reports it. */
     elevationHigh: {
-      order: 28,
+      order: 29,
       fillable: true,
       validation: {
         rule: schema.float(),
@@ -363,7 +390,7 @@ export default defineModel({
 
     /** Comma-separated normalized uses: hiking, running, bike, horse, ski, atv, motorcycle. */
     allowedUses: {
-      order: 29,
+      order: 30,
       fillable: true,
       validation: {
         rule: schema.string().max(200),
@@ -372,7 +399,7 @@ export default defineModel({
     },
 
     dogsAllowed: {
-      order: 30,
+      order: 31,
       fillable: true,
       validation: {
         rule: schema.boolean(),
@@ -381,7 +408,7 @@ export default defineModel({
     },
 
     wheelchairAccessible: {
-      order: 31,
+      order: 32,
       fillable: true,
       validation: {
         rule: schema.boolean(),
@@ -391,7 +418,7 @@ export default defineModel({
 
     /** Part of a National Scenic/Historic Trail (PCT, AT, CDT, …). */
     nationalTrail: {
-      order: 32,
+      order: 33,
       fillable: true,
       validation: {
         rule: schema.boolean(),

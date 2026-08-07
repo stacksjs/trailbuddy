@@ -12,12 +12,15 @@ interface TrailStoreLike {
 
 export interface CoverageState {
   total: number
-  states: Array<{ code: string, name: string, count: number }>
+  countries: Array<{ code: string, count: number }>
+  /** `country` qualifies `code`: region codes repeat across countries. */
+  states: Array<{ code: string, name: string, country: string, count: number }>
   sources: Array<{ source: string, count: number }>
 }
 
 export interface TrailQuery {
   q?: string
+  country?: string
   state?: string
   difficulty?: string
   routeType?: string
@@ -38,7 +41,7 @@ export const catalogLoaded = state(false)
 export const catalogError = state<string | null>(null)
 export const catalogSource = state<'api' | 'seed'>('seed')
 
-export const EMPTY_COVERAGE: CoverageState = { total: 0, states: [], sources: [] }
+export const EMPTY_COVERAGE: CoverageState = { total: 0, countries: [], states: [], sources: [] }
 
 /**
  * National coverage, straight from the catalog.
@@ -63,6 +66,7 @@ export async function fetchCoverage(): Promise<CoverageState> {
 
     return {
       total: Number(stats.total) || 0,
+      countries: Array.isArray(stats.countries) ? stats.countries : [],
       states: Array.isArray(stats.states) ? stats.states : [],
       sources: Array.isArray(stats.sources) ? stats.sources : [],
     }
@@ -126,6 +130,8 @@ export async function queryTrails(query: TrailQuery): Promise<TrailQueryResult> 
 
   if (query.q)
     params.set('q', query.q)
+  if (query.country)
+    params.set('country', query.country)
   if (query.state)
     params.set('state', query.state)
   if (query.difficulty && query.difficulty !== 'all')

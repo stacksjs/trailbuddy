@@ -16,7 +16,8 @@ const CACHE_TTL_MS = 60_000
 
 interface CoverageStats {
   total: number
-  states: Array<{ code: string, name: string, count: number }>
+  countries: Array<{ code: string, count: number }>
+  states: Array<{ code: string, name: string, country: string, count: number }>
   sources: Array<{ source: string, count: number }>
 }
 
@@ -32,13 +33,23 @@ export default new Action({
       if (cache && Date.now() - cache.at < CACHE_TTL_MS)
         return response.json({ success: true, ...cache.value })
 
+      // Grouped by country as well as region: region codes are only unique
+      // within a country, so `BE` alone is both Berlin and canton Bern.
       const stateRows = await db.sql`
-        SELECT state AS code, state_name AS name, COUNT(*) AS count
+        SELECT state AS code, state_name AS name, country, COUNT(*) AS count
         FROM trails
         WHERE state IS NOT NULL AND state != ''
-        GROUP BY state, state_name
+        GROUP BY country, state, state_name
         ORDER BY count DESC
-      `.execute() as Array<{ code: string, name: string, count: number }>
+      `.execute() as Array<{ code: string, name: string, country: string, count: number }>
+
+      const countryRows = await db.sql`
+        SELECT country AS code, COUNT(*) AS count
+        FROM trails
+        WHERE country IS NOT NULL AND country != ''
+        GROUP BY country
+        ORDER BY count DESC
+      `.execute() as Array<{ code: string, count: number }>
 
       const sourceRows = await db.sql`
         SELECT source, COUNT(*) AS count
@@ -50,11 +61,13 @@ export default new Action({
       const states = (stateRows ?? []).map(row => ({
         code: row.code,
         name: row.name || row.code,
+        country: row.country || 'US',
         count: Number(row.count),
       }))
 
       const value: CoverageStats = {
         total: states.reduce((sum, row) => sum + row.count, 0),
+        countries: (countryRows ?? []).map(row => ({ code: row.code, count: Number(row.count) })),
         states,
         sources: (sourceRows ?? []).map(row => ({ source: row.source, count: Number(row.count) })),
       }
@@ -65,7 +78,7 @@ export default new Action({
     }
     catch (error) {
       console.error('[trails] stats failed:', error)
-      return response.json({ success: false, total: 0, states: [], sources: [] }, 500)
+      return response.json({ success: false, total: 0, countries: [], states: [], sources: [] }, 500)
     }
   },
 })

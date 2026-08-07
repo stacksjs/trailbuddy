@@ -27,7 +27,7 @@ import {
   pathStats,
   pickImage,
 } from '../normalize'
-import { resolveState } from '../states'
+import { resolveRegion } from '../regions'
 import { fetchAllPages, joinSegments, pathsToCoordinates } from './arcgis'
 
 const TRAILS_LAYER = 'https://apps.fs.usda.gov/arcx/rest/services/EDW/EDW_TrailNFSPublish_01/MapServer/0'
@@ -276,7 +276,7 @@ function normalizeTrail(
   if (stats.distanceMiles < MIN_TRAIL_MILES)
     return null
 
-  const state = resolveState(stats.centroid.lat, stats.centroid.lng)
+  const state = resolveRegion(stats.centroid.lat, stats.centroid.lng, ['US'])
   if (!state)
     return null
 
@@ -338,6 +338,7 @@ function normalizeTrail(
     maxLat: stats.maxLat,
     minLng: stats.minLng,
     maxLng: stats.maxLng,
+    country: state.country,
     state: state.code,
     stateName: state.name,
     managedBy: forestName,

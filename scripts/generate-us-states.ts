@@ -1,5 +1,5 @@
 /**
- * Regenerate `resources/functions/scraper/data/us-states.json`.
+ * Regenerate `app/Ingest/data/us-states.json`.
  *
  * The trail ingest has to answer "which state is this trail in?" for every one
  * of the millions of features it pulls, offline and without a per-point API
@@ -98,7 +98,7 @@ async function main(): Promise<void> {
 
   states.sort((a, b) => a.code.localeCompare(b.code))
 
-  const target = new URL('../resources/functions/scraper/data/us-states.json', import.meta.url)
+  const target = new URL('../app/Ingest/data/us-states.json', import.meta.url)
   await Bun.write(target, `${JSON.stringify(states)}\n`)
 
   const bytes = (await Bun.file(target).arrayBuffer()).byteLength

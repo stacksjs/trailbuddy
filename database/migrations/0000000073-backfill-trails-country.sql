@@ -1,0 +1,11 @@
+-- Backfill `country` for every row ingested before the column existed.
+--
+-- The catalog was US-only until DACH was added, so every pre-existing row is
+-- American regardless of which source produced it. Left NULL these rows would
+-- vanish from any country-filtered query and be missing from the country
+-- breakdown on the explore page — they are not "unknown country", they are the
+-- United States.
+--
+-- Scoped to NULL so a re-run cannot relabel a German trail, and so this stays
+-- correct if it is ever replayed against a database that already has DACH rows.
+UPDATE "trails" SET "country" = 'US' WHERE "country" IS NULL;

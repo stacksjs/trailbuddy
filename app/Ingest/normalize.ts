@@ -39,6 +39,26 @@ export interface PathStats {
  * the difference between an ingest that finishes overnight and one that does not.
  */
 export function pathStats(coords: Coordinate[]): PathStats {
+  return segmentedPathStats([coords])
+}
+
+/**
+ * The same statistics for a path that arrives in disconnected pieces.
+ *
+ * OSM route relations are a list of member ways, and those members are not
+ * reliably ordered or contiguous — a route has alternates, spurs and plain
+ * gaps. Concatenating them into one array and measuring end to end counts the
+ * jump between every pair of members as trail: it recorded Zentralalpenweg 02,
+ * a 1,300 km route, as 1,687 miles, and inflated 14,000 other relations the
+ * same way.
+ *
+ * Distance is therefore summed WITHIN members and never across them, while
+ * bounds, centroid and closure still consider every point. Closure is judged
+ * on the first and last point of the whole set, which stays correct for a
+ * genuine ring split across several ways.
+ */
+export function segmentedPathStats(segments: Coordinate[][]): PathStats {
+  const coords = segments.length === 1 ? segments[0] : segments.flat()
   let meters = 0
   let sumLat = 0
   let sumLng = 0
@@ -62,8 +82,12 @@ export function pathStats(coords: Coordinate[]): PathStats {
     if (point.lng > maxLng)
       maxLng = point.lng
 
-    if (i > 0)
-      meters += haversineDistance(coords[i - 1], point)
+  }
+
+  // Measured per member, so the gaps between them never count as trail.
+  for (const segment of segments) {
+    for (let i = 1; i < segment.length; i++)
+      meters += haversineDistance(segment[i - 1], segment[i])
   }
 
   const first = coords[0]
@@ -243,4 +267,24 @@ export function pickImage(sourceId: string): string {
 
 export function metersToFeet(meters: number): number {
   return Math.round(meters * FEET_PER_METER)
+}
+
+/** Countries whose readers expect miles rather than kilometres. */
+const IMPERIAL_COUNTRIES = new Set(['US'])
+
+/**
+ * A trail's length written the way a reader in that country expects.
+ *
+ * Every column stays in miles and feet — one storage unit keeps sorting,
+ * filtering and the difficulty thresholds coherent across the whole catalog.
+ * This is only for prose: "a 4.8-kilometre trail in Tirol" rather than "a
+ * 3-mile trail in Tirol", which reads as though the data were imported from
+ * somewhere it does not belong.
+ */
+export function describeDistance(distanceMiles: number, country: string): string {
+  if (IMPERIAL_COUNTRIES.has(country))
+    return `${distanceMiles}-mile`
+
+  const km = round(distanceMiles * (METERS_PER_MILE / 1000), 1)
+  return `${km}-kilometre`
 }

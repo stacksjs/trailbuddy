@@ -3,9 +3,13 @@
  *
  * The broadest of the three sources by a wide margin: OSM has the city
  * greenway, the county park loop and the unsigned singletrack that no federal
- * dataset carries. It is also the only one with no national primary key we can
- * page through, so coverage is achieved geographically — the country is cut
- * into one-degree tiles and each tile is one unit of retryable work.
+ * dataset carries. It is also the only one that is not US-only — the Forest
+ * Service and Park Service have no German, Austrian or Swiss equivalent, so
+ * outside the US this is the whole catalog.
+ *
+ * It has no primary key we can page through, so coverage is achieved
+ * geographically: each covered area is cut into one-degree tiles and each tile
+ * is one unit of retryable work.
  *
  * Licence: ODbL. Attribution is carried on every row via `sourceUrl`.
  */
@@ -15,6 +19,7 @@ import type { NormalizedTrail, Shard, SourceFetchResult, TrailSourceAdapter } fr
 import { TrailHttpClient } from '../client'
 import {
   deriveDifficulty,
+  describeDistance,
   deriveRouteType,
   encodeGeometry,
   encodeTags,
@@ -23,10 +28,10 @@ import {
   metersToFeet,
   MIN_TRAIL_MILES,
   normalizeSurface,
-  pathStats,
+  segmentedPathStats,
   pickImage,
 } from '../normalize'
-import { resolveState } from '../states'
+import { resolveRegion } from '../regions'
 
 const OVERPASS_ENDPOINT = 'https://overpass-api.de/api/interpreter'
 
@@ -39,12 +44,21 @@ const OVERPASS_ENDPOINT = 'https://overpass-api.de/api/interpreter'
  */
 const TILE_DEGREES = 1
 
-/** Continental US, Alaska and Hawaii. Tiles outside every state are dropped. */
+/**
+ * Every area the OSM ingest sweeps. Tiles that fall in no covered region are
+ * dropped, so these can be generous rectangles rather than tight outlines.
+ *
+ * The DACH box is a single rectangle because the three countries are
+ * contiguous and small enough that separate boxes would overlap anyway; the
+ * per-tile land check discards what falls in France, Italy or the Czech
+ * Republic. It is ~90 tiles against the US's ~1,370.
+ */
 const COVERAGE_BOXES: Array<[number, number, number, number]> = [
   // [south, west, north, east]
   [24, -125, 50, -66], // CONUS
   [51, -180, 72, -129], // Alaska
   [18, -161, 23, -154], // Hawaii
+  [45, 5, 56, 18], // Germany, Austria, Switzerland
 ]
 
 interface OverpassElement {
@@ -109,19 +123,20 @@ function buildQuery(south: number, west: number, north: number, east: number): s
   ].join('')
 }
 
-function extractCoordinates(element: OverpassElement): Coordinate[] {
+/**
+ * A way yields one segment; a relation yields one per member way.
+ *
+ * The boundaries matter — see `segmentedPathStats`. Flattening them here made
+ * the jump from the end of one member to the start of the next count as trail.
+ */
+function extractSegments(element: OverpassElement): Coordinate[][] {
   if (element.geometry)
-    return element.geometry.map(point => ({ lat: point.lat, lng: point.lon }))
+    return [element.geometry.map(point => ({ lat: point.lat, lng: point.lon }))]
 
   if (element.members) {
-    const coords: Coordinate[] = []
-    for (const member of element.members) {
-      if (!member.geometry)
-        continue
-      for (const point of member.geometry)
-        coords.push({ lat: point.lat, lng: point.lon })
-    }
-    return coords
+    return element.members
+      .filter(member => member.geometry && member.geometry.length > 0)
+      .map(member => member.geometry!.map(point => ({ lat: point.lat, lng: point.lon })))
   }
 
   return []
@@ -203,17 +218,21 @@ function normalizeElement(element: OverpassElement): NormalizedTrail | null {
   if (!name)
     return null
 
-  const coords = extractCoordinates(element)
+  const segments = extractSegments(element)
+  // The drawn line stays the full point set; only the measurement is per
+  // member, so a relation still renders as one route on the map.
+  const coords = segments.flat()
   if (coords.length < 2)
     return null
 
-  const stats = pathStats(coords)
+  const stats = segmentedPathStats(segments)
   if (stats.distanceMiles < MIN_TRAIL_MILES)
     return null
 
-  // A trail whose centroid is not in a US state is over the border or in the
-  // ocean — a tile inevitably straddles both.
-  const state = resolveState(stats.centroid.lat, stats.centroid.lng)
+  // A trail whose centroid resolves to no region is outside every country the
+  // catalog covers, or in open water — a tile inevitably straddles both. This
+  // is what keeps French and Italian trails out of the DACH sweep.
+  const state = resolveRegion(stats.centroid.lat, stats.centroid.lng)
   if (!state)
     return null
 
@@ -229,7 +248,7 @@ function normalizeElement(element: OverpassElement): NormalizedTrail | null {
     name,
     location: `${state.name}`,
     description: tags.description
-      ?? `${name} is a ${stats.distanceMiles}-mile ${deriveDifficulty(stats.distanceMiles, ascent)} trail in ${state.name}. Mapped by the OpenStreetMap community.`,
+      ?? `${name} is a ${describeDistance(stats.distanceMiles, state.country)} ${deriveDifficulty(stats.distanceMiles, ascent)} trail in ${state.name}. Mapped by the OpenStreetMap community.`,
 
     latitude: stats.centroid.lat,
     longitude: stats.centroid.lng,
@@ -237,6 +256,7 @@ function normalizeElement(element: OverpassElement): NormalizedTrail | null {
     maxLat: stats.maxLat,
     minLng: stats.minLng,
     maxLng: stats.maxLng,
+    country: state.country,
     state: state.code,
     stateName: state.name,
     managedBy: tags.operator ?? '',
@@ -341,5 +361,5 @@ function tileTouchesLand(tile: { south: number, west: number, north: number, eas
     [tile.north, midLng],
   ]
 
-  return probes.some(([lat, lng]) => resolveState(lat, lng) !== null)
+  return probes.some(([lat, lng]) => resolveRegion(lat, lng) !== null)
 }

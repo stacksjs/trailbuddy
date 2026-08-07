@@ -35,16 +35,48 @@
   const searching = state(false)
   const searchFailed = state(false)
 
-  // How many trails the catalog holds nationally, and where.
+  // How much the catalog holds, and where.
   const coverage = state(EMPTY_COVERAGE)
-  const topStates = derived(() => coverage().states.slice(0, 12))
+  const activeCountry = state('')
+
+  /** Countries read as names, not ISO codes, everywhere they are shown. */
+  const COUNTRY_NAMES: Record<string, string> = {
+    US: 'United States',
+    DE: 'Germany',
+    AT: 'Austria',
+    CH: 'Switzerland',
+  }
+
+  function countryName(code: string): string {
+    return COUNTRY_NAMES[code] ?? code
+  }
+
+  const countries = derived(() => coverage().countries)
+
+  /**
+   * Regions for the country in view. With no country picked this is the
+   * biggest regions anywhere, which is how the page used to behave when the
+   * catalog was US-only.
+   */
+  const topStates = derived(() => {
+    const country = activeCountry()
+    const all = coverage().states
+    return (country ? all.filter((s: any) => s.country === country) : all).slice(0, 12)
+  })
 
   const heading = derived(() => {
     const code = activeState()
-    if (!code)
-      return 'Every trail in the country'
-    const match = coverage().states.find((s: any) => s.code === code)
-    return match ? `Trails in ${match.name}` : 'Trails'
+    if (code) {
+      const match = coverage().states.find((s: any) => s.code === code)
+      if (match)
+        return `Trails in ${match.name}`
+    }
+
+    const country = activeCountry()
+    if (country)
+      return `Every trail in ${countryName(country)}`
+
+    return 'Every trail we know'
   })
 
   let exploreMap: TrailMapHandle | null = null
@@ -59,6 +91,7 @@
     try {
       const res = await queryTrails({
         q: search(),
+        country: activeCountry(),
         state: activeState(),
         difficulty: difficulty(),
         routeType: routeType(),
@@ -103,6 +136,18 @@
 
   function selectState(code: string) {
     activeState.set(activeState() === code ? '' : code)
+    runSearch()
+  }
+
+  /**
+   * Picking a country clears the region: `DE-BY` inside "Switzerland" would
+   * return nothing, and an empty list with two filters lit is a dead end the
+   * user has to reason their way out of.
+   */
+  function selectCountry(code: string) {
+    const next = activeCountry() === code ? '' : code
+    activeCountry.set(next)
+    activeState.set('')
     runSearch()
   }
 
@@ -194,9 +239,29 @@
       <h1 class="font-display text-3xl font-bold tracking-tight text-slate-900 dark:text-white md:text-4xl">{{ heading() }}</h1>
       <p class="mt-2 text-slate-600 dark:text-slate-400">
         <span :if="coverage().total > 0" class="font-semibold text-slate-900 dark:text-white tabular-nums">{{ coverage().total.toLocaleString() }}</span>
-        <span :if="coverage().total > 0"> trails across {{ coverage().states.length }} states, from OpenStreetMap, the Forest Service and the Park Service.</span>
-        <span :if="coverage().total === 0">Trail search across the United States.</span>
+        <span :if="coverage().total > 0"> trails across {{ coverage().states.length }} regions in {{ countries().length }} countries, from OpenStreetMap, the Forest Service and the Park Service.</span>
+        <span :if="coverage().total === 0">Trail search across the US, Germany, Austria and Switzerland.</span>
       </p>
+    </div>
+
+    <!-- Browse by country. Shown only once there is more than one: a single
+         pill reading "United States" is a control that cannot do anything. -->
+    <div :if="countries().length > 1" class="mb-4 flex gap-2 overflow-x-auto pb-1">
+      <button
+        @click="selectCountry('')"
+        x-class="activeCountry === '' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-slate-100 text-slate-600 dark:text-slate-300 dark:bg-slate-800'"
+        class="shrink-0 px-4 py-2 text-sm font-medium rounded-full transition active:scale-[0.98]">
+        Everywhere
+      </button>
+      <template :for="c in countries">
+        <button
+          @click="selectCountry(c.code)"
+          x-class="activeCountry === c.code ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-slate-100 text-slate-600 dark:text-slate-300 dark:bg-slate-800'"
+          class="shrink-0 px-4 py-2 text-sm font-medium rounded-full transition active:scale-[0.98]">
+          {{ countryName(c.code) }}
+          <span class="ml-1.5 text-xs opacity-60 tabular-nums">{{ c.count.toLocaleString() }}</span>
+        </button>
+      </template>
     </div>
 
     <!-- Search + filters -->
@@ -209,7 +274,7 @@
           type="search"
           x-value="search"
           @input="onSearchInput($event.target.value)"
-          placeholder="Search 40,000+ trails by name, park or forest"
+          placeholder="Search trails by name, park, forest or Land"
           class="w-full py-3 pl-11 pr-4 text-slate-900 dark:text-white bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition"
         />
       </div>
@@ -223,14 +288,15 @@
       </div>
     </div>
 
-    <!-- Browse by state. Horizontal pills rather than a 48-row list: the
-         catalog covers every state, and a dropdown of 48 hides that fact. -->
+    <!-- Browse by region. Horizontal pills rather than a long list: the
+         catalog covers every state and Land, and a dropdown hides that fact.
+         Scoped to the country in view once one is picked. -->
     <div :if="topStates().length > 0" class="mb-8 flex gap-2 overflow-x-auto pb-2">
       <button
         @click="activeState.set(''); runSearch()"
         x-class="activeState === '' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'"
         class="shrink-0 px-4 py-2 text-sm font-medium border rounded-full transition hover:border-emerald-400">
-        All states
+        All regions
       </button>
       <template :for="s in topStates">
         <button

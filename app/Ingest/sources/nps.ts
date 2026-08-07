@@ -30,7 +30,7 @@ import {
   pathStats,
   pickImage,
 } from '../normalize'
-import { resolveState } from '../states'
+import { resolveRegion } from '../regions'
 import { fetchAllPages, joinSegments, pathsToCoordinates } from './arcgis'
 
 const TRAILS_LAYER = 'https://mapservices.nps.gov/arcgis/rest/services/NationalDatasets/NPS_Public_Trails_Geographic/FeatureServer/0'
@@ -242,7 +242,7 @@ function normalizeTrail(
   if (stats.distanceMiles < MIN_TRAIL_MILES)
     return null
 
-  const state = resolveState(stats.centroid.lat, stats.centroid.lng)
+  const state = resolveRegion(stats.centroid.lat, stats.centroid.lng, ['US'])
   if (!state)
     return null
 
@@ -292,6 +292,7 @@ function normalizeTrail(
     maxLat: stats.maxLat,
     minLng: stats.minLng,
     maxLng: stats.maxLng,
+    country: state.country,
     state: state.code,
     stateName: state.name,
     managedBy: park,
