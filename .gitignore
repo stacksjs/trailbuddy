@@ -47,6 +47,11 @@ stacks.log
 .env.keys
 /storage/framework/frontend-dist
 
+# Bundles built by each site's `preStart` (config/cloud.ts) — serve.js, api.js
+# and ingest.js. Generated on the box from the release that is already in git,
+# so committing them would mean two copies of the same code that can disagree.
+/storage/framework/runtime
+
 # Stub workspace packages (temporary)
 /ts-auth
 /ts-cloud
