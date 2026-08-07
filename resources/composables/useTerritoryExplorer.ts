@@ -71,8 +71,14 @@ export function useTerritoryExplorer(wl: TerritoryStore | null) {
         fillOpacity: isYours ? 0.4 : 0.2,
         weight: isYours ? 3 : 2,
         dashArray: t.status === 'contested' ? '8 4' : undefined,
-        onClick: () => map.flyToBounds(polygon.getBounds(), { padding: [40, 40] }),
+        onClick: () => polygon && map.flyToBounds(polygon.getBounds(), { padding: [40, 40] }),
       })
+
+      // Nothing drawn means nothing to frame: extending the bounds anyway
+      // would zoom the map to empty ground.
+      if (!polygon)
+        continue
+
       bounds.push(...coords)
     }
 

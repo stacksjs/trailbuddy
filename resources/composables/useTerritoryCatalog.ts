@@ -52,8 +52,17 @@ export async function loadTerritories(wl: TerritoryStoreLike | null): Promise<bo
       throw new Error(`Territories API returned ${res.status}`)
     const payload = await res.json()
     const features: MapFeature[] = Array.isArray(payload?.features) ? payload.features : []
-    if (!features.length)
-      return false
+
+    // An empty answer is an answer. This used to `return false` here, which
+    // left the store's built-in demo territories on screen — so a player with
+    // no claimed land saw "Cascade Ridge Zone" and "Summit Kingdom" owned by
+    // people who do not exist, and the game could never show the honest empty
+    // state that tells them to go and record a loop.
+    if (!features.length) {
+      wl.hydrateTerritoriesFromApi([], {}, [])
+      territorySource.set('api')
+      return true
+    }
 
     const territories: any[] = []
     const polygons: Record<number, [number, number][]> = {}

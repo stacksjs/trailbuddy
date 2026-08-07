@@ -50,8 +50,16 @@ export function useActivityCatalog(wl: ActivityStoreLike | null) {
         throw new Error(`Activities API returned ${res.status}`)
       const payload = await res.json()
       const rows: ApiActivity[] = Array.isArray(payload?.activities) ? payload.activities : []
-      if (!rows.length)
+
+      // Same reasoning as the territory catalog: an empty feed is a real
+      // answer. Returning early here left the store's demo activities on
+      // screen, so a new account saw runs by people who do not exist rather
+      // than an empty feed inviting them to record one.
+      if (!rows.length) {
+        wl.hydrateActivitiesFromApi([])
+        activitySource.set('api')
         return
+      }
 
       const activities = rows.map(a => ({
         id: a.id,

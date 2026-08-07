@@ -102,10 +102,11 @@ export function useTrailCatalog(wl: TrailStoreLike | null) {
       const payload = await listRes.json()
       const { trails, geometryById } = normalizeTrailsPayload(payload)
 
-      if (trails.length > 0) {
-        wl.hydrateTrailsFromApi(trails, routesFromTrails(trails, geometryById))
-        catalogSource.set('api')
-      }
+      // Hydrated unconditionally, empty included: the API's answer is the
+      // truth, and keeping the store's demo trails when it returns nothing is
+      // how a page ends up showing places that do not exist.
+      wl.hydrateTrailsFromApi(trails, routesFromTrails(trails, geometryById))
+      catalogSource.set('api')
     }
     catch (err) {
       catalogError.set(err instanceof Error ? err.message : 'Could not load trails')

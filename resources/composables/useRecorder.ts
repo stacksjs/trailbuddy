@@ -495,6 +495,9 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
               targetTerritoryId.set(t.id)
           },
         })
+        if (!layer)
+          continue
+
         refs.territoryLayers[t.id] = layer
         bounds.push(...poly)
       }

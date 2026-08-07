@@ -460,8 +460,6 @@
     actions: {
       /** Replace seed trails with API/OSM data when available. */
       hydrateTrailsFromApi(trails: Trail[], routes: Record<number, [number, number][]>) {
-        if (!trails.length)
-          return
         this.trails = trails
         this.trailRoutes = { ...this.trailRoutes, ...routes }
       },
@@ -471,8 +469,6 @@
         polygons: Record<number, [number, number][]>,
         users: User[],
       ) {
-        if (!territories.length)
-          return
         this.territories = territories
         this.territoryPolygons = polygons
         // Merge any owners we don't already know about so names resolve.
@@ -484,8 +480,6 @@
       },
       /** Replace seed activities with live data from /api/activities. */
       hydrateActivitiesFromApi(activities: Activity[]) {
-        if (!activities.length)
-          return
         this.activities = activities
       },
       findTrail(id: number): Trail | undefined {

@@ -178,7 +178,15 @@ export async function drawTerritoryPolygon(
     popupHtml?: string
     onClick?: () => void
   },
-): Promise<PolygonType> {
+): Promise<PolygonType | null> {
+  // A polygon needs three points to be a shape. Handed fewer — a territory
+  // whose ring failed to load, or one the API returned without geometry —
+  // ts-maps dereferences an element it never created and throws
+  // `Cannot read properties of undefined (reading 'appendChild')`, which takes
+  // down the whole map rather than skipping the one bad record.
+  if (!Array.isArray(coords) || coords.length < 3)
+    return null
+
   const { Polygon } = await ensureTsMaps()
   const layer = new Polygon(coords, {
     color: options.color,
