@@ -216,6 +216,38 @@ jobs:
       - name: Install Dependencies
         run: bun install
 
+      # Without this the job dies further down at `ssh-keygen` with
+      # `Load key "/home/runner/.ssh/id_ed25519": error in libcrypto`, which
+      # says nothing about the actual cause — the deploy secrets were never
+      # configured, so the key file is empty. Name what is missing instead.
+      - name: Check deploy secrets
+        env:
+          HETZNER_SSH_PRIVATE_KEY: ${{ secrets.HETZNER_SSH_PRIVATE_KEY }}
+          HETZNER_SSH_HOST: ${{ secrets.HETZNER_SSH_HOST }}
+          HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
+          PORKBUN_API_KEY: ${{ secrets.PORKBUN_API_KEY }}
+          PORKBUN_SECRET_KEY: ${{ secrets.PORKBUN_SECRET_KEY }}
+          DOTENV_PUBLIC_KEY_PRODUCTION: ${{ secrets.DOTENV_PUBLIC_KEY_PRODUCTION }}
+          DOTENV_PRIVATE_KEY_PRODUCTION: ${{ secrets.DOTENV_PRIVATE_KEY_PRODUCTION }}
+        run: |
+          missing=()
+          for name in HETZNER_SSH_PRIVATE_KEY HETZNER_SSH_HOST HCLOUD_TOKEN \
+                      PORKBUN_API_KEY PORKBUN_SECRET_KEY \
+                      DOTENV_PUBLIC_KEY_PRODUCTION DOTENV_PRIVATE_KEY_PRODUCTION; do
+            if [ -z "${!name}" ]; then
+              missing+=("$name")
+            fi
+          done
+
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::Deploy secrets not configured: ${missing[*]}"
+            echo "Add them under Settings → Secrets and variables → Actions."
+            echo "Until then, deploys run from a workstation via 'bun run deploy'."
+            exit 1
+          fi
+
+          echo "All deploy secrets present."
+
       # `.env` is only here so config loading has a file to read. Every value
       # that matters in production comes from the encrypted `.env.production`
       # in the repo, decrypted with the keys written below.
