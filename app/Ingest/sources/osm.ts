@@ -345,6 +345,50 @@ export const osmSource: TrailSourceAdapter = {
   },
 }
 
+/**
+ * Re-fetch specific relations by id, outside the tile grid.
+ *
+ * Needed to repair rows written before member boundaries were preserved (see
+ * `segmentedPathStats`): their distances were measured across the gaps between
+ * a relation's member ways. The stored geometry is flattened, so the true
+ * length cannot be recovered locally — the members have to come back from
+ * Overpass.
+ *
+ * Fetching by id rather than re-running the tiles is what makes the repair
+ * affordable: ~95 requests for 14,000 relations, against 1,459 tiles for a
+ * full re-sync that would also redo 230,000 ways that were never wrong.
+ *
+ * Rate limiting, retries and the User-Agent come from the shared client, so
+ * this is exactly as polite to Overpass as the normal ingest.
+ */
+export async function fetchRelationsByIds(ids: number[]): Promise<SourceFetchResult> {
+  if (ids.length === 0)
+    return { trails: [], seen: 0 }
+
+  const query = `[out:json][timeout:280];relation(id:${ids.join(',')});out body geom;`
+
+  const response = await client.json<OverpassResponse>(OVERPASS_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `data=${encodeURIComponent(query)}`,
+    cacheKey: `relations:${ids[0]}:${ids.length}`,
+  })
+
+  if (response.remark && /timed out|out of memory/i.test(response.remark))
+    throw new Error(`Overpass: ${response.remark}`)
+
+  const elements = response.elements ?? []
+  const trails: NormalizedTrail[] = []
+
+  for (const element of elements) {
+    const trail = normalizeElement(element)
+    if (trail)
+      trails.push(trail)
+  }
+
+  return { trails, seen: elements.length }
+}
+
 function tileTouchesLand(tile: { south: number, west: number, north: number, east: number }): boolean {
   const midLat = (tile.south + tile.north) / 2
   const midLng = (tile.west + tile.east) / 2

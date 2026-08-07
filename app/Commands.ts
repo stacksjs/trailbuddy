@@ -36,6 +36,10 @@ export default {
     file: 'IngestTrails',
     enabled: true,
   },
+  'trails:repair-distances': {
+    file: 'RepairTrailDistances',
+    enabled: true,
+  },
   'territory:ranks': {
     file: 'ComputeTerritoryRanks',
     enabled: true,
