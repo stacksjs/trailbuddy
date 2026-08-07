@@ -77,14 +77,22 @@ export default new Action({
 function applyFilters(query: any, request: { get: (key: string) => any }): any {
   const search = readString(request, 'q') ?? readString(request, 'search')
   if (search) {
-    // Name first, then place. `location` carries the park or forest, so
-    // "yosemite" and "pisgah" find their trails even when no trail is named
-    // after them.
-    const pattern = `%${search}%`
-    query = query.whereGroup((group: any) => group
-      .whereLike('name', pattern)
-      .orWhereLike('location', pattern)
-      .orWhereLike('state_name', pattern))
+    // Matched through the FTS index rather than three `LIKE '%term%'`
+    // predicates. Those could not use an index, so every search scanned the
+    // whole table — and the exact count, having no LIMIT to stop at, scanned
+    // it even for terms that matched nothing.
+    //
+    // The index covers name, then place (`location` carries the park or
+    // forest, so "yosemite" and "pisgah" find their trails even when no trail
+    // is named after them) and region.
+    const match = toFtsQuery(search)
+
+    // A term that survives sanitising to nothing must match nothing, not
+    // everything — dropping the filter would answer "%" with the entire
+    // catalog.
+    query = match
+      ? query.whereRaw('id IN (SELECT rowid FROM trails_fts WHERE trails_fts MATCH ?)', [match])
+      : query.whereRaw('1 = 0')
   }
 
   const country = readString(request, 'country')
@@ -171,6 +179,41 @@ function sortColumns(request: { get: (key: string) => any }): [string, 'asc' | '
     default:
       return ['national_trail', 'desc']
   }
+}
+
+/**
+ * Turn what somebody typed into an FTS5 query.
+ *
+ * User input cannot be handed to MATCH as-is: `"`, `*`, `:`, `^`, `-`, `(`,
+ * `)` and the bare words AND / OR / NOT / NEAR are all query syntax. A trail
+ * called "Mont Blanc - Tour" searched verbatim is a syntax error, and a lone
+ * `*` is a parse failure rather than a wildcard.
+ *
+ * So the input is reduced to word tokens, each quoted as a literal. The final
+ * token gets a `*` because search runs as you type: without it "Schwarz"
+ * matches nothing until the "wald" arrives.
+ *
+ * Returns null when nothing survives, which the caller turns into "match
+ * nothing" rather than "no filter".
+ */
+function toFtsQuery(input: string): string | null {
+  // Unicode-aware: ä, ö, ü and ß are letters here, not separators. The
+  // tokenizer folds the diacritics, but only if the character reaches it.
+  const tokens = input
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(token => token.length > 0)
+    .slice(0, 8)
+
+  if (tokens.length === 0)
+    return null
+
+  return tokens
+    .map((token, index) => {
+      const quoted = `"${token}"`
+      return index === tokens.length - 1 ? `${quoted}*` : quoted
+    })
+    .join(' ')
 }
 
 function readString(request: { get: (key: string) => any }, key: string): string | null {
