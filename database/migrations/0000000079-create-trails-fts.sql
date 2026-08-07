@@ -41,32 +41,15 @@ CREATE VIRTUAL TABLE IF NOT EXISTS trails_fts USING fts5(
 -- it is idempotent by construction and needs no guard at all.
 INSERT INTO trails_fts(trails_fts) VALUES ('rebuild');
 
--- Keep the index in step with the table.
+-- Keeping the index in step with the table is deliberately NOT done with
+-- triggers here.
 --
--- External-content FTS5 does not observe writes to its content table, so the
--- triggers are what make this correct rather than an optimisation. The ingest
--- upserts hundreds of thousands of rows, and a stale index would quietly serve
--- trails that have been renamed or removed.
+-- The obvious implementation is three AFTER INSERT/UPDATE/DELETE triggers, and
+-- that is what this migration first tried. It applies cleanly through the
+-- `sqlite3` CLI and fails in production: the migration runner splits a file on
+-- every `;` outside single quotes and knows nothing about `BEGIN ... END`, so
+-- each trigger arrives at SQLite as two fragments and the deploy dies on
+-- `SQLiteError: incomplete input`.
 --
--- Deletes and updates use the 'delete' command form, which is how external
--- content tables retract a row: FTS5 cannot read the old values back from the
--- content table at that point, so they have to be handed to it explicitly.
-DROP TRIGGER IF EXISTS trails_fts_after_insert;
-CREATE TRIGGER trails_fts_after_insert AFTER INSERT ON trails BEGIN
-  INSERT INTO trails_fts(rowid, name, location, state_name)
-  VALUES (new.id, new.name, new.location, new.state_name);
-END;
-
-DROP TRIGGER IF EXISTS trails_fts_after_delete;
-CREATE TRIGGER trails_fts_after_delete AFTER DELETE ON trails BEGIN
-  INSERT INTO trails_fts(trails_fts, rowid, name, location, state_name)
-  VALUES ('delete', old.id, old.name, old.location, old.state_name);
-END;
-
-DROP TRIGGER IF EXISTS trails_fts_after_update;
-CREATE TRIGGER trails_fts_after_update AFTER UPDATE ON trails BEGIN
-  INSERT INTO trails_fts(trails_fts, rowid, name, location, state_name)
-  VALUES ('delete', old.id, old.name, old.location, old.state_name);
-  INSERT INTO trails_fts(rowid, name, location, state_name)
-  VALUES (new.id, new.name, new.location, new.state_name);
-END;
+-- Sync lives in `writeTrails` instead (app/Ingest/ingest.ts), which is the one
+-- path that writes trails in volume. See the note there.

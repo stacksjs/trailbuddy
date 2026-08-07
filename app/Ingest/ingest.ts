@@ -317,12 +317,18 @@ export async function writeTrails(trails: NormalizedTrail[]): Promise<{ imported
     const now = new Date().toISOString()
 
     const ids = batch.map(trail => `'${trail.sourceId.replace(/'/g, '\'\'')}'`).join(',')
+    // Read the FTS columns as well as the key: the search index has to be
+    // retracted using the values as they are NOW, before the upsert replaces
+    // them. Reading them afterwards would retract the new terms and leave the
+    // old ones matching forever.
     const existingRows = await db.sql`
-      SELECT source_id FROM trails
+      SELECT id, source_id, name, location, state_name FROM trails
       WHERE source = ${batch[0].source} AND source_id IN (${db.unsafe(ids)})
-    `.execute() as Array<{ source_id: string }>
+    `.execute() as Array<{ id: number, source_id: string, name: string, location: string, state_name: string }>
 
     const existing = new Set((existingRows ?? []).map(row => row.source_id))
+
+    await retractFromSearchIndex(existingRows ?? [])
 
     const rows = batch.map(trail => ({
       uuid: crypto.randomUUID(),
@@ -370,6 +376,7 @@ export async function writeTrails(trails: NormalizedTrail[]): Promise<{ imported
     }))
 
     await db.upsert('trails', rows, ['source', 'source_id'], MERGE_COLUMNS)
+    await addToSearchIndex(batch[0].source, batch.map(trail => trail.sourceId))
 
     for (const trail of batch) {
       if (existing.has(trail.sourceId))
@@ -380,6 +387,72 @@ export async function writeTrails(trails: NormalizedTrail[]): Promise<{ imported
   }
 
   return { imported, updated }
+}
+
+/**
+ * Keep `trails_fts` in step with the rows this function writes.
+ *
+ * External-content FTS5 does not observe writes to its content table, so an
+ * upsert that renames a trail leaves the index still matching the old name.
+ *
+ * The natural place for this is a trigger, and it is not one because the
+ * migration runner cannot create triggers: it splits a `.sql` file on every
+ * `;` outside quotes with no knowledge of `BEGIN ... END`, so a trigger body
+ * reaches SQLite in fragments (see 0000000079-create-trails-fts.sql).
+ *
+ * Doing it here is sound because this is the only path that writes trails in
+ * volume. A row edited some other way stays stale until its shard re-syncs,
+ * the same 30-day bound everything else has.
+ *
+ * Failures are logged rather than thrown: a search index briefly behind is a
+ * far better outcome than an ingest that stops.
+ */
+interface SearchIndexRow {
+  id: number
+  name: string
+  location: string
+  state_name: string
+}
+
+/**
+ * Retract rows from the index. MUST run before the upsert overwrites them —
+ * FTS5 cannot recover the old terms itself, so it is handed the values that
+ * are still in the table at this point.
+ */
+async function retractFromSearchIndex(rows: SearchIndexRow[]): Promise<void> {
+  if (rows.length === 0)
+    return
+
+  try {
+    for (const row of rows) {
+      await db.sql`
+        INSERT INTO trails_fts(trails_fts, rowid, name, location, state_name)
+        VALUES ('delete', ${row.id}, ${row.name}, ${row.location}, ${row.state_name})
+      `.execute()
+    }
+  }
+  catch (error) {
+    console.warn(`[ingest] search index retract failed: ${error instanceof Error ? error.message : error}`)
+  }
+}
+
+/** Add the current state of these rows to the index, after the upsert. */
+async function addToSearchIndex(source: string, sourceIds: string[]): Promise<void> {
+  if (sourceIds.length === 0)
+    return
+
+  const quoted = sourceIds.map(id => `'${id.replace(/'/g, '\'\'')}'`).join(',')
+
+  try {
+    await db.sql`
+      INSERT INTO trails_fts(rowid, name, location, state_name)
+      SELECT id, name, location, state_name FROM trails
+      WHERE source = ${source} AND source_id IN (${db.unsafe(quoted)})
+    `.execute()
+  }
+  catch (error) {
+    console.warn(`[ingest] search index add failed: ${error instanceof Error ? error.message : error}`)
+  }
 }
 
 /** Per-source counts, for the CLI and the worker's status endpoint. */
