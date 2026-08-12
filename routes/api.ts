@@ -134,6 +134,7 @@ route.group({ prefix: '/garmin' }, () => {
   route.post('/disconnect', 'Actions/Garmin/GarminDisconnectAction').middleware('auth')
   route.post('/webhook', 'Actions/Garmin/GarminWebhookAction')
 })
+route.get('/integrations/status', 'Actions/Integration/IntegrationStatusAction')
 
 // Admin dashboard. The action re-checks the admin role itself; `auth` here
 // only guarantees there is a session to check.
@@ -397,13 +398,16 @@ route.group({ prefix: '/shipping' }, () => {
 route.get('/trails', 'Actions/Trail/TrailIndexAction')
 // Registered BEFORE `/trails/{id}/...` so `stats` is not captured as an id.
 route.get('/trails/stats', 'Actions/Trail/TrailStatsAction')
+route.get('/trails/{id}', 'Actions/Trail/TrailShowAction')
 route.get('/trails/{id}/reviews', 'Actions/Trail/TrailReviewIndexAction')
 
 // Public reads - feed, activity detail, territory map/leaderboard/profile, follows.
 route.get('/activities', 'Actions/Activity/ActivityIndexAction')
+route.get('/activities/leaderboard', 'Actions/Activity/ActivityLeaderboardAction')
 route.get('/activities/{id}', 'Actions/Activity/ActivityShowAction')
 route.get('/territories/map', 'Actions/Territory/GetTerritoriesForMapAction')
 route.get('/territories/leaderboard', 'Actions/Territory/TerritoryLeaderboardAction')
+route.get('/territories/battles', 'Actions/Territory/TerritoryBattleIndexAction')
 route.get('/territories/user/{userId}', 'Actions/Territory/UserTerritoriesAction')
 // Registered before /users/{id} so 'search' isn't captured as an id (#971).
 route.get('/users/search', 'Actions/Social/UserSearchAction')
@@ -437,9 +441,9 @@ route.group({ middleware: 'auth' }, () => {
 
   // Full-table sweeps - event hooks keep these fresh; manual calls are rare
   route.group({ middleware: 'throttle:10,1' }, () => {
-    route.post('/territories/recompute-ranks', 'Actions/Territory/ComputeTerritoryRanksAction')
-    route.post('/territories/decay-sweep', 'Actions/Territory/DecayTerritoriesAction')
-    route.post('/maintenance/recompute-counters', 'Actions/Maintenance/RecomputeCountersAction')
+    route.post('/territories/recompute-ranks', 'Actions/Territory/ComputeTerritoryRanksAction').middleware('role:admin')
+    route.post('/territories/decay-sweep', 'Actions/Territory/DecayTerritoriesAction').middleware('role:admin')
+    route.post('/maintenance/recompute-counters', 'Actions/Maintenance/RecomputeCountersAction').middleware('role:admin')
     route.post('/achievements/evaluate', 'Actions/Achievement/EvaluateAchievementsAction')
   })
 
@@ -457,6 +461,10 @@ route.group({ middleware: 'auth' }, () => {
     route.post('/trails/{id}/save', 'Actions/Trail/SavedTrailToggleAction')
     // Social graph - follow/unfollow another athlete
     route.post('/users/{id}/follow', 'Actions/Social/FollowToggleAction')
+    route.post('/users/{id}/block', 'Actions/Social/BlockToggleAction')
+    route.post('/reports', 'Actions/Social/ReportStoreAction')
+    route.get('/privacy-settings', 'Actions/Privacy/PrivacySettingsShowAction')
+    route.patch('/privacy-settings', 'Actions/Privacy/PrivacySettingsUpdateAction')
     // Clubs - create + join/leave + owner delete (#964)
     route.post('/clubs', 'Actions/Club/ClubStoreAction')
     route.post('/clubs/{id}/join', 'Actions/Club/ClubMembershipToggleAction')
@@ -469,6 +477,9 @@ route.group({ middleware: 'auth' }, () => {
     // Notifications (recipient = session user)
     route.get('/notifications', 'Actions/Social/NotificationIndexAction')
     route.post('/notifications/read', 'Actions/Social/NotificationReadAction')
+    route.get('/custom-routes', 'Actions/Route/CustomRouteIndexAction')
+    route.post('/custom-routes', 'Actions/Route/CustomRouteStoreAction')
+    route.delete('/custom-routes/{id}', 'Actions/Route/CustomRouteDestroyAction')
   })
 })
 

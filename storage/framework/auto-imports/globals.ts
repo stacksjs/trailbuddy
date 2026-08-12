@@ -27,7 +27,9 @@ declare global {
   const computeSplitsFromSamples: typeof autoImports.computeSplitsFromSamples
   const ELEVATION_NOISE_FLOOR_FT: typeof autoImports.ELEVATION_NOISE_FLOOR_FT
   const METERS_TO_FEET: typeof autoImports.METERS_TO_FEET
+  const blockedUserIdsFor: typeof autoImports.blockedUserIdsFor
   const canViewActivity: typeof autoImports.canViewActivity
+  const maskRouteEndpoints: typeof autoImports.maskRouteEndpoints
   const isDark: typeof autoImports.isDark
   const toggleDark: typeof autoImports.toggleDark
   const preferredDark: typeof autoImports.preferredDark
@@ -43,13 +45,23 @@ declare global {
   const generateSampleLoopJson: typeof autoImports.generateSampleLoopJson
   const validateGpsDataForClaim: typeof autoImports.validateGpsDataForClaim
   const validateTrackRealism: typeof autoImports.validateTrackRealism
-  const harnessFallbackUserId: typeof autoImports.harnessFallbackUserId
+  const parseActivityFile: typeof autoImports.parseActivityFile
+  const parseGpxActivity: typeof autoImports.parseGpxActivity
+  const parseTcxActivity: typeof autoImports.parseTcxActivity
+  const parseFitActivity: typeof autoImports.parseFitActivity
+  const importedTrackGeoJson: typeof autoImports.importedTrackGeoJson
+  const trackToGpx: typeof autoImports.trackToGpx
+  const downloadGpxFile: typeof autoImports.downloadGpxFile
+  const classifyBattleOutcome: typeof autoImports.classifyBattleOutcome
   const parseDurationToSeconds: typeof autoImports.parseDurationToSeconds
   const paceString: typeof autoImports.paceString
   const territoryFreshnessMs: typeof autoImports.territoryFreshnessMs
   const computeTerritoryDecay: typeof autoImports.computeTerritoryDecay
   const DECAY_STALE_DAYS: typeof autoImports.DECAY_STALE_DAYS
   const DECAY_EXPIRE_DAYS: typeof autoImports.DECAY_EXPIRE_DAYS
+  const parseTrackSamples: typeof autoImports.parseTrackSamples
+  const evaluateTrackIntegrity: typeof autoImports.evaluateTrackIntegrity
+  const durationLabel: typeof autoImports.durationLabel
   const computeCounterFixes: typeof autoImports.computeCounterFixes
   const haversineDistance: typeof autoImports.haversineDistance
   const isClosedLoop: typeof autoImports.isClosedLoop
