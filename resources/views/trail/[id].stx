@@ -8,6 +8,8 @@
   import { useRouteParam } from '../../composables/useRouteParam'
   import { useSavedTrails } from '../../composables/useSavedTrails'
   import { REVIEW_CONDITION_OPTIONS, useTrailReviews } from '../../composables/useTrailReviews'
+  import { normalizeTrailsPayload } from '../../assets/scripts/trail-data'
+  import { isTrailOffline, offlineTrail, removeOfflineTrail, saveTrailOffline } from '../../assets/scripts/offline-trails'
 
   useHead({ title: 'Trail Details - WildLoop' })
 
@@ -16,6 +18,10 @@
   const reviewTab = state<'reviews' | 'conditions'>('reviews')
   const conditionOptions = REVIEW_CONDITION_OPTIONS
   let detailMap: TrailMapHandle | null = null
+  const loadingTrail = state(true)
+  const trailLoadError = state(false)
+  const downloaded = state(false)
+  const offlineMessage = state<string | null>(null)
 
   // -1 is a deliberate no-match sentinel: if the route param can't be
   // resolved we render a real "not found" instead of silently loading a
@@ -51,6 +57,35 @@
   }
 
   onMount(() => {
+    const loadTrail = async () => {
+      if (trail()) {
+        loadingTrail.set(false)
+        return
+      }
+      try {
+        const res = await fetch(`/api/trails/${trailId()}`)
+        const payload = await res.json().catch(() => null)
+        if (!res.ok || !payload?.trail) {
+          trailLoadError.set(true)
+          loadingTrail.set(false)
+          return
+        }
+        const normalized = normalizeTrailsPayload({ trails: [payload.trail] })
+        const found = normalized.trails[0]
+        if (found && wl)
+          wl.upsertTrailFromApi(found, normalized.geometryById[found.id])
+      }
+      catch {
+        const savedTrail = await offlineTrail(trailId())
+        if (savedTrail && wl)
+          wl.upsertTrailFromApi(savedTrail.trail, savedTrail.route)
+        else
+          trailLoadError.set(true)
+      }
+      loadingTrail.set(false)
+    }
+    void loadTrail()
+    void isTrailOffline(trailId()).then(value => downloaded.set(value))
     const cancelMap = runWhenMapReady('trail-map', mountDetailMap)
     const stop = effect(() => {
       trail()
@@ -61,6 +96,26 @@
       stop()
     }
   })
+
+  async function toggleOfflineDownload() {
+    const current = trail()
+    if (!current || !wl) return
+    try {
+      if (downloaded()) {
+        await removeOfflineTrail(current.id)
+        downloaded.set(false)
+        offlineMessage.set('Offline download removed.')
+      }
+      else {
+        await saveTrailOffline(current, wl.trailRoutes()[current.id] ?? [])
+        downloaded.set(true)
+        offlineMessage.set('Trail route saved for offline use.')
+      }
+    }
+    catch (error) {
+      offlineMessage.set(error instanceof Error ? error.message : 'Could not save this trail offline')
+    }
+  }
 
   onDestroy(() => {
     detailMap?.destroy()
@@ -86,12 +141,16 @@
           <button @click="onToggleSave(trailId())" class="p-3 rounded-xl backdrop-blur-sm transition" x-class="saved ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'" x-aria-label="saved ? 'Unsave trail' : 'Save trail'">
             <Icon name="heart" size="20" />
           </button>
+          <button @click="toggleOfflineDownload()" class="p-3 rounded-xl backdrop-blur-sm transition" x-class="downloaded ? 'bg-emerald-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'" x-aria-label="downloaded ? 'Remove offline trail' : 'Download trail offline'">
+            <Icon name="download" size="20" />
+          </button>
           <StxLink to="/record" class="px-5 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition">Start</StxLink>
         </div>
       </div>
     </section>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <p :if="offlineMessage" class="mb-4 px-4 py-3 text-sm text-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">{{ offlineMessage }}</p>
       <div class="grid lg:grid-cols-3 gap-8">
         <div class="lg:col-span-2 space-y-8">
           <!-- Stats -->
@@ -248,8 +307,9 @@
     </div>
   </div>
 
-  <div :if="!trail" class="text-center py-32">
-    <p class="text-gray-500 font-medium">Trail not found</p>
+  <div :if="loadingTrail" class="text-center py-32 text-gray-500">Loading trail…</div>
+  <div :if="!loadingTrail && !trail" class="text-center py-32">
+    <p class="text-gray-500 font-medium">{{ trailLoadError ? 'Trail could not be loaded' : 'Trail not found' }}</p>
     <StxLink to="/trails" class="inline-block mt-4 px-6 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition">Browse Trails</StxLink>
   </div>
 @endsection

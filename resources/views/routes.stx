@@ -1,0 +1,85 @@
+@extends('layouts/default')
+
+@section('title', 'Route Planner - WildLoop')
+
+@section('content')
+<script client>
+  import { token } from '../assets/scripts/auth'
+
+  useHead({ title: 'Route Planner - WildLoop' })
+  const wl = useStore('wl')
+  const name = state('')
+  const selectedTrailId = state(0)
+  const routes = state<any[]>([])
+  const message = state('')
+
+  async function loadRoutes() {
+    const res = await fetch('/api/custom-routes', { headers: { Authorization: `Bearer ${token()}` } }).catch(() => null)
+    const payload = await res?.json().catch(() => null)
+    routes.set(res?.ok && Array.isArray(payload?.routes) ? payload.routes : [])
+  }
+
+  async function saveRoute() {
+    const trailId = Number(selectedTrailId())
+    const trail = wl?.findTrail(trailId)
+    const route = wl?.trailRoutes()[trailId] ?? []
+    if (!trail || route.length < 2) {
+      message.set('Choose a trail with verified route geometry.')
+      return
+    }
+    const res = await fetch('/api/custom-routes', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name().trim() || `${trail.name} route`, route, elevation: trail.elevation }),
+    })
+    const payload = await res.json().catch(() => null)
+    if (!res.ok) {
+      message.set(payload?.error || 'Could not save route')
+      return
+    }
+    message.set(payload.route.closedLoop ? 'Saved as a closed loop.' : 'Saved. This route does not close within 50 metres.')
+    name.set('')
+    await loadRoutes()
+  }
+
+  async function deleteRoute(id) {
+    await fetch(`/api/custom-routes/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token()}` } })
+    await loadRoutes()
+  }
+
+  onMount(() => void loadRoutes())
+</script>
+
+<div class="mx-auto px-4 py-8 max-w-4xl">
+  <header class="mb-6">
+    <h1 class="font-bold text-2xl dark:text-white">Route Planner</h1>
+    <p class="mt-1 text-sm text-gray-500 dark:text-slate-400">Turn verified catalog geometry into a saved route for offline preparation and navigation.</p>
+  </header>
+
+  <section class="card mb-6">
+    <div class="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+      <input x-value="name" @input="name.set($event.target.value)" placeholder="Route name" class="px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg" />
+      <select @change="selectedTrailId.set(Number($event.target.value))" class="px-3 py-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-lg">
+        <option value="0">Choose a trail…</option>
+        <template :for="trail in wl?.trails() || []"><option x-value="trail.id" :text="trail.name"></option></template>
+      </select>
+      <button @click="saveRoute()" class="px-5 py-2 font-semibold text-sm text-white bg-emerald-600 rounded-lg">Save route</button>
+    </div>
+    <p :if="message" class="mt-3 text-sm text-emerald-600">{{ message }}</p>
+  </section>
+
+  <div class="space-y-3">
+    <template :for="route in routes">
+      <div class="flex gap-4 items-center card">
+        <div class="flex-1">
+          <p class="font-semibold dark:text-white">{{ route.name }}</p>
+          <p class="text-xs text-gray-500">{{ route.distance.toFixed(1) + ' mi · ' + (route.closedLoop ? 'closed loop' : 'point-to-point') }}</p>
+        </div>
+        <button @click="deleteRoute(route.id)" class="px-3 py-1.5 text-xs font-semibold text-red-600 border border-red-200 rounded-lg">Delete</button>
+      </div>
+    </template>
+    <p :if="routes.length === 0" class="py-12 text-center text-gray-400">No saved routes yet.</p>
+  </div>
+</div>
+@endsection
+

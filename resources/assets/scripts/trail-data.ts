@@ -61,8 +61,9 @@ export function routesFromTrails(trails: UiTrail[], geometryById: Record<number,
     const geom = geometryById[t.id]
     if (geom && geom.length >= 2)
       routes[t.id] = geom
-    else if (t.lat && t.lng)
-      routes[t.id] = [[t.lat, t.lng], [t.lat + 0.008, t.lng + 0.012]]
+    // Missing geometry stays missing. A fabricated diagonal line looks like a
+    // navigable route and is materially more dangerous than an honest
+    // "route unavailable" state.
   }
   return routes
 }
