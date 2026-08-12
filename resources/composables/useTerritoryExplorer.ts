@@ -1,4 +1,5 @@
 import { derived, onDestroy, state } from 'stx'
+import { loadTerritories, type TerritoryViewport } from './useTerritoryCatalog'
 import {
   createTrailMap,
   drawTrailMarker,
@@ -17,10 +18,17 @@ interface TerritoryStore {
   territoryPolygons: () => Record<number, LatLng[]>
   trailRoutes: () => Record<number, LatLng[]>
   trails: () => Array<{ id: number, lat: number, lng: number, difficulty: string }>
+  hydrateTerritoriesFromApi: (
+    territories: unknown[],
+    polygons: Record<number, LatLng[]>,
+    users: unknown[],
+  ) => void
 }
 
 export function useTerritoryExplorer(wl: TerritoryStore | null) {
   let territoryMap: TrailMapHandle | null = null
+  let viewportTimer: ReturnType<typeof setTimeout> | null = null
+  let refreshingViewport = false
   const filter = state<'all' | 'mine' | 'contested'>('all')
 
   const currentUserId = derived(() => wl?.currentUserId())
@@ -58,29 +66,36 @@ export function useTerritoryExplorer(wl: TerritoryStore | null) {
     territoryMap = await createTrailMap('territories-map', { scrollWheelZoom: true })
     if (!territoryMap) return
     const { map } = territoryMap
+    const territoryLayers: Array<{ remove?: () => void }> = []
     const bounds: LatLng[] = []
     const uid = currentUserId()
 
-    for (const t of wl.territories()) {
-      const coords = wl.territoryPolygons()[t.id]
-      if (!coords) continue
-      const isYours = t.user_id === uid
-      const color = isYours ? '#059669' : '#f59e0b'
-      const polygon = await drawTerritoryPolygon(map, coords, {
-        color,
-        fillOpacity: isYours ? 0.4 : 0.2,
-        weight: isYours ? 3 : 2,
-        dashArray: t.status === 'contested' ? '8 4' : undefined,
-        onClick: () => polygon && map.flyToBounds(polygon.getBounds(), { padding: [40, 40] }),
-      })
+    async function drawTerritories(shouldFit: boolean) {
+      for (const layer of territoryLayers)
+        map.removeLayer(layer as any)
+      territoryLayers.length = 0
 
-      // Nothing drawn means nothing to frame: extending the bounds anyway
-      // would zoom the map to empty ground.
-      if (!polygon)
-        continue
-
-      bounds.push(...coords)
+      for (const t of wl!.territories()) {
+        const coords = wl!.territoryPolygons()[t.id]
+        if (!coords) continue
+        const isYours = t.user_id === uid
+        const color = isYours ? '#059669' : '#f59e0b'
+        const polygon = await drawTerritoryPolygon(map, coords, {
+          color,
+          fillOpacity: isYours ? 0.4 : 0.2,
+          weight: isYours ? 3 : 2,
+          dashArray: t.status === 'contested' ? '8 4' : undefined,
+          onClick: () => polygon && map.flyToBounds(polygon.getBounds(), { padding: [40, 40] }),
+        })
+        if (!polygon)
+          continue
+        territoryLayers.push(polygon)
+        if (shouldFit)
+          bounds.push(...coords)
+      }
     }
+
+    await drawTerritories(true)
 
     const routes = wl.trailRoutes()
     for (const tr of wl.trails()) {
@@ -104,9 +119,38 @@ export function useTerritoryExplorer(wl: TerritoryStore | null) {
 
     if (bounds.length)
       territoryMap.fitPoints(bounds, [30, 30])
+
+    // Query only what the athlete can currently see. The backend applies the
+    // indexed bounding-box predicate before LIMIT, so dense cities no longer
+    // crowd unrelated regions out of the response.
+    map.on('moveend', () => {
+      if (viewportTimer)
+        clearTimeout(viewportTimer)
+      viewportTimer = setTimeout(async () => {
+        if (refreshingViewport || !territoryMap)
+          return
+        const visible: any = territoryMap.map.getBounds()
+        const viewport: TerritoryViewport = {
+          minLat: visible.getSouth(),
+          minLng: visible.getWest(),
+          maxLat: visible.getNorth(),
+          maxLng: visible.getEast(),
+        }
+        refreshingViewport = true
+        try {
+          if (await loadTerritories(wl, viewport))
+            await drawTerritories(false)
+        }
+        finally {
+          refreshingViewport = false
+        }
+      }, 250)
+    })
   }
 
   onDestroy(() => {
+    if (viewportTimer)
+      clearTimeout(viewportTimer)
     territoryMap?.destroy()
     territoryMap = null
   })

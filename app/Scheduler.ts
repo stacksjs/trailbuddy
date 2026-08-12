@@ -9,9 +9,25 @@ import { schedule } from '@stacksjs/scheduler'
  * questions, feel free to reach out via Discord or GitHub Discussions.
  */
 export default function () {
-  schedule.job('name').everyMinute().setTimeZone('America/Los_Angeles')
-  schedule.action('name').everyFiveMinutes()
-  schedule.command('echo "Hello, world!"').daily()
+  schedule.command('./buddy territory:ranks')
+    .hourly()
+    .withoutOverlapping(30)
+    .onOneServer()
+    .withName('wildloop-territory-ranks')
+
+  schedule.command('./buddy territory:decay --apply')
+    .at('03:10')
+    .setTimeZone('UTC')
+    .withoutOverlapping(60)
+    .onOneServer()
+    .withName('wildloop-territory-decay')
+
+  schedule.command('./buddy counters:recompute')
+    .at('04:10')
+    .setTimeZone('UTC')
+    .withoutOverlapping(60)
+    .onOneServer()
+    .withName('wildloop-counter-repair')
 }
 
 process.on('SIGINT', () => {

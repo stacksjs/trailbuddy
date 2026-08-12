@@ -4,6 +4,7 @@
 
 import { evaluateAchievementsForUser } from '../Achievement/EvaluateAchievementsAction'
 import { recomputeTerritoryRanks } from './ComputeTerritoryRanksAction'
+import UserPrivacySetting from '../../Models/UserPrivacySetting'
 
 const MIN_TERRITORY_SIZE = 1000
 const MAX_TERRITORY_SIZE = 5000000
@@ -18,7 +19,7 @@ export default new Action({
     // Acting user comes from the authenticated session (route is behind `auth`).
     // The body fallback only fires for in-process callers (the seed harness),
     // never over HTTP - so a client can't claim as another user.
-    const userId = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('user_id'))
+    const userId = (await Auth.user().catch(() => null))?.id
 
     // Field validation (#977): malformed input → 422 with a field-keyed map.
     const fields: Record<string, string> = {}
@@ -39,14 +40,12 @@ export default new Action({
         return response.json({ success: false, error: 'Activity does not belong to user' }, 403)
       }
 
-      // Idempotency (#947 review): this activity has already claimed land. The
-      // overlap check below blocks a re-claim only while that territory is
-      // still active/contested - if it later expired, re-POSTing would award
-      // claim XP again. Guard on the 'claimed' history event instead.
-      const priorClaims = (await TerritoryHistory.where('activity_id', '=', activityId).get()) ?? []
-      if (priorClaims.some((h: any) => h.event_type === 'claimed')) {
-        const existing = await TerritoryStats.where('user_id', '=', userId).first()
-        return response.json({ success: true, alreadyProcessed: true, xpGained: 0, totalXp: existing?.xp || 0 })
+      if (!activity.capture_eligible || activity.game_mode !== 'capture') {
+        return response.json({
+          success: false,
+          error: activity.integrity_reason || 'This activity is not eligible for territory capture',
+          code: 'capture_ineligible',
+        }, 422)
       }
 
       if (!activity.gpx_data) {
@@ -76,6 +75,22 @@ export default new Action({
       const simplified = simplifyTrack(coordinates)
       const area = calculatePolygonArea(simplified)
 
+      // A home safety zone is stronger than route masking: it prevents a
+      // territory polygon from being created around the protected location,
+      // so the game itself cannot reveal where a run began or ended.
+      const privacy = await UserPrivacySetting.where('user_id', '=', userId).first().catch(() => null)
+      if (privacy?.exclude_home_from_game && privacy.home_lat != null && privacy.home_lng != null) {
+        const home = { lat: privacy.home_lat, lng: privacy.home_lng }
+        const radius = privacy.home_radius_meters ?? 500
+        if (pointInPolygon(home, simplified) || simplified.some((point: any) => haversineDistance(home, point) <= radius)) {
+          return response.json({
+            success: false,
+            error: 'Activity saved, but no territory was created inside your protected home zone',
+            code: 'privacy_zone',
+          }, 422)
+        }
+      }
+
       if (area < MIN_TERRITORY_SIZE) {
         return response.json({
           success: false,
@@ -90,82 +105,121 @@ export default new Action({
         }, 400)
       }
 
-      // Reject claims that overlap existing territory - a loop run over occupied
-      // land is handled by conquest (route-intersection split), not by stacking
-      // a second overlapping territory on top (which produced undefined state).
-      // Contested land is still owned land; only 'expired' land is reclaimable.
-      const activeTerritories = await Territory.whereIn('status', ['active', 'contested']).get()
-      for (const t of (activeTerritories ?? [])) {
-        if (!t.polygon_data) continue
-        if (polygonsOverlap(simplified, geoJsonToCoordinates(t.polygon_data))) {
-          return response.json({
-            success: false,
-            error: 'Territory overlaps existing land. Run through it to conquer instead',
-            code: 'overlap',
-          }, 409)
-        }
-      }
-
       const perimeter = calculatePerimeter(simplified)
       const centroid = getCentroid(simplified)
       const boundingBox = getBoundingBox(simplified)
+      const bounds = parseBoundingBox(boundingBox)
       const polygonData = coordinatesToGeoJson(simplified)
 
-      const territory = await Territory.forceCreate({
-        user_id: userId,
-        activity_id: activityId,
-        name: `Territory #${Date.now()}`,
-        polygon_data: polygonData,
-        bounding_box: boundingBox,
-        center_lat: centroid.lat,
-        center_lng: centroid.lng,
-        area_size: area,
-        perimeter,
-        status: 'active',
-        conquest_count: 0,
-        claimed_at: new Date().toISOString(),
-        last_activity_at: new Date().toISOString(),
-      })
-
-      await TerritoryHistory.forceCreate({
-        territory_id: territory.id,
-        user_id: userId,
-        activity_id: activityId,
-        event_type: 'claimed',
-        area_at_event: area,
-        notes: 'Initial claim',
-      })
-
-      // XP for claiming new ground (#947), persisted to territory_stats.
       const xpGained = XP_REWARDS.claim(area)
-      const stats = await TerritoryStats.where('user_id', '=', userId).first()
-      const prevXp = stats?.xp || 0
-      if (stats) {
-        await TerritoryStats.forceUpdate(stats.id, {
-          total_territories_owned: (stats.total_territories_owned || 0) + 1,
-          total_area_owned: (stats.total_area_owned || 0) + area,
-          territories_claimed: (stats.territories_claimed || 0) + 1,
-          largest_territory_area: Math.max(stats.largest_territory_area || 0, area),
-          xp: prevXp + xpGained,
-        })
-      }
-      else {
-        await TerritoryStats.forceCreate({
+      const now = new Date().toISOString()
+      const { db } = await import('@stacksjs/database')
+      const transactionResult = await (db as any).transaction(async (tx: any) => {
+        // The idempotency read, overlap read, territory/history inserts, and
+        // holdings counters share one serializable transaction. A concurrent
+        // retry can no longer award XP twice or create overlapping land in the
+        // gap between independent ORM writes.
+        const priorClaim = await tx.selectFrom('territory_histories')
+          .select(['id'])
+          .where('activity_id', '=', activityId)
+          .where('event_type', '=', 'claimed')
+          .executeTakeFirst()
+        const existingStats = await tx.selectFrom('territory_stats')
+          .selectAll()
+          .where('user_id', '=', userId)
+          .executeTakeFirst()
+        if (priorClaim) {
+          return { alreadyProcessed: true, territory: null, previousXp: existingStats?.xp || 0 }
+        }
+
+        const candidates = await tx.selectFrom('territories').selectAll().execute()
+        for (const candidate of candidates) {
+          if (!['active', 'contested'].includes(candidate.status) || !candidate.polygon_data) continue
+          if (polygonsOverlap(simplified, geoJsonToCoordinates(candidate.polygon_data)))
+            return { overlap: true, territory: null, previousXp: existingStats?.xp || 0 }
+        }
+
+        await tx.insertInto('territories').values({
           user_id: userId,
-          total_territories_owned: 1,
-          total_area_owned: area,
-          territories_claimed: 1,
-          territories_conquered: 0,
-          territories_lost: 0,
-          territories_defended: 0,
-          longest_ownership_days: 0,
-          largest_territory_area: area,
-          xp: xpGained,
-          // Unranked until the recompute below assigns real ranks (#944).
-          weekly_rank: null,
-          all_time_rank: null,
-        })
+          activity_id: activityId,
+          parent_territory_id: null,
+          name: `Territory #${Date.now()}`,
+          polygon_data: polygonData,
+          bounding_box: boundingBox,
+          min_lat: bounds.minLat,
+          min_lng: bounds.minLng,
+          max_lat: bounds.maxLat,
+          max_lng: bounds.maxLng,
+          center_lat: centroid.lat,
+          center_lng: centroid.lng,
+          area_size: area,
+          perimeter,
+          status: 'active',
+          conquest_count: 0,
+          claimed_at: now,
+          last_activity_at: now,
+          created_at: now,
+        }).execute()
+        const territory = await tx.selectFrom('territories')
+          .selectAll()
+          .where('activity_id', '=', activityId)
+          .orderBy('id', 'desc')
+          .executeTakeFirst()
+        if (!territory)
+          throw new Error('Territory insert returned no row')
+
+        await tx.insertInto('territory_histories').values({
+          territory_id: territory.id,
+          user_id: userId,
+          activity_id: activityId,
+          event_type: 'claimed',
+          area_at_event: area,
+          notes: 'Initial claim',
+          created_at: now,
+        }).execute()
+
+        const previousXp = existingStats?.xp || 0
+        if (existingStats) {
+          await tx.updateTable('territory_stats').set({
+            total_territories_owned: (existingStats.total_territories_owned || 0) + 1,
+            total_area_owned: (existingStats.total_area_owned || 0) + area,
+            territories_claimed: (existingStats.territories_claimed || 0) + 1,
+            largest_territory_area: Math.max(existingStats.largest_territory_area || 0, area),
+            xp: previousXp + xpGained,
+            updated_at: now,
+          }).where('id', '=', existingStats.id).execute()
+        }
+        else {
+          await tx.insertInto('territory_stats').values({
+            user_id: userId,
+            total_territories_owned: 1,
+            total_area_owned: area,
+            territories_claimed: 1,
+            territories_conquered: 0,
+            territories_lost: 0,
+            territories_defended: 0,
+            longest_ownership_days: 0,
+            largest_territory_area: area,
+            xp: xpGained,
+            weekly_rank: null,
+            all_time_rank: null,
+            created_at: now,
+          }).execute()
+        }
+        return { territory, previousXp }
+      }, { isolation: 'serializable', retries: 2 })
+
+      if (transactionResult.alreadyProcessed)
+        return response.json({ success: true, alreadyProcessed: true, xpGained: 0, totalXp: transactionResult.previousXp })
+      if (transactionResult.overlap) {
+        return response.json({
+          success: false,
+          error: 'Territory overlaps existing land. Run through it to conquer instead',
+          code: 'overlap',
+        }, 409)
       }
+      const territory = transactionResult.territory
+      const prevXp = transactionResult.previousXp
 
       // Holdings changed - refresh persisted leaderboard ranks (#944).
       await recomputeTerritoryRanks().catch((err: unknown) =>

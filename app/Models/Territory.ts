@@ -108,8 +108,13 @@ export default defineModel({
       },
     },
 
+    min_lat: { order: 5, fillable: true, nullable: true, validation: { rule: schema.float().min(-90).max(90) }, factory: () => null },
+    min_lng: { order: 6, fillable: true, nullable: true, validation: { rule: schema.float().min(-180).max(180) }, factory: () => null },
+    max_lat: { order: 7, fillable: true, nullable: true, validation: { rule: schema.float().min(-90).max(90) }, factory: () => null },
+    max_lng: { order: 8, fillable: true, nullable: true, validation: { rule: schema.float().min(-180).max(180) }, factory: () => null },
+
     center_lat: {
-      order: 5,
+      order: 9,
       fillable: true,
       validation: {
         rule: schema.float().required(),
@@ -121,7 +126,7 @@ export default defineModel({
     },
 
     center_lng: {
-      order: 6,
+      order: 10,
       fillable: true,
       validation: {
         rule: schema.float().required(),

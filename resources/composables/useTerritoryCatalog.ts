@@ -1,4 +1,5 @@
 import { onMount, state } from 'stx'
+import { token } from '../assets/scripts/auth'
 
 /**
  * Hydrate the `wl` store's territories from the live API
@@ -43,11 +44,31 @@ let territoriesStarted = false
  * backend's authoritative ownership rather than any client-side guess (#943).
  * Returns true if live data was applied.
  */
-export async function loadTerritories(wl: TerritoryStoreLike | null): Promise<boolean> {
+export interface TerritoryViewport {
+  minLat: number
+  minLng: number
+  maxLat: number
+  maxLng: number
+}
+
+export async function loadTerritories(
+  wl: TerritoryStoreLike | null,
+  viewport?: TerritoryViewport,
+): Promise<boolean> {
   if (!wl)
     return false
   try {
-    const res = await fetch('/api/territories/map?limit=500')
+    const query = new URLSearchParams({ limit: '500' })
+    if (viewport) {
+      query.set('min_lat', String(viewport.minLat))
+      query.set('min_lng', String(viewport.minLng))
+      query.set('max_lat', String(viewport.maxLat))
+      query.set('max_lng', String(viewport.maxLng))
+    }
+    const bearer = token()
+    const res = await fetch(`/api/territories/map?${query}`, {
+      headers: bearer ? { Authorization: `Bearer ${bearer}` } : undefined,
+    })
     if (!res.ok)
       throw new Error(`Territories API returned ${res.status}`)
     const payload = await res.json()

@@ -36,10 +36,10 @@
         Live Battles
         <span class="flex gap-1 items-center px-2 py-1 font-medium text-red-600 text-xs bg-red-50 dark:bg-red-900/20 rounded-full">
           <span class="h-1.5 w-1.5 bg-red-500 rounded-full animate-pulse"></span>
-          Live
+          15s updates
         </span>
       </h1>
-      <p class="mt-1 text-gray-500 text-sm dark:text-slate-400">Watch territory battles unfold in real time</p>
+      <p class="mt-1 text-gray-500 text-sm dark:text-slate-400">Persisted battle events refresh automatically every 15 seconds.</p>
     </div>
 
     <div class="grid gap-8 lg:grid-cols-3">
