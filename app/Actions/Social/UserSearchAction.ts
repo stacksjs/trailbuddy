@@ -15,6 +15,8 @@ export default new Action({
     const q = typeof qRaw === 'string' ? qRaw.trim() : ''
 
     try {
+      const viewerId = (await Auth.user().catch(() => null))?.id ?? null
+      const blockedIds = await blockedUserIdsFor(viewerId)
       // Fetch the full match set, then paginate - so meta.total/hasMore reflect
       // the real count (a DB-side .limit() before paginate() would cap total at
       // the page size and make hasMore always false, #978 review).
@@ -22,7 +24,8 @@ export default new Action({
         ? (await User.where('name', 'like', `%${q}%`).get()) ?? []
         : (await User.query().get()) ?? []
 
-      const ids = users.map((u: any) => u.id)
+      const visibleUsers = users.filter((user: any) => !blockedIds.has(user.id))
+      const ids = visibleUsers.map((u: any) => u.id)
       const activities = ids.length ? (await Activity.whereIn('user_id', ids).get()) ?? [] : []
       const stats = ids.length ? (await TerritoryStats.whereIn('user_id', ids).get()) ?? [] : []
       const followers = ids.length ? (await Follow.whereIn('following_id', ids).get()) ?? [] : []
@@ -35,7 +38,7 @@ export default new Action({
         followerCount.set(f.following_id, (followerCount.get(f.following_id) ?? 0) + 1)
       const statsByUser = new Map(stats.map((s: any) => [s.user_id, s]))
 
-      const athletes = users
+      const athletes = visibleUsers
         .map((u: any) => ({
           id: u.id,
           name: u.name,

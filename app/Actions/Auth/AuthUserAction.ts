@@ -14,11 +14,24 @@ export default new Action({
     if (!user)
       return response.json({ error: 'Unauthenticated' }, 401)
 
+    let roles: string[] = []
+    try {
+      const { createBqbRbacStore, Rbac } = await import('@stacksjs/auth')
+      Rbac.setStore(createBqbRbacStore())
+      roles = ((await Rbac.getUserRoles(user.id)) ?? [])
+        .map((role: any) => String(role?.name ?? ''))
+        .filter(Boolean)
+    }
+    catch {
+      roles = []
+    }
+
     return response.json({
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
+        roles,
       },
     })
   },

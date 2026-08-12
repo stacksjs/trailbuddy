@@ -10,7 +10,7 @@ export default new Action({
   method: 'DELETE',
 
   async handle(request) {
-    const userId = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('user_id'))
+    const userId = (await Auth.user().catch(() => null))?.id
     const clubId = positiveInt(request.get('id') ?? request.get('club_id'))
 
     if (!userId)

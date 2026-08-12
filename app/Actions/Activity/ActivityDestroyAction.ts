@@ -16,7 +16,7 @@ export default new Action({
     const id = positiveInt(request.get('id'))
     // Owner from the authenticated session (route is behind `auth`); body
     // fallback is for the in-process seed harness only.
-    const userId = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('user_id'))
+    const userId = (await Auth.user().catch(() => null))?.id
 
     if (!id)
       return response.json({ success: false, error: 'Validation failed', fields: { id: 'required: a positive integer activity id' } }, 422)

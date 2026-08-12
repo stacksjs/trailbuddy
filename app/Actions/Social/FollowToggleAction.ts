@@ -11,7 +11,7 @@ export default new Action({
 
   async handle(request) {
     const targetId = positiveInt(request.get('id'))
-    const followerId = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('follower_id'))
+    const followerId = (await Auth.user().catch(() => null))?.id
 
     // Field validation (#977).
     if (!targetId)
@@ -25,6 +25,8 @@ export default new Action({
       const target = await User.find(targetId)
       if (!target)
         return response.json({ success: false, error: 'User not found' }, 404)
+      if ((await blockedUserIdsFor(followerId)).has(targetId))
+        return response.json({ success: false, error: 'This athlete is unavailable' }, 403)
 
       const existing = await Follow
         .where('follower_id', '=', followerId)

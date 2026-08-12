@@ -18,13 +18,15 @@ import { describeResponseError, describeThrownError, type UserFacingError } from
 /** Where the bearer token lives. `game-api.ts` reads the same key. */
 export const TOKEN_KEY = 'auth_token'
 
-/** Where the signed-in user is cached. There is no `/me` endpoint to re-fetch from. */
+/** Where the signed-in user is cached between full page navigations. */
 const USER_KEY = 'auth_user'
 
 export interface AuthUser {
   id: number
   email: string
   name?: string
+  avatar?: string | null
+  roles?: string[]
 }
 
 export interface AuthResult {
@@ -101,6 +103,46 @@ export function signOut(): void {
     return
   localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(USER_KEY)
+}
+
+/**
+ * Resolve the bearer token to the authoritative server-side user.
+ *
+ * Cached identity is only a fast rendering hint. This request is the trust
+ * boundary: a revoked or expired token clears both cached values, preventing
+ * the UI from continuing to act as a stale/demo athlete.
+ */
+export async function refreshCurrentUser(): Promise<AuthUser | null> {
+  const bearer = token()
+  if (!bearer)
+    return null
+
+  try {
+    const response = await fetch('/api/me', {
+      credentials: 'same-origin',
+      headers: { Authorization: `Bearer ${bearer}` },
+    })
+
+    if (response.status === 401) {
+      signOut()
+      return null
+    }
+    if (!response.ok)
+      return currentUser()
+
+    const payload = await response.json().catch(() => null)
+    const user = payload?.user as AuthUser | undefined
+    if (!user?.id)
+      return currentUser()
+
+    persist({ user })
+    return user
+  }
+  catch {
+    // Offline startup may use the last server-verified identity. Writes still
+    // require the bearer token and are re-authorized by every endpoint.
+    return currentUser()
+  }
 }
 
 /**

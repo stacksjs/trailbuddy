@@ -12,7 +12,7 @@ export default new Action({
     const activityId = positiveInt(request.get('id') ?? request.get('activity_id'))
     // Author from the authenticated session (route is behind `auth`); body
     // fallback is for the in-process harness only.
-    const userId = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('user_id'))
+    const userId = (await Auth.user().catch(() => null))?.id
     const body = boundedString(request.get('body'), 2000)
 
     // Field validation (#977).
@@ -29,6 +29,10 @@ export default new Action({
     try {
       const activity = await Activity.find(activityId)
       if (!activity)
+        return response.json({ success: false, error: 'Activity not found' }, 404)
+      const following = new Set(((await Follow.where('follower_id', '=', userId).get()) ?? []).map((row: any) => row.following_id))
+      const blockedIds = await blockedUserIdsFor(userId)
+      if (!canViewActivity(activity, userId, following, blockedIds))
         return response.json({ success: false, error: 'Activity not found' }, 404)
 
       const comment = await ActivityComment.forceCreate({

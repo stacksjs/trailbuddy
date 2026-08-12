@@ -12,7 +12,7 @@ export default new Action({
 
   async handle(request) {
     const clubId = positiveInt(request.get('id') ?? request.get('club_id'))
-    const userId = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('user_id'))
+    const userId = (await Auth.user().catch(() => null))?.id
 
     if (!userId)
       return response.json({ success: false, error: 'Authentication required' }, 401)

@@ -2,8 +2,7 @@
 //
 // POST /api/activities/{id}/kudos - toggles the requesting user's kudos on an
 // activity (idempotent: add if absent, remove if present), then recomputes the
-// denormalized activities.kudos_count from the kudos rows. The giver is taken
-// from the body for now (auth hardening tracked in #939).
+// denormalized activities.kudos_count from the kudos rows.
 import { evaluateAchievementsForUser } from '../Achievement/EvaluateAchievementsAction'
 
 export default new Action({
@@ -13,23 +12,24 @@ export default new Action({
 
   async handle(request) {
     const activityId = positiveInt(request.get('id') ?? request.get('activity_id'))
-    // Giver from the authenticated session (route is behind `auth`); body
-    // fallback is for the in-process harness only.
     const giverId = (await Auth.user().catch(() => null))?.id
-      ?? positiveInt(request.get('user_id') ?? request.get('giver_id'))
 
     // Field validation (#977).
     const fields: Record<string, string> = {}
     if (!activityId)
       fields.activity_id = 'required: a positive integer activity id'
     if (!giverId)
-      fields.user_id = 'required: authenticated session (or user_id in the harness)'
+      fields.user_id = 'required: authenticated session'
     if (Object.keys(fields).length)
       return response.json({ success: false, error: 'Validation failed', fields }, 422)
 
     try {
       const activity = await Activity.find(activityId)
       if (!activity)
+        return response.json({ success: false, error: 'Activity not found' }, 404)
+      const following = new Set(((await Follow.where('follower_id', '=', giverId).get()) ?? []).map((row: any) => row.following_id))
+      const blockedIds = await blockedUserIdsFor(giverId)
+      if (!canViewActivity(activity, giverId, following, blockedIds))
         return response.json({ success: false, error: 'Activity not found' }, 404)
 
       const existing = await Kudos

@@ -17,7 +17,7 @@ export default new Action({
     const trailId = positiveInt(request.get('id') ?? request.get('trail_id'))
     // Reviewer from the authenticated session (route is behind `auth`); body
     // fallback is for the in-process seed harness only.
-    const userId = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('user_id'))
+    const userId = (await Auth.user().catch(() => null))?.id
     const rating = request.get<number>('rating')
     const content = (request.get<string>('content') ?? '').trim()
     const title = (request.get<string>('title') ?? '').trim() || null

@@ -14,11 +14,15 @@ export default new Action({
       return response.json({ success: false, error: 'User ID is required' }, 400)
 
     try {
+      const viewerId = (await Auth.user().catch(() => null))?.id ?? null
+      const blockedIds = await blockedUserIdsFor(viewerId)
+      if (blockedIds.has(userId))
+        return response.json({ success: false, error: 'User not found' }, 404)
       const followers = await Follow.where('following_id', '=', userId).get()
       const following = await Follow.where('follower_id', '=', userId).get()
 
-      const followerIds = (followers ?? []).map((f: any) => f.follower_id)
-      const followingIds = (following ?? []).map((f: any) => f.following_id)
+      const followerIds = (followers ?? []).map((f: any) => f.follower_id).filter((id: number) => !blockedIds.has(id))
+      const followingIds = (following ?? []).map((f: any) => f.following_id).filter((id: number) => !blockedIds.has(id))
 
       return response.json({
         success: true,

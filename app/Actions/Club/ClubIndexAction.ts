@@ -12,10 +12,8 @@ export default new Action({
 
   async handle(request) {
     try {
-      // Session user drives private-club visibility + isMember. On this PUBLIC
-      // route it MUST come from the auth token only - the harness fallback is
-      // null over real HTTP, so a spoofed ?user_id can't unmask private clubs.
-      const sessionUser = (await Auth.user().catch(() => null))?.id ?? harnessFallbackUserId(request)
+      // Session user drives private-club visibility and membership state.
+      const sessionUser = (await Auth.user().catch(() => null))?.id ?? null
 
       const clubs = (await Club.all()) ?? []
       const memberships = (await ClubMember.all()) ?? []

@@ -13,7 +13,7 @@ export default new Action({
   method: 'POST',
 
   async handle(request) {
-    const challengerId = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('user_id'))
+    const challengerId = (await Auth.user().catch(() => null))?.id
     if (!challengerId)
       return response.json({ success: false, error: 'Authentication required' }, 401)
 

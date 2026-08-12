@@ -14,7 +14,7 @@ export default new Action({
     const trailId = positiveInt(request.get('id') ?? request.get('trail_id'))
     // Saver from the authenticated session (route is behind `auth`); body
     // fallback is for the in-process harness only.
-    const userId = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('user_id'))
+    const userId = (await Auth.user().catch(() => null))?.id
 
     // Field validation (#977).
     if (!userId)

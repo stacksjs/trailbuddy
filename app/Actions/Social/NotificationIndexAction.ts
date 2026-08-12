@@ -9,7 +9,7 @@ export default new Action({
   method: 'GET',
 
   async handle(request) {
-    const userId = (await Auth.user().catch(() => null))?.id ?? request.get<number>('user_id')
+    const userId = (await Auth.user().catch(() => null))?.id
     if (!userId)
       return response.json({ success: false, error: 'Authentication required' }, 401)
 
