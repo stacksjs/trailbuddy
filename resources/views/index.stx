@@ -1,21 +1,14 @@
 @extends('layouts/default')
 
-@section('title', 'WildLoop - Every trail. Every mile. Every loop.')
+@section('title', 'WildLoop - Find your line. Claim your ground.')
 
 @section('content')
 <script client>
   import { fetchCoverage } from '../composables/useTrailCatalog'
+  import { activitySharePreview } from '../functions/activity-share'
 
-  useHead({ title: 'WildLoop - Every trail. Every mile. Every loop.' })
+  useHead({ title: 'WildLoop - Find your line. Claim your ground.' })
 
-  /**
-   * Everything on this page is the real catalog.
-   *
-   * It used to open on a personal stats card (`Your week`, miles, zones held)
-   * fed by the store's demo data, so a visitor who had never signed in was
-   * shown somebody's fabricated week as the first thing on the site. A
-   * marketing page argues from what the product actually holds.
-   */
   const coverage = state({ total: 0, states: [], sources: [] })
 
   onMount(() => {
@@ -24,9 +17,6 @@
 
   const trailCount = derived(() => coverage().total)
   const regionCount = derived(() => coverage().states.length)
-
-  // Region rows carry their country, so the country count comes from the same
-  // request rather than a second round trip or a hardcoded number.
   const countryCount = derived(() => {
     const seen = new Set()
     for (const region of coverage().states) {
@@ -36,285 +26,494 @@
     return seen.size
   })
 
-  /** The largest regions, for the coverage strip. */
-  const topRegions = derived(() => coverage().states.slice(0, 4))
+  const sampleActivity = {
+    activityType: 'Trail Run',
+    created_at: '2026-08-12T13:18:00.000Z',
+    distance: 9.84,
+    duration: '1:28:04',
+    elevation_gain: 1842,
+    moving_time: '1:26:18',
+    pace: '8:46 /mi',
+    title: 'Headlands Ridge Loop',
+    userName: 'Maya Chen',
+  }
+
+  const sampleRoute = [
+    { lat: 37.832, lng: -122.532 },
+    { lat: 37.838, lng: -122.521 },
+    { lat: 37.835, lng: -122.506 },
+    { lat: 37.825, lng: -122.497 },
+    { lat: 37.814, lng: -122.505 },
+    { lat: 37.808, lng: -122.519 },
+    { lat: 37.817, lng: -122.531 },
+    { lat: 37.832, lng: -122.532 },
+  ]
+
+  const sampleSquare = activitySharePreview(sampleActivity, sampleRoute, 'square')
+  const sampleStory = activitySharePreview(sampleActivity, sampleRoute, 'story')
 </script>
 
-  <!-- ── Hero ─────────────────────────────────────────────────────────────
-       Asymmetric split: the argument on the left, the outdoors on the right.
-       The photograph is what makes this feel like a trail product; the type
-       stays quiet so the emerald only appears on the count and the CTA. -->
-  <section class="bg-white dark:bg-slate-950">
-    <div class="mx-auto px-4 pt-12 pb-16 sm:px-6 lg:px-8 lg:pt-24 lg:pb-28 max-w-7xl">
-      <div class="grid gap-12 items-center lg:grid-cols-5 lg:gap-16">
-        <div class="lg:col-span-3 reveal">
-          <span class="inline-flex items-center gap-1.5 mb-6 px-3 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 rounded-full border border-emerald-200 dark:border-emerald-500/25">
-            <i class="i-hugeicons-location-01 h-3.5 w-3.5" aria-hidden="true"></i>
-            <span :if="trailCount() > 0">{{ trailCount().toLocaleString() + ' trails mapped' }}</span>
-            <span :if="trailCount() === 0">Trail discovery and GPS tracking</span>
-          </span>
-
-          <h1 class="mb-6 font-display text-4xl font-bold text-slate-900 dark:text-white md:text-5xl lg:text-6xl tracking-tighter leading-[1.05]">
-            Every trail. Every mile.<br class="hidden sm:block" /> Every loop.
-          </h1>
-
-          <p class="mb-9 text-lg text-slate-600 dark:text-slate-400 max-w-[42ch] leading-relaxed">
-            Search the trails of four countries. Track your run. Close the loop and the ground is yours.
-          </p>
-
-          <div class="flex flex-col gap-3 sm:flex-row">
-            <StxLink to="/record" class="inline-flex items-center justify-center gap-2 px-8 py-3.5 font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition active:scale-[0.98]">
-              <i class="i-hugeicons-play h-4.5 w-4.5" aria-hidden="true"></i>
-              Start tracking
-            </StxLink>
-            <StxLink to="/trails" class="px-8 py-3.5 text-center font-semibold text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-full transition active:scale-[0.98]">
-              Browse trails
-            </StxLink>
-          </div>
+<main class="marketing-page overflow-hidden">
+  <section class="hero-field">
+    <div class="mx-auto grid max-w-7xl gap-10 px-4 pb-14 pt-12 sm:px-6 lg:grid-cols-[0.83fr_1.17fr] lg:items-center lg:gap-16 lg:px-8 lg:pb-24 lg:pt-20">
+      <div class="hero-copy relative z-10">
+        <h1 class="font-display text-[clamp(2.75rem,5vw,5rem)] font-bold leading-[0.9] tracking-[-0.06em] text-[#eef4f0]">
+          Find your line.<br />Claim your ground.
+        </h1>
+        <p class="mt-7 max-w-[36rem] text-lg leading-relaxed text-[#acbbb4] sm:text-xl">
+          Record every effort, discover better trails, and turn closed loops into territory worth defending.
+        </p>
+        <div class="mt-9 flex flex-col gap-3 sm:flex-row">
+          <StxLink to="/record" class="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-500 px-7 py-3.5 text-sm font-bold text-[#07110f] transition hover:bg-emerald-400 active:scale-[0.98]">
+            <i class="i-lucide-navigation h-4 w-4" aria-hidden="true"></i>
+            Start an activity
+          </StxLink>
+          <StxLink to="/trails" class="inline-flex items-center justify-center gap-2 rounded-full border border-[#7d9188]/45 px-7 py-3.5 text-sm font-bold text-[#eef4f0] transition hover:border-emerald-400 hover:text-emerald-300 active:scale-[0.98]">
+            Explore trails
+            <i class="i-lucide-arrow-up-right h-4 w-4" aria-hidden="true"></i>
+          </StxLink>
         </div>
+      </div>
 
-        <div class="lg:col-span-2 reveal reveal-delay-1">
+      <figure class="hero-visual">
+        <picture>
+          <source srcset="/images/marketing/wildloop-ridge-runner.webp" type="image/webp" />
           <img
-            src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&h=1000&fit=crop"
-            alt="Sunlight through a stand of tall forest trees"
-            width="1200"
-            height="1000"
-            class="w-full h-[320px] sm:h-[420px] lg:h-[520px] object-cover rounded-[var(--r-card)]"
+            src="/images/marketing/wildloop-ridge-runner.jpg"
+            alt="A trail runner following an alpine ridge above cloud-filled valleys"
+            width="1440"
+            height="960"
+            fetchpriority="high"
+            class="h-[420px] w-full object-cover sm:h-[560px] lg:h-[650px]"
           />
+        </picture>
+      </figure>
+    </div>
+  </section>
+
+  <section class="data-ribbon border-y border-emerald-950/10 dark:border-white/10">
+    <div class="mx-auto grid max-w-7xl grid-cols-2 gap-x-6 gap-y-9 px-4 py-10 sm:px-6 lg:grid-cols-[1.35fr_1fr_1fr_1.35fr] lg:px-8">
+      <div>
+        <p :if="trailCount() > 0" class="font-display text-3xl font-bold tracking-tight tabular-nums">{{ trailCount().toLocaleString() }}</p>
+        <div :if="trailCount() === 0" class="h-9 w-28 animate-pulse rounded bg-emerald-950/10 dark:bg-white/10"></div>
+        <p class="mt-1 text-sm text-current/60">Trails ready to explore</p>
+      </div>
+      <div>
+        <p :if="countryCount() > 0" class="font-display text-3xl font-bold tracking-tight tabular-nums">{{ countryCount() }}</p>
+        <div :if="countryCount() === 0" class="h-9 w-12 animate-pulse rounded bg-emerald-950/10 dark:bg-white/10"></div>
+        <p class="mt-1 text-sm text-current/60">Countries covered</p>
+      </div>
+      <div>
+        <p :if="regionCount() > 0" class="font-display text-3xl font-bold tracking-tight tabular-nums">{{ regionCount() }}</p>
+        <div :if="regionCount() === 0" class="h-9 w-16 animate-pulse rounded bg-emerald-950/10 dark:bg-white/10"></div>
+        <p class="mt-1 text-sm text-current/60">States and regions</p>
+      </div>
+      <div class="col-span-2 lg:col-span-1">
+        <p class="font-display text-xl font-bold tracking-tight">One map. Two reasons to move.</p>
+        <p class="mt-1 text-sm leading-relaxed text-current/60">Train for yourself, then compete for the terrain around you.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-paper">
+    <div class="mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[0.78fr_1.22fr] lg:items-center lg:gap-20 lg:px-8 lg:py-28">
+      <div class="section-rise">
+        <p class="section-kicker">Territory changes everything</p>
+        <h2 class="mt-4 max-w-[12ch] font-display text-4xl font-bold leading-[0.98] tracking-[-0.045em] sm:text-5xl">Your route is the border.</h2>
+        <p class="mt-6 max-w-[34rem] text-lg leading-relaxed text-current/65">Close the loop and the land inside becomes yours. Keep moving to hold it, or take ground from somebody else.</p>
+        <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+          <div class="feature-rule">
+            <i class="i-lucide-scan-line h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-hidden="true"></i>
+            <div>
+              <h3 class="font-bold">GPS drawn</h3>
+              <p class="mt-1 text-sm leading-relaxed text-current/60">No arbitrary hexes. The line you travel determines what you capture.</p>
+            </div>
+          </div>
+          <div class="feature-rule">
+            <i class="i-lucide-shield-check h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-hidden="true"></i>
+            <div>
+              <h3 class="font-bold">Effort verified</h3>
+              <p class="mt-1 text-sm leading-relaxed text-current/60">Impossible speeds, teleporting tracks, and open routes do not score.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="territory-plot section-rise" role="img" aria-label="A closed running route enclosing captured territory">
+        <svg viewBox="0 0 760 620" aria-hidden="true">
+          <g class="plot-contours" fill="none" stroke="currentColor">
+            <path d="M-40 154 C112 18 238 230 390 102 S696 54 820 168" />
+            <path d="M-70 250 C114 112 264 330 420 202 S690 138 826 250" />
+            <path d="M-24 440 C122 302 294 530 454 386 S708 318 820 424" />
+            <path d="M-36 532 C120 406 282 604 450 496 S706 422 820 518" />
+          </g>
+          <path class="territory-fill" d="M167 393 C109 306 152 184 269 151 C382 120 540 184 589 279 C635 369 554 482 420 503 C304 522 217 469 167 393 Z" />
+          <path class="territory-route-shadow" d="M167 393 C109 306 152 184 269 151 C382 120 540 184 589 279 C635 369 554 482 420 503 C304 522 217 469 167 393 Z" />
+          <path class="territory-route" d="M167 393 C109 306 152 184 269 151 C382 120 540 184 589 279 C635 369 554 482 420 503 C304 522 217 469 167 393 Z" />
+          <circle cx="167" cy="393" r="13" class="territory-start" />
+        </svg>
+        <div class="plot-caption">
+          <span>Closed loop</span>
+          <strong>2.7 km² captured</strong>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ── Coverage ─────────────────────────────────────────────────────────
-       A figure row on a tinted band, not cards. These are the only numbers
-       that separate this from every other trail app, and all four are read
-       from the database at request time. -->
-  <section class="border-y border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-    <div class="mx-auto px-4 py-14 sm:px-6 lg:px-8 max-w-7xl">
-      <div class="grid grid-cols-2 gap-y-10 gap-x-6 lg:grid-cols-4 lg:divide-x lg:divide-slate-200 dark:lg:divide-slate-800">
-        <!-- Each figure holds its space with a skeleton bar until the count
-             lands, so the row does not reflow as the request resolves. -->
-        <div class="lg:px-8 lg:first:pl-0">
-          <p :if="trailCount() > 0" class="font-display text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tabular-nums">{{ trailCount().toLocaleString() }}</p>
-          <div :if="trailCount() === 0" class="h-9 md:h-10 w-32 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
-          <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400">Trails in the catalog</p>
+  <section class="section-muted">
+    <div class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+      <div class="grid gap-5 md:grid-cols-12 md:auto-rows-[190px]">
+        <div class="bento-copy md:col-span-7 md:row-span-2">
+          <i class="i-lucide-map h-7 w-7 text-emerald-600 dark:text-emerald-400" aria-hidden="true"></i>
+          <div>
+            <h2 class="max-w-[13ch] font-display text-4xl font-bold leading-none tracking-[-0.04em] sm:text-5xl">A trail app that keeps up.</h2>
+            <p class="mt-5 max-w-[34rem] text-base leading-relaxed text-current/65">Search by place, surface, distance, and route shape. Save the trail, head outside, and let live GPS handle the rest.</p>
+          </div>
         </div>
-        <div class="lg:px-8">
-          <p :if="countryCount() > 0" class="font-display text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tabular-nums">{{ countryCount() }}</p>
-          <div :if="countryCount() === 0" class="h-9 md:h-10 w-12 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
-          <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400">Countries covered</p>
+        <div class="bento-image md:col-span-5 md:row-span-3">
+          <picture>
+            <source srcset="/images/marketing/wildloop-forest-trail.webp" type="image/webp" />
+            <img src="/images/marketing/wildloop-forest-trail.jpg" alt="Two hikers following an S-shaped trail through dense green forest" width="960" height="1200" loading="lazy" class="h-full w-full object-cover" />
+          </picture>
         </div>
-        <div class="lg:px-8">
-          <p :if="regionCount() > 0" class="font-display text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tabular-nums">{{ regionCount() }}</p>
-          <div :if="regionCount() === 0" class="h-9 md:h-10 w-16 bg-slate-200 dark:bg-slate-800 rounded animate-pulse"></div>
-          <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400">States and regions</p>
+        <div class="bento-small md:col-span-4">
+          <i class="i-lucide-route h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-hidden="true"></i>
+          <h3 class="mt-auto font-display text-xl font-bold">Plan the way through</h3>
+          <p class="mt-2 text-sm leading-relaxed text-current/60">Trace a route, inspect the climb, and keep it available offline.</p>
         </div>
-        <div class="lg:px-8">
-          <p class="font-display text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tabular-nums">3</p>
-          <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400">Public data sources</p>
+        <div class="bento-small md:col-span-3">
+          <i class="i-lucide-heart-pulse h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-hidden="true"></i>
+          <h3 class="mt-auto font-display text-xl font-bold">Bring your watch</h3>
+          <p class="mt-2 text-sm leading-relaxed text-current/60">Import FIT, GPX, and TCX activities with health metrics intact.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ── Territory ────────────────────────────────────────────────────────
-       Split reversed against the hero so the two do not read as the same
-       section twice. This is the part no trail database has. -->
-  <section class="bg-white dark:bg-slate-950">
-    <div class="mx-auto px-4 py-20 sm:px-6 lg:px-8 lg:py-28 max-w-7xl">
-      <div class="grid gap-12 items-center lg:grid-cols-2 lg:gap-16">
-        <div class="order-2 lg:order-1 reveal">
-          <img
-            src="https://images.unsplash.com/photo-1551632811-561732d1e306?w=1200&h=900&fit=crop"
-            alt="Two hikers on a ridge line above a valley"
-            width="1200"
-            height="900"
-            class="w-full h-[300px] sm:h-[400px] object-cover rounded-[var(--r-card)]"
-          />
-        </div>
-
-        <div class="order-1 lg:order-2 reveal reveal-delay-1">
-          <h2 class="mb-5 font-display text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight leading-[1.1]">
-            Run a loop, keep the ground
-          </h2>
-          <p class="mb-8 text-lg text-slate-600 dark:text-slate-400 max-w-[46ch] leading-relaxed">
-            Finish where you started and the land inside your track becomes yours. Someone else has to run it to take it back.
-          </p>
-
-          <ul class="space-y-5">
-            <li class="flex gap-3.5">
-              <i class="i-hugeicons-tick-double-01 h-5 w-5 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true"></i>
-              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
-                <span class="font-semibold text-slate-900 dark:text-white">Your track is the border.</span>
-                The area you enclose is measured from the GPS you recorded, not drawn from a preset grid.
-              </p>
-            </li>
-            <li class="flex gap-3.5">
-              <i class="i-hugeicons-shield-01 h-5 w-5 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true"></i>
-              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
-                <span class="font-semibold text-slate-900 dark:text-white">Fabricated runs are refused.</span>
-                Tracks that teleport, never close, or are too sparse to be a real recording do not claim anything.
-              </p>
-            </li>
-          </ul>
-        </div>
+  <section class="share-stage">
+    <div class="mx-auto grid max-w-7xl gap-14 px-4 py-20 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:gap-20 lg:px-8 lg:py-28">
+      <div class="share-cards section-rise" aria-label="WildLoop activity image examples">
+        <img x-src="sampleSquare" alt="Square WildLoop activity image with a route trace and activity metrics" width="1080" height="1080" loading="lazy" class="share-square" />
+        <img x-src="sampleStory" alt="Vertical WildLoop story image with a route trace and activity metrics" width="1080" height="1920" loading="lazy" class="share-story" />
+      </div>
+      <div class="section-rise">
+        <p class="section-kicker text-emerald-300">Built to leave the feed</p>
+        <h2 class="mt-4 max-w-[11ch] font-display text-4xl font-bold leading-[0.98] tracking-[-0.045em] text-[#eff6f2] sm:text-5xl">Your best effort deserves better than a screenshot.</h2>
+        <p class="mt-6 max-w-[32rem] text-lg leading-relaxed text-[#a9bab2]">Every activity becomes a polished image with the real trail, distance, time, pace, and climb already in place.</p>
+        <ul class="mt-8 space-y-4 text-sm font-semibold text-[#dce7e1]">
+          <li class="flex items-center gap-3"><i class="i-lucide-share-2 h-4 w-4 text-emerald-400" aria-hidden="true"></i> Open the native share sheet in one tap</li>
+          <li class="flex items-center gap-3"><i class="i-lucide-layout-template h-4 w-4 text-emerald-400" aria-hidden="true"></i> Switch between post, story, and link formats</li>
+          <li class="flex items-center gap-3"><i class="i-lucide-download h-4 w-4 text-emerald-400" aria-hidden="true"></i> Download a full-resolution PNG anytime</li>
+        </ul>
       </div>
     </div>
   </section>
 
-  <!-- ── How it works ─────────────────────────────────────────────────────
-       A staggered numbered rhythm rather than three equal cards, which is the
-       default every generated page reaches for. Steps are named by the verb,
-       not by "Step 1". -->
-  <section class="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-    <div class="mx-auto px-4 py-20 sm:px-6 lg:px-8 lg:py-28 max-w-5xl">
-      <h2 class="mb-14 font-display text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight max-w-[18ch] leading-[1.1]">
-        Three steps from opening the app to owning ground
-      </h2>
-
-      <ol class="space-y-12 lg:space-y-14">
-        <li class="flex flex-col gap-3 sm:flex-row sm:gap-8 reveal">
-          <span class="font-display text-4xl font-bold text-emerald-600/25 dark:text-emerald-400/25 tabular-nums leading-none">01</span>
-          <div class="sm:pt-1">
-            <h3 class="mb-2 font-display text-xl font-bold text-slate-900 dark:text-white">Find a loop</h3>
-            <p class="text-slate-600 dark:text-slate-400 max-w-[54ch] leading-relaxed">
-              Search by name, park, forest or region. Filter to loops only, then pick something that ends where it starts.
-            </p>
-          </div>
-        </li>
-        <li class="flex flex-col gap-3 sm:flex-row sm:gap-8 sm:pl-12 reveal reveal-delay-1">
-          <span class="font-display text-4xl font-bold text-emerald-600/25 dark:text-emerald-400/25 tabular-nums leading-none">02</span>
-          <div class="sm:pt-1">
-            <h3 class="mb-2 font-display text-xl font-bold text-slate-900 dark:text-white">Record it</h3>
-            <p class="text-slate-600 dark:text-slate-400 max-w-[54ch] leading-relaxed">
-              Start tracking and run, hike or ride. Distance, climb and pace come off the GPS trace as you go.
-            </p>
-          </div>
-        </li>
-        <li class="flex flex-col gap-3 sm:flex-row sm:gap-8 sm:pl-24 reveal reveal-delay-2">
-          <span class="font-display text-4xl font-bold text-emerald-600/25 dark:text-emerald-400/25 tabular-nums leading-none">03</span>
-          <div class="sm:pt-1">
-            <h3 class="mb-2 font-display text-xl font-bold text-slate-900 dark:text-white">Hold the ground</h3>
-            <p class="text-slate-600 dark:text-slate-400 max-w-[54ch] leading-relaxed">
-              Close the loop and the area is yours on the map until somebody runs it out from under you.
-            </p>
-          </div>
-        </li>
-      </ol>
-    </div>
-  </section>
-
-  <!-- ── Where it reaches ─────────────────────────────────────────────────
-       Bento with exactly four cells for four claims, two of them carrying
-       real photography so the grid is not four white boxes of text. -->
-  <section class="bg-white dark:bg-slate-950">
-    <div class="mx-auto px-4 py-20 sm:px-6 lg:px-8 lg:py-28 max-w-7xl">
-      <p class="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-400">Coverage</p>
-      <h2 class="mb-12 font-display text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight max-w-[20ch] leading-[1.1]">
-        Built from public mapping, not user uploads
-      </h2>
-
-      <div class="grid gap-4 md:grid-cols-3 md:auto-rows-[220px]">
-        <div class="md:col-span-2 md:row-span-2 relative overflow-hidden rounded-[var(--r-card)]">
-          <img
-            src="https://images.unsplash.com/photo-1465056836041-7f43ac27dcb5?w=1200&h=900&fit=crop"
-            alt="A narrow trail winding through alpine meadow"
-            width="1200"
-            height="900"
-            class="absolute inset-0 h-full w-full object-cover"
-          />
-          <div class="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/20 to-transparent"></div>
-          <div class="relative flex h-full flex-col justify-end p-7">
-            <h3 class="mb-2 font-display text-2xl font-bold text-white">OpenStreetMap, everywhere it reaches</h3>
-            <p class="text-slate-200 max-w-[44ch] leading-relaxed">
-              The city greenway and the unsigned singletrack, mapped by the people who walk them.
-            </p>
-          </div>
-        </div>
-
-        <div class="rounded-[var(--r-card)] border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-7">
-          <h3 class="mb-2 font-display text-lg font-bold text-slate-900 dark:text-white">Forest Service</h3>
-          <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-            Every ranger district in the national forest system, down to the connector spur.
-          </p>
-        </div>
-
-        <div class="rounded-[var(--r-card)] border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-7">
-          <h3 class="mb-2 font-display text-lg font-bold text-slate-900 dark:text-white">Park Service</h3>
-          <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-            Named park trails with the surface, the climb and the use each one allows.
-          </p>
-        </div>
-
-        <div class="md:col-span-3 rounded-[var(--r-card)] border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-7">
-          <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <h3 class="font-display text-lg font-bold text-slate-900 dark:text-white">Refreshed on a cycle, not frozen at launch</h3>
-            <p class="text-sm text-slate-600 dark:text-slate-400">Reroutes and closures land within the month.</p>
-          </div>
-          <div :if="topRegions().length > 0" class="mt-5 flex flex-wrap gap-2">
-            <span
-              :for="region in topRegions()"
-              class="px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700"
-            >
-              {{ region.name + ' ' + region.count.toLocaleString() }}
-            </span>
-          </div>
-        </div>
+  <section class="section-paper">
+    <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
+      <div class="grid gap-10 lg:grid-cols-[0.7fr_1.3fr] lg:gap-20">
+        <h2 class="font-display text-4xl font-bold leading-none tracking-[-0.04em] sm:text-5xl">From idea to claimed.</h2>
+        <ol class="process-list">
+          <li>
+            <span>01</span>
+            <div><h3>Find the trail</h3><p>Search the catalog or draw the route you want to follow.</p></div>
+          </li>
+          <li>
+            <span>02</span>
+            <div><h3>Record the effort</h3><p>Track live with your phone, sync a watch, or import an activity file.</p></div>
+          </li>
+          <li>
+            <span>03</span>
+            <div><h3>Close the loop</h3><p>Your verified route becomes the boundary for a territory claim.</p></div>
+          </li>
+          <li>
+            <span>04</span>
+            <div><h3>Share the proof</h3><p>Send a route-rich activity image straight to the social app you use.</p></div>
+          </li>
+        </ol>
       </div>
     </div>
   </section>
 
-  <!-- ── Close ────────────────────────────────────────────────────────────
-       Centered is right here: one line, one action, nothing to compare. The
-       CTA reuses the hero's label rather than inventing a second word for
-       the same intent. -->
-  <section class="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-    <div class="mx-auto px-4 py-20 sm:px-6 lg:px-8 lg:py-24 max-w-3xl text-center">
-      <h2 class="mb-5 font-display text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight leading-[1.1]">
-        The map is waiting to be taken
-      </h2>
-      <p class="mb-9 text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
-        Pick a loop near you and put your name on it.
-      </p>
-      <StxLink to="/record" class="inline-flex items-center justify-center gap-2 px-8 py-3.5 font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition active:scale-[0.98]">
-        <i class="i-hugeicons-play h-4.5 w-4.5" aria-hidden="true"></i>
-        Start tracking
+  <section class="closing-field">
+    <div class="mx-auto max-w-4xl px-4 py-20 text-center sm:px-6 lg:px-8 lg:py-28">
+      <i class="i-lucide-mountain-snow mx-auto h-8 w-8 text-emerald-400" aria-hidden="true"></i>
+      <h2 class="mt-6 font-display text-4xl font-bold leading-none tracking-[-0.045em] text-[#eff6f2] sm:text-6xl">The map is wide open.</h2>
+      <p class="mx-auto mt-5 max-w-[32rem] text-lg leading-relaxed text-[#a9bab2]">Find a line worth following. Close it. Make it yours.</p>
+      <StxLink to="/register" class="mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-emerald-500 px-8 py-4 text-sm font-bold text-[#07110f] transition hover:bg-emerald-400 active:scale-[0.98]">
+        Create your free account
+        <i class="i-lucide-arrow-right h-4 w-4" aria-hidden="true"></i>
       </StxLink>
     </div>
   </section>
+</main>
 
 <style>
-  /* Entry animation on load, deliberately NOT scroll-driven.
-     Motivation: the hero should arrive rather than simply be there, and the
-     stagger gives the eye an order to read in.
-
-     This started as a `view()` timeline reveal per section. It stranded
-     content: two blocks sat at opacity 0 while fully inside the viewport,
-     because `animation-fill-mode: both` pins an element at its `from` state
-     whenever the timeline does not progress as expected. A fade that can
-     leave text permanently unreadable is not worth the effect, so the motion
-     is now time-based. It runs once, it always completes, and nothing below
-     the fold depends on a timeline resolving correctly. */
-  @media (prefers-reduced-motion: no-preference) {
-    .reveal {
-      animation: reveal-in 0.62s cubic-bezier(0.16, 1, 0.3, 1) backwards;
-      will-change: transform;
-    }
-    .reveal-delay-1 { animation-delay: 0.09s; }
-    .reveal-delay-2 { animation-delay: 0.18s; }
+  .marketing-page {
+    --page-paper: #f3f5f1;
+    --page-muted: #e8eee9;
+    --page-ink: #102019;
+    color: var(--page-ink);
+    background: var(--page-paper);
   }
 
-  /* Transform only. Fading in from opacity 0 means the element is unreadable
-     until the animation completes, and an animation is not guaranteed to run:
-     a backgrounded or occluded page pauses the document timeline, and every
-     `.reveal` here was observed sitting at opacity 0 with the animation
-     "running" but never advancing. Text that depends on motion to become
-     legible is a bug waiting for a slow frame. The rise is decoration; the
-     content is readable with or without it. */
-  @keyframes reveal-in {
-    from { transform: translateY(16px); }
-    to { transform: none; }
+  .dark .marketing-page {
+    --page-paper: #0c1512;
+    --page-muted: #111e19;
+    --page-ink: #e8f0eb;
+  }
+
+  .hero-field,
+  .closing-field {
+    background: #07110f;
+  }
+
+  .hero-visual {
+    overflow: hidden;
+    border-radius: 1.5rem 1.5rem 6rem 1.5rem;
+    box-shadow: 0 32px 80px rgb(0 0 0 / 35%);
+  }
+
+  .data-ribbon {
+    color: var(--page-ink);
+    background: #d9e8df;
+  }
+
+  .dark .data-ribbon {
+    background: #10251e;
+  }
+
+  .section-paper {
+    background: var(--page-paper);
+  }
+
+  .section-muted {
+    background: var(--page-muted);
+  }
+
+  .section-kicker {
+    color: #08784c;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.17em;
+    text-transform: uppercase;
+  }
+
+  .dark .section-kicker {
+    color: #6ee7b7;
+  }
+
+  .feature-rule {
+    display: flex;
+    gap: 0.85rem;
+    padding-top: 1rem;
+    border-top: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+  }
+
+  .territory-plot {
+    position: relative;
+    overflow: hidden;
+    min-height: 32rem;
+    border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+    border-radius: 4.5rem 1.5rem 1.5rem 1.5rem;
+    color: #315d4b;
+    background: #dce9e1;
+  }
+
+  .dark .territory-plot {
+    color: #335d4d;
+    background: #0f1c18;
+  }
+
+  .territory-plot svg {
+    width: 100%;
+    height: 100%;
+    min-height: 32rem;
+  }
+
+  .plot-contours {
+    opacity: 0.3;
+    stroke-width: 2;
+  }
+
+  .territory-fill {
+    fill: #10b981;
+    opacity: 0.15;
+  }
+
+  .territory-route-shadow {
+    fill: none;
+    stroke: #06120f;
+    stroke-width: 22;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.35;
+  }
+
+  .territory-route {
+    fill: none;
+    stroke: #10b981;
+    stroke-width: 11;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .territory-start {
+    fill: #edf7f1;
+    stroke: #0b1b15;
+    stroke-width: 7;
+  }
+
+  .plot-caption {
+    position: absolute;
+    right: 2rem;
+    bottom: 2rem;
+    padding-left: 1rem;
+    border-left: 3px solid #10b981;
+  }
+
+  .plot-caption span,
+  .plot-caption strong {
+    display: block;
+  }
+
+  .plot-caption span {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.6;
+  }
+
+  .plot-caption strong {
+    margin-top: 0.2rem;
+    font-size: 1.15rem;
+    color: var(--page-ink);
+  }
+
+  .bento-copy,
+  .bento-small {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+    border: 1px solid color-mix(in srgb, currentColor 11%, transparent);
+    border-radius: 1.5rem;
+    background: var(--page-paper);
+  }
+
+  .bento-copy {
+    justify-content: space-between;
+  }
+
+  .bento-image {
+    overflow: hidden;
+    min-height: 34rem;
+    border-radius: 1.5rem 4.5rem 1.5rem 1.5rem;
+  }
+
+  .share-stage {
+    background: #07110f;
+  }
+
+  .share-cards {
+    position: relative;
+    min-height: 38rem;
+  }
+
+  .share-square,
+  .share-story {
+    position: absolute;
+    object-fit: contain;
+    border: 1px solid rgb(255 255 255 / 10%);
+    border-radius: 1.25rem;
+    box-shadow: 0 28px 80px rgb(0 0 0 / 46%);
+  }
+
+  .share-square {
+    left: 0;
+    bottom: 0;
+    width: 74%;
+  }
+
+  .share-story {
+    right: 0;
+    top: 0;
+    width: 42%;
+  }
+
+  .process-list li {
+    display: grid;
+    grid-template-columns: 3rem 1fr;
+    gap: 1.25rem;
+    padding: 1.35rem 0;
+    border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  }
+
+  .process-list li:last-child {
+    border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  }
+
+  .process-list span {
+    color: #0d9560;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+
+  .process-list h3 {
+    font-size: 1.05rem;
+    font-weight: 800;
+  }
+
+  .process-list p {
+    margin-top: 0.3rem;
+    color: color-mix(in srgb, currentColor 62%, transparent);
+    line-height: 1.65;
+  }
+
+  @media (max-width: 767px) {
+    .hero-visual {
+      border-radius: 1.25rem 1.25rem 3.5rem 1.25rem;
+    }
+
+    .territory-plot {
+      min-height: 24rem;
+      border-radius: 3rem 1.25rem 1.25rem;
+    }
+
+    .territory-plot svg {
+      min-height: 24rem;
+    }
+
+    .share-cards {
+      min-height: 31rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-copy {
+      animation: hero-arrive 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .hero-visual {
+      animation: hero-arrive 0.9s 0.08s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .section-rise {
+      animation: section-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 8% cover 32%;
+    }
+  }
+
+  @keyframes hero-arrive {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  @keyframes section-rise {
+    from { opacity: 0.45; transform: translateY(18px); }
+    to { opacity: 1; transform: none; }
   }
 </style>
 @endsection
