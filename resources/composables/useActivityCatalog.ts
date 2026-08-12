@@ -1,4 +1,5 @@
 import { onMount, state } from 'stx'
+import { token } from '../assets/scripts/auth'
 
 /**
  * Hydrate the `wl` store's activity feed from the live API
@@ -39,13 +40,12 @@ export const activityError = state<string | null>(null)
 
 let activitiesStarted = false
 
-export function useActivityCatalog(wl: ActivityStoreLike | null) {
-  onMount(async () => {
-    if (!wl || activitiesStarted)
-      return
-    activitiesStarted = true
-    try {
-      const res = await fetch('/api/activities?limit=200')
+export async function loadActivities(wl: ActivityStoreLike): Promise<void> {
+  try {
+      const bearer = token()
+      const res = await fetch('/api/activities?limit=200', {
+        headers: bearer ? { Authorization: `Bearer ${bearer}` } : {},
+      })
       if (!res.ok)
         throw new Error(`Activities API returned ${res.status}`)
       const payload = await res.json()
@@ -89,10 +89,18 @@ export function useActivityCatalog(wl: ActivityStoreLike | null) {
 
       wl.hydrateActivitiesFromApi(activities)
       activitySource.set('api')
-    }
-    catch (err) {
+  }
+  catch (err) {
       activityError.set(err instanceof Error ? err.message : 'Could not load activities')
       activitySource.set('seed')
-    }
+  }
+}
+
+export function useActivityCatalog(wl: ActivityStoreLike | null) {
+  onMount(async () => {
+    if (!wl || activitiesStarted)
+      return
+    activitiesStarted = true
+    await loadActivities(wl)
   })
 }

@@ -4,6 +4,7 @@
 
 @section('content')
 <script client>
+  import { token } from '../assets/scripts/auth'
   useHead({ title: 'Leaderboard - WildLoop' })
 
   interface LeaderEntry {
@@ -14,33 +15,32 @@
     trailsCompleted: number
   }
 
-  const wl = useStore('wl')
   const period = state<'weekly' | 'monthly' | 'alltime'>('weekly')
   const metric = state<'distance' | 'elevation' | 'activities'>('distance')
+  const scope = state<'global' | 'following'>('global')
+  const leaders = state<LeaderEntry[]>([])
+  const loading = state(true)
 
-  function periodCutoff(p: string): number {
-    if (p === 'weekly') return Date.now() - 7 * 86400000
-    if (p === 'monthly') return Date.now() - 30 * 86400000
-    return 0
+  async function loadLeaderboard() {
+    loading.set(true)
+    const bearer = token()
+    const query = new URLSearchParams({ period: period(), metric: metric(), scope: scope() })
+    const res = await fetch(`/api/activities/leaderboard?${query}`, {
+      headers: bearer ? { Authorization: `Bearer ${bearer}` } : {},
+    }).catch(() => null)
+    const payload = await res?.json().catch(() => null)
+    leaders.set(res?.ok && Array.isArray(payload?.leaderboard) ? payload.leaderboard : [])
+    loading.set(false)
   }
 
-  const leaders = derived<LeaderEntry[]>(() => {
-    if (!wl) return []
-    const cutoff = periodCutoff(period())
-    const m = metric()
-    const list = wl.users().map((u: any) => {
-      const userActs = wl.activities().filter((a: any) =>
-        a.user_id === u.id && new Date(a.created_at).getTime() >= cutoff)
-      return {
-        userId: u.id,
-        userName: u.name,
-        totalDistance: userActs.reduce((sum: number, a: any) => sum + (a.distance || 0), 0),
-        totalElevation: userActs.reduce((sum: number, a: any) => sum + (a.elevation_gain || 0), 0),
-        trailsCompleted: userActs.length,
-      }
+  onMount(() => {
+    const stop = effect(() => {
+      period()
+      metric()
+      scope()
+      void loadLeaderboard()
     })
-    const key = m === 'elevation' ? 'totalElevation' : m === 'activities' ? 'trailsCompleted' : 'totalDistance'
-    return list.sort((a: LeaderEntry, b: LeaderEntry) => (b as any)[key] - (a as any)[key])
+    return () => stop()
   })
 
   /** Format an entry's value for the currently-selected metric. */
@@ -69,6 +69,13 @@
       <button @click="metric.set('elevation')" x-class="metric === 'elevation' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-3 py-1.5 font-medium text-sm border-b-2 transition">Elevation</button>
       <button @click="metric.set('activities')" x-class="metric === 'activities' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-gray-500 dark:text-slate-400'" class="px-3 py-1.5 font-medium text-sm border-b-2 transition">Activities</button>
     </div>
+
+    <div class="flex gap-2 mb-6">
+      <button @click="scope.set('global')" x-class="scope === 'global' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-400'" class="px-3 py-1.5 rounded-lg text-xs font-medium">Global</button>
+      <button @click="scope.set('following')" x-class="scope === 'following' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-slate-400'" class="px-3 py-1.5 rounded-lg text-xs font-medium">Following</button>
+    </div>
+
+    <div :if="loading" class="py-10 text-center text-gray-400">Calculating rankings…</div>
 
     <!-- Top 3 podium -->
     <div :if="leaders.length >= 3" class="grid gap-4 grid-cols-3 mb-8">

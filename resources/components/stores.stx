@@ -6,6 +6,7 @@
     email: string
     avatar: string | null
     joinedAt: string
+    roles?: string[]
   }
 
   interface Trail {
@@ -427,7 +428,9 @@
   // defineStore is idempotent - returns existing store on re-navigation
   const wlStore = defineStore('wl', {
     state: () => ({
-      currentUserId: 1,
+      // 0 is the explicit guest sentinel. The authenticated id is hydrated
+      // from /api/me; it is never inferred from seed/demo data.
+      currentUserId: 0,
       users: seedUsers,
       trails: seedTrails,
       activities: seedActivities,
@@ -458,10 +461,37 @@
     },
 
     actions: {
+      /** Merge a server-verified identity into the catalog and select it. */
+      hydrateAuthenticatedUser(user: Partial<User> & { id: number }) {
+        const existing = this.users.find((candidate: User) => candidate.id === user.id)
+        const normalized = {
+          id: user.id,
+          name: user.name || existing?.name || 'Athlete',
+          email: user.email || existing?.email || '',
+          avatar: user.avatar ?? existing?.avatar ?? null,
+          joinedAt: user.joinedAt || existing?.joinedAt || new Date().toISOString(),
+          roles: user.roles ?? existing?.roles ?? [],
+        }
+        if (existing)
+          Object.assign(existing, normalized)
+        else
+          this.users.push(normalized)
+        this.currentUserId = user.id
+      },
+      clearAuthenticatedUser() {
+        this.currentUserId = 0
+      },
       /** Replace seed trails with API/OSM data when available. */
       hydrateTrailsFromApi(trails: Trail[], routes: Record<number, [number, number][]>) {
         this.trails = trails
         this.trailRoutes = { ...this.trailRoutes, ...routes }
+      },
+      upsertTrailFromApi(trail: Trail, route?: [number, number][]) {
+        const index = this.trails.findIndex((candidate: Trail) => candidate.id === trail.id)
+        if (index >= 0) this.trails[index] = trail
+        else this.trails.push(trail)
+        if (route && route.length >= 2)
+          this.trailRoutes = { ...this.trailRoutes, [trail.id]: route }
       },
       /** Replace seed territories with live data from /api/territories/map. */
       hydrateTerritoriesFromApi(
@@ -481,6 +511,9 @@
       /** Replace seed activities with live data from /api/activities. */
       hydrateActivitiesFromApi(activities: Activity[]) {
         this.activities = activities
+      },
+      hydrateConquestsFromApi(conquests: Conquest[]) {
+        this.conquests = conquests
       },
       findTrail(id: number): Trail | undefined {
         return this.trails.find((t: Trail) => t.id === id)
@@ -739,6 +772,6 @@
     // already orphans every snapshot written under the old name. The shape is
     // unchanged, so the suffix stays at v4 and the key drops the now-redundant
     // store-id segment rather than reading `wildloop-wl-`.
-    persist: { key: 'wildloop-v4' },
+    persist: { key: 'wildloop-v5' },
   })
 </script>
