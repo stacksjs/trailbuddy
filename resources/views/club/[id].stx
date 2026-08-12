@@ -5,12 +5,12 @@
 @section('content')
 <script client>
   import { deleteClub, fetchClubDetail, toggleClubMembership } from '../../assets/scripts/game-api'
-  import { useRouteParam } from '../../composables/useRouteParam'
+  import { readRouteParam } from '../../composables/useRouteParam'
 
   useHead({ title: 'Club - WildLoop' })
 
   const wl = useStore('wl')
-  const clubId = useRouteParam('id') ?? -1
+  const clubId = readRouteParam('id') ?? -1
   const club = state<any>(null)
   const loading = state(true)
   const loadError = state(false)

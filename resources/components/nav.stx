@@ -70,7 +70,7 @@
       </div>
 
       <div class="hidden md:flex gap-2 items-center">
-        <button @click="dark.toggle()" aria-label="Toggle dark mode" class="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors">
+        <button @click="useDark().toggle()" aria-label="Toggle dark mode" class="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors">
           <Icon name="moon" size="18" class="dark:hidden" />
           <Icon name="sun" size="18" class="hidden dark:inline" />
         </button>

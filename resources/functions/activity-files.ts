@@ -1,4 +1,4 @@
-import { FitDecoder, FitParser } from 'ts-health'
+import { FitDecoder, FitParser } from 'ts-watches/fit'
 
 export const MAX_ACTIVITY_FILE_BYTES = 25 * 1024 * 1024
 export const MAX_ACTIVITY_TRACK_POINTS = 100_000

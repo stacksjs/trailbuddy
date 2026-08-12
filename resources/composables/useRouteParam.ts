@@ -13,7 +13,7 @@
  * Every `[id]` route in the app is shaped `/{base}/{id}`, so the id is always
  * the trailing path segment; that's the pathname fallback.
  */
-export function useRouteParam(name = 'id'): number | null {
+export function readRouteParam(name = 'id'): number | null {
   if (typeof window === 'undefined')
     return null
   const w = window as any

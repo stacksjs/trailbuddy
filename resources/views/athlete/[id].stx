@@ -5,7 +5,7 @@
 @section('content')
 <script client>
   import { fetchAthlete, reportContent, toggleBlock, toggleFollow } from '../../assets/scripts/game-api'
-  import { useRouteParam } from '../../composables/useRouteParam'
+  import { readRouteParam } from '../../composables/useRouteParam'
 
   useHead({ title: 'Athlete - WildLoop' })
 
@@ -19,7 +19,7 @@
 
   // -1 is a no-match sentinel so an unresolved param renders "not found"
   // rather than silently loading athlete 0/1 (#987).
-  const athleteId = useRouteParam('id') ?? -1
+  const athleteId = readRouteParam('id') ?? -1
 
   const isSelf = derived(() => !!wl && athleteId === wl.currentUserId())
   const isFollowing = derived(() => !!wl && wl.isFollowing(athleteId))

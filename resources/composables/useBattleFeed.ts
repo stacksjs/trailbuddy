@@ -1,5 +1,4 @@
 import { onDestroy, onMount } from 'stx'
-import { token } from '../assets/scripts/auth'
 
 interface BattleStoreLike {
   hydrateConquestsFromApi: (battles: unknown[]) => void
@@ -9,7 +8,7 @@ export function useBattleFeed(wl: BattleStoreLike | null) {
   let timer: ReturnType<typeof setInterval> | null = null
   const load = async () => {
     if (!wl) return
-    const bearer = token()
+    const bearer = typeof localStorage === 'undefined' ? null : localStorage.getItem('auth_token')
     const response = await fetch('/api/territories/battles?limit=200', {
       headers: bearer ? { Authorization: `Bearer ${bearer}` } : {},
     }).catch(() => null)
@@ -25,4 +24,3 @@ export function useBattleFeed(wl: BattleStoreLike | null) {
     if (timer) clearInterval(timer)
   })
 }
-

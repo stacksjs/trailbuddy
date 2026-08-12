@@ -1,5 +1,4 @@
 import { onMount, state } from 'stx'
-import { token } from '../assets/scripts/auth'
 
 /**
  * Hydrate the `wl` store's activity feed from the live API
@@ -42,57 +41,57 @@ let activitiesStarted = false
 
 export async function loadActivities(wl: ActivityStoreLike): Promise<void> {
   try {
-      const bearer = token()
-      const res = await fetch('/api/activities?limit=200', {
-        headers: bearer ? { Authorization: `Bearer ${bearer}` } : {},
-      })
-      if (!res.ok)
-        throw new Error(`Activities API returned ${res.status}`)
-      const payload = await res.json()
-      const rows: ApiActivity[] = Array.isArray(payload?.activities) ? payload.activities : []
+    const bearer = typeof localStorage === 'undefined' ? null : localStorage.getItem('auth_token')
+    const res = await fetch('/api/activities?limit=200', {
+      headers: bearer ? { Authorization: `Bearer ${bearer}` } : {},
+    })
+    if (!res.ok)
+      throw new Error(`Activities API returned ${res.status}`)
+    const payload = await res.json()
+    const rows: ApiActivity[] = Array.isArray(payload?.activities) ? payload.activities : []
 
-      // Same reasoning as the territory catalog: an empty feed is a real
-      // answer. Returning early here left the store's demo activities on
-      // screen, so a new account saw runs by people who do not exist rather
-      // than an empty feed inviting them to record one.
-      if (!rows.length) {
-        wl.hydrateActivitiesFromApi([])
-        activitySource.set('api')
-        return
-      }
-
-      const activities = rows.map(a => ({
-        id: a.id,
-        user_id: a.userId,
-        userName: a.userName || 'Unknown',
-        trail_id: a.trailId ?? null,
-        trail_name: a.trailName ?? `${a.activityType} Activity`,
-        title: a.title,
-        activityType: a.activityType,
-        distance: a.distance,
-        duration: a.duration,
-        moving_time: a.movingTime ?? a.duration,
-        pace: a.pace ?? '--',
-        elevation_gain: a.elevationGain ?? 0,
-        calories: a.calories ?? 0,
-        heartRateAvg: null,
-        heartRateMax: null,
-        cadence: null,
-        splits: Array.isArray(a.splits) ? a.splits : [],
-        kudos_count: a.kudosCount ?? 0,
-        comments: [],
-        notes: a.notes ?? '',
-        visibility: a.visibility ?? 'public',
-        hasGps: a.hasGps ?? false,
-        created_at: a.createdAt ?? a.completedAt ?? new Date().toISOString(),
-      }))
-
-      wl.hydrateActivitiesFromApi(activities)
+    // Same reasoning as the territory catalog: an empty feed is a real
+    // answer. Returning early here left the store's demo activities on
+    // screen, so a new account saw runs by people who do not exist rather
+    // than an empty feed inviting them to record one.
+    if (!rows.length) {
+      wl.hydrateActivitiesFromApi([])
       activitySource.set('api')
+      return
+    }
+
+    const activities = rows.map(a => ({
+      id: a.id,
+      user_id: a.userId,
+      userName: a.userName || 'Unknown',
+      trail_id: a.trailId ?? null,
+      trail_name: a.trailName ?? `${a.activityType} Activity`,
+      title: a.title,
+      activityType: a.activityType,
+      distance: a.distance,
+      duration: a.duration,
+      moving_time: a.movingTime ?? a.duration,
+      pace: a.pace ?? '--',
+      elevation_gain: a.elevationGain ?? 0,
+      calories: a.calories ?? 0,
+      heartRateAvg: null,
+      heartRateMax: null,
+      cadence: null,
+      splits: Array.isArray(a.splits) ? a.splits : [],
+      kudos_count: a.kudosCount ?? 0,
+      comments: [],
+      notes: a.notes ?? '',
+      visibility: a.visibility ?? 'public',
+      hasGps: a.hasGps ?? false,
+      created_at: a.createdAt ?? a.completedAt ?? new Date().toISOString(),
+    }))
+
+    wl.hydrateActivitiesFromApi(activities)
+    activitySource.set('api')
   }
   catch (err) {
-      activityError.set(err instanceof Error ? err.message : 'Could not load activities')
-      activitySource.set('seed')
+    activityError.set(err instanceof Error ? err.message : 'Could not load activities')
+    activitySource.set('seed')
   }
 }
 

@@ -5,14 +5,14 @@
 @section('content')
 <script client>
   import { createTrailMap, drawTerritoryPolygon, runWhenMapReady, type TrailMapHandle } from '../../composables/useTrailMap'
-  import { useRouteParam } from '../../composables/useRouteParam'
+  import { readRouteParam } from '../../composables/useRouteParam'
 
   useHead({ title: 'Territory Details - WildLoop' })
 
   const wl = useStore('wl')
   // -1 is a no-match sentinel so an unresolved param renders "not found"
   // rather than silently loading territory 1 (#987).
-  const territoryId = useRouteParam('id') ?? -1
+  const territoryId = readRouteParam('id') ?? -1
 
   const territory = derived(() => wl ? wl.findTerritory(territoryId) : null)
   const owner = derived(() => {

@@ -13,7 +13,8 @@
     "bun-query-builder": "^0.1.63",
     "stacks": "0.70.207",
     "ts-health": "0.1.0",
-    "ts-watches": "0.1.0",
+    "ts-images": "0.2.10",
+    "ts-watches": "0.1.1",
     "ts-web-scraper": "^0.1.6"
   },
   "devDependencies": {
