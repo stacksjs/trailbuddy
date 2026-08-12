@@ -13,6 +13,9 @@ export interface CreatedActivity {
   activityType: string
   distance: number
   hasGps: boolean
+  captureEligible?: boolean
+  integrityStatus?: string
+  integrityReason?: string | null
 }
 
 export interface ClaimResult {
@@ -41,13 +44,6 @@ export interface ConquestResult {
 // The browser auth client (@stacksjs/browser) stores the bearer token under
 // `auth_token`; reuse the same key so our calls authenticate the same session.
 const TOKEN_KEY = 'auth_token'
-
-// Seeded demo athlete ("You" = user id 1). The write endpoints require auth
-// (#939), so we transparently sign this user in if there's no session yet -
-// keeps the demo frictionless while the backend still derives the acting user
-// from the token (never the request body).
-const DEMO_EMAIL = 'you@wildloop.test'
-const DEMO_PASSWORD = 'password123'
 
 /**
  * Read the double-submit CSRF cookie the framework middleware plants on safe
@@ -85,49 +81,30 @@ function authHeaders(): Record<string, string> {
   return headers
 }
 
-let sessionPromise: Promise<void> | null = null
-
 /**
- * Ensure there's an authenticated session before a write. Idempotent: returns
- * immediately if a token already exists, otherwise signs in the seeded demo
- * user once (deduped across concurrent callers).
+ * Preserve the existing call sites while enforcing an important invariant:
+ * the app never manufactures a session. Guests remain guests until they sign
+ * in or register, and the API remains the authority for every write.
  */
 export function ensureSession(): Promise<void> {
-  if (typeof localStorage === 'undefined')
-    return Promise.resolve()
-  if (localStorage.getItem(TOKEN_KEY))
-    return Promise.resolve()
-  if (sessionPromise)
-    return sessionPromise
-  sessionPromise = (async () => {
-    try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD }),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        const token = (data?.data ?? data)?.token
-        if (token)
-          localStorage.setItem(TOKEN_KEY, token)
-      }
-    }
-    catch {
-      // Offline / API down - writes will simply 401 and no-op.
-    }
-    finally {
-      sessionPromise = null
-    }
-  })()
-  return sessionPromise
+  return Promise.resolve()
 }
 
 /** Convert recorded [lat, lng] points to a GeoJSON LineString string the engine parses. */
-export function routeToGeoJson(points: Array<[number, number]>): string {
+export function routeToGeoJson(
+  points: Array<[number, number]>,
+  samples: Array<{ t: number, accuracy?: number | null, eleFt?: number | null }> = [],
+): string {
   return JSON.stringify({
     type: 'LineString',
     coordinates: points.map(([lat, lng]) => [lng, lat]),
+    properties: {
+      samples: points.map((_, index) => ({
+        time: samples[index]?.t ?? null,
+        accuracy: samples[index]?.accuracy ?? null,
+        altitude: samples[index]?.eleFt ?? null,
+      })),
+    },
   })
 }
 
@@ -149,6 +126,12 @@ export interface ActivityPayload {
   /** Who can see it (#957): public | followers | private. Defaults public. */
   visibility?: string
   completed_at?: string
+  /** Stable client id used to deduplicate retries and offline replays. */
+  upload_id?: string
+  recording_source?: 'web_gps' | 'simulation' | 'manual' | 'file_import' | 'garmin'
+  game_mode?: 'capture' | 'free' | 'none'
+  /** Optional focus target. The server will resolve battles only for this id. */
+  target_territory_id?: number | null
 }
 
 /** Persist a recorded run as an Activity. Returns the created activity (with id). */
@@ -159,8 +142,12 @@ export async function createActivity(payload: ActivityPayload): Promise<CreatedA
     headers: authHeaders(),
     body: JSON.stringify(payload),
   })
-  if (!res.ok)
-    return null
+  if (!res.ok) {
+    const body = await res.json().catch(() => null)
+    const error = new Error(body?.error || `Activity upload failed with HTTP ${res.status}`) as Error & { retryable?: boolean }
+    error.retryable = res.status >= 500 || res.status === 408 || res.status === 429
+    throw error
+  }
   const json = await res.json()
   return json?.activity ?? null
 }
@@ -215,7 +202,7 @@ export interface ActivityComment {
 
 /** Fetch a single activity (incl. parsed route + comments). */
 export async function fetchActivityDetail(activityId: number): Promise<any | null> {
-  const res = await fetch(`/api/activities/${activityId}`)
+  const res = await fetch(`/api/activities/${activityId}`, { headers: authHeaders() })
   if (!res.ok)
     return null
   const json = await res.json()
@@ -446,7 +433,7 @@ export async function toggleSaveTrail(trailId: number): Promise<{ success: boole
 
 /** Fetch a user's saved trails (with trail summaries) (#969). */
 export async function fetchSavedTrails(userId: number): Promise<{ savedTrails: any[] } | null> {
-  const res = await fetch(`/api/users/${userId}/saved-trails`)
+  const res = await fetch(`/api/users/${userId}/saved-trails`, { headers: authHeaders() })
   if (!res.ok)
     return null
   const json = await res.json()
@@ -464,7 +451,7 @@ export interface AthleteSearchResult {
 
 /** Search athletes by name; empty/short query returns a discover list (#971). */
 export async function searchAthletes(q: string): Promise<AthleteSearchResult[] | null> {
-  const res = await fetch(`/api/users/search?q=${encodeURIComponent(q)}`)
+  const res = await fetch(`/api/users/search?q=${encodeURIComponent(q)}`, { headers: authHeaders() })
   if (!res.ok)
     return null
   const json = await res.json()
@@ -482,7 +469,7 @@ export async function fetchAchievements(userId: number): Promise<{ achievements:
 
 /** Fetch a public athlete profile (identity, stats, social counts, recent activities). */
 export async function fetchAthlete(userId: number): Promise<any | null> {
-  const res = await fetch(`/api/users/${userId}`)
+  const res = await fetch(`/api/users/${userId}`, { headers: authHeaders() })
   if (!res.ok)
     return null
   const json = await res.json()
@@ -491,7 +478,7 @@ export async function fetchAthlete(userId: number): Promise<any | null> {
 
 /** Fetch a user's social graph (counts + id lists). Public read. */
 export async function fetchFollows(userId: number): Promise<FollowsResult | null> {
-  const res = await fetch(`/api/users/${userId}/follows`)
+  const res = await fetch(`/api/users/${userId}/follows`, { headers: authHeaders() })
   if (!res.ok)
     return null
   const json = await res.json()
@@ -509,6 +496,33 @@ export async function toggleFollow(targetId: number): Promise<{ success: boolean
   return res.json()
 }
 
+/** Block/unblock an athlete. Blocking also removes follow relationships. */
+export async function toggleBlock(targetId: number): Promise<{ success: boolean, blocked?: boolean, error?: string }> {
+  await ensureSession()
+  const res = await fetch(`/api/users/${targetId}/block`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({}),
+  })
+  return res.json().catch(() => ({ success: false, error: `HTTP ${res.status}` }))
+}
+
+/** Submit a deduplicated moderation report. */
+export async function reportContent(payload: {
+  subject_type: 'user' | 'activity' | 'comment' | 'trail_review' | 'territory'
+  subject_id: number
+  reason: 'harassment' | 'spam' | 'unsafe' | 'cheating' | 'privacy' | 'other'
+  details?: string
+}): Promise<{ success: boolean, alreadyReported?: boolean, error?: string }> {
+  await ensureSession()
+  const res = await fetch('/api/reports', {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify(payload),
+  })
+  return res.json().catch(() => ({ success: false, error: `HTTP ${res.status}` }))
+}
+
 /** Claim a new territory from a completed closed-loop activity. */
 export async function claimTerritory(activityId: number, userId: number): Promise<ClaimResult> {
   await ensureSession()
@@ -517,37 +531,84 @@ export async function claimTerritory(activityId: number, userId: number): Promis
     headers: authHeaders(),
     body: JSON.stringify({ activity_id: activityId, user_id: userId }),
   })
-  return res.json()
+  const result = await res.json().catch(() => null)
+  if (res.status >= 500) {
+    const error = new Error(result?.error || 'Territory claim failed') as Error & { retryable?: boolean }
+    error.retryable = true
+    throw error
+  }
+  return result
 }
 
 /** Process conquests for an activity that ran through enemy territory. */
-export async function processConquest(activityId: number, userId: number): Promise<ConquestResult> {
+export async function processConquest(activityId: number, userId: number, targetTerritoryId?: number | null): Promise<ConquestResult> {
   await ensureSession()
   const res = await fetch('/api/territories/process-conquest', {
     method: 'POST',
     headers: authHeaders(),
-    body: JSON.stringify({ activity_id: activityId, user_id: userId }),
+    body: JSON.stringify({
+      activity_id: activityId,
+      user_id: userId,
+      ...(targetTerritoryId ? { target_territory_id: targetTerritoryId } : {}),
+    }),
   })
-  return res.json()
+  const result = await res.json().catch(() => null)
+  if (res.status >= 500) {
+    const error = new Error(result?.error || 'Territory battle failed') as Error & { retryable?: boolean }
+    error.retryable = result?.retryable !== false
+    throw error
+  }
+  return result
 }
 
 export interface RunResult {
   activityId: number | null
   claim?: ClaimResult
   conquest?: ConquestResult
+  queued?: boolean
+  error?: string
 }
 
 /**
  * Persist a recorded run and run the territory engine end-to-end: create the
  * Activity, then attempt a closed-loop claim and a route-intersection conquest.
  */
-export async function persistRunAndProcess(payload: ActivityPayload): Promise<RunResult> {
-  const activity = await createActivity(payload)
-  if (!activity)
-    return { activityId: null }
-  const claim = await claimTerritory(activity.id, payload.user_id)
-  const conquest = await processConquest(activity.id, payload.user_id)
-  return { activityId: activity.id, claim, conquest }
+export async function persistRunAndProcess(
+  payload: ActivityPayload,
+  options: { queueOnFailure?: boolean } = {},
+): Promise<RunResult> {
+  const queueOnFailure = options.queueOnFailure ?? true
+  try {
+    const activity = await createActivity(payload)
+    if (!activity)
+      throw new Error('The activity API refused the upload')
+
+    if (payload.recording_source !== 'web_gps' || payload.game_mode !== 'capture')
+      return { activityId: activity.id }
+
+    if (!activity.captureEligible) {
+      return {
+        activityId: activity.id,
+        error: activity.integrityReason || 'Run saved, but its telemetry was not capture eligible',
+      }
+    }
+
+    const claim = await claimTerritory(activity.id, payload.user_id)
+    const conquest = await processConquest(activity.id, payload.user_id, payload.target_territory_id)
+    return { activityId: activity.id, claim, conquest }
+  }
+  catch (error) {
+    if (queueOnFailure && payload.upload_id && (error as Error & { retryable?: boolean })?.retryable !== false) {
+      const { enqueueRun } = await import('./run-upload-queue')
+      await enqueueRun(payload, error)
+      return {
+        activityId: null,
+        queued: true,
+        error: 'Saved on this device and will retry when WildLoop is online',
+      }
+    }
+    throw error
+  }
 }
 
 /** Build a short toast message from a run result, or null if nothing happened. */

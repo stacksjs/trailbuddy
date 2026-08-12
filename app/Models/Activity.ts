@@ -3,6 +3,9 @@ import { schema } from '@stacksjs/validation'
 
 const activityTypes = ['Trail Run', 'Hike', 'Walk', 'Bike'] as const
 const visibilities = ['public', 'followers', 'private'] as const
+const recordingSources = ['web_gps', 'simulation', 'manual', 'file_import', 'garmin'] as const
+const integrityStatuses = ['verified', 'unverified', 'rejected'] as const
+const gameModes = ['capture', 'free', 'none'] as const
 
 export default defineModel({
   name: 'Activity',
@@ -169,8 +172,52 @@ export default defineModel({
       factory: (): typeof visibilities[number] => 'public',
     },
 
-    completed_at: {
+    upload_id: {
       order: 10,
+      fillable: true,
+      nullable: true,
+      validation: { rule: schema.string().max(100) },
+      factory: () => null,
+    },
+
+    recording_source: {
+      order: 11,
+      fillable: true,
+      validation: { rule: schema.enum(recordingSources).required() },
+      factory: (): typeof recordingSources[number] => 'manual',
+    },
+
+    game_mode: {
+      order: 12,
+      fillable: true,
+      validation: { rule: schema.enum(gameModes).required() },
+      factory: (): typeof gameModes[number] => 'none',
+    },
+
+    capture_eligible: {
+      order: 13,
+      fillable: true,
+      validation: { rule: schema.boolean() },
+      factory: () => false,
+    },
+
+    integrity_status: {
+      order: 14,
+      fillable: true,
+      validation: { rule: schema.enum(integrityStatuses).required() },
+      factory: (): typeof integrityStatuses[number] => 'unverified',
+    },
+
+    integrity_reason: {
+      order: 15,
+      fillable: true,
+      nullable: true,
+      validation: { rule: schema.string().max(500) },
+      factory: () => null,
+    },
+
+    completed_at: {
+      order: 16,
       fillable: true,
       validation: {
         rule: schema.string(),

@@ -1,7 +1,9 @@
-@include('styles')
-@include('theme')
+@include('../components/styles')
+@include('../components/theme')
 <link rel="stylesheet" href="/css/ts-maps.css" data-ts-maps-css>
-@include('stores')
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#059669">
+@include('../components/stores')
 
 <script client>
   import { useTrailCatalog } from '../composables/useTrailCatalog'
@@ -9,22 +11,32 @@
   import { useActivityCatalog } from '../composables/useActivityCatalog'
   import { useFollows } from '../composables/useFollows'
   import { useNotifications } from '../composables/useNotifications'
-  import { ensureSession } from '../assets/scripts/game-api'
+  import { useRunUploadQueue } from '../composables/useRunUploadQueue'
+  import { useBattleFeed } from '../composables/useBattleFeed'
+  import { currentUser, refreshCurrentUser } from '../assets/scripts/auth'
   const wl = useStore('wl')
+  const cachedUser = currentUser()
+  if (cachedUser)
+    wl.hydrateAuthenticatedUser(cachedUser)
   useTrailCatalog(wl)
   useTerritoryCatalog(wl)
   useActivityCatalog(wl)
   useFollows(wl)
   useNotifications(wl)
-  // Establish the demo athlete's session early so authenticated writes
-  // (record/kudos/comment/claim) are instant. Idempotent + non-blocking.
-  ensureSession()
+  useRunUploadQueue(wl)
+  useBattleFeed(wl)
+  // Re-resolve the bearer token against /api/me. The local cache only avoids
+  // identity flicker; the server response remains authoritative.
+  refreshCurrentUser().then((user) => {
+    if (user) wl.hydrateAuthenticatedUser(user)
+    else wl.clearAuthenticatedUser()
+  })
 </script>
 
-@include('nav')
+@include('../components/nav')
 
 <main class="flex-1">
   @slot('content')
 </main>
 
-@include('footer')
+@include('../components/footer')

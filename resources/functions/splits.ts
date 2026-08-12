@@ -16,6 +16,8 @@ export interface RecorderSample {
   eleFt: number | null
   /** The recorder's moving-time counter (seconds) at this sample. */
   movingS: number
+  /** Horizontal accuracy radius from the Geolocation API, in metres. */
+  accuracy?: number | null
 }
 
 export interface MileSplit {

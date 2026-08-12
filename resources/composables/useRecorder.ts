@@ -1,4 +1,4 @@
-import { derived, onDestroy, state, useStore } from 'stx'
+import { derived, onDestroy, onMount, state, useStore } from 'stx'
 import type { CircleMarker as CircleMarkerType } from 'ts-maps'
 import type { Polygon as PolygonType } from 'ts-maps'
 import type { Polyline as PolylineType } from 'ts-maps'
@@ -25,6 +25,7 @@ import {
   type RecorderSample,
 } from '../functions/splits'
 import { loadTerritories } from './useTerritoryCatalog'
+import { loadActivityVisibilityDefault } from '../assets/scripts/privacy-defaults'
 
 type ActivityType = 'Trail Run' | 'Hike' | 'Walk' | 'Bike'
 type RecordMode = 'idle' | 'simulated' | 'manual'
@@ -61,6 +62,11 @@ interface TrailStore {
   conquerTerritory: (id: number, distance: number) => boolean
   addSessionXp: (amount: number) => number
   addActivity: (activity: Record<string, unknown>) => void
+  hydrateTerritoriesFromApi: (
+    territories: unknown[],
+    polygons: Record<number, LatLng[]>,
+    users: unknown[],
+  ) => void
 }
 
 interface RecorderOptions {
@@ -109,7 +115,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
   const recording = state(false)
   const paused = state(false)
   const activityType = state<ActivityType>('Trail Run')
-  const visibility = state('public')
+  const visibility = state('followers')
   const mode = state<RecordMode>('idle')
   const elapsed = state(0)
   const distance = state(0)
@@ -122,13 +128,21 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
   const runMode = state<'capture' | 'free'>('capture')
   const targetTerritoryId = state<number | null>(null)
   const conquestToast = state<string | null>(null)
+  const saveStatus = state<'idle' | 'saving' | 'saved' | 'queued' | 'error'>('idle')
+  const saveMessage = state<string | null>(null)
+  const wrongTurn = state(false)
+
+  onMount(async () => {
+    if (!recording())
+      visibility.set(await loadActivityVisibilityDefault())
+  })
 
   const trailOptions = derived(() =>
     wl ? wl.trails().map(t => ({ id: t.id, name: t.name, location: t.location })) : [],
   )
 
   const refs: {
-    mapHandle: ReturnType<typeof createTrailMap> | null
+    mapHandle: Awaited<ReturnType<typeof createTrailMap>> | null
     map: TsMapType | null
     territoryLayers: Record<number, PolygonType>
     trailMarkers: Record<number, CircleMarkerType>
@@ -143,6 +157,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     simTimer: ReturnType<typeof setInterval> | null
     watchId: number | null
     toastTimer: ReturnType<typeof setTimeout> | null
+    wakeLock: { release: () => Promise<void> } | null
   } = {
     mapHandle: null,
     map: null,
@@ -157,6 +172,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     simTimer: null,
     watchId: null,
     toastTimer: null,
+    wakeLock: null,
   }
 
   function paintTerritory(territoryId: number, mine: boolean, progress = 0) {
@@ -218,7 +234,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
   // altitudeM comes from the GPS (metres, often null on desktop) or, for
   // simulated runs, from the trail's published elevation profile. While paused
   // nothing accrues - no distance, no samples, no capture progress (#960).
-  function addRoutePoint(lat: number, lng: number, altitudeM: number | null = null) {
+  function addRoutePoint(lat: number, lng: number, altitudeM: number | null = null, accuracy: number | null = null) {
     if (!refs.routeLine || !refs.map) return
     if (paused() || !recording()) return
     const coords = refs.routeCoords
@@ -236,9 +252,16 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
       if (d >= ELEVATION_NOISE_FLOOR_FT)
         elevation.set(Math.round(elevation() + d))
     }
-    refs.samples.push({ lat, lng, t: Date.now(), eleFt, movingS: elapsed() })
+    refs.samples.push({ lat, lng, t: Date.now(), eleFt, movingS: elapsed(), accuracy })
 
     refs.routeLine.setLatLngs(coords)
+    if (mode() === 'manual' && wl) {
+      const guide = wl.trailRoutes()[selectedTrailId()] ?? []
+      if (guide.length > 1) {
+        const nearestMiles = guide.reduce((nearest, point) => Math.min(nearest, haversine([lat, lng], point)), Number.POSITIVE_INFINITY)
+        wrongTurn.set(nearestMiles > 0.08)
+      }
+    }
     checkConquest(lat, lng)
   }
 
@@ -260,6 +283,9 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     captureProgress.set({})
     sessionXp.set(0)
     conquestToast.set(null)
+    saveStatus.set('idle')
+    saveMessage.set(null)
+    wrongTurn.set(false)
     paused.set(false)
     if (wl) wl.resetCaptureSamples()
     refs.routeCoords = []
@@ -283,6 +309,10 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
 
   async function simulate() {
     if (!wl || !refs.map) return
+    if (!wl.currentUserId()) {
+      alert('Sign in before recording an activity.')
+      return
+    }
     const id = selectedTrailId()
     const route = wl.trailRoutes()[id]
     if (!route || route.length < 2) return
@@ -319,6 +349,10 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
 
   async function startManual() {
     if (!refs.map) return
+    if (!wl?.currentUserId()) {
+      alert('Sign in before recording an activity.')
+      return
+    }
     if (!navigator.geolocation) {
       gpsStatus.set('stopped')
       alert('Geolocation is not available on this device. Use Simulate Trail Run instead.')
@@ -330,26 +364,28 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     refs.routeCoords = []
     refs.routeLine = await createLiveRouteLine(refs.map, YOURS)
 
-    const beginTracking = (startLat: number, startLng: number, startAltM: number | null) => {
+    const beginTracking = (startLat: number, startLng: number, startAltM: number | null, accuracy: number | null) => {
       recording.set(true)
       gpsStatus.set('active')
       refs.startedAtMs = Date.now()
-      addRoutePoint(startLat, startLng, startAltM)
+      addRoutePoint(startLat, startLng, startAltM, accuracy)
       refs.map!.setView([startLat, startLng], 17)
       startTicker()
       refs.watchId = navigator.geolocation.watchPosition(
         (pos) => {
           gpsStatus.set('active')
-          addRoutePoint(pos.coords.latitude, pos.coords.longitude, pos.coords.altitude)
+          addRoutePoint(pos.coords.latitude, pos.coords.longitude, pos.coords.altitude, pos.coords.accuracy)
           refs.map!.panTo([pos.coords.latitude, pos.coords.longitude])
         },
         () => gpsStatus.set('searching'),
         { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 },
       )
+      const wakeLock = (navigator as Navigator & { wakeLock?: { request: (type: 'screen') => Promise<{ release: () => Promise<void> }> } }).wakeLock
+      void wakeLock?.request('screen').then(lock => refs.wakeLock = lock).catch(() => undefined)
     }
 
     navigator.geolocation.getCurrentPosition(
-      pos => beginTracking(pos.coords.latitude, pos.coords.longitude, pos.coords.altitude),
+      pos => beginTracking(pos.coords.latitude, pos.coords.longitude, pos.coords.altitude, pos.coords.accuracy),
       (err) => {
         gpsStatus.set('stopped')
         if (refs.routeLine && refs.map) {
@@ -375,11 +411,18 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     splits: MileSplit[]
   }
 
-  // Persist the run to the backend and run the territory engine (closed-loop
-  // claim + route-intersection conquest). Fire-and-forget; failures (e.g. the
-  // run wasn't a closed loop) are expected and surfaced only on success.
-  const persistRun = async (routeSnapshot: LatLng[], trailId: number | null, metrics: RunMetrics): Promise<void> => {
-    if (!wl || routeSnapshot.length < 2) return
+  // Persist the run before inserting it into the local catalog. A stable
+  // upload id makes retries idempotent; transient failures are queued in
+  // IndexedDB and retried by the app shell when connectivity returns.
+  const persistRun = async (
+    routeSnapshot: LatLng[],
+    sampleSnapshot: RecorderSample[],
+    trailId: number | null,
+    metrics: RunMetrics,
+  ): Promise<number | null> => {
+    if (!wl || routeSnapshot.length < 2) return null
+    saveStatus.set('saving')
+    saveMessage.set('Saving activity…')
     try {
       const result = await persistRunAndProcess({
         user_id: wl.currentUserId(),
@@ -390,10 +433,14 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
         moving_time: metrics.movingTimeStr,
         pace: metrics.paceStr,
         elevation: elevation(),
-        gpx_data: routeToGeoJson(routeSnapshot),
+        gpx_data: routeToGeoJson(routeSnapshot, sampleSnapshot),
         splits: metrics.splits,
         visibility: visibility(),
         completed_at: new Date().toISOString(),
+        upload_id: `run:${crypto.randomUUID()}`,
+        recording_source: mode() === 'simulated' ? 'simulation' : 'web_gps',
+        game_mode: runMode(),
+        target_territory_id: targetTerritoryId(),
       })
       const message = runResultMessage(result)
       if (message) {
@@ -407,17 +454,32 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
         await loadTerritories(wl)
         repaintTerritories()
       }
+      if (result.queued) {
+        saveStatus.set('queued')
+        saveMessage.set(result.error ?? 'Saved offline; retry is automatic')
+        return null
+      }
+      saveStatus.set(result.activityId ? 'saved' : 'error')
+      saveMessage.set(result.error ?? (result.activityId ? 'Activity saved' : 'Activity could not be saved'))
+      return result.activityId
     }
     catch (err) {
       console.error('persistRun failed:', err)
+      saveStatus.set('error')
+      saveMessage.set(err instanceof Error ? err.message : 'Activity could not be saved')
+      return null
     }
   }
 
-  function stop() {
+  async function stop() {
     recording.set(false)
     paused.set(false)
     gpsStatus.set('stopped')
     clearTimers()
+    if (refs.wakeLock) {
+      void refs.wakeLock.release().catch(() => undefined)
+      refs.wakeLock = null
+    }
     if (distance() > 0 && wl) {
       const trail = mode() === 'simulated' ? wl.findTrail(selectedTrailId()) : null
 
@@ -432,17 +494,17 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
 
       // Persist to the backend + run the territory engine using the recorded
       // GPS track (snapshot before it's cleared on the next run).
-      void persistRun([...refs.routeCoords], trail?.id ?? null, {
+      const activityId = await persistRun([...refs.routeCoords], [...refs.samples], trail?.id ?? null, {
         durationStr: fmtDuration(wallS),
         movingTimeStr: fmtDuration(movingS),
         paceStr,
         splits,
       })
-      const captures = conqueredIds().length
-      const title = captures > 0
-        ? `Capture Run: ${captures} zone${captures > 1 ? 's' : ''} taken`
-        : `${activityType()}, ${new Date().toLocaleDateString()}`
-      wl.addActivity({
+      const title = mode() === 'simulated'
+        ? `Route preview: ${trail?.name ?? activityType()}`
+        : `${runMode() === 'capture' ? 'Capture Run' : activityType()}, ${new Date().toLocaleDateString()}`
+      if (activityId) wl.addActivity({
+        id: activityId,
         user_id: wl.currentUserId(),
         userName: 'You',
         trail_id: trail?.id ?? null,
@@ -543,6 +605,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
 
   onDestroy(() => {
     clearTimers()
+    if (refs.wakeLock) void refs.wakeLock.release().catch(() => undefined)
     if (refs.toastTimer) clearTimeout(refs.toastTimer)
     refs.mapHandle?.destroy()
     refs.mapHandle = null
@@ -566,6 +629,9 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     sessionXp,
     runMode,
     conquestToast,
+    saveStatus,
+    saveMessage,
+    wrongTurn,
     trailOptions,
     simulate,
     startManual,

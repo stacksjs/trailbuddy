@@ -1,0 +1,22 @@
+@extends('layouts/default')
+
+@section('title', 'Offline - WildLoop')
+
+@section('content')
+<script client>
+  useHead({ title: 'Offline - WildLoop' })
+</script>
+
+<div class="mx-auto px-4 py-20 max-w-xl text-center">
+  <div class="flex items-center justify-center mx-auto mb-5 h-16 w-16 rounded-2xl bg-emerald-100 dark:bg-emerald-900/20">
+    <i class="i-lucide-map-pinned h-8 w-8 text-emerald-600" aria-hidden="true"></i>
+  </div>
+  <h1 class="font-bold text-2xl dark:text-white">You're offline</h1>
+  <p class="mt-2 text-gray-500 dark:text-slate-400">Previously opened pages and downloaded trail routes remain available. Recorded runs stay safely on this device and upload when connectivity returns.</p>
+  <div class="flex gap-3 justify-center mt-6">
+    <StxLink to="/trails" class="px-5 py-2.5 font-semibold text-sm text-white bg-emerald-600 rounded-lg">Downloaded trails</StxLink>
+    <StxLink to="/record" class="px-5 py-2.5 font-semibold text-sm text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-lg">Recorder</StxLink>
+  </div>
+</div>
+@endsection
+

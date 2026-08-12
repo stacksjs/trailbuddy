@@ -1,6 +1,7 @@
 import { state } from 'stx'
 import { createActivity } from '../assets/scripts/game-api'
 import { paceString, parseDurationToSeconds } from '../functions/duration'
+import { loadActivityVisibilityDefault } from '../assets/scripts/privacy-defaults'
 
 /**
  * Manual activity entry (#955) - log a run/hike after the fact with no GPS
@@ -30,7 +31,7 @@ export function useManualActivity(wl: ManualStoreLike | null) {
   const mTrailId = state('')
   const mDate = state('')
   const mNotes = state('')
-  const mVisibility = state('public')
+  const mVisibility = state('followers')
 
   function openManualEntry() {
     mType.set('Trail Run')
@@ -40,9 +41,12 @@ export function useManualActivity(wl: ManualStoreLike | null) {
     mTrailId.set('')
     mDate.set('')
     mNotes.set('')
-    mVisibility.set('public')
+    mVisibility.set('followers')
     manualError.set(null)
     manualOpen.set(true)
+    void loadActivityVisibilityDefault().then((value) => {
+      if (manualOpen()) mVisibility.set(value)
+    })
   }
 
   function closeManualEntry() {
@@ -98,6 +102,12 @@ export function useManualActivity(wl: ManualStoreLike | null) {
       notes: notes || undefined,
       visibility: mVisibility(),
       completed_at: completedAt,
+      upload_id: `manual:${crypto.randomUUID()}`,
+      recording_source: 'manual',
+      game_mode: 'none',
+    }).catch((error) => {
+      manualError.set(error instanceof Error ? error.message : 'Could not save the activity')
+      return null
     })
     submitting.set(false)
 

@@ -5,9 +5,13 @@
 // territory engine (claim / process-conquest) later reads. Snake_case keys
 // match the ORM's column-based attributes.
 import { evaluateAchievementsForUser } from '../Achievement/EvaluateAchievementsAction'
+import { durationLabel, evaluateTrackIntegrity, type RecordingSource } from '../../../resources/functions/activity-integrity'
+import UserPrivacySetting from '../../Models/UserPrivacySetting'
 
 const ACTIVITY_TYPES = ['Trail Run', 'Hike', 'Walk', 'Bike']
 const VISIBILITIES = ['public', 'followers', 'private']
+const RECORDING_SOURCES: RecordingSource[] = ['web_gps', 'simulation', 'manual', 'file_import', 'garmin']
+const GAME_MODES = ['capture', 'free', 'none']
 
 export default new Action({
   name: 'Activity Store',
@@ -15,23 +19,32 @@ export default new Action({
   method: 'POST',
 
   async handle(request) {
-    // Owner from the authenticated session (route is behind `auth`); body
-    // fallback is for the in-process seed harness only.
-    const userId = (await Auth.user().catch(() => null))?.id ?? positiveInt(request.get('user_id'))
+    // The authenticated session is the only source of actor identity.
+    const userId = (await Auth.user().catch(() => null))?.id
     const activityType = request.get<string>('activity_type') || 'Trail Run'
     const distance = boundedNumber(request.get('distance'), 0, 1000)
     const duration = durationString(request.get('duration'))
+    const recordingSource = request.get<RecordingSource>('recording_source')
+      ?? (request.get('gpx_data') ? 'file_import' : 'manual')
+    const gameMode = request.get<string>('game_mode') ?? 'none'
+    const uploadId = request.get<string>('upload_id')?.trim() || null
 
     // Field validation (#977): malformed input → 422 with a field-keyed map.
     const fields: Record<string, string> = {}
     if (!userId)
-      fields.user_id = 'required: authenticated session (or user_id in the harness)'
+      fields.user_id = 'required: authenticated session'
     if (!ACTIVITY_TYPES.includes(activityType))
       fields.activity_type = `must be one of: ${ACTIVITY_TYPES.join(', ')}`
     if (distance === null)
       fields.distance = 'required: miles as a number between 0 and 1000'
     if (duration === null)
       fields.duration = 'required: a MM:SS or H:MM:SS duration'
+    if (!RECORDING_SOURCES.includes(recordingSource))
+      fields.recording_source = `must be one of: ${RECORDING_SOURCES.join(', ')}`
+    if (!GAME_MODES.includes(gameMode))
+      fields.game_mode = `must be one of: ${GAME_MODES.join(', ')}`
+    if (uploadId && (uploadId.length > 100 || !/^[A-Za-z0-9._:-]+$/.test(uploadId)))
+      fields.upload_id = 'must be 100 characters or fewer using letters, numbers, dot, underscore, colon, or dash'
 
     const movingTime = request.get('moving_time')
     if (movingTime !== undefined && movingTime !== null && durationString(movingTime) === null)
@@ -50,9 +63,21 @@ export default new Action({
     const completedAt = request.get('completed_at')
     if (completedAt !== undefined && completedAt !== null && (typeof completedAt !== 'string' || Number.isNaN(Date.parse(completedAt))))
       fields.completed_at = 'must be a parseable date string'
-    const visibility = request.get<string>('visibility') ?? 'public'
+    const privacy = userId
+      ? await UserPrivacySetting.where('user_id', '=', userId).first().catch(() => null)
+      : null
+    const visibility = request.get<string>('visibility') ?? privacy?.default_activity_visibility ?? 'followers'
     if (!VISIBILITIES.includes(visibility))
       fields.visibility = `must be one of: ${VISIBILITIES.join(', ')}`
+
+    const integrity = evaluateTrackIntegrity({
+      gpxData: typeof gpxData === 'string' ? gpxData : null,
+      source: recordingSource,
+      activityType,
+      completedAt: typeof completedAt === 'string' ? completedAt : null,
+    })
+    if (!integrity.valid)
+      fields.gpx_data = integrity.reason ?? 'Track telemetry failed integrity checks'
 
     if (Object.keys(fields).length)
       return response.json({ success: false, error: 'Validation failed', fields }, 422)
@@ -67,20 +92,54 @@ export default new Action({
       splitsJson = rawSplits
 
     try {
+      if (uploadId) {
+        const existing = await Activity
+          .where('user_id', '=', userId)
+          .where('upload_id', '=', uploadId)
+          .first()
+        if (existing) {
+          return response.json({
+            success: true,
+            alreadyProcessed: true,
+            activity: activityResponse(existing),
+          })
+        }
+      }
+
+      const captureEligible = integrity.captureEligible && gameMode === 'capture'
+      const serverDistance = recordingSource === 'web_gps' && integrity.distanceMiles !== null
+        ? Number(integrity.distanceMiles.toFixed(2))
+        : distance
+      const serverDuration = recordingSource === 'web_gps' && integrity.durationSeconds !== null
+        ? durationLabel(integrity.durationSeconds)
+        : duration
+      const paceSeconds = integrity.durationSeconds && integrity.distanceMiles && integrity.distanceMiles > 0.01
+        ? Math.round(integrity.durationSeconds / integrity.distanceMiles)
+        : null
+      const serverPace = recordingSource === 'web_gps' && paceSeconds !== null
+        ? `${Math.floor(paceSeconds / 60)}:${String(paceSeconds % 60).padStart(2, '0')}`
+        : request.get<string>('pace') ?? null
+
       const activity = await Activity.create({
         user_id: userId,
         trail_id: trailId,
         activity_type: activityType,
-        distance,
-        duration,
+        distance: serverDistance,
+        duration: serverDuration,
         moving_time: durationString(movingTime) ?? null,
-        pace: request.get<string>('pace') ?? null,
+        pace: serverPace,
         elevation,
         kudos_count: 0,
         notes: request.get<string>('notes') ?? null,
         gpx_data: (gpxData as string | undefined) ?? null,
         splits: splitsJson,
         visibility,
+        upload_id: uploadId,
+        recording_source: recordingSource,
+        game_mode: gameMode,
+        capture_eligible: captureEligible,
+        integrity_status: integrity.status,
+        integrity_reason: captureEligible ? null : integrity.reason,
         completed_at: (completedAt as string | undefined) ?? new Date().toISOString(),
       })
 
@@ -90,20 +149,7 @@ export default new Action({
 
       return response.json({
         success: true,
-        activity: {
-          id: activity.id,
-          userId: activity.user_id,
-          trailId: activity.trail_id,
-          activityType: activity.activity_type,
-          distance: activity.distance,
-          duration: activity.duration,
-          movingTime: activity.moving_time,
-          pace: activity.pace,
-          elevation: activity.elevation,
-          completedAt: activity.completed_at,
-          visibility: activity.visibility ?? 'public',
-          hasGps: !!activity.gpx_data,
-        },
+        activity: activityResponse(activity),
       }, 201)
     }
     catch (error) {
@@ -112,3 +158,25 @@ export default new Action({
     }
   },
 })
+
+function activityResponse(activity: any) {
+  return {
+    id: activity.id,
+    userId: activity.user_id,
+    trailId: activity.trail_id,
+    activityType: activity.activity_type,
+    distance: activity.distance,
+    duration: activity.duration,
+    movingTime: activity.moving_time,
+    pace: activity.pace,
+    elevation: activity.elevation,
+    completedAt: activity.completed_at,
+    visibility: activity.visibility ?? 'public',
+    hasGps: !!activity.gpx_data,
+    recordingSource: activity.recording_source ?? 'manual',
+    gameMode: activity.game_mode ?? 'none',
+    captureEligible: !!activity.capture_eligible,
+    integrityStatus: activity.integrity_status ?? 'unverified',
+    integrityReason: activity.integrity_reason ?? null,
+  }
+}
