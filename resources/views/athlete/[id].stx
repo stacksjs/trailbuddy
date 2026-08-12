@@ -4,7 +4,7 @@
 
 @section('content')
 <script client>
-  import { fetchAthlete, toggleFollow } from '../../assets/scripts/game-api'
+  import { fetchAthlete, reportContent, toggleBlock, toggleFollow } from '../../assets/scripts/game-api'
   import { useRouteParam } from '../../composables/useRouteParam'
 
   useHead({ title: 'Athlete - WildLoop' })
@@ -13,6 +13,9 @@
   const profile = state<any>(null)
   const loading = state(true)
   const loadError = state(false)
+  const safetyOpen = state(false)
+  const reportReason = state('harassment')
+  const safetyMessage = state<string | null>(null)
 
   // -1 is a no-match sentinel so an unresolved param renders "not found"
   // rather than silently loading athlete 0/1 (#987).
@@ -53,6 +56,26 @@
       wl.setFollowing(athleteId, was)
     }
   }
+
+  async function onBlock() {
+    if (isSelf()) return
+    const result = await toggleBlock(athleteId)
+    if (result.success && result.blocked) {
+      safetyMessage.set('Athlete blocked and follow connections removed.')
+      profile.set(null)
+    }
+    else if (!result.success) safetyMessage.set(result.error ?? 'Could not block athlete')
+  }
+
+  async function onReport() {
+    const result = await reportContent({
+      subject_type: 'user',
+      subject_id: athleteId,
+      reason: reportReason() as any,
+    })
+    safetyMessage.set(result.success ? 'Report received. Thank you.' : result.error ?? 'Could not submit report')
+    if (result.success) safetyOpen.set(false)
+  }
 </script>
 
   <div class="mx-auto px-4 py-6 sm:px-6 lg:px-8 max-w-4xl">
@@ -86,7 +109,21 @@
                 x-class="isFollowing ? 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'"
                 class="px-4 py-1.5 font-semibold text-sm rounded-lg transition"
 >{{ isFollowing ? 'Following' : 'Follow' }}</button>
+              <button :if="!isSelf" @click="safetyOpen.set(!safetyOpen())" class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:text-red-500 transition">Safety</button>
             </div>
+            <div :if="safetyOpen && !isSelf" class="mt-3 flex flex-wrap gap-2 justify-center sm:justify-start">
+              <select x-value="reportReason" @change="event => reportReason.set(event.target.value)" class="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700">
+                <option value="harassment">Harassment</option>
+                <option value="spam">Spam</option>
+                <option value="unsafe">Unsafe behavior</option>
+                <option value="cheating">Cheating</option>
+                <option value="privacy">Privacy concern</option>
+                <option value="other">Other</option>
+              </select>
+              <button @click="onReport()" class="px-3 py-2 text-xs font-semibold rounded-lg bg-amber-500 text-white">Report</button>
+              <button @click="onBlock()" class="px-3 py-2 text-xs font-semibold rounded-lg bg-red-600 text-white">Block athlete</button>
+            </div>
+            <p :if="safetyMessage" class="mt-2 text-xs text-gray-500 dark:text-slate-400">{{ safetyMessage }}</p>
             <div class="flex flex-wrap gap-4 justify-center sm:justify-start mt-3">
               <div class="text-center">
                 <p class="text-lg font-bold text-emerald-600">{{ profile.stats.totalDistance.toFixed(1) }}</p>

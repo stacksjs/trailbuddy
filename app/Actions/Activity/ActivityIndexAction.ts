@@ -33,19 +33,19 @@ export default new Action({
     const page = readPageParams(request, { defaultLimit: 100, maxLimit: 500 })
 
     try {
-      // The viewer (who's asking) drives visibility (#957) - from the session
-      // token; the harness fallback (viewer_id) is null over real HTTP so it
-      // can't be spoofed. `user_id` above is the profile filter, not the viewer.
-      const viewerId = (await Auth.user().catch(() => null))?.id ?? harnessFallbackUserId(request, 'viewer_id')
+      // The session drives visibility; `user_id` above filters the profile and
+      // never grants viewer permissions.
+      const viewerId = (await Auth.user().catch(() => null))?.id ?? null
       const viewerFollowing = viewerId !== null
         ? new Set(((await Follow.where('follower_id', '=', viewerId).get()) ?? []).map((f: any) => f.following_id))
         : new Set<number>()
+      const blockedIds = await blockedUserIdsFor(viewerId)
 
       const query = userId
         ? Activity.where('user_id', '=', userId)
         : Activity.query()
       const allRows = (await query.orderBy('completed_at', 'desc').get()) ?? []
-      const rows = allRows.filter((a: any) => canViewActivity(a, viewerId, viewerFollowing))
+      const rows = allRows.filter((a: any) => canViewActivity(a, viewerId, viewerFollowing, blockedIds))
 
       // Batch-load owners + trails so the feed gets names without N+1 lookups.
       const userIds = [...new Set(rows.map((a: any) => a.user_id).filter(Boolean))]
@@ -55,12 +55,17 @@ export default new Action({
       const userName = new Map(users.map((u: any) => [u.id, u.name]))
       const trailName = new Map(trails.map((t: any) => [t.id, t.name]))
 
-      const activities = rows.map((a: any) => {
+      // Historical/dev databases can contain activities whose athlete was
+      // removed before foreign keys were enabled. Do not emit /athlete/null
+      // links or an actionable "Unknown" account into the social feed.
+      const ownedRows = rows.filter((activity: any) => userName.has(activity.user_id))
+
+      const activities = ownedRows.map((a: any) => {
         const tName = a.trail_id ? (trailName.get(a.trail_id) ?? null) : null
         return {
           id: a.id,
           userId: a.user_id,
-          userName: userName.get(a.user_id) ?? 'Unknown',
+          userName: userName.get(a.user_id),
           trailId: a.trail_id,
           trailName: tName,
           title: titleFor(a.activity_type, tName, a.completed_at),

@@ -8,7 +8,8 @@
   import { useActivityEditor } from '../../composables/useActivityEditor'
   import { useMentions } from '../../composables/useMentions'
   import { useRouteParam } from '../../composables/useRouteParam'
-  import { fetchActivityDetail, postComment, toggleKudos } from '../../assets/scripts/game-api'
+  import { fetchActivityDetail, postComment, reportContent, toggleKudos } from '../../assets/scripts/game-api'
+  import { downloadGpxFile } from '../../functions/activity-files'
 
   useHead({ title: 'Activity Details - WildLoop' })
 
@@ -16,6 +17,10 @@
   const hasKudos = state(false)
   const newComment = state('')
   const comments = state<Array<{ id: number, userName: string, body: string, createdAt: string }>>([])
+  const activityRoute = state<Array<{ lat: number, lng: number }>>([])
+  const reportOpen = state(false)
+  const reportReason = state('unsafe')
+  const reportMessage = state<string | null>(null)
 
   // -1 is a no-match sentinel so an unresolved param renders "not found"
   // rather than silently loading activity 1 (#987).
@@ -38,12 +43,15 @@
     const detail = await fetchActivityDetail(activityId)
     if (detail && Array.isArray(detail.comments))
       comments.set(detail.comments)
+    if (detail && Array.isArray(detail.route))
+      activityRoute.set(detail.route)
     else if (activity()?.comments)
       comments.set(activity().comments)
     // The API is authoritative for GPS-lock + notes (persisted store copies
     // from before #954 don't carry them).
     if (detail && wl && typeof detail.hasGps === 'boolean')
       wl.patchActivity(activityId, { hasGps: detail.hasGps, notes: detail.notes ?? '', visibility: detail.visibility ?? 'public' })
+    await mountActivityMap()
   })
 
   const handlers = {
@@ -70,6 +78,15 @@
       if (created)
         comments.set([...comments(), created])
     },
+    async reportActivity() {
+      const result = await reportContent({
+        subject_type: 'activity',
+        subject_id: activityId,
+        reason: reportReason() as any,
+      })
+      reportMessage.set(result.success ? 'Report received. Thank you.' : result.error ?? 'Could not submit report')
+      if (result.success) reportOpen.set(false)
+    },
   }
 
   let activityMap: TrailMapHandle | null = null
@@ -77,8 +94,11 @@
   async function mountActivityMap() {
     if (!wl) return
     const a = wl.findActivity(activityId)
-    if (!a || !a.trail_id) return
-    const route = wl.trailRoutes()[a.trail_id]
+    if (!a) return
+    const recordedRoute = activityRoute().map(point => [point.lat, point.lng] as [number, number])
+    const route = recordedRoute.length > 1
+      ? recordedRoute
+      : a.trail_id ? wl.trailRoutes()[a.trail_id] : null
     if (!route || route.length < 2) return
     activityMap?.destroy()
     activityMap = await createTrailMap('activity-map', { scrollWheelZoom: false })
@@ -110,6 +130,7 @@
           </div>
         </div>
         <div :if="isOwner" class="flex items-center gap-2">
+          <button :if="activityRoute.length > 1" @click="downloadGpxFile(activity.title, activityRoute())" class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-600 transition">Export GPX</button>
           <button
             @click="editing ? closeEditor() : openEditor(activity)"
             class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 dark:border-slate-600 text-gray-600 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-600 transition"
@@ -124,7 +145,21 @@
             class="px-3 py-1.5 text-xs font-semibold rounded-lg border transition"
 >{{ confirmingDelete ? 'Confirm delete' : 'Delete' }}</button>
         </div>
+        <button :if="!isOwner" @click="reportOpen.set(!reportOpen())" class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-200 dark:border-slate-600 text-gray-500 dark:text-slate-400 hover:text-red-500 transition">Report</button>
       </div>
+
+      <div :if="reportOpen && !isOwner" class="mb-4 flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-900/10 p-3">
+        <select x-value="reportReason" @change="event => reportReason.set(event.target.value)" class="px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700">
+          <option value="unsafe">Unsafe behavior</option>
+          <option value="cheating">Cheating</option>
+          <option value="harassment">Harassment</option>
+          <option value="spam">Spam</option>
+          <option value="privacy">Privacy concern</option>
+          <option value="other">Other</option>
+        </select>
+        <button @click="handlers.reportActivity()" class="px-3 py-2 text-xs font-semibold rounded-lg bg-amber-500 text-white">Submit report</button>
+      </div>
+      <p :if="reportMessage" class="mb-3 text-xs text-gray-500 dark:text-slate-400">{{ reportMessage }}</p>
 
       <div class="flex items-center gap-2 mb-2">
         <h1 class="text-2xl font-bold dark:text-white">{{ activity.title }}</h1>

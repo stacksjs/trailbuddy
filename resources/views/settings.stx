@@ -17,6 +17,15 @@
   const connectedAt = state('')
   const lastSyncAt = state('')
   const working = state(false)
+  const privacyLoading = state(true)
+  const privacyWorking = state(false)
+  const defaultVisibility = state('followers')
+  const hideStartEndMeters = state(400)
+  const homeLat = state('')
+  const homeLng = state('')
+  const homeRadiusMeters = state(500)
+  const excludeHomeFromGame = state(true)
+  const showPreciseTerritories = state(false)
 
   // The callback lands back here with the outcome in the query string, since
   // a redirect from garmin.com cannot hand us anything else.
@@ -63,6 +72,48 @@
     }
   }
 
+  async function loadPrivacy() {
+    const res = await fetch('/api/privacy-settings', { headers: { Authorization: `Bearer ${token()}` } }).catch(() => null)
+    const payload = await res?.json().catch(() => null)
+    if (res?.ok && payload?.settings) {
+      const settings = payload.settings
+      defaultVisibility.set(settings.defaultActivityVisibility)
+      hideStartEndMeters.set(settings.hideStartEndMeters)
+      homeLat.set(settings.homeLat ?? '')
+      homeLng.set(settings.homeLng ?? '')
+      homeRadiusMeters.set(settings.homeRadiusMeters)
+      excludeHomeFromGame.set(settings.excludeHomeFromGame)
+      showPreciseTerritories.set(settings.showPreciseTerritories)
+    }
+    privacyLoading.set(false)
+  }
+
+  async function savePrivacy() {
+    privacyWorking.set(true)
+    error.set('')
+    notice.set('')
+    const res = await fetch('/api/privacy-settings', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        default_activity_visibility: defaultVisibility(),
+        hide_start_end_meters: Number(hideStartEndMeters()),
+        home_lat: homeLat() === '' ? null : Number(homeLat()),
+        home_lng: homeLng() === '' ? null : Number(homeLng()),
+        home_radius_meters: Number(homeRadiusMeters()),
+        exclude_home_from_game: excludeHomeFromGame(),
+        show_precise_territories: showPreciseTerritories(),
+      }),
+    }).catch(() => null)
+    const payload = await res?.json().catch(() => null)
+    privacyWorking.set(false)
+    if (!res?.ok) {
+      error.set(payload?.error || 'Could not save privacy settings')
+      return
+    }
+    notice.set('Privacy and location-safety settings saved.')
+  }
+
   onMount(() => {
     if (!isSignedIn()) {
       navigate('/login')
@@ -77,6 +128,7 @@
     }
 
     loadStatus()
+    loadPrivacy()
   })
 
   async function connectGarmin() {
@@ -161,6 +213,51 @@
     <i class="i-hugeicons-checkmark-circle-02 h-5 w-5 shrink-0 mt-px" aria-hidden="true"></i>
     <span>{{ notice }}</span>
   </div>
+
+  <section class="mb-6 p-6 bg-white dark:bg-slate-800 border border-slate-200 rounded-2xl dark:border-slate-700">
+    <div class="flex gap-4 items-start">
+      <span class="flex items-center justify-center h-12 w-12 shrink-0 rounded-xl bg-emerald-50 dark:bg-emerald-900/20" aria-hidden="true">
+        <i class="i-hugeicons-shield-02 h-6 w-6 text-emerald-700 dark:text-emerald-300"></i>
+      </span>
+      <div class="min-w-0 flex-1">
+        <h2 class="font-semibold text-slate-900 dark:text-white">Privacy & location safety</h2>
+        <p class="mt-1 text-slate-500 text-sm dark:text-slate-400">Mask route endpoints for other people and keep the territory game away from a protected location.</p>
+
+        <div :if="privacyLoading" class="mt-5 h-9 w-40 bg-slate-100 dark:bg-slate-700 rounded-full animate-pulse"></div>
+        <div :if="!privacyLoading" class="grid gap-5 mt-5 sm:grid-cols-2">
+          <label class="text-sm text-slate-700 dark:text-slate-300">
+            <span class="block mb-1 font-medium">Default activity visibility</span>
+            <select x-value="defaultVisibility" @change="defaultVisibility.set($event.target.value)" class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg">
+              <option value="public">Public</option>
+              <option value="followers">Followers</option>
+              <option value="private">Only me</option>
+            </select>
+          </label>
+          <label class="text-sm text-slate-700 dark:text-slate-300">
+            <span class="block mb-1 font-medium">Hide each route end (metres)</span>
+            <input type="number" min="0" max="5000" x-value="hideStartEndMeters" @input="hideStartEndMeters.set(Number($event.target.value))" class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg" />
+          </label>
+          <label class="text-sm text-slate-700 dark:text-slate-300">
+            <span class="block mb-1 font-medium">Protected latitude</span>
+            <input type="number" step="any" placeholder="Optional" x-value="homeLat" @input="homeLat.set($event.target.value)" class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg" />
+          </label>
+          <label class="text-sm text-slate-700 dark:text-slate-300">
+            <span class="block mb-1 font-medium">Protected longitude</span>
+            <input type="number" step="any" placeholder="Optional" x-value="homeLng" @input="homeLng.set($event.target.value)" class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg" />
+          </label>
+          <label class="text-sm text-slate-700 dark:text-slate-300">
+            <span class="block mb-1 font-medium">Protected radius (metres)</span>
+            <input type="number" min="100" max="5000" x-value="homeRadiusMeters" @input="homeRadiusMeters.set(Number($event.target.value))" class="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg" />
+          </label>
+          <div class="space-y-3 text-sm text-slate-700 dark:text-slate-300">
+            <label class="flex gap-2 items-start"><input type="checkbox" x-checked="excludeHomeFromGame" @change="excludeHomeFromGame.set($event.target.checked)" class="mt-0.5 h-4 w-4 rounded" /><span>Do not create territory inside the protected zone</span></label>
+            <label class="flex gap-2 items-start"><input type="checkbox" x-checked="showPreciseTerritories" @change="showPreciseTerritories.set($event.target.checked)" class="mt-0.5 h-4 w-4 rounded" /><span>Show my precise territory outlines to everyone</span></label>
+          </div>
+        </div>
+        <button :if="!privacyLoading" type="button" @click="savePrivacy()" x-disabled="privacyWorking" class="mt-5 px-5 py-2.5 font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-full disabled:opacity-50">Save privacy settings</button>
+      </div>
+    </div>
+  </section>
 
   <section class="p-6 bg-white dark:bg-slate-800 border border-slate-200 rounded-2xl dark:border-slate-700">
     <div class="flex gap-4 items-start">

@@ -10,7 +10,7 @@
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <div class="mb-8">
       <h1 class="font-bold text-3xl text-gray-900 dark:text-white mb-2">Privacy Policy</h1>
-      <p class="text-sm text-gray-500 dark:text-slate-400">Last updated June 2026</p>
+      <p class="text-sm text-gray-500 dark:text-slate-400">Last updated August 2026</p>
     </div>
 
     <div class="space-y-8 text-gray-600 dark:text-slate-300 leading-relaxed">
@@ -26,17 +26,17 @@
 
       <section>
         <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">What others can see</h2>
-        <p>Your profile, activities, reviews, and the territory you hold are visible to other WildLoop users by default. Per-activity privacy controls are on our roadmap; until then, treat anything you post as visible to the community. Your email is never shown publicly.</p>
+        <p>You control each activity's visibility: public, followers only, or private. New accounts default to followers only, and you can change that default in Settings. Your email is never shown publicly. Blocking another athlete hides both accounts from each other and removes any follow relationship.</p>
       </section>
 
       <section>
         <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">Location data</h2>
-        <p>GPS tracks are recorded only while you're actively recording an activity. You can delete any activity, which removes its track; territory you've already captured stays on the map but is no longer linked to the deleted activity.</p>
+        <p>GPS tracks are recorded only while you're actively recording. Shared routes hide their start and finish by default. Settings also lets you define a protected location and radius; capture runs that expose that zone will save as activities without creating territory. Other athletes receive coarse territory outlines unless you opt in to precise outlines.</p>
       </section>
 
       <section>
         <h2 class="font-semibold text-lg text-gray-900 dark:text-white mb-2">Your choices</h2>
-        <p>You can edit or delete your activities at any time and update your account details. To delete your account entirely, contact us and we'll remove your personal data, subject to any legal retention requirements.</p>
+        <p>You can edit or delete activities, export your own route as GPX, update location controls, block athletes, and report activities or profiles. To delete your account entirely, contact us and we'll remove your personal data, subject to legal retention requirements.</p>
       </section>
 
       <section>
