@@ -10,7 +10,7 @@
 import process from 'node:process'
 import garminConfig from '../../../config/garmin'
 import { OAUTH_COOKIE } from './GarminConnectAction'
-import { isConfigured, openOAuthState } from './garmin'
+import { createGarminClient, isConfigured, openOAuthState } from './garmin'
 
 /** Read one cookie off the request. */
 function readCookie(request: any, name: string): string | undefined {
@@ -63,50 +63,12 @@ export default new Action({
       return backToSettings('failed')
 
     try {
-      const tokenResponse = await fetch(garminConfig.endpoints.token, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
-          client_id: garminConfig.clientId,
-          client_secret: garminConfig.clientSecret,
-          code,
-          code_verifier: sealed.verifier,
-          redirect_uri: garminConfig.redirectUri,
-        }),
-      })
-
-      if (!tokenResponse.ok) {
-        console.error('[garmin] token exchange failed', tokenResponse.status, await tokenResponse.text().catch(() => ''))
-        return backToSettings('failed')
-      }
-
-      const tokens = await tokenResponse.json() as {
-        access_token?: string
-        refresh_token?: string
-        expires_in?: number
-        scope?: string
-      }
-
-      if (!tokens.access_token) {
-        console.error('[garmin] token exchange returned no access token')
-        return backToSettings('failed')
-      }
-
-      // Garmin identifies the athlete by its own opaque id, and that is the
-      // only key its webhooks carry. Without it a push cannot be attributed.
-      const idResponse = await fetch(garminConfig.endpoints.userId, {
-        headers: { Authorization: `Bearer ${tokens.access_token}`, Accept: 'application/json' },
-      })
-      const garminUserId = ((await idResponse.json().catch(() => null)) as { userId?: string } | null)?.userId
-
-      if (!garminUserId) {
-        console.error('[garmin] could not resolve the Garmin user id')
-        return backToSettings('failed')
-      }
+      const client = createGarminClient(garminConfig)
+      const tokens = await client.exchangeCode(code, sealed.verifier)
+      const garminUserId = await client.getUserId(tokens.accessToken)
 
       const { db } = await import('@stacksjs/database')
-      const expiresAt = tokens.expires_in ? Math.floor(Date.now() / 1000) + tokens.expires_in : null
+      const expiresAt = tokens.expiresAt ?? null
 
       // Reconnecting replaces the previous row rather than accumulating them,
       // and the unique index on garmin_user_id stops one watch feeding two
@@ -116,8 +78,8 @@ export default new Action({
       await db.insertInto('garmin_connections').values({
         user_id: sealed.userId,
         garmin_user_id: garminUserId,
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token ?? null,
+        access_token: tokens.accessToken,
+        refresh_token: tokens.refreshToken ?? null,
         expires_at: expiresAt,
         scope: tokens.scope ?? garminConfig.scope,
       }).execute()

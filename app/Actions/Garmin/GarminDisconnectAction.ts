@@ -6,6 +6,7 @@
 // who believes they have unplugged.
 
 import garminConfig from '../../../config/garmin'
+import { createGarminClient } from './garmin'
 
 export default new Action({
   name: 'Garmin Disconnect',
@@ -34,10 +35,7 @@ export default new Action({
     // because a third party had an outage is the wrong way to fail. The
     // athlete can also revoke us from their own Garmin account settings.
     try {
-      await fetch(garminConfig.endpoints.deregister, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${connection.access_token}` },
-      })
+      await createGarminClient(garminConfig).deregister(connection.access_token)
     }
     catch (error) {
       console.error('[garmin] deregistration call failed; removing the local connection anyway', error)

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'bun:test'
 import {
   buildAuthorizeUrl,
   createPkcePair,
+  extractDisconnects,
   extractSummaries,
   isConfigured,
   mapActivity,
@@ -217,6 +218,16 @@ describe('extractSummaries', () => {
   it('returns nothing for a shape it does not recognise, rather than throwing', () => {
     expect(extractSummaries(null)).toEqual([])
     expect(extractSummaries({ unexpected: true })).toEqual([])
+  })
+})
+
+describe('extractDisconnects', () => {
+  it('reads revocations so stale tokens can be removed immediately', () => {
+    expect(extractDisconnects({ deregistrations: [{ userId: 'garmin-42' }] })).toEqual([{ userId: 'garmin-42' }])
+  })
+
+  it('ignores malformed revocation entries', () => {
+    expect(extractDisconnects({ deregistrations: [{ nope: true }] })).toEqual([])
   })
 })
 

@@ -8,20 +8,22 @@
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.120",
-    "@stacksjs/buddy": "^0.70.207",
+    "@stacksjs/buddy": "0.70.207",
     "@stacksjs/ts-cloud": "^0.7.86",
     "bun-query-builder": "^0.1.63",
-    "stacks": "^0.70.207",
-    "ts-watches": "^0.1.0",
+    "stacks": "0.70.207",
+    "ts-health": "0.1.0",
+    "ts-watches": "0.1.0",
     "ts-web-scraper": "^0.1.6"
   },
   "devDependencies": {
-    "@stacksjs/stx": "^0.2.111",
-    "bun-plugin-stx": "^0.2.111",
-    "ts-maps": "^0.2.7"
+    "@stacksjs/stx": "0.2.111",
+    "bun-plugin-stx": "0.2.111",
+    "ts-maps": "0.3.1"
   },
   "overrides": {
-    "@stacksjs/browser": "0.70.281"
+    "@stacksjs/browser": "0.70.281",
+    "bunfig": "0.15.15"
   },
   "bugs": {
     "url": "https://github.com/stacksjs/wildloop/issues"
@@ -43,7 +45,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "build:maps": "mkdir -p public/js public/css && bun build ../../Libraries/ts-maps/packages/ts-maps/src/index.ts --outfile public/js/ts-maps.mjs --format esm --minify && cp ../../Libraries/ts-maps/packages/ts-maps/src/core-map/ts-maps.css public/css/ts-maps.css",
+    "build:maps": "mkdir -p public/js public/css && bun build ts-maps --outfile public/js/ts-maps.mjs --format esm --minify && cp node_modules/ts-maps/src/core-map/ts-maps.css public/css/ts-maps.css",
     "build:reset": "rm -rf node_modules && bun install && ./buddy generate:types && ./buddy lint:fix && cd storage/framework && bun run build && cd ../../",
     "buddy": "./buddy",
     "stacks": "./buddy",
@@ -85,7 +87,8 @@
     "release": "./buddy release",
     "changelog": "./buddy changelog",
     "generate": "./buddy generate",
-    "typecheck": "bunx tsc --noEmit",
+    "typecheck": "bunx tsc --project tsconfig.app.json --noEmit",
+    "typecheck:app": "bunx tsc --project tsconfig.app.json --noEmit",
     "types:check": "bun tsc --noEmit",
     "types:fix": "./buddy types:fix",
     "test": "./buddy test",

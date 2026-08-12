@@ -10,11 +10,38 @@
  * be tested without a Garmin account, a network, or a database.
  */
 
-import { createHmac, timingSafeEqual } from 'node:crypto'
-import { createPkcePair, extractActivitySummaries, GarminActivityApiClient, isAuthenticWebhook } from 'ts-watches'
+import { createPkcePair, extractActivitySummaries, extractDeregistrations, GarminActivityApiClient, isAuthenticWebhook, signState, verifyState } from 'ts-watches'
 
-export type { GarminActivitySummary } from 'ts-watches'
+export type { GarminActivitySummary, GarminDeregistration } from 'ts-watches'
 export { createPkcePair, isAuthenticWebhook }
+
+export function createGarminClient(config: {
+  clientId: string
+  clientSecret: string
+  redirectUri: string
+  scope?: string
+  endpoints?: {
+    authorize?: string
+    token?: string
+    userId?: string
+    permissions?: string
+    deregister?: string
+  }
+}): GarminActivityApiClient {
+  return new GarminActivityApiClient({
+    clientId: config.clientId,
+    clientSecret: config.clientSecret,
+    redirectUri: config.redirectUri,
+    scope: config.scope,
+    endpoints: {
+      authorize: config.endpoints?.authorize,
+      token: config.endpoints?.token,
+      userId: config.endpoints?.userId,
+      permissions: config.endpoints?.permissions,
+      registration: config.endpoints?.deregister,
+    },
+  })
+}
 
 /**
  * Garmin's activity types mapped onto the four WildLoop records.
@@ -170,11 +197,9 @@ export function buildAuthorizeUrl(options: {
   challenge: string
   scope?: string
 }): string {
-  const client = new GarminActivityApiClient({
-    clientId: options.clientId,
+  const client = createGarminClient({
+    ...options,
     clientSecret: 'unused-for-url-building',
-    redirectUri: options.redirectUri,
-    scope: options.scope,
     endpoints: { authorize: options.authorizeEndpoint },
   })
 
@@ -194,6 +219,11 @@ export function isConfigured(config: { clientId?: string, clientSecret?: string 
 /** Pull activity summaries out of a push payload. */
 export function extractSummaries(body: unknown): GarminActivitySummary[] {
   return extractActivitySummaries(body)
+}
+
+/** Pull account-revocation notices out of a push payload. */
+export function extractDisconnects(body: unknown): GarminDeregistration[] {
+  return extractDeregistrations(body)
 }
 
 /** What has to survive the round trip to Garmin and back. */
@@ -223,9 +253,7 @@ export const OAUTH_STATE_TTL_MS = 10 * 60 * 1000
  * account, which is an account-takeover-shaped hole rather than a mix-up.
  */
 export function sealOAuthState(state: OAuthState, secret: string): string {
-  const payload = Buffer.from(JSON.stringify(state)).toString('base64url')
-  const signature = createHmac('sha256', secret).update(payload).digest('base64url')
-  return `${payload}.${signature}`
+  return signState(JSON.stringify(state), secret)
 }
 
 /**
@@ -236,23 +264,11 @@ export function openOAuthState(token: string | undefined, secret: string, now = 
   if (!token || !secret)
     return null
 
-  const separator = token.lastIndexOf('.')
-  if (separator === -1)
-    return null
-
-  const payload = token.slice(0, separator)
-  const signature = token.slice(separator + 1)
-  const expected = createHmac('sha256', secret).update(payload).digest('base64url')
-
-  // Constant-time: a byte-by-byte compare leaks how much of a forged
-  // signature was correct, which is enough to construct one.
-  const given = Buffer.from(signature)
-  const want = Buffer.from(expected)
-  if (given.length !== want.length || !timingSafeEqual(given, want))
-    return null
-
   try {
-    const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as OAuthState
+    const verified = verifyState(token, secret)
+    if (!verified)
+      return null
+    const parsed = JSON.parse(verified) as OAuthState
     if (typeof parsed?.userId !== 'number' || typeof parsed?.verifier !== 'string' || typeof parsed?.state !== 'string')
       return null
     if (!parsed.issuedAt || now - parsed.issuedAt > OAUTH_STATE_TTL_MS)
@@ -263,4 +279,3 @@ export function openOAuthState(token: string | undefined, secret: string, now = 
     return null
   }
 }
-

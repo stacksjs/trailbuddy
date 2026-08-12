@@ -13,7 +13,7 @@
 //     unusable, or Garmin will retry the whole batch forever.
 
 import garminConfig from '../../../config/garmin'
-import { extractSummaries, isAuthenticWebhook, mapActivity } from './garmin'
+import { extractDisconnects, extractSummaries, isAuthenticWebhook, mapActivity } from './garmin'
 
 export default new Action({
   name: 'Garmin Webhook',
@@ -27,7 +27,6 @@ export default new Action({
   async handle(request) {
     const presented = request.headers?.get?.('x-garmin-signature')
       || request.headers?.get?.('x-webhook-secret')
-      || new URL(request.url).searchParams.get('secret')
 
     if (!isAuthenticWebhook(presented, garminConfig.webhookSecret)) {
       // Deliberately terse: an unauthenticated caller learns nothing about
@@ -37,14 +36,32 @@ export default new Action({
 
     const body = request.jsonBody ?? await request.json?.().catch(() => null)
     const summaries = extractSummaries(body)
+    const disconnects = extractDisconnects(body)
 
-    if (summaries.length === 0)
-      return response.json({ received: 0, imported: 0 })
+    if (summaries.length === 0 && disconnects.length === 0)
+      return response.json({ received: 0, imported: 0, deregistered: 0 })
 
     const { db } = await import('@stacksjs/database')
 
     let imported = 0
     let skipped = 0
+    let deregistered = 0
+
+    // Garmin sends this when an athlete revokes WildLoop from Connect. Delete
+    // the local tokens immediately; otherwise a disconnected account still
+    // appears connected and retains credentials we no longer need.
+    for (const disconnect of disconnects) {
+      const result = await db
+        .deleteFrom('garmin_connections')
+        .where('garmin_user_id', '=', disconnect.userId)
+        .executeTakeFirst()
+        .catch((error: unknown) => {
+          console.error('[garmin] could not apply deregistration', error)
+          return null
+        })
+      if (result)
+        deregistered++
+    }
 
     for (const summary of summaries) {
       try {
@@ -90,7 +107,19 @@ export default new Action({
           continue
         }
 
-        const created = await Activity.create({ user_id: connection.user_id, ...mapped })
+        const created = await Activity.create({
+          user_id: connection.user_id,
+          ...mapped,
+          upload_id: `garmin:${summary.summaryId}`,
+          recording_source: 'garmin',
+          game_mode: 'none',
+          // Summary webhooks do not contain the full timestamped route. They
+          // are excellent activity records, but cannot alter territory until
+          // Garmin route-detail verification is configured.
+          capture_eligible: false,
+          integrity_status: 'unverified',
+          integrity_reason: 'Garmin summary did not include route telemetry',
+        })
 
         await db.insertInto('garmin_activity_imports').values({
           user_id: connection.user_id,
@@ -114,6 +143,11 @@ export default new Action({
       }
     }
 
-    return response.json({ received: summaries.length, imported, skipped })
+    return response.json({
+      received: summaries.length + disconnects.length,
+      imported,
+      skipped,
+      deregistered,
+    })
   },
 })

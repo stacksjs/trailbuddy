@@ -1,0 +1,63 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "jsx": "preserve",
+    "module": "esnext",
+    "moduleDetection": "force",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "types": ["bun"],
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "strict": false,
+    "strictNullChecks": false,
+    "noUncheckedIndexedAccess": false,
+    "noUncheckedSideEffectImports": true,
+    "noUnusedLocals": false,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "paths": {
+      "Actions/*": ["./app/Actions/*"],
+      "Commands/*": ["./app/Commands/*"],
+      "Jobs/*": ["./app/Jobs/*"],
+      "Middleware/*": ["./app/Middleware/*"],
+      "Models/*": ["./app/Models/*"],
+      "Notifications/*": ["./app/Notifications/*"],
+      "stx": ["./node_modules/@stacksjs/stx/dist/index.d.ts"],
+      "~/*": ["./*"],
+      "@/*": ["./resources/*"]
+    }
+  },
+  "include": [
+    "types/**/*.d.ts",
+    "app/Models/**/*.ts",
+    "config/integrations.ts",
+    "resources/assets/scripts/auth.ts",
+    "resources/assets/scripts/game-api.ts",
+    "resources/assets/scripts/offline-trails.ts",
+    "resources/assets/scripts/pwa.ts",
+    "resources/assets/scripts/privacy-defaults.ts",
+    "resources/assets/scripts/run-upload-queue.ts",
+    "resources/composables/**/*.ts",
+    "resources/functions/**/*.ts",
+    "tests/unit/activity-files.test.ts",
+    "tests/unit/activity-integrity.test.ts",
+    "tests/unit/privacy.test.ts",
+    "tests/unit/session-identity.test.ts",
+    "tests/unit/territory-battle.test.ts",
+    "tests/unit/game-integrity-schema.test.ts"
+  ],
+  "exclude": [
+    "cloud/**",
+    "dist/**",
+    "node_modules/**",
+    "pantry/**",
+    "storage/framework/defaults/**",
+    "resources/functions/dark.ts",
+    "resources/functions/counter.ts"
+  ]
+}
