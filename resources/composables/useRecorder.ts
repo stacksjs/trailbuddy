@@ -1,4 +1,5 @@
 import { derived, onDestroy, onMount, state, useStore } from 'stx'
+import { haptics, isNativeMobile, location } from '@stacksjs/mobile'
 import type { CircleMarker as CircleMarkerType } from 'ts-maps'
 import type { Polygon as PolygonType } from 'ts-maps'
 import type { Polyline as PolylineType } from 'ts-maps'
@@ -268,8 +269,8 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
   function clearTimers() {
     if (refs.elapsedTimer) { clearInterval(refs.elapsedTimer); refs.elapsedTimer = null }
     if (refs.simTimer) { clearInterval(refs.simTimer); refs.simTimer = null }
-    if (refs.watchId !== null && navigator.geolocation) {
-      navigator.geolocation.clearWatch(refs.watchId)
+    if (refs.watchId !== null) {
+      location.clearWatch(refs.watchId)
       refs.watchId = null
     }
   }
@@ -320,6 +321,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     mode.set('simulated')
     recording.set(true)
     gpsStatus.set('active')
+    void haptics.impact('medium')
     refs.routeCoords = []
     refs.startedAtMs = Date.now()
     refs.routeLine = await createLiveRouteLine(refs.map, SIM_ROUTE)
@@ -353,7 +355,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
       alert('Sign in before recording an activity.')
       return
     }
-    if (!navigator.geolocation) {
+    if (!isNativeMobile() && !navigator.geolocation) {
       gpsStatus.set('stopped')
       alert('Geolocation is not available on this device. Use Simulate Trail Run instead.')
       return
@@ -367,41 +369,41 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     const beginTracking = (startLat: number, startLng: number, startAltM: number | null, accuracy: number | null) => {
       recording.set(true)
       gpsStatus.set('active')
+      void haptics.impact('medium')
       refs.startedAtMs = Date.now()
       addRoutePoint(startLat, startLng, startAltM, accuracy)
       refs.map!.setView([startLat, startLng], 17)
       startTicker()
-      refs.watchId = navigator.geolocation.watchPosition(
-        (pos) => {
+      refs.watchId = location.watchPosition(
+        (position) => {
           gpsStatus.set('active')
-          addRoutePoint(pos.coords.latitude, pos.coords.longitude, pos.coords.altitude, pos.coords.accuracy)
-          refs.map!.panTo([pos.coords.latitude, pos.coords.longitude])
+          addRoutePoint(position.latitude, position.longitude, position.altitude ?? null, position.accuracy)
+          refs.map!.panTo([position.latitude, position.longitude])
         },
-        () => gpsStatus.set('searching'),
         { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 },
       )
       const wakeLock = (navigator as Navigator & { wakeLock?: { request: (type: 'screen') => Promise<{ release: () => Promise<void> }> } }).wakeLock
       void wakeLock?.request('screen').then(lock => refs.wakeLock = lock).catch(() => undefined)
     }
 
-    navigator.geolocation.getCurrentPosition(
-      pos => beginTracking(pos.coords.latitude, pos.coords.longitude, pos.coords.altitude, pos.coords.accuracy),
-      (err) => {
+    void location.getCurrentPosition({ enableHighAccuracy: true, maximumAge: 0, timeout: 15000 })
+      .then(position => beginTracking(position.latitude, position.longitude, position.altitude ?? null, position.accuracy))
+      .catch((error: unknown) => {
         gpsStatus.set('stopped')
         if (refs.routeLine && refs.map) {
           refs.map.removeLayer(refs.routeLine)
           refs.routeLine = null
         }
-        alert(err.code === err.PERMISSION_DENIED
-          ? 'Location permission denied. Enable it in your browser settings to record a run.'
+        const code = typeof error === 'object' && error !== null && 'code' in error ? Number(error.code) : 0
+        alert(code === 1
+          ? 'Location permission denied. Enable Location for WildLoop in Settings to record a run.'
           : 'Could not get your location. Try again in a moment.')
-      },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 },
-    )
+      })
   }
 
   function togglePause() {
     paused.set(!paused())
+    void haptics.impact(paused() ? 'soft' : 'medium')
   }
 
   interface RunMetrics {
@@ -438,7 +440,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
         visibility: visibility(),
         completed_at: new Date().toISOString(),
         upload_id: `run:${crypto.randomUUID()}`,
-        recording_source: mode() === 'simulated' ? 'simulation' : 'web_gps',
+        recording_source: mode() === 'simulated' ? 'simulation' : isNativeMobile() ? 'native_gps' : 'web_gps',
         game_mode: runMode(),
         target_territory_id: targetTerritoryId(),
       })
@@ -456,7 +458,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
       }
       if (result.queued) {
         saveStatus.set('queued')
-        saveMessage.set(result.error ?? 'Saved offline; retry is automatic')
+        saveMessage.set(result.error ?? 'Saved offline; syncing is automatic')
         return null
       }
       saveStatus.set(result.activityId ? 'saved' : 'error')
@@ -475,6 +477,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     recording.set(false)
     paused.set(false)
     gpsStatus.set('stopped')
+    void haptics.notification('success')
     clearTimers()
     if (refs.wakeLock) {
       void refs.wakeLock.release().catch(() => undefined)
@@ -578,11 +581,11 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
       if (bounds.length) refs.mapHandle.fitPoints(bounds, [40, 40])
       else refs.map.setView([37.7749, -122.4194], 5)
 
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          async (pos) => {
+      if (isNativeMobile() || navigator.geolocation) {
+        void location.getCurrentPosition({ enableHighAccuracy: true })
+          .then(async (position) => {
             const { CircleMarker } = await ensureTsMaps()
-            const here = new CircleMarker([pos.coords.latitude, pos.coords.longitude], {
+            const here = new CircleMarker([position.latitude, position.longitude], {
               radius: 8,
               color: '#ffffff',
               weight: 3,
@@ -591,11 +594,9 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
             }).addTo(refs.map!).bindPopup('You are here')
             refs.hereMarker = here
             gpsStatus.set('active')
-            refs.map!.setView([pos.coords.latitude, pos.coords.longitude], 14)
-          },
-          () => gpsStatus.set('searching'),
-          { enableHighAccuracy: true },
-        )
+            refs.map!.setView([position.latitude, position.longitude], 14)
+          })
+          .catch(() => gpsStatus.set('searching'))
       }
     }
     catch (err) {

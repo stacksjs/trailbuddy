@@ -1,4 +1,5 @@
 import { derived, state } from 'stx'
+import { haptics } from '@stacksjs/mobile'
 import type { ActivityShareCardPreset, ActivitySharePoint } from 'ts-images/activity-card'
 import { activitySharePreview, downloadActivityShareImage, shareActivityImage, type ShareableActivity } from '../functions/activity-share'
 
@@ -26,9 +27,11 @@ export function useActivityShare(getActivity: () => ShareableActivity | null, ge
     try {
       await downloadActivityShareImage(activity, getRoute(), sharePreset())
       shareMessage.set('Image downloaded. It is ready to post anywhere.')
+      await haptics.notification('success')
     }
     catch (error) {
       shareMessage.set(error instanceof Error ? error.message : 'Could not create the activity image')
+      await haptics.notification('error')
     }
     finally {
       shareBusy.set(false)
@@ -47,9 +50,11 @@ export function useActivityShare(getActivity: () => ShareableActivity | null, ge
         shareMessage.set('Activity image shared.')
       else if (outcome === 'downloaded')
         shareMessage.set('Sharing is not available here, so the image was downloaded instead.')
+      if (outcome !== 'cancelled') await haptics.notification('success')
     }
     catch (error) {
       shareMessage.set(error instanceof Error ? error.message : 'Could not share the activity image')
+      await haptics.notification('error')
     }
     finally {
       shareBusy.set(false)

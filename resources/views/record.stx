@@ -179,9 +179,15 @@
 
     <!-- Controls -->
     <div class="flex gap-4 items-center justify-center">
-      <button @click="startManual()" x-class="recording ? 'hidden' : 'record-btn-start'">▶</button>
-      <button @click="togglePause()" x-class="!recording ? 'hidden' : paused ? 'record-btn-resume' : 'record-btn-pause'">{{ paused ? '▶' : '⏸' }}</button>
-      <button @click="stop()" x-class="recording ? 'record-btn-stop' : 'hidden'">⏹</button>
+      <button @click="startManual()" aria-label="Start recording" x-class="recording ? 'hidden' : 'record-btn-start'">
+        <i class="i-lucide-play h-8 w-8" aria-hidden="true"></i>
+      </button>
+      <button @click="togglePause()" :aria-label="paused ? 'Resume recording' : 'Pause recording'" x-class="!recording ? 'hidden' : paused ? 'record-btn-resume' : 'record-btn-pause'">
+        <i x-class="paused ? 'i-lucide-play h-7 w-7' : 'i-lucide-pause h-7 w-7'" aria-hidden="true"></i>
+      </button>
+      <button @click="stop()" aria-label="Finish recording" x-class="recording ? 'record-btn-stop' : 'hidden'">
+        <i class="i-lucide-square h-7 w-7" aria-hidden="true"></i>
+      </button>
     </div>
 
     <div x-class="recording ? 'hidden' : 'mt-8 card'">
@@ -196,7 +202,7 @@
     </div>
 
     <p class="mt-4 text-center text-gray-500 text-sm dark:text-slate-400">
-      <span :if="!recording">Hit ▶ to start GPS capture, or simulate a trail route</span>
+      <span :if="!recording">Tap start to begin GPS capture, or simulate a trail route</span>
       <span :if="recording">{{ runMode === 'capture' ? 'Stay inside the highlighted zone. The capture bar fills as you run' : 'Free run, no territory capture' }}</span>
     </p>
   </div>
