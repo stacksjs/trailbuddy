@@ -254,6 +254,17 @@ export const tsCloud: TsCloudConfig = {
   },
 
   infrastructure: {
+    // This project attaches to an existing compute owner, but it still declares
+    // its runtime/proxy contract so the deploy command takes the compute path
+    // and the shared gateway renders WildLoop routes with rpx.
+    compute: {
+      runtime: 'bun',
+      webServer: 'rpx',
+      proxy: {
+        engine: 'rpx',
+        version: '0.11.45',
+      },
+    },
     dns: {
       // wildloop.org is registered and DNS-managed at Porkbun, so records are
       // written through their API. ts-cloud reads PORKBUN_API_KEY and
