@@ -144,6 +144,7 @@ export const tsCloud: TsCloudConfig = {
     main: {
       root: '.',
       exclude: SOURCE_RELEASE_EXCLUDES,
+      deploy: 'server',
       path: '/',
       domain: 'wildloop.org',
       start: 'bun storage/framework/runtime/production/serve.js',
@@ -185,6 +186,7 @@ export const tsCloud: TsCloudConfig = {
     api: {
       root: '.',
       exclude: SOURCE_RELEASE_EXCLUDES,
+      deploy: 'server',
       start: 'bun storage/framework/runtime/production/api.js',
       port: 3050,
       preStart: [
@@ -221,6 +223,7 @@ export const tsCloud: TsCloudConfig = {
     ingest: {
       root: '.',
       exclude: SOURCE_RELEASE_EXCLUDES,
+      deploy: 'server',
       start: 'bun storage/framework/runtime/production/ingest.js',
       port: 3051,
       preStart: [
