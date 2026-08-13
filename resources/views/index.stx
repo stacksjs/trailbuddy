@@ -9,22 +9,35 @@
 
   useHead({ title: 'WildLoop - Find your line. Claim your ground.' })
 
-  const coverage = state({ total: 0, states: [], sources: [] })
+  // Last known production snapshot: render useful proof immediately, then
+  // replace it with the minute-cached live catalog response. A cold API used
+  // to leave three anonymous skeleton bars in the marketing page for 1s+.
+  const coverage = state({
+    total: 593188,
+    countries: [
+      { code: 'US', count: 302768 },
+      { code: 'DE', count: 202955 },
+      { code: 'CH', count: 53440 },
+      { code: 'AT', count: 34025 },
+    ],
+    states: [],
+    sources: [],
+  })
 
   onMount(() => {
-    fetchCoverage().then(value => coverage.set(value))
+    // Keep the catalog refresh behind the hero/runtime critical path. The
+    // snapshot above is already useful and the live value is supplementary.
+    setTimeout(() => {
+      fetchCoverage().then((value) => {
+        if (value.total > 0)
+          coverage.set(value)
+      })
+    }, 800)
   })
 
   const trailCount = derived(() => coverage().total)
-  const regionCount = derived(() => coverage().states.length)
-  const countryCount = derived(() => {
-    const seen = new Set()
-    for (const region of coverage().states) {
-      if (region.country)
-        seen.add(region.country)
-    }
-    return seen.size
-  })
+  const regionCount = derived(() => coverage().states.length || 102)
+  const countryCount = derived(() => coverage().countries.length)
 
   const sampleActivity = {
     activityType: 'Trail Run',
@@ -94,18 +107,15 @@
   <section class="data-ribbon border-y border-emerald-950/10 dark:border-white/10">
     <div class="mx-auto grid max-w-7xl grid-cols-2 gap-x-6 gap-y-9 px-4 py-10 sm:px-6 lg:grid-cols-[1.35fr_1fr_1fr_1.35fr] lg:px-8">
       <div>
-        <p :if="trailCount() > 0" class="font-display text-3xl font-bold tracking-tight tabular-nums">{{ trailCount().toLocaleString() }}</p>
-        <div :if="trailCount() === 0" class="h-9 w-28 animate-pulse rounded bg-emerald-950/10 dark:bg-white/10"></div>
+        <p class="font-display text-3xl font-bold tracking-tight tabular-nums">{{ trailCount().toLocaleString() }}</p>
         <p class="mt-1 text-sm text-current/60">Trails ready to explore</p>
       </div>
       <div>
-        <p :if="countryCount() > 0" class="font-display text-3xl font-bold tracking-tight tabular-nums">{{ countryCount() }}</p>
-        <div :if="countryCount() === 0" class="h-9 w-12 animate-pulse rounded bg-emerald-950/10 dark:bg-white/10"></div>
+        <p class="font-display text-3xl font-bold tracking-tight tabular-nums">{{ countryCount() }}</p>
         <p class="mt-1 text-sm text-current/60">Countries covered</p>
       </div>
       <div>
-        <p :if="regionCount() > 0" class="font-display text-3xl font-bold tracking-tight tabular-nums">{{ regionCount() }}</p>
-        <div :if="regionCount() === 0" class="h-9 w-16 animate-pulse rounded bg-emerald-950/10 dark:bg-white/10"></div>
+        <p class="font-display text-3xl font-bold tracking-tight tabular-nums">{{ regionCount() }}</p>
         <p class="mt-1 text-sm text-current/60">States and regions</p>
       </div>
       <div class="col-span-2 lg:col-span-1">

@@ -70,23 +70,62 @@ async function serverUser(): Promise<BootstrapUser | null> {
   }
 }
 
+export interface AppDataNeeds {
+  activities: boolean
+  battles: boolean
+  follows: boolean
+  territories: boolean
+  trails: boolean
+}
+
+function isPath(pathname: string, routes: string[]): boolean {
+  return routes.some(route => pathname === route || pathname.startsWith(`${route}/`))
+}
+
+/** Public data sources needed by a route; everything else stays network-idle. */
+export function dataNeedsForPath(pathname: string): AppDataNeeds {
+  return {
+    activities: isPath(pathname, ['/activity', '/athlete', '/feed', '/profile', '/record', '/stats']),
+    battles: isPath(pathname, ['/battles', '/challenges', '/conquests', '/territories', '/territory']),
+    follows: isPath(pathname, ['/athlete', '/athletes', '/feed', '/profile']),
+    territories: isPath(pathname, ['/battles', '/challenges', '/conquests', '/leaderboard', '/record', '/territories', '/territory']),
+    trails: isPath(pathname, ['/record', '/trail', '/trails']),
+  }
+}
+
+let identityStarted = false
+
 /** Initialize the shared WildLoop store and its browser-side data sources. */
 export function useWildLoopApp(): void {
   const wl = useStore('wl') as WildLoopAppStore
   const localUser = cachedUser()
+  const hasSession = typeof localStorage !== 'undefined' && !!localStorage.getItem('auth_token')
+  const pathname = typeof location === 'undefined' ? '/' : location.pathname
+  const needs = dataNeedsForPath(pathname)
+
   if (localUser)
     wl.hydrateAuthenticatedUser(localUser)
 
-  useTrailCatalog(wl)
-  useTerritoryCatalog(wl)
-  useActivityCatalog(wl)
-  useFollows(wl)
-  useNotifications(wl)
-  useRunUploadQueue(wl)
-  useBattleFeed(wl)
+  if (needs.trails)
+    useTrailCatalog(wl)
+  if (needs.territories)
+    useTerritoryCatalog(wl)
+  if (needs.activities)
+    useActivityCatalog(wl)
+  if (needs.battles)
+    useBattleFeed(wl)
+  if (hasSession && needs.follows)
+    useFollows(wl)
+  if (hasSession) {
+    useNotifications(wl)
+    useRunUploadQueue(wl)
+  }
 
   // The server remains authoritative. Local identity only prevents a flash
   // of signed-out UI while the current bearer token is checked.
+  if (identityStarted)
+    return
+  identityStarted = true
   serverUser().then((user) => {
     if (user)
       wl.hydrateAuthenticatedUser(user)
