@@ -54,3 +54,29 @@ bun run typecheck:app
 ```
 
 Inspect `/health`, verify the scheduler logs, and exercise an offline record/reconnect before each production release.
+
+## Frontend production path
+
+`app/ProductionServer.ts` is the production entry point. It deliberately loads
+the exact `@stacksjs/stx` and `bun-plugin-stx` versions from `package.json`
+instead of the generated pantry copy. A local `~/Code/Tools/stx` checkout is
+preferred only for framework development.
+
+WildLoop pages are client-data shells, so the server compiles one render per
+view source, prewarms static routes, and lets the browser cache successful HTML
+briefly. STX serves Brotli/gzip documents and external cached runtime, router,
+and Crosswind assets. Production pages must never contain `data-stx-hmr` or
+open `/_stx/hmr`; a permanent event stream consumes a reverse-proxy upstream
+connection.
+
+After deployment, verify the production contract:
+
+```bash
+curl -sSI -H 'Accept-Encoding: br, gzip' https://wildloop.org/
+curl -sS --compressed https://wildloop.org/ | grep -E 'data-stx-hmr|/_stx/hmr'
+```
+
+The first command should report `Content-Encoding: br` or `gzip`, `Vary:
+Accept-Encoding`, and the short public cache policy. The second command should
+print nothing. Also confirm `/_stx/runtime.js`, `/_stx/router.js`, and the
+fingerprinted Crosswind stylesheet return cacheable responses.
