@@ -1,11 +1,14 @@
+import type { RouteRegistry } from '@stacksjs/router'
+
 /**
- * Route Registry
- *
- * This file re-exports the default route registry.
- * Customize this file to add your own route files.
+ * WildLoop's app-owned route registry. Keeping it here makes production API
+ * releases independent of the vendored Stacks source tree.
  *
  * @see https://docs.stacksjs.org/routing
  */
+export default {
+  api: 'api',
+  v1: { path: 'v1', prefix: 'v1' },
+} satisfies RouteRegistry
 
-export * from '../storage/framework/defaults/app/Routes'
-export { default } from '../storage/framework/defaults/app/Routes'
+export type { RouteDefinition, RouteRegistry } from '@stacksjs/router'
