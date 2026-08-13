@@ -18,8 +18,8 @@
     "ts-web-scraper": "^0.1.6"
   },
   "devDependencies": {
-    "@stacksjs/stx": "0.2.178",
-    "bun-plugin-stx": "0.2.178",
+    "@stacksjs/stx": "0.2.179",
+    "bun-plugin-stx": "0.2.179",
     "ts-maps": "0.3.1"
   },
   "overrides": {
