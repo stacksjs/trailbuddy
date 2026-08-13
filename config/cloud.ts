@@ -137,8 +137,11 @@ export const tsCloud: TsCloudConfig = {
       start: 'bun storage/framework/runtime/production/serve.js',
       port: 3049,
       // The release ships without dependencies, so nothing resolves until
-      // install runs here. Migrate then creates the schema: ts-cloud provisions
-      // no tables, and serving against an empty database fails every read.
+      // install runs here. Database migrations are deliberately NOT part of a
+      // web release: the production catalog is persistent, and its historical
+      // migration ledger predates some columns. Schema work must be backed up,
+      // reviewed, and run as a separate operation instead of blocking or
+      // endangering an otherwise safe application cutover.
       preStart: [
         LINK_ENV_KEYS,
         INSTALL_DEPS,
@@ -148,7 +151,6 @@ export const tsCloud: TsCloudConfig = {
         // The database lives OUTSIDE the release, so create its directory
         // before migrate runs — on a fresh box nothing else would.
         'mkdir -p /var/www/wildloop-shared/database',
-        'bun node_modules/@stacksjs/buddy/dist/cli.js migrate --force',
       ],
       // Pin the proxy target. `buddy serve` otherwise falls back to
       // 127.0.0.1:3008, which on this SHARED box is the `stacks` project's own

@@ -2,13 +2,19 @@
 
 ## Database
 
-Apply migrations before starting the upgraded application:
+Database migrations are never run automatically by `bun run deploy`. The
+catalog lives outside release directories, and an application rollback must
+not imply a schema rollback. Before an intentional schema operation, take a
+verified copy of `/var/www/wildloop-shared/database/stacks.sqlite`, inspect the
+production migration ledger, then run:
 
 ```bash
-./buddy migrate
+./buddy migrate --force
 ```
 
-Migrations 80-91 add activity integrity/idempotency, indexed territory bounds, atomic battle-resolution markers, privacy/block/report tables, custom routes, and their uniqueness/query indexes. They are safe to apply repeatedly through the migration runner.
+Never use `migrate:fresh` against production. If a migration reports an
+already-existing column or index, reconcile the ledger with the live schema;
+do not rerun DDL blindly or fold the repair into an application deploy.
 
 ## Scheduler
 
