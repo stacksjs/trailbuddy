@@ -1,7 +1,14 @@
 export default {
-  // Auto-detected: root 'resources', pagesDir 'views', componentsDir 'components',
-  // layoutsDir 'layouts'. Only partialsDir is overridden (defaults to 'partials').
-  partialsDir: 'components',
+  root: '.',
+  pagesDir: 'resources/views',
+  componentsDir: 'resources/components',
+  layoutsDir: 'resources/layouts',
+
+  site: {
+    url: 'https://wildloop.org',
+  },
+
+  partialsDir: 'resources/components',
 
   css: './crosswind.ts',
 
