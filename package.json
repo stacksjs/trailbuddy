@@ -99,13 +99,5 @@
     "bud": "./buddy",
     "stx": "./buddy"
   },
-  "type": "module",
-  "workspaces": [
-    "storage/framework/**",
-    "!**/node_modules/**",
-    "!**/dist/**",
-    "!**/docs/deps/**",
-    "!storage/framework/server/storage/**",
-    "!storage/framework/cache/**"
-  ]
+  "type": "module"
 }
