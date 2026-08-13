@@ -3,7 +3,7 @@ import { schema } from '@stacksjs/validation'
 
 const activityTypes = ['Trail Run', 'Hike', 'Walk', 'Bike'] as const
 const visibilities = ['public', 'followers', 'private'] as const
-const recordingSources = ['web_gps', 'simulation', 'manual', 'file_import', 'garmin'] as const
+const recordingSources = ['web_gps', 'native_gps', 'simulation', 'manual', 'file_import', 'garmin'] as const
 const integrityStatuses = ['verified', 'unverified', 'rejected'] as const
 const gameModes = ['capture', 'free', 'none'] as const
 

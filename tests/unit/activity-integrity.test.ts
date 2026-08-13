@@ -33,6 +33,21 @@ describe('activity integrity', () => {
     expect(result.durationSeconds).toBe(230)
   })
 
+  it('applies the same integrity rules to native Craft GPS tracks', () => {
+    const completedAt = new Date(Date.UTC(2026, 7, 12, 12, 4, 0)).toISOString()
+    const result = evaluateTrackIntegrity({
+      gpxData: track(),
+      source: 'native_gps',
+      activityType: 'Trail Run',
+      completedAt,
+      nowMs: Date.parse(completedAt),
+    })
+
+    expect(result.valid).toBe(true)
+    expect(result.captureEligible).toBe(true)
+    expect(result.status).toBe('verified')
+  })
+
   it('saves a simulation as non-scoring even with complete telemetry', () => {
     const result = evaluateTrackIntegrity({
       gpxData: track(),
@@ -74,4 +89,3 @@ describe('activity integrity', () => {
     expect(result.captureEligible).toBe(false)
   })
 })
-

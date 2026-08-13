@@ -1,12 +1,12 @@
 import { readFile } from 'node:fs/promises'
 import { describe, expect, it } from 'bun:test'
-import { MAX_UPLOAD_ATTEMPTS, queuedRunDisposition, retryDelayMs } from '../../resources/assets/scripts/run-upload-queue'
+import { MAX_UPLOAD_ATTEMPTS, nextUploadDelayMs, queuedRunDisposition } from '../../resources/assets/scripts/run-upload-queue'
 
 describe('offline activity retry policy', () => {
   it('backs off exponentially and caps at one day', () => {
-    expect(retryDelayMs(1)).toBe(30_000)
-    expect(retryDelayMs(2)).toBe(60_000)
-    expect(retryDelayMs(99)).toBe(86_400_000)
+    expect(nextUploadDelayMs(1)).toBe(30_000)
+    expect(nextUploadDelayMs(2)).toBe(60_000)
+    expect(nextUploadDelayMs(99)).toBe(86_400_000)
   })
 
   it('defers future retries and dead-letters repeated failures', () => {

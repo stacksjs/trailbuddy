@@ -5,12 +5,12 @@
 // territory engine (claim / process-conquest) later reads. Snake_case keys
 // match the ORM's column-based attributes.
 import { evaluateAchievementsForUser } from '../Achievement/EvaluateAchievementsAction'
-import { durationLabel, evaluateTrackIntegrity, type RecordingSource } from '../../../resources/functions/activity-integrity'
+import { durationLabel, evaluateTrackIntegrity, isLiveGpsSource, type RecordingSource } from '../../../resources/functions/activity-integrity'
 import UserPrivacySetting from '../../Models/UserPrivacySetting'
 
 const ACTIVITY_TYPES = ['Trail Run', 'Hike', 'Walk', 'Bike']
 const VISIBILITIES = ['public', 'followers', 'private']
-const RECORDING_SOURCES: RecordingSource[] = ['web_gps', 'simulation', 'manual', 'file_import', 'garmin']
+const RECORDING_SOURCES: RecordingSource[] = ['web_gps', 'native_gps', 'simulation', 'manual', 'file_import', 'garmin']
 const GAME_MODES = ['capture', 'free', 'none']
 
 export default new Action({
@@ -107,16 +107,16 @@ export default new Action({
       }
 
       const captureEligible = integrity.captureEligible && gameMode === 'capture'
-      const serverDistance = recordingSource === 'web_gps' && integrity.distanceMiles !== null
+      const serverDistance = isLiveGpsSource(recordingSource) && integrity.distanceMiles !== null
         ? Number(integrity.distanceMiles.toFixed(2))
         : distance
-      const serverDuration = recordingSource === 'web_gps' && integrity.durationSeconds !== null
+      const serverDuration = isLiveGpsSource(recordingSource) && integrity.durationSeconds !== null
         ? durationLabel(integrity.durationSeconds)
         : duration
       const paceSeconds = integrity.durationSeconds && integrity.distanceMiles && integrity.distanceMiles > 0.01
         ? Math.round(integrity.durationSeconds / integrity.distanceMiles)
         : null
-      const serverPace = recordingSource === 'web_gps' && paceSeconds !== null
+      const serverPace = isLiveGpsSource(recordingSource) && paceSeconds !== null
         ? `${Math.floor(paceSeconds / 60)}:${String(paceSeconds % 60).padStart(2, '0')}`
         : request.get<string>('pace') ?? null
 

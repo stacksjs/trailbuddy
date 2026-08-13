@@ -17,7 +17,7 @@ export interface QueuedRun {
   failedAt: string | null
 }
 
-export function retryDelayMs(attempts: number): number {
+export function nextUploadDelayMs(attempts: number): number {
   return Math.min(MAX_RETRY_DELAY_MS, BASE_RETRY_DELAY_MS * 2 ** Math.max(0, attempts - 1))
 }
 
@@ -75,7 +75,7 @@ export async function enqueueRun(payload: ActivityPayload, error: unknown = null
     queuedAt: existing?.queuedAt ?? new Date(now).toISOString(),
     attempts,
     lastError: error instanceof Error ? error.message : error ? String(error) : null,
-    nextAttemptAt: new Date(now + retryDelayMs(attempts)).toISOString(),
+    nextAttemptAt: new Date(now + nextUploadDelayMs(attempts)).toISOString(),
     failedAt: attempts >= MAX_UPLOAD_ATTEMPTS ? new Date(now).toISOString() : null,
   }
   await withStore('readwrite', store => store.put(queued))

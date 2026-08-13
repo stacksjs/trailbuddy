@@ -128,7 +128,7 @@ export interface ActivityPayload {
   completed_at?: string
   /** Stable client id used to deduplicate retries and offline replays. */
   upload_id?: string
-  recording_source?: 'web_gps' | 'simulation' | 'manual' | 'file_import' | 'garmin'
+  recording_source?: 'web_gps' | 'native_gps' | 'simulation' | 'manual' | 'file_import' | 'garmin'
   game_mode?: 'capture' | 'free' | 'none'
   /** Optional focus target. The server will resolve battles only for this id. */
   target_territory_id?: number | null
@@ -583,7 +583,7 @@ export async function persistRunAndProcess(
     if (!activity)
       throw new Error('The activity API refused the upload')
 
-    if (payload.recording_source !== 'web_gps' || payload.game_mode !== 'capture')
+    if (!['web_gps', 'native_gps'].includes(payload.recording_source ?? '') || payload.game_mode !== 'capture')
       return { activityId: activity.id }
 
     if (!activity.captureEligible) {
@@ -604,7 +604,7 @@ export async function persistRunAndProcess(
       return {
         activityId: null,
         queued: true,
-        error: 'Saved on this device and will retry when WildLoop is online',
+        error: 'Saved on this device and will sync when WildLoop is online',
       }
     }
     throw error

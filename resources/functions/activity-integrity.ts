@@ -1,6 +1,10 @@
 import type { Coordinate } from './geo'
 
-export type RecordingSource = 'web_gps' | 'simulation' | 'manual' | 'file_import' | 'garmin'
+export type RecordingSource = 'web_gps' | 'native_gps' | 'simulation' | 'manual' | 'file_import' | 'garmin'
+
+export function isLiveGpsSource(source: RecordingSource): boolean {
+  return source === 'web_gps' || source === 'native_gps'
+}
 
 export interface TrackSample extends Coordinate {
   /** Wall-clock epoch milliseconds. */
@@ -144,12 +148,12 @@ export function evaluateTrackIntegrity(input: {
     const segmentMetres = haversineMetres(samples[index - 1], sample)
     distanceMetres += segmentMetres
     const startTime = samples[index - 1].time
-    if (source === 'web_gps' && startTime !== null && sample.time !== null) {
+    if (isLiveGpsSource(source) && startTime !== null && sample.time !== null) {
       const seconds = (sample.time - startTime) / 1000
       if (seconds <= 0 || segmentMetres / seconds > maxSpeed)
         return rejected(`Track contains an implausible ${input.activityType.toLowerCase()} speed`, samples)
     }
-    else if (source === 'web_gps' && segmentMetres > 2000) {
+    else if (isLiveGpsSource(source) && segmentMetres > 2000) {
       return rejected('Track contains an implausible GPS jump', samples)
     }
   }
@@ -161,7 +165,7 @@ export function evaluateTrackIntegrity(input: {
     : null
   const distanceMiles = distanceMetres / METRES_PER_MILE
 
-  if (source !== 'web_gps') {
+  if (!isLiveGpsSource(source)) {
     return {
       valid: true,
       captureEligible: false,
