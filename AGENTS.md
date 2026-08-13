@@ -68,6 +68,8 @@ The framework ships a skill per subsystem under
 authoritatively. Read the relevant `SKILL.md` before doing non-trivial work
 rather than guessing at an API.
 
+For native iOS and shared mobile/web STX work, read the `stacks-mobile` skill.
+
 Add your own with `app/Skills/<name>/SKILL.md`, then re-run `buddy setup:ai`.
 
 ---

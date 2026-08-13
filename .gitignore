@@ -46,6 +46,7 @@ stacks.log
 /storage/framework/stx
 .env.keys
 /storage/framework/frontend-dist
+/storage/framework/mobile
 
 # Bundles built by each site's `preStart` (config/cloud.ts) — serve.js, api.js
 # and ingest.js. Generated on the box from the release that is already in git,
