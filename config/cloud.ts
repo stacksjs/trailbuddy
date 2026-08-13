@@ -56,6 +56,12 @@ const INSTALL_BUN = '/usr/local/bin/bun'
 
 const INSTALL_DEPS = `${INSTALL_BUN} install --frozen-lockfile`
 
+// The repository bunfig preloads a development-only file from the vendored
+// framework tree. Production intentionally excludes that tree, so remove only
+// that global preload after install; test-specific settings remain untouched.
+const PREPARE_PRODUCTION_BUNFIG =
+  "sed -i '/^preload = .*storage\\/framework\\/defaults\\/resources\\/plugins\\/preloader\\.ts/d' bunfig.toml"
+
 /**
  * Files that belong to a developer checkout or to mutable host state, never to
  * an immutable production release. In particular, shipping database/*.sqlite
@@ -136,6 +142,7 @@ export const tsCloud: TsCloudConfig = {
       preStart: [
         LINK_ENV_KEYS,
         INSTALL_DEPS,
+        PREPARE_PRODUCTION_BUNFIG,
         'mkdir -p storage/framework/runtime/production',
         'bun build --production --target=bun --packages=external app/ProductionServer.ts --outfile storage/framework/runtime/production/serve.js',
         // The database lives OUTSIDE the release, so create its directory
@@ -172,6 +179,7 @@ export const tsCloud: TsCloudConfig = {
       preStart: [
         LINK_ENV_KEYS,
         INSTALL_DEPS,
+        PREPARE_PRODUCTION_BUNFIG,
         'mkdir -p storage/framework/runtime/production',
         'bun build --production --target=bun --packages=external node_modules/@stacksjs/actions/dist/serve/api.js --outfile storage/framework/runtime/production/api.js',
         'mkdir -p /var/www/wildloop-shared/database',
@@ -208,6 +216,7 @@ export const tsCloud: TsCloudConfig = {
       preStart: [
         LINK_ENV_KEYS,
         INSTALL_DEPS,
+        PREPARE_PRODUCTION_BUNFIG,
         'mkdir -p storage/framework/runtime/production',
         'bun build --production --target=bun --packages=external app/TrailIngestWorker.ts --outfile storage/framework/runtime/production/ingest.js',
         'mkdir -p /var/www/wildloop-shared/database',
