@@ -75,6 +75,31 @@ const ENSURE_INSTALL_BUN = `test -x ${INSTALL_BUN} || (mkdir -p /var/www/wildloo
 
 const INSTALL_DEPS = `${INSTALL_BUN} install --frozen-lockfile`
 
+/**
+ * Files that belong to a developer checkout or to mutable host state, never to
+ * an immutable production release. In particular, shipping database/*.sqlite
+ * copied a 191 MB local catalog into every site tarball even though all three
+ * services use SHARED_DATABASE on the server. Keeping this list shared also
+ * guarantees main, api, and ingest are built from the same source boundary.
+ */
+const SOURCE_RELEASE_EXCLUDES = [
+  '.claude',
+  '.codex',
+  '.git',
+  '.env',
+  '.env.keys',
+  'coverage',
+  'database/*.sqlite',
+  'database/*.sqlite-*',
+  'dist',
+  'node_modules',
+  'pantry',
+  'storage/cloud',
+  'storage/framework',
+  'storage/logs',
+  'storage/screenshots',
+]
+
 export const tsCloud: TsCloudConfig = {
   project: {
     name: 'WildLoop',
@@ -118,6 +143,7 @@ export const tsCloud: TsCloudConfig = {
     // crash-looped on `ROOT_DIR=$(...)` before it ever bound a port.
     main: {
       root: '.',
+      exclude: SOURCE_RELEASE_EXCLUDES,
       path: '/',
       domain: 'wildloop.org',
       start: 'bun storage/framework/runtime/production/serve.js',
@@ -158,6 +184,7 @@ export const tsCloud: TsCloudConfig = {
     // shared and a 0.0.0.0 bind would expose this API to every neighbour.
     api: {
       root: '.',
+      exclude: SOURCE_RELEASE_EXCLUDES,
       start: 'bun storage/framework/runtime/production/api.js',
       port: 3050,
       preStart: [
@@ -193,6 +220,7 @@ export const tsCloud: TsCloudConfig = {
     // which is the only practical way to check on a job this long.
     ingest: {
       root: '.',
+      exclude: SOURCE_RELEASE_EXCLUDES,
       start: 'bun storage/framework/runtime/production/ingest.js',
       port: 3051,
       preStart: [
