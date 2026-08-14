@@ -110,9 +110,12 @@
     catch {
       if (token !== searchToken)
         return
+      const fallback = offlineResults()
       searchFailed.set(true)
-      results.set([])
-      matchCount.set(0)
+      results.set(fallback)
+      routes.set(wl?.trailRoutes() ?? {})
+      matchCount.set(fallback.length)
+      catalogError.set('Live trail search is unavailable offline.')
     }
     finally {
       if (token === searchToken)
@@ -132,6 +135,17 @@
     if (debounce)
       clearTimeout(debounce)
     debounce = setTimeout(() => runSearch(), 250)
+  }
+
+  /** Keep discovery useful when the native shell has fallen back offline. */
+  function offlineResults() {
+    const term = search().trim().toLowerCase()
+    return (wl?.trails() ?? []).filter((trail: any) => {
+      const matchesText = !term || `${trail.name} ${trail.location}`.toLowerCase().includes(term)
+      const matchesDifficulty = difficulty() === 'all' || trail.difficulty === difficulty()
+      const matchesRoute = routeType() === 'all' || trail.routeType === routeType()
+      return matchesText && matchesDifficulty && matchesRoute
+    })
   }
 
   function selectState(code: string) {
