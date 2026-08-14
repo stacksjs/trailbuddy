@@ -29,7 +29,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CRAFT_REVISION: 182e42a965fe29fd88c71dc3632636fb7c4e69be
+  CRAFT_REVISION: 33480239c59ffbf1b9aa7cf744ed5f91493c7a73
   MAESTRO_SHA256: b3e561161904fb391875ca5834d5b22cf0b01c052dd1b408ad83e30d8f8951b3
   MAESTRO_VERSION: cli-2.8.0
 
@@ -119,7 +119,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
-          target: google_apis
+          target: default
           arch: x86_64
           profile: pixel_7
           disable-animations: true
