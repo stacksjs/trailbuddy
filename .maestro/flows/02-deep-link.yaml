@@ -9,6 +9,9 @@ tags:
     permissions:
       all: allow
 - openLink: wildloop://record
+- tapOn:
+    text: Open
+    optional: true
 - extendedWaitUntil:
     visible: Capture Run
     timeout: 10000

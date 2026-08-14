@@ -1,5 +1,5 @@
 appId: ${APP_ID}
-name: Bundled cold start with Android offline enforcement
+name: Bundled cold start with offline enforcement
 tags:
   - mobile
   - offline
