@@ -1,7 +1,20 @@
-import { FitDecoder, FitParser } from 'ts-watches/fit'
-
 export const MAX_ACTIVITY_FILE_BYTES = 25 * 1024 * 1024
 export const MAX_ACTIVITY_TRACK_POINTS = 100_000
+
+const FIT_EPOCH_MS = Date.UTC(1989, 11, 31)
+const FIT_RECORD_MESSAGE = 20
+
+interface FitFieldDefinition {
+  number: number
+  size: number
+  type: number
+}
+
+interface FitMessageDefinition {
+  fields: FitFieldDefinition[]
+  globalNumber: number
+  littleEndian: boolean
+}
 
 export interface ImportedTrackSample {
   lat: number
@@ -115,23 +128,117 @@ export function parseTcxActivity(text: string, fallbackName = 'TCX import'): Imp
 }
 
 export function parseFitActivity(bytes: ArrayBuffer, fallbackName = 'FIT import'): ImportedActivityFile {
-  const parser = new FitParser(bytes)
-  const activity = new FitDecoder(parser.parse()).decodeActivity()
-  if (!activity)
-    throw new Error('The FIT file does not contain a supported activity session')
+  const data = new DataView(bytes)
+  if (data.byteLength < 12) throw new Error('The FIT file is too small')
+  const headerSize = data.getUint8(0)
+  if (headerSize < 12 || headerSize > data.byteLength) throw new Error('The FIT file header is invalid')
+  const signature = String.fromCharCode(...new Uint8Array(bytes, 8, 4))
+  if (signature !== '.FIT') throw new Error('The file is not a FIT activity')
 
-  const samples = activity.records
-    .filter(record => record.position)
-    .map(record => ({
-      lat: record.position!.lat,
-      lng: record.position!.lng,
-      time: timeValue(record.timestamp),
-      altitude: numberBetween(record.position!.altitude ?? record.altitude, -1000, 10000),
+  const dataEnd = headerSize + data.getUint32(4, true)
+  if (dataEnd > data.byteLength) throw new Error('The FIT file is truncated')
+
+  const definitions = new Map<number, FitMessageDefinition>()
+  const samples: ImportedTrackSample[] = []
+  let offset = headerSize
+  let lastTimestamp: number | null = null
+
+  const requireBytes = (count: number) => {
+    if (offset + count > dataEnd) throw new Error('The FIT file contains a truncated record')
+  }
+  const readField = (field: FitFieldDefinition, littleEndian: boolean): number | null => {
+    requireBytes(field.size)
+    const start = offset
+    offset += field.size
+    const type = field.type & 0x1F
+    if (type === 0 || type === 2 || type === 10 || type === 13) {
+      const value = data.getUint8(start)
+      return value === (type === 10 ? 0 : 0xFF) ? null : value
+    }
+    if (type === 1) {
+      const value = data.getInt8(start)
+      return value === 0x7F ? null : value
+    }
+    if ((type === 3 || type === 4 || type === 11) && field.size >= 2) {
+      const signed = type === 3
+      const value = signed ? data.getInt16(start, littleEndian) : data.getUint16(start, littleEndian)
+      const invalid = type === 11 ? 0 : signed ? 0x7FFF : 0xFFFF
+      return value === invalid ? null : value
+    }
+    if ((type === 5 || type === 6 || type === 12) && field.size >= 4) {
+      const signed = type === 5
+      const value = signed ? data.getInt32(start, littleEndian) : data.getUint32(start, littleEndian)
+      const invalid = type === 12 ? 0 : signed ? 0x7FFFFFFF : 0xFFFFFFFF
+      return value === invalid ? null : value
+    }
+    return null
+  }
+
+  while (offset < dataEnd) {
+    requireBytes(1)
+    const recordHeader = data.getUint8(offset++)
+    const compressed = (recordHeader & 0x80) !== 0
+    const definition = !compressed && (recordHeader & 0x40) !== 0
+    const localNumber = compressed ? (recordHeader >> 5) & 0x03 : recordHeader & 0x0F
+
+    if (definition) {
+      requireBytes(5)
+      offset++ // reserved
+      const littleEndian = data.getUint8(offset++) === 0
+      const globalNumber = data.getUint16(offset, littleEndian)
+      offset += 2
+      const fieldCount = data.getUint8(offset++)
+      const fields: FitFieldDefinition[] = []
+      requireBytes(fieldCount * 3)
+      for (let index = 0; index < fieldCount; index++) {
+        fields.push({
+          number: data.getUint8(offset++),
+          size: data.getUint8(offset++),
+          type: data.getUint8(offset++),
+        })
+      }
+      if ((recordHeader & 0x20) !== 0) {
+        requireBytes(1)
+        const developerFieldCount = data.getUint8(offset++)
+        requireBytes(developerFieldCount * 3)
+        for (let index = 0; index < developerFieldCount; index++) {
+          fields.push({ number: data.getUint8(offset++), size: data.getUint8(offset++), type: 13 })
+        }
+      }
+      definitions.set(localNumber, { fields, globalNumber, littleEndian })
+      continue
+    }
+
+    const message = definitions.get(localNumber)
+    if (!message) throw new Error('The FIT file references an unknown message definition')
+    const values = new Map<number, number>()
+    for (const field of message.fields) {
+      const value = readField(field, message.littleEndian)
+      if (value !== null) values.set(field.number, value)
+    }
+    let timestamp = values.get(253) ?? null
+    if (compressed && lastTimestamp !== null) {
+      const timeOffset = recordHeader & 0x1F
+      timestamp = (lastTimestamp & ~0x1F) + timeOffset
+      if (timestamp <= lastTimestamp) timestamp += 0x20
+    }
+    if (timestamp !== null) lastTimestamp = timestamp
+    if (message.globalNumber !== FIT_RECORD_MESSAGE) continue
+
+    const latitude = values.get(0)
+    const longitude = values.get(1)
+    if (latitude === undefined || longitude === undefined) continue
+    const altitudeValue = values.get(78) ?? values.get(2)
+    addSample(samples, {
+      lat: latitude * (180 / 2 ** 31),
+      lng: longitude * (180 / 2 ** 31),
+      time: timestamp === null ? null : FIT_EPOCH_MS + timestamp * 1000,
+      altitude: altitudeValue === undefined ? null : altitudeValue / 5 - 500,
       accuracy: null,
-    }))
-  if (samples.length > MAX_ACTIVITY_TRACK_POINTS)
-    throw new Error(`Activity files may contain at most ${MAX_ACTIVITY_TRACK_POINTS.toLocaleString()} track points`)
-  return summarize(activity.name || fallbackName, samples)
+    })
+  }
+
+  return summarize(fallbackName, samples)
 }
 
 export async function parseActivityFile(file: File): Promise<ImportedActivityFile> {

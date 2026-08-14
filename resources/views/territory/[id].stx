@@ -71,7 +71,7 @@
       <div class="grid lg:grid-cols-3 gap-8">
         <div class="lg:col-span-2 space-y-8">
           <div class="card p-0 overflow-hidden">
-            <div id="territory-detail-map" class="h-80"></div>
+            <div id="territory-detail-map" data-stx-ignore class="h-80"></div>
           </div>
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">

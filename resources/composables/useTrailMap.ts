@@ -47,6 +47,11 @@ export interface TrailMapHandle {
   fitPoints: (points: LatLng[], padding?: [number, number]) => void
 }
 
+interface TrailMapElement extends HTMLElement {
+  _tsMap?: TsMapType
+  _tsMapHandle?: TrailMapHandle
+}
+
 export function trailDifficultyColor(difficulty: string): string {
   if (difficulty === 'hard') return '#dc2626'
   if (difficulty === 'moderate') return '#f59e0b'
@@ -63,13 +68,18 @@ export async function createTrailMap(
   container: HTMLElement | string,
   options?: { center?: LatLng, zoom?: number, scrollWheelZoom?: boolean },
 ): Promise<TrailMapHandle | null> {
-  const el = resolveElement(container)
-  if (!el)
-    return null
-
   try {
     const { TsMap, tileLayer, Polyline } = await ensureTsMaps()
-    const prev = (el as HTMLElement & { _tsMap?: TsMapType })._tsMap
+    // Loading the map chunk yields to STX hydration. Resolve the target after
+    // that await so a structural render cannot leave us mounting into a
+    // detached copy of the original container.
+    const el = resolveElement(container)
+    if (!el?.isConnected)
+      return null
+    const mapElement = el as TrailMapElement
+    if (mapElement._tsMapHandle)
+      return mapElement._tsMapHandle
+    const prev = mapElement._tsMap
     if (prev) {
       try { prev.remove() }
       catch { /* noop */ }
@@ -81,6 +91,7 @@ export async function createTrailMap(
       zoom: options?.zoom ?? 4,
       scrollWheelZoom: options?.scrollWheelZoom ?? true,
     })
+    mapElement._tsMap = map
 
     tileLayer(OSM_TILES, {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -89,14 +100,15 @@ export async function createTrailMap(
       offlineCache: true,
     }).addTo(map)
 
-    ;(el as HTMLElement & { _tsMap?: TsMapType })._tsMap = map
-
-    return {
+    const handle: TrailMapHandle = {
       map,
       destroy() {
         try { map.remove() }
         catch { /* noop */ }
-        ;(el as HTMLElement & { _tsMap?: TsMapType })._tsMap = undefined
+        if (mapElement._tsMap === map) {
+          mapElement._tsMap = undefined
+          mapElement._tsMapHandle = undefined
+        }
       },
       fitPoints(points, padding = [32, 32]) {
         if (points.length < 1)
@@ -110,6 +122,8 @@ export async function createTrailMap(
         map.removeLayer(guide)
       },
     }
+    mapElement._tsMapHandle = handle
+    return handle
   }
   catch (err) {
     console.error('[trail-map] init failed:', err)
@@ -125,7 +139,7 @@ export function runWhenMapReady(
 ): () => void {
   let attempts = 0
   const max = options?.maxAttempts ?? 24
-  const delay = options?.delayMs ?? 50
+  const delay = options?.delayMs ?? 150
   let timer: ReturnType<typeof setTimeout> | null = null
   let cancelled = false
 

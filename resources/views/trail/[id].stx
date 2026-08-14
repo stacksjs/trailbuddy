@@ -186,7 +186,7 @@
 
           <!-- Map -->
           <div class="card p-0 overflow-hidden">
-            <div id="trail-map" class="trail-map-panel ts-map-container"></div>
+            <div id="trail-map" data-stx-ignore class="trail-map-panel ts-map-container"></div>
           </div>
 
           <!-- Segments -->

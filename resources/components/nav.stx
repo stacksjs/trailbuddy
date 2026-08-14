@@ -1,13 +1,6 @@
 <script client>
   import { initializeAuthSession, token } from '../assets/scripts/auth'
 
-  if (typeof navLinks === 'undefined') var navLinks = state([
-    { to: '/trails', label: 'Trails' },
-    { to: '/feed', label: 'Feed' },
-    { to: '/territories', label: 'Territory' },
-    { to: '/leaderboard', label: 'Leaderboard' },
-    { to: '/clubs', label: 'Clubs' },
-  ])
   const mobileOpen = state(false)
 
   // Signed-in state is the presence of the bearer token the browser auth
@@ -64,11 +57,11 @@
         </StxLink>
 
         <div class="hidden md:flex gap-1 items-center">
-          <StxLink :for="link in navLinks" :key="link.to"
-            x-to="link.to"
-            activeClass="nav-active"
-            class="px-3 py-2 font-medium text-slate-500 text-sm dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors"
-          >{{ link.label }}</StxLink>
+          <StxLink to="/trails" activeClass="nav-active" class="px-3 py-2 font-medium text-slate-500 text-sm dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors">Trails</StxLink>
+          <StxLink to="/feed" activeClass="nav-active" class="px-3 py-2 font-medium text-slate-500 text-sm dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors">Feed</StxLink>
+          <StxLink to="/territories" activeClass="nav-active" class="px-3 py-2 font-medium text-slate-500 text-sm dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors">Territory</StxLink>
+          <StxLink to="/leaderboard" activeClass="nav-active" class="px-3 py-2 font-medium text-slate-500 text-sm dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors">Leaderboard</StxLink>
+          <StxLink to="/clubs" activeClass="nav-active" class="px-3 py-2 font-medium text-slate-500 text-sm dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded transition-colors">Clubs</StxLink>
         </div>
       </div>
 
@@ -111,10 +104,11 @@
     </div>
 
     <div :show="mobileOpen()" x-cloak class="md:hidden pb-4 space-y-1">
-      <StxLink :for="link in navLinks" :key="link.to"
-        x-to="link.to"
-        class="block px-3 py-2 text-slate-500 text-sm dark:text-slate-400 rounded"
-      >{{ link.label }}</StxLink>
+      <StxLink to="/trails" class="block px-3 py-2 text-slate-500 text-sm dark:text-slate-400 rounded">Trails</StxLink>
+      <StxLink to="/feed" class="block px-3 py-2 text-slate-500 text-sm dark:text-slate-400 rounded">Feed</StxLink>
+      <StxLink to="/territories" class="block px-3 py-2 text-slate-500 text-sm dark:text-slate-400 rounded">Territory</StxLink>
+      <StxLink to="/leaderboard" class="block px-3 py-2 text-slate-500 text-sm dark:text-slate-400 rounded">Leaderboard</StxLink>
+      <StxLink to="/clubs" class="block px-3 py-2 text-slate-500 text-sm dark:text-slate-400 rounded">Clubs</StxLink>
       <div :if="!signedIn()" class="pt-2 space-y-1">
         <StxLink to="/login" class="block px-3 py-2 text-slate-600 text-sm dark:text-slate-400 rounded">Log in</StxLink>
         <StxLink to="/register" class="block mt-1 px-4 py-2.5 text-center font-semibold text-sm text-white bg-emerald-600 rounded-full">Sign up</StxLink>

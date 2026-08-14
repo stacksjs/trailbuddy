@@ -357,7 +357,7 @@
       </div>
 
       <div class="lg:col-span-3 card p-0 overflow-hidden">
-        <div id="trails-explore-map" class="trail-map-panel ts-map-container"></div>
+        <div id="trails-explore-map" data-stx-ignore class="trail-map-panel ts-map-container"></div>
       </div>
     </div>
 

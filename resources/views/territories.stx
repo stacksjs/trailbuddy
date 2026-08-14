@@ -45,7 +45,7 @@
   <!-- Map -->
   <section class="-mt-8 mx-auto px-4 py-12 sm:px-6 lg:px-8 max-w-7xl">
     <div class="card p-0 overflow-hidden">
-      <div id="territories-map" class="trail-map-panel ts-map-container"></div>
+      <div id="territories-map" data-stx-ignore class="trail-map-panel ts-map-container"></div>
     </div>
   </section>
 
