@@ -1,6 +1,12 @@
 import type { MobileConfig } from '../storage/framework/core/types/src/mobile'
 
 const envVars = typeof Bun !== 'undefined' ? Bun.env : process.env
+const mobileContent = envVars.MOBILE_E2E === '1'
+  ? { webAssets: 'dist' }
+  : {
+      url: envVars.MOBILE_URL ?? 'https://wildloop.org',
+      fallbackWebAssets: 'dist',
+    }
 
 export default {
   ios: {
@@ -11,8 +17,7 @@ export default {
     deploymentTarget: '16.0',
     watchDeploymentTarget: '9.0',
     teamId: envVars.APPLE_TEAM_ID,
-    url: envVars.MOBILE_URL ?? 'https://wildloop.org',
-    fallbackWebAssets: 'dist',
+    ...mobileContent,
     trustedOrigins: ['https://wildloop.org'],
     associatedDomains: ['applinks:wildloop.org'],
     appIcon: 'public/images/app/wildloop-app-icon.png',
@@ -66,8 +71,7 @@ export default {
     versionCode: Number(envVars.ANDROID_VERSION_CODE ?? '1'),
     minSdk: 26,
     targetSdk: 35,
-    url: envVars.MOBILE_URL ?? 'https://wildloop.org',
-    fallbackWebAssets: 'dist',
+    ...mobileContent,
     trustedOrigins: ['https://wildloop.org'],
     appIcon: 'public/images/app/wildloop-app-icon.png',
     googleServicesFile: envVars.ANDROID_GOOGLE_SERVICES_FILE,

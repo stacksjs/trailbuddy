@@ -99,6 +99,8 @@
     "types:check": "bun tsc --noEmit",
     "types:fix": "./buddy types:fix",
     "test": "./buddy test",
+    "test:e2e:android": "bun scripts/run-mobile-e2e.ts android",
+    "test:e2e:ios": "bun scripts/run-mobile-e2e.ts ios",
     "test:ui": "./buddy test:ui",
     "test:coverage": "./buddy test:coverage",
     "test:types": "./buddy test:types",
