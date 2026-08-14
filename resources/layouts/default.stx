@@ -17,6 +17,7 @@
 </script>
 
 <NativeAppShell tabBar>
+  <NativeNetworkBanner />
   @include('../components/mobile-header')
   <div class="hidden md:block">
     @include('../components/nav')
