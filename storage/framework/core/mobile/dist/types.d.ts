@@ -163,6 +163,40 @@ export declare interface PushNotificationsApi {
   onToken: (callback: (token: string) => void) => () => void
   onNotification: (callback: (data: Record<string, unknown>) => void) => () => void
 }
+export declare interface HealthDataOptions {
+  startDate?: number
+  endDate?: number
+}
+export declare interface HealthDataResult {
+  value: number
+  unit: string
+}
+export declare interface HealthApi {
+  requestAuthorization: (types: HealthDataType[]) => Promise<boolean>
+  getData: (type: HealthDataType, options?: HealthDataOptions) => Promise<HealthDataResult>
+}
+export declare interface LiveActivityState {
+  status?: string
+  distanceMeters?: number
+  durationSeconds?: number
+  progress?: number
+}
+export declare interface LiveActivityOptions extends LiveActivityState {
+  activityId: string
+  title: string
+}
+export declare interface LiveActivitiesApi {
+  start: (options: LiveActivityOptions) => Promise<{ id: string }>
+  update: (state: LiveActivityState) => Promise<void>
+  end: () => Promise<void>
+}
+export declare interface WatchConnectivityApi {
+  send: (message: Record<string, unknown>) => Promise<Record<string, unknown>>
+  updateContext: (context: Record<string, unknown>) => Promise<void>
+  isReachable: () => Promise<boolean>
+  onMessage: (callback: (message: Record<string, unknown>) => void) => () => void
+  onReachabilityChange: (callback: (reachable: boolean) => void) => () => void
+}
 export type HapticStyle = 'light' | 'medium' | 'heavy' | 'soft' | 'rigid';
 export type HapticNotificationType = 'success' | 'warning' | 'error';
 export type PermissionType = | 'camera'
@@ -180,3 +214,4 @@ export type PermissionType = | 'camera'
 export type PermissionStatus = 'granted' | 'denied' | 'undetermined' | 'restricted';
 export type BiometricType = 'faceId' | 'touchId' | 'fingerprint' | 'face' | 'iris';
 export type AppState = 'active' | 'inactive' | 'background';
+export type HealthDataType = 'steps' | 'heartRate' | 'activeEnergy' | 'distance';

@@ -29,6 +29,7 @@ export interface MobileCapabilities {
   bluetooth?: boolean
   nfc?: boolean
   healthKit?: boolean
+  liveActivities?: boolean
   backgroundTasks?: boolean
   screenCapture?: boolean
   pdfViewer?: boolean
@@ -93,6 +94,8 @@ export interface AndroidMobileConfig {
   backgroundColor?: string
   trustedOrigins?: string[]
   appIcon?: string
+  /** Path to Firebase's google-services.json, required for production Android push registration. */
+  googleServicesFile?: string
   capabilities?: MobileCapabilities
 }
 

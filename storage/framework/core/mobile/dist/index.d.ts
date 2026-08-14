@@ -20,6 +20,9 @@ export declare const deepLinks: DeepLinksApi;
 export declare const keepAwake: KeepAwakeApi;
 export declare const network: NetworkApi;
 export declare const pushNotifications: PushNotificationsApi;
+export declare const health: HealthApi;
+export declare const liveActivities: LiveActivitiesApi;
+export declare const watchConnectivity: WatchConnectivityApi;
 export declare function isNativeMobile(): boolean;
 export declare function onMobileReady(callback: (event: CraftReadyEvent) => void): () => void;
 export declare function withNativeFeedback<T>(action: () => T | Promise<T>): Promise<T>;
@@ -207,4 +210,39 @@ export declare interface PushNotificationsApi {
   register: () => Promise<string>
   onToken: (callback: (token: string) => void) => () => void
   onNotification: (callback: (data: Record<string, unknown>) => void) => () => void
+}
+export type HealthDataType = 'steps' | 'heartRate' | 'activeEnergy' | 'distance';
+export declare interface HealthDataOptions {
+  startDate?: number
+  endDate?: number
+}
+export declare interface HealthDataResult {
+  value: number
+  unit: string
+}
+export declare interface HealthApi {
+  requestAuthorization: (types: HealthDataType[]) => Promise<boolean>
+  getData: (type: HealthDataType, options?: HealthDataOptions) => Promise<HealthDataResult>
+}
+export declare interface LiveActivityState {
+  status?: string
+  distanceMeters?: number
+  durationSeconds?: number
+  progress?: number
+}
+export declare interface LiveActivityOptions extends LiveActivityState {
+  activityId: string
+  title: string
+}
+export declare interface LiveActivitiesApi {
+  start: (options: LiveActivityOptions) => Promise<{ id: string }>
+  update: (state: LiveActivityState) => Promise<void>
+  end: () => Promise<void>
+}
+export declare interface WatchConnectivityApi {
+  send: (message: Record<string, unknown>) => Promise<Record<string, unknown>>
+  updateContext: (context: Record<string, unknown>) => Promise<void>
+  isReachable: () => Promise<boolean>
+  onMessage: (callback: (message: Record<string, unknown>) => void) => () => void
+  onReachabilityChange: (callback: (reachable: boolean) => void) => () => void
 }

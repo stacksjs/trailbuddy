@@ -50,6 +50,7 @@ const CAPABILITY_KEYS = {
   bluetooth: 'enableBluetooth',
   nfc: 'enableNFC',
   healthKit: 'enableHealthKit',
+  liveActivities: 'enableLiveActivities',
   backgroundTasks: 'enableBackgroundTasks',
   screenCapture: 'enableScreenCapture',
   pdfViewer: 'enablePDFViewer',
@@ -90,12 +91,12 @@ export function toCraftIosConfig(config: IosMobileConfig): CraftIosConfig {
     privacy: config.privacy,
     orientations: config.orientations,
   }
-  if (config.capabilities?.backgroundLocation) craft.enableGeolocation = true
 
   for (const [key, nativeKey] of Object.entries(CAPABILITY_KEYS)) {
     const enabled = config.capabilities?.[key as keyof typeof CAPABILITY_KEYS]
     if (enabled !== undefined) craft[nativeKey] = enabled
   }
+  if (config.capabilities?.backgroundLocation) craft.enableGeolocation = true
 
   return craft
 }
