@@ -29,6 +29,7 @@ jobs:
   source-projects:
     env:
       ANDROID_GOOGLE_SERVICES_JSON: ${{ secrets.ANDROID_GOOGLE_SERVICES_JSON }}
+      CRAFT_REVISION: 10b616655f1c27e5b2a44090c87e201d5892a205
     strategy:
       fail-fast: false
       matrix:
@@ -63,6 +64,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           repository: home-lang/craft
+          ref: ${{ env.CRAFT_REVISION }}
           path: .craft
       - name: Configure Firebase
         if: matrix.platform == 'android' && env.ANDROID_GOOGLE_SERVICES_JSON != ''
@@ -92,4 +94,4 @@ jobs:
         working-directory: storage/framework/mobile/android
         run: ./gradlew assembleRelease
       - name: Verify provenance
-        run: bun -e "JSON.parse(await Bun.file('storage/framework/mobile/${{ matrix.platform }}/stacks-mobile.json').text())"
+        run: bun -e "const manifest = JSON.parse(await Bun.file('storage/framework/mobile/${{ matrix.platform }}/stacks-mobile.json').text()); if (manifest.builder?.revision !== process.env.CRAFT_REVISION) throw new Error('Craft revision mismatch')"
