@@ -73,6 +73,7 @@ export default {
     targetSdk: 35,
     ...mobileContent,
     trustedOrigins: ['https://wildloop.org'],
+    urlSchemes: ['wildloop'],
     appIcon: 'public/images/app/wildloop-app-icon.png',
     googleServicesFile: envVars.ANDROID_GOOGLE_SERVICES_FILE,
     backgroundColor: '#003c2f',

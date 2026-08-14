@@ -16,6 +16,7 @@ export declare const permissions: PermissionsApi;
 export declare const secureStorage: SecureStorageApi;
 export declare const share: ShareApi;
 export declare const appReview: AppReviewApi;
+export declare function normalizeDeepLinkURL(value: unknown): string | null;
 export declare const deepLinks: DeepLinksApi;
 export declare const keepAwake: KeepAwakeApi;
 export declare const network: NetworkApi;
