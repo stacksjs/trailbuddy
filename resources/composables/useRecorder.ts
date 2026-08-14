@@ -1,5 +1,5 @@
 import { derived, onDestroy, onMount, state, useStore } from 'stx'
-import { appReview, haptics, isNativeMobile, keepAwake, lifecycle, location } from '@stacksjs/mobile'
+import { appReview, haptics, isNativeMobile, keepAwake, lifecycle, liveActivities, location } from '@stacksjs/mobile'
 import type { CircleMarker as CircleMarkerType } from 'ts-maps'
 import type { Polygon as PolygonType } from 'ts-maps'
 import type { Polyline as PolylineType } from 'ts-maps'
@@ -201,6 +201,8 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     lastPanAt: number
     checkpointPending: boolean
     lifecycleCleanup: (() => void) | null
+    liveActivityStarted: boolean
+    lastLiveActivityUpdateAt: number
   } = {
     mapHandle: null,
     map: null,
@@ -219,6 +221,53 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     lastPanAt: 0,
     checkpointPending: false,
     lifecycleCleanup: null,
+    liveActivityStarted: false,
+    lastLiveActivityUpdateAt: 0,
+  }
+
+  async function startNativeLiveActivity(): Promise<void> {
+    if (!isNativeMobile() || mode() !== 'manual') return
+    try {
+      await liveActivities.start({
+        activityId: crypto.randomUUID(),
+        title: activityType(),
+        status: 'Recording',
+        distanceMeters: distance() * 1609.344,
+        durationSeconds: elapsed(),
+        progress: 0,
+      })
+      refs.liveActivityStarted = true
+      refs.lastLiveActivityUpdateAt = Date.now()
+    }
+    catch {
+      refs.liveActivityStarted = false
+    }
+  }
+
+  async function updateNativeLiveActivity(force = false): Promise<void> {
+    if (!isNativeMobile() || mode() !== 'manual') return
+    const now = Date.now()
+    if (!force && now - refs.lastLiveActivityUpdateAt < 5_000) return
+    try {
+      await liveActivities.update({
+        status: paused() ? 'Paused' : 'Recording',
+        distanceMeters: distance() * 1609.344,
+        durationSeconds: elapsed(),
+        progress: 0,
+      })
+      refs.liveActivityStarted = true
+      refs.lastLiveActivityUpdateAt = now
+    }
+    catch {
+      if (!refs.liveActivityStarted) await startNativeLiveActivity()
+    }
+  }
+
+  async function endNativeLiveActivity(): Promise<void> {
+    if (!isNativeMobile() || mode() !== 'manual') return
+    await liveActivities.end().catch(() => undefined)
+    refs.liveActivityStarted = false
+    refs.lastLiveActivityUpdateAt = 0
   }
 
   function paintTerritory(territoryId: number, mine: boolean, progress = 0) {
@@ -406,6 +455,8 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     refs.samples = []
     refs.startedAtMs = null
     refs.lastPanAt = 0
+    refs.liveActivityStarted = false
+    refs.lastLiveActivityUpdateAt = 0
     if (refs.routeLine && refs.map) {
       refs.map.removeLayer(refs.routeLine)
       refs.routeLine = null
@@ -419,6 +470,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
   function startTicker() {
     refs.elapsedTimer = setInterval(() => {
       if (!paused() && recording()) elapsed.set(elapsed() + 1)
+      if (recording()) void updateNativeLiveActivity()
     }, 1000)
   }
 
@@ -491,6 +543,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
       refs.map!.setView([startLat, startLng], 17)
       startTicker()
       void keepAwake.enable().catch(() => undefined)
+      void startNativeLiveActivity()
       refs.watchId = location.watchPosition(
         (position) => {
           gpsStatus.set('active')
@@ -535,6 +588,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     paused.set(shouldPause)
     void haptics.impact(paused() ? 'soft' : 'medium')
     await checkpointRecording()
+    await updateNativeLiveActivity(true)
   }
 
   interface RunMetrics {
@@ -627,6 +681,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     void haptics.notification('success')
     clearTimers()
     void keepAwake.disable().catch(() => undefined)
+    await endNativeLiveActivity()
     if (distance() > 0 && wl) {
       const trail = mode() === 'simulated' ? wl.findTrail(selectedTrailId()) : null
 
@@ -734,6 +789,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     if (lastSample) refs.map?.setView([lastSample.lat, lastSample.lng], 17)
     startTicker()
     void keepAwake.enable().catch(() => undefined)
+    await updateNativeLiveActivity(true)
     saveStatus.set('queued')
     saveMessage.set('Recovered your in-progress activity')
   }

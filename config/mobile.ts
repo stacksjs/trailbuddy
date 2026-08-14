@@ -47,7 +47,9 @@ export default {
       filePicker: true,
       geolocation: true,
       haptics: true,
+      healthKit: true,
       keepAwake: true,
+      liveActivities: true,
       localDatabase: true,
       orientationLock: true,
       pushNotifications: true,
@@ -66,6 +68,7 @@ export default {
     fallbackWebAssets: 'dist',
     trustedOrigins: ['https://wildloop.org'],
     appIcon: 'public/images/app/wildloop-app-icon.png',
+    googleServicesFile: envVars.ANDROID_GOOGLE_SERVICES_FILE,
     backgroundColor: '#003c2f',
     darkMode: true,
     capabilities: {
