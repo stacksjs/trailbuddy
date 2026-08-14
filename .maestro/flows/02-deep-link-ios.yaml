@@ -20,15 +20,10 @@ tags:
 - assertVisible:
     text: Start recording
     enabled: true
-- waitForAnimationToEnd:
-    timeout: 5000
-- takeScreenshot: deep-link-controls
-- scrollUntilVisible:
-    element:
-      text: Capture Run
-    direction: UP
+- tapOn: "^Feed$"
+- assertVisible: Activity Feed
+- tapOn: "^Record$"
+- extendedWaitUntil:
+    visible: Capture Run
     timeout: 10000
-- waitForAnimationToEnd:
-    timeout: 5000
-- assertVisible: Capture Run
 - takeScreenshot: deep-link
