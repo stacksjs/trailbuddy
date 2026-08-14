@@ -1,5 +1,5 @@
 import { derived, onDestroy, onMount, state, useStore } from 'stx'
-import { appReview, haptics, isNativeMobile, keepAwake, lifecycle, liveActivities, location } from '@stacksjs/mobile'
+import { appReview, device, haptics, health, isNativeMobile, keepAwake, lifecycle, liveActivities, location, secureStorage, watchConnectivity } from '@stacksjs/mobile'
 import type { CircleMarker as CircleMarkerType } from 'ts-maps'
 import type { Polygon as PolygonType } from 'ts-maps'
 import type { Polyline as PolylineType } from 'ts-maps'
@@ -201,6 +201,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     lastPanAt: number
     checkpointPending: boolean
     lifecycleCleanup: (() => void) | null
+    watchCleanup: (() => void) | null
     liveActivityStarted: boolean
     lastLiveActivityUpdateAt: number
   } = {
@@ -221,12 +222,13 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     lastPanAt: 0,
     checkpointPending: false,
     lifecycleCleanup: null,
+    watchCleanup: null,
     liveActivityStarted: false,
     lastLiveActivityUpdateAt: 0,
   }
 
   async function startNativeLiveActivity(): Promise<void> {
-    if (!isNativeMobile() || mode() !== 'manual') return
+    if (!isNativeMobile() || !device.isIOS() || mode() !== 'manual') return
     try {
       await liveActivities.start({
         activityId: crypto.randomUUID(),
@@ -245,7 +247,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
   }
 
   async function updateNativeLiveActivity(force = false): Promise<void> {
-    if (!isNativeMobile() || mode() !== 'manual') return
+    if (!isNativeMobile() || !device.isIOS() || mode() !== 'manual') return
     const now = Date.now()
     if (!force && now - refs.lastLiveActivityUpdateAt < 5_000) return
     try {
@@ -264,10 +266,53 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
   }
 
   async function endNativeLiveActivity(): Promise<void> {
-    if (!isNativeMobile() || mode() !== 'manual') return
+    if (!isNativeMobile() || !device.isIOS() || mode() !== 'manual') return
     await liveActivities.end().catch(() => undefined)
     refs.liveActivityStarted = false
     refs.lastLiveActivityUpdateAt = 0
+  }
+
+  function watchState(status?: string): Record<string, unknown> {
+    return {
+      recording: recording(),
+      paused: paused(),
+      distanceMeters: distance() * 1609.344,
+      durationSeconds: elapsed(),
+      status: status ?? (recording() ? paused() ? 'Paused' : 'Recording' : 'Ready'),
+    }
+  }
+
+  async function updateWatchState(status?: string): Promise<void> {
+    if (!isNativeMobile() || !device.isIOS()) return
+    await watchConnectivity.updateContext(watchState(status)).catch(() => undefined)
+  }
+
+  async function saveNativeWorkout(activityId: number | null, endedAt: number): Promise<void> {
+    if (!isNativeMobile() || mode() !== 'manual' || !refs.startedAtMs || refs.samples.length < 2) return
+    const connected = await secureStorage.get('wildloop_health_connected').catch(() => null)
+    if (connected !== 'true') return
+    const workoutTypes = {
+      'Trail Run': 'running',
+      'Hike': 'hiking',
+      'Walk': 'walking',
+      'Bike': 'cycling',
+    } as const
+    const calories = Math.max(1, Math.round(elapsed() / 60 * 10))
+    await health.saveWorkout({
+      activityId: `wildloop:${activityId ?? refs.startedAtMs}`,
+      type: workoutTypes[activityType()],
+      startDate: refs.startedAtMs,
+      endDate: endedAt,
+      distanceMeters: distance() * 1609.344,
+      activeEnergyCalories: calories,
+      locations: refs.samples.map(sample => ({
+        latitude: sample.lat,
+        longitude: sample.lng,
+        altitude: sample.eleFt == null ? undefined : sample.eleFt / METERS_TO_FEET,
+        accuracy: sample.accuracy ?? undefined,
+        timestamp: sample.t,
+      })),
+    })
   }
 
   function paintTerritory(territoryId: number, mine: boolean, progress = 0) {
@@ -470,7 +515,10 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
   function startTicker() {
     refs.elapsedTimer = setInterval(() => {
       if (!paused() && recording()) elapsed.set(elapsed() + 1)
-      if (recording()) void updateNativeLiveActivity()
+      if (recording()) {
+        void updateNativeLiveActivity()
+        void updateWatchState()
+      }
     }, 1000)
   }
 
@@ -544,6 +592,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
       startTicker()
       void keepAwake.enable().catch(() => undefined)
       void startNativeLiveActivity()
+      void updateWatchState('Recording')
       refs.watchId = location.watchPosition(
         (position) => {
           gpsStatus.set('active')
@@ -589,6 +638,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     void haptics.impact(paused() ? 'soft' : 'medium')
     await checkpointRecording()
     await updateNativeLiveActivity(true)
+    await updateWatchState(shouldPause ? 'Paused' : 'Recording')
   }
 
   interface RunMetrics {
@@ -659,6 +709,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
   }
 
   async function stop() {
+    const endedAt = Date.now()
     if (isNativeMobile() && mode() === 'manual') {
       try {
         const nativeResult = await location.stopRecording()
@@ -728,10 +779,12 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
         visibility: visibility(),
         hasGps: true,
       })
+      await saveNativeWorkout(activityId, endedAt).catch(error => console.error('native workout save failed:', error))
       if (activityId) void maybeRequestNativeReview()
     }
     await clearRecordingCheckpoint().catch(() => undefined)
     mode.set('idle')
+    await updateWatchState('Finished')
   }
 
   async function recoverRecording(): Promise<void> {
@@ -862,6 +915,16 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
       }
 
       await recoverRecording()
+      if (isNativeMobile() && device.isIOS()) {
+        refs.watchCleanup = watchConnectivity.onMessage((message) => {
+          if (message.type !== 'recording-control' || typeof message.action !== 'string') return
+          if (message.action === 'start' && !recording()) void startManual()
+          if (message.action === 'pause' && recording() && !paused()) void togglePause()
+          if (message.action === 'resume' && recording() && paused()) void togglePause()
+          if (message.action === 'finish' && recording()) void stop()
+        })
+        void updateWatchState()
+      }
       refs.lifecycleCleanup = lifecycle.onStateChange((appState) => {
         if (!recording()) return
         if (appState === 'background') void checkpointRecording()
@@ -879,6 +942,8 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     void keepAwake.disable().catch(() => undefined)
     refs.lifecycleCleanup?.()
     refs.lifecycleCleanup = null
+    refs.watchCleanup?.()
+    refs.watchCleanup = null
     if (refs.toastTimer) clearTimeout(refs.toastTimer)
     refs.mapHandle?.destroy()
     refs.mapHandle = null

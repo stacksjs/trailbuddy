@@ -27,10 +27,12 @@
   const homeRadiusMeters = state(500)
   const excludeHomeFromGame = state(true)
   const showPreciseTerritories = state(false)
-  const appleHealthAvailable = state(false)
-  const appleHealthConnected = state(false)
-  const appleHealthWorking = state(false)
-  const appleHealthSummary = state('')
+  const nativeHealthAvailable = state(false)
+  const nativeHealthConnected = state(false)
+  const nativeHealthWorking = state(false)
+  const nativeHealthSummary = state('')
+  const nativeHealthProvider = derived(() => device.isIOS() ? 'Apple Health' : 'Health Connect')
+  const nativeHealthButtonLabel = derived(() => nativeHealthConnected() ? 'Refresh health summary' : `Connect ${nativeHealthProvider()}`)
 
   // The callback lands back here with the outcome in the query string, since
   // a redirect from garmin.com cannot hand us anything else.
@@ -134,36 +136,37 @@
 
     loadStatus()
     loadPrivacy()
-    appleHealthAvailable.set(isNativeMobile() && device.isIOS())
-    if (appleHealthAvailable()) {
+    nativeHealthAvailable.set(isNativeMobile() && (device.isIOS() || device.isAndroid()))
+    if (nativeHealthAvailable()) {
       secureStorage.get('wildloop_health_connected')
-        .then(value => appleHealthConnected.set(value === 'true'))
+        .then(value => nativeHealthConnected.set(value === 'true'))
         .catch(() => undefined)
     }
   })
 
-  async function connectAppleHealth() {
-    appleHealthWorking.set(true)
+  async function connectNativeHealth() {
+    nativeHealthWorking.set(true)
     error.set('')
     notice.set('')
     try {
-      await health.requestAuthorization(['steps', 'distance', 'activeEnergy', 'heartRate'])
+      const authorized = await health.requestAuthorization(['steps', 'distance', 'activeEnergy', 'heartRate', 'workouts'])
+      if (!authorized) throw new Error(`${nativeHealthProvider()} permission was not granted`)
       const startDate = new Date().setHours(0, 0, 0, 0)
       const [steps, distance, energy] = await Promise.all([
         health.getData('steps', { startDate }),
         health.getData('distance', { startDate }),
         health.getData('activeEnergy', { startDate }),
       ])
-      appleHealthSummary.set(`${Math.round(steps.value).toLocaleString()} steps · ${(distance.value / 1000).toFixed(1)} km · ${Math.round(energy.value)} kcal today`)
-      appleHealthConnected.set(true)
+      nativeHealthSummary.set(`${Math.round(steps.value).toLocaleString()} steps · ${(distance.value / 1000).toFixed(1)} km · ${Math.round(energy.value)} kcal today`)
+      nativeHealthConnected.set(true)
       await secureStorage.set('wildloop_health_connected', 'true')
-      notice.set('Apple Health connected. Health data stays on this device unless you choose to attach it to an activity.')
+      notice.set(`${nativeHealthProvider()} connected. Completed phone recordings can now be saved as workouts.`)
     }
     catch (err) {
-      error.set(err instanceof Error ? err.message : 'Could not connect Apple Health')
+      error.set(err instanceof Error ? err.message : `Could not connect ${nativeHealthProvider()}`)
     }
     finally {
-      appleHealthWorking.set(false)
+      nativeHealthWorking.set(false)
     }
   }
 
@@ -352,17 +355,17 @@
     </div>
   </section>
 
-  <section :if="appleHealthAvailable" class="mt-6 p-6 bg-white dark:bg-slate-800 border border-slate-200 rounded-2xl dark:border-slate-700">
+  <section :if="nativeHealthAvailable" class="mt-6 p-6 bg-white dark:bg-slate-800 border border-slate-200 rounded-2xl dark:border-slate-700">
     <div class="flex gap-4 items-start">
       <span class="flex items-center justify-center h-12 w-12 shrink-0 rounded-xl bg-rose-50 dark:bg-rose-900/20" aria-hidden="true">
         <i class="i-hugeicons-heart-check h-6 w-6 text-rose-600 dark:text-rose-300"></i>
       </span>
       <div class="min-w-0 flex-1">
-        <h2 class="font-semibold text-slate-900 dark:text-white">Apple Health</h2>
-        <p class="mt-1 text-slate-500 text-sm dark:text-slate-400">Use activity and heart-rate context from HealthKit with explicit Apple permission.</p>
-        <p :if="appleHealthSummary" class="mt-3 font-medium text-slate-700 text-sm dark:text-slate-200">{{ appleHealthSummary }}</p>
-        <button type="button" @click="connectAppleHealth()" x-disabled="appleHealthWorking" class="mt-4 px-5 py-2.5 font-semibold text-sm text-white bg-rose-600 hover:bg-rose-700 rounded-full disabled:opacity-50 transition-colors active:scale-[0.98]">
-          {{ appleHealthConnected ? 'Refresh Health summary' : 'Connect Apple Health' }}
+        <h2 class="font-semibold text-slate-900 dark:text-white">{{ nativeHealthProvider }}</h2>
+        <p class="mt-1 text-slate-500 text-sm dark:text-slate-400">Read your daily fitness summary and save completed WildLoop recordings as workouts with explicit device permission.</p>
+        <p :if="nativeHealthSummary" class="mt-3 font-medium text-slate-700 text-sm dark:text-slate-200">{{ nativeHealthSummary }}</p>
+        <button type="button" @click="connectNativeHealth()" x-disabled="nativeHealthWorking" class="mt-4 px-5 py-2.5 font-semibold text-sm text-white bg-rose-600 hover:bg-rose-700 rounded-full disabled:opacity-50 transition-colors active:scale-[0.98]">
+          {{ nativeHealthButtonLabel }}
         </button>
       </div>
     </div>
