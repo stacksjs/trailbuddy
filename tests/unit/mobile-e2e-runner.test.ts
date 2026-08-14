@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { parseAdbDevices, requestedPlatform, selectIosSimulator } from '../../scripts/run-mobile-e2e'
+import { maestroReportSummary, parseAdbDevices, requestedPlatform, selectIosSimulator } from '../../scripts/run-mobile-e2e'
 
 describe('mobile E2E runner', () => {
   it('selects a booted iPhone before a shutdown simulator', () => {
@@ -24,5 +24,14 @@ describe('mobile E2E runner', () => {
     expect(requestedPlatform(['--verbose', 'android'])).toBe('android')
     expect(requestedPlatform(['ios'])).toBe('ios')
     expect(() => requestedPlatform(['web'])).toThrow('Usage:')
+  })
+
+  it('reads failures from Maestro JUnit even when its process exits successfully', () => {
+    expect(maestroReportSummary(`
+      <testsuite tests="2" failures="1">
+        <testcase name="pass" />
+        <testcase name="fail"><failure>not visible</failure></testcase>
+      </testsuite>
+    `)).toEqual({ failures: 1, tests: 2 })
   })
 })

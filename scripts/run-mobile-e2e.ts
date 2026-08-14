@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import process from 'node:process'
 
@@ -64,6 +64,13 @@ export function selectIosSimulator(payload: SimctlDevices): IosDevice | null {
   return candidates.find(device => device.state === 'Booted') ?? candidates[0] ?? null
 }
 
+export function maestroReportSummary(xml: string): { failures: number, tests: number } {
+  return {
+    failures: xml.match(/<(?:failure|error)\b/g)?.length ?? 0,
+    tests: xml.match(/<testcase\b/g)?.length ?? 0,
+  }
+}
+
 function craftSource(platform: MobilePlatform): string | undefined {
   const envName = platform === 'ios' ? 'CRAFT_IOS_SRC' : 'CRAFT_ANDROID_SRC'
   if (process.env[envName]) return process.env[envName]
@@ -75,7 +82,17 @@ function craftSource(platform: MobilePlatform): string | undefined {
 function buildGeneratedApp(platform: MobilePlatform): void {
   const envName = platform === 'ios' ? 'CRAFT_IOS_SRC' : 'CRAFT_ANDROID_SRC'
   const source = craftSource(platform)
-  execute(['bun', 'run', 'build'], { env: { MOBILE_E2E: '1' } })
+  execute([
+    'bunx',
+    '--bun',
+    '@stacksjs/stx',
+    'build',
+    '--pages',
+    'resources/views',
+    '--out',
+    'dist',
+    '--no-cache',
+  ], { env: { MOBILE_E2E: '1' } })
   execute(['bun', 'run', `build:${platform}`], {
     env: {
       MOBILE_E2E: '1',
@@ -89,9 +106,7 @@ function runMaestro(platform: MobilePlatform, deviceId: string): void {
   requirePath(flowRoot, 'Maestro flow directory')
 
   const platformResults = join(resultsRoot, platform)
-  const appId = platform === 'ios'
-    ? process.env.IOS_BUNDLE_ID ?? 'org.wildloop.app'
-    : process.env.ANDROID_PACKAGE_NAME ?? 'org.wildloop.app'
+  const report = join(platformResults, 'report.xml')
   mkdirSync(platformResults, { recursive: true })
   execute([
     'maestro',
@@ -99,18 +114,30 @@ function runMaestro(platform: MobilePlatform, deviceId: string): void {
     '--no-ansi',
     'test',
     '--env',
-    `APP_ID=${appId}`,
+    `APP_ID=${appId(platform)}`,
     '--format',
     'junit',
     '--output',
-    join(platformResults, 'report.xml'),
+    report,
     '--debug-output',
     join(platformResults, 'debug'),
+    '--test-output-dir',
+    join(platformResults, 'tests'),
     flowRoot,
   ])
+
+  const summary = maestroReportSummary(readFileSync(report, 'utf8'))
+  if (summary.tests === 0) throw new Error(`Maestro ran no ${platform} tests`)
+  if (summary.failures > 0) throw new Error(`Maestro reported ${summary.failures} failed ${platform} test(s)`)
 }
 
-function runAndroid(): void {
+function appId(platform: MobilePlatform): string {
+  return platform === 'ios'
+    ? process.env.IOS_BUNDLE_ID ?? 'org.wildloop.app'
+    : process.env.ANDROID_PACKAGE_NAME ?? 'org.wildloop.app'
+}
+
+function runAndroid(preview: boolean): void {
   requireCommand('adb')
   const devices = parseAdbDevices(execute(['adb', 'devices'], { capture: true }))
   if (devices.length !== 1) throw new Error(`Expected exactly one ready Android device, found ${devices.length}`)
@@ -119,10 +146,17 @@ function runAndroid(): void {
     ?? join(generatedRoot, 'android/app/build/outputs/apk/debug/app-debug.apk')
   requirePath(apk, 'Android E2E APK')
   execute(['adb', '-s', devices[0], 'install', '-r', apk])
-  runMaestro('android', devices[0])
+  if (preview) {
+    execute(['adb', '-s', devices[0], 'shell', 'am', 'force-stop', appId('android')])
+    execute(['adb', '-s', devices[0], 'shell', 'monkey', '-p', appId('android'), '-c', 'android.intent.category.LAUNCHER', '1'])
+    console.log(`WildLoop is open on Android device ${devices[0]}.`)
+  }
+  else {
+    runMaestro('android', devices[0])
+  }
 }
 
-function runIos(): void {
+function runIos(preview: boolean): void {
   requireCommand('xcodebuild')
   requireCommand('xcrun')
 
@@ -151,11 +185,19 @@ function runIos(): void {
     ?? join(derivedData, 'Build/Products/Debug-iphonesimulator/WildLoop.app')
   requirePath(app, 'iOS E2E app')
   execute(['xcrun', 'simctl', 'install', device.udid, app])
-  runMaestro('ios', device.udid)
+  if (preview) {
+    requireCommand('open')
+    execute(['open', '-a', 'Simulator'])
+    execute(['xcrun', 'simctl', 'launch', '--terminate-running-process', device.udid, appId('ios')])
+    console.log(`WildLoop is open in Simulator on ${device.name}.`)
+  }
+  else {
+    runMaestro('ios', device.udid)
+  }
 }
 
 function usage(): never {
-  throw new Error('Usage: bun scripts/run-mobile-e2e.ts <ios|android> [--build-only|--skip-build]')
+  throw new Error('Usage: bun scripts/run-mobile-e2e.ts <ios|android> [--preview|--build-only|--skip-build]')
 }
 
 export function requestedPlatform(args: string[]): MobilePlatform {
@@ -165,12 +207,20 @@ export function requestedPlatform(args: string[]): MobilePlatform {
 }
 
 if (import.meta.main) {
-  const platform = requestedPlatform(process.argv.slice(2))
-  const buildOnly = process.argv.includes('--build-only')
-  const skipBuild = process.argv.includes('--skip-build')
-  if (buildOnly && skipBuild) throw new Error('--build-only and --skip-build cannot be combined')
-  if (!buildOnly) requireCommand('maestro')
+  try {
+    const platform = requestedPlatform(process.argv.slice(2))
+    const preview = process.argv.includes('--preview')
+    const buildOnly = process.argv.includes('--build-only')
+    const skipBuild = process.argv.includes('--skip-build')
+    if (buildOnly && skipBuild) throw new Error('--build-only and --skip-build cannot be combined')
+    if (preview && buildOnly) throw new Error('--preview and --build-only cannot be combined')
+    if (!preview && !buildOnly) requireCommand('maestro')
 
-  if (!skipBuild) buildGeneratedApp(platform)
-  if (!buildOnly) platform === 'ios' ? runIos() : runAndroid()
+    if (!skipBuild) buildGeneratedApp(platform)
+    if (!buildOnly) platform === 'ios' ? runIos(preview) : runAndroid(preview)
+  }
+  catch (error) {
+    console.error(error instanceof Error ? error.message : error)
+    process.exitCode = 1
+  }
 }
