@@ -1,0 +1,29 @@
+appId: ${APP_ID}
+name: Native shell navigation
+tags:
+  - mobile
+  - smoke
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Find your line.*"
+    timeout: 15000
+- tapOn: "^Feed$"
+- assertVisible: Activity Feed
+- tapOn: "^Trails$"
+- assertVisible: Every trail we know
+- tapOn: "^Record$"
+- assertVisible: Capture Run
+- assertVisible:
+    text: Start recording
+    enabled: true
+- tapOn: "^Territory$"
+- assertVisible: Your territory map
+- tapOn: "^Profile$"
+- assertVisible: Activities
+- tapOn: "^Settings$"
+- assertVisible: Privacy & location safety
+- takeScreenshot: navigation

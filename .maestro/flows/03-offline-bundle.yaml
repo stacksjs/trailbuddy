@@ -1,0 +1,19 @@
+appId: ${APP_ID}
+name: Bundled cold start with Android offline enforcement
+tags:
+  - mobile
+  - offline
+onFlowComplete:
+  - setAirplaneMode: disabled
+---
+- setAirplaneMode: enabled
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Find your line.*"
+    timeout: 15000
+- tapOn: "^Record$"
+- assertVisible: Capture Run
+- takeScreenshot: offline-bundle

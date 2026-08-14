@@ -1,0 +1,18 @@
+appId: ${APP_ID}
+name: Native deep link routing
+tags:
+  - deep-link
+  - mobile
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- openLink: wildloop://record
+- extendedWaitUntil:
+    visible: Capture Run
+    timeout: 10000
+- assertVisible:
+    text: Start recording
+    enabled: true
+- takeScreenshot: deep-link
