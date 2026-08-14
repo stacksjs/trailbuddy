@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'bun:test'
-import { maestroReportSummary, parseAdbDevices, prepareIosSimulatorBundle, requestedPlatform, selectIosSimulator, validateBundledFrontend, validateIosAppBundle } from '../../scripts/run-mobile-e2e'
+import { maestroReportSummary, parseAdbDevices, prepareIosSimulatorBundle, requestedPlatform, selectAndroidDeepLinkActivity, selectIosSimulator, validateBundledFrontend, validateIosAppBundle } from '../../scripts/run-mobile-e2e'
 
 describe('mobile E2E runner', () => {
   it('selects a booted iPhone before a shutdown simulator', () => {
@@ -21,6 +21,12 @@ describe('mobile E2E runner', () => {
 
   it('returns only ready Android devices', () => {
     expect(parseAdbDevices('List of devices attached\nemulator-5554\tdevice\nemulator-5556\toffline\n')).toEqual(['emulator-5554'])
+  })
+
+  it('selects the app activity registered for an Android deep link', () => {
+    const output = '2 activities found:\ncom.android.browser/.BrowserActivity\norg.wildloop.app/org.wildloop.app.MainActivity\n'
+    expect(selectAndroidDeepLinkActivity(output, 'org.wildloop.app')).toBe('org.wildloop.app/org.wildloop.app.MainActivity')
+    expect(selectAndroidDeepLinkActivity(output, 'org.missing.app')).toBeNull()
   })
 
   it('accepts only supported platform arguments', () => {

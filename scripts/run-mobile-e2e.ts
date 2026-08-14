@@ -55,6 +55,14 @@ export function parseAdbDevices(output: string): string[] {
     .map(parts => parts[0])
 }
 
+export function selectAndroidDeepLinkActivity(output: string, packageName: string): string | null {
+  for (const line of output.split('\n')) {
+    const component = line.trim().split(/\s+/).find(token => token.startsWith(`${packageName}/`))
+    if (component) return component
+  }
+  return null
+}
+
 export function selectIosSimulator(payload: SimctlDevices): IosDevice | null {
   const candidates = Object.entries(payload.devices ?? {})
     .filter(([runtime]) => runtime.toLowerCase().includes('ios'))
@@ -175,11 +183,13 @@ function runMaestroJourneys(platform: MobilePlatform, deviceId: string): void {
       'adb', '-s', deviceId, 'shell', 'cmd', 'package', 'query-activities', '--brief',
       '-a', 'android.intent.action.VIEW', '-c', 'android.intent.category.BROWSABLE', '-d', 'wildloop://record',
     ], { capture: true })
-    if (!target.includes(appId('android'))) throw new Error(`Android did not register wildloop:// for ${appId('android')}`)
+    const component = selectAndroidDeepLinkActivity(target, appId('android'))
+    if (!component) throw new Error(`Android did not register wildloop:// for ${appId('android')}`)
     execute([
       'adb', '-s', deviceId, 'shell', 'am', 'start', '-W',
+      '-n', component,
       '-a', 'android.intent.action.VIEW', '-c', 'android.intent.category.BROWSABLE',
-      '-d', 'wildloop://record', appId('android'),
+      '-d', 'wildloop://record',
     ])
   }
   else {
@@ -224,7 +234,9 @@ function runIos(preview: boolean): void {
   if (device.state !== 'Booted') execute(['xcrun', 'simctl', 'boot', device.udid])
   execute(['xcrun', 'simctl', 'bootstatus', device.udid, '-b'])
 
-  const derivedData = join(resultsRoot, 'ios/DerivedData')
+  const derivedData = process.env.RUNNER_TEMP
+    ? join(process.env.RUNNER_TEMP, 'wildloop-ios-derived-data')
+    : join(resultsRoot, 'derived-data/ios')
   const project = join(generatedRoot, 'ios/WildLoop.xcodeproj')
   requirePath(project, 'generated WildLoop Xcode project')
   mkdirSync(derivedData, { recursive: true })

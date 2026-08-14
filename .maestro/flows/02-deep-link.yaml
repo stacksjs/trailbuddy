@@ -4,6 +4,9 @@ tags:
   - deep-link
   - mobile
 ---
+- tapOn:
+    text: Open
+    optional: true
 - extendedWaitUntil:
     visible: Capture Run
     timeout: 10000
