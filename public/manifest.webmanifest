@@ -8,11 +8,10 @@
   "theme_color": "#059669",
   "icons": [
     {
-      "src": "/images/og_image.jpeg",
-      "sizes": "any",
-      "type": "image/jpeg",
-      "purpose": "any"
+      "src": "/images/app/wildloop-app-icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
-

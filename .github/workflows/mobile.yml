@@ -1,0 +1,58 @@
+name: Mobile
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'config/mobile.ts'
+      - 'resources/**'
+      - 'storage/framework/core/mobile/**'
+      - 'storage/framework/core/actions/src/build/ios*.ts'
+      - 'storage/framework/core/actions/src/build/android*.ts'
+      - '.github/workflows/mobile.yml'
+  pull_request:
+    paths:
+      - 'app/**'
+      - 'config/mobile.ts'
+      - 'resources/**'
+      - 'storage/framework/core/mobile/**'
+      - 'storage/framework/core/actions/src/build/ios*.ts'
+      - 'storage/framework/core/actions/src/build/android*.ts'
+      - '.github/workflows/mobile.yml'
+
+jobs:
+  source-projects:
+    strategy:
+      matrix:
+        include:
+          - platform: ios
+            os: macos-latest
+          - platform: android
+            os: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.14'
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Build shared STX application
+        run: bun run build
+      - name: Checkout Craft
+        uses: actions/checkout@v4
+        with:
+          repository: home-lang/craft
+          path: .craft
+      - name: Generate iOS project
+        if: matrix.platform == 'ios'
+        run: STACKS_IOS_SKIP_XCODEGEN=1 CRAFT_IOS_SRC="$PWD/.craft/packages/ios/src/index.ts" bun run build:ios
+      - name: Parse generated Swift
+        if: matrix.platform == 'ios'
+        run: swiftc -frontend -parse storage/framework/mobile/ios/Sources/WildLoopApp.swift
+      - name: Generate Android project
+        if: matrix.platform == 'android'
+        run: STACKS_ANDROID_SKIP_GRADLE=1 CRAFT_ANDROID_SRC="$PWD/.craft/packages/android/src/index.ts" bun run build:android
+      - name: Verify provenance
+        run: bun -e "JSON.parse(await Bun.file('storage/framework/mobile/${{ matrix.platform }}/stacks-mobile.json').text())"
