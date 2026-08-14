@@ -477,6 +477,7 @@ route.group({ middleware: 'auth' }, () => {
     // Notifications (recipient = session user)
     route.get('/notifications', 'Actions/Social/NotificationIndexAction')
     route.post('/notifications/read', 'Actions/Social/NotificationReadAction')
+    route.post('/notifications/push-token', 'Actions/Notification/RegisterPushTokenAction')
     route.get('/custom-routes', 'Actions/Route/CustomRouteIndexAction')
     route.post('/custom-routes', 'Actions/Route/CustomRouteStoreAction')
     route.delete('/custom-routes/{id}', 'Actions/Route/CustomRouteDestroyAction')

@@ -10,8 +10,10 @@
 
 <script client>
   import { useWildLoopApp } from '../composables/useWildLoopApp'
+  import { useNativeServices } from '../composables/useNativeServices'
 
   useWildLoopApp()
+  useNativeServices()
 </script>
 
 <NativeAppShell tabBar>
