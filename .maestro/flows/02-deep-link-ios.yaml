@@ -30,4 +30,7 @@ tags:
 - extendedWaitUntil:
     visible: Capture Run
     timeout: 10000
+- extendedWaitUntil:
+    visible: Cascade Ridge Zone
+    timeout: 10000
 - takeScreenshot: deep-link
