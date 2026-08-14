@@ -46,6 +46,8 @@ jobs:
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
         if: matrix.platform == 'android'
+        with:
+          gradle-version: '8.4'
       - name: Install XcodeGen
         if: matrix.platform == 'ios'
         run: brew install xcodegen
