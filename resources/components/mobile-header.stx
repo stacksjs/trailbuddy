@@ -6,7 +6,7 @@ function tap(): void {
 }
 </script>
 
-<header class="sticky top-0 z-40 flex h-13 items-center justify-between border-b border-slate-200/70 bg-white/90 px-4 backdrop-blur-xl md:hidden dark:border-slate-700/70 dark:bg-slate-950/90">
+<header class="native-app-sticky-top sticky z-40 flex h-13 items-center justify-between border-b border-slate-200/70 bg-white/90 px-4 backdrop-blur-xl md:hidden dark:border-slate-700/70 dark:bg-slate-950/90">
   <StxLink to="/feed" class="flex items-center gap-2" aria-label="WildLoop feed" @click="tap()">
     <span class="relative inline-block h-5 w-5 shrink-0 rounded-full border-2 border-emerald-500" aria-hidden="true">
       <span class="absolute -top-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-emerald-400"></span>
