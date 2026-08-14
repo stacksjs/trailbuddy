@@ -1,0 +1,130 @@
+name: Mobile E2E
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.maestro/**'
+      - 'app/**'
+      - 'config/mobile.ts'
+      - 'resources/**'
+      - 'scripts/run-mobile-e2e.ts'
+      - 'storage/framework/core/actions/src/build/**'
+      - 'storage/framework/core/mobile/**'
+      - '.github/workflows/mobile-e2e.yml'
+  pull_request:
+    paths:
+      - '.maestro/**'
+      - 'app/**'
+      - 'config/mobile.ts'
+      - 'resources/**'
+      - 'scripts/run-mobile-e2e.ts'
+      - 'storage/framework/core/actions/src/build/**'
+      - 'storage/framework/core/mobile/**'
+      - '.github/workflows/mobile-e2e.yml'
+
+concurrency:
+  group: mobile-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CRAFT_REVISION: 5d0338799cc49d5611965e9f4c0175866be197c1
+  MAESTRO_SHA256: b3e561161904fb391875ca5834d5b22cf0b01c052dd1b408ad83e30d8f8951b3
+  MAESTRO_VERSION: cli-2.8.0
+
+jobs:
+  ios:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.14'
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install native build tools
+        run: brew install xcodegen
+      - name: Install Maestro
+        run: |
+          curl -fsSL "https://github.com/mobile-dev-inc/Maestro/releases/download/${MAESTRO_VERSION}/maestro.zip" -o "$RUNNER_TEMP/maestro.zip"
+          echo "$MAESTRO_SHA256  $RUNNER_TEMP/maestro.zip" | shasum -a 256 --check
+          unzip -q "$RUNNER_TEMP/maestro.zip" -d "$RUNNER_TEMP/maestro-cli"
+          echo "$RUNNER_TEMP/maestro-cli/maestro/bin" >> "$GITHUB_PATH"
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Checkout Craft
+        uses: actions/checkout@v5
+        with:
+          repository: home-lang/craft
+          ref: ${{ env.CRAFT_REVISION }}
+          path: .craft
+      - name: Run iOS E2E flows
+        env:
+          CRAFT_IOS_SRC: ${{ github.workspace }}/.craft/packages/ios/src/index.ts
+        run: bun scripts/run-mobile-e2e.ts ios
+      - name: Upload iOS diagnostics
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: mobile-e2e-ios
+          path: storage/framework/runtime/e2e/ios
+          if-no-files-found: warn
+
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.14'
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Install Maestro
+        run: |
+          curl -fsSL "https://github.com/mobile-dev-inc/Maestro/releases/download/${MAESTRO_VERSION}/maestro.zip" -o "$RUNNER_TEMP/maestro.zip"
+          echo "$MAESTRO_SHA256  $RUNNER_TEMP/maestro.zip" | sha256sum --check
+          unzip -q "$RUNNER_TEMP/maestro.zip" -d "$RUNNER_TEMP/maestro-cli"
+          echo "$RUNNER_TEMP/maestro-cli/maestro/bin" >> "$GITHUB_PATH"
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Checkout Craft
+        uses: actions/checkout@v5
+        with:
+          repository: home-lang/craft
+          ref: ${{ env.CRAFT_REVISION }}
+          path: .craft
+      - name: Build Android E2E app
+        env:
+          CRAFT_ANDROID_SRC: ${{ github.workspace }}/.craft/packages/android/src/index.ts
+        run: bun scripts/run-mobile-e2e.ts android --build-only
+      - name: Run Android E2E flows
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          disable-animations: true
+          script: bun scripts/run-mobile-e2e.ts android --skip-build
+      - name: Upload Android diagnostics
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: mobile-e2e-android
+          path: storage/framework/runtime/e2e/android
+          if-no-files-found: warn
