@@ -1,4 +1,5 @@
 import { onMount, state } from 'stx'
+import { readyToken } from '../assets/scripts/auth'
 
 /**
  * Hydrate the `wl` store's activity feed from the live API
@@ -41,7 +42,7 @@ let activitiesStarted = false
 
 export async function loadActivities(wl: ActivityStoreLike): Promise<void> {
   try {
-    const bearer = typeof localStorage === 'undefined' ? null : localStorage.getItem('auth_token')
+    const bearer = await readyToken()
     const res = await fetch('/api/activities?limit=200', {
       headers: bearer ? { Authorization: `Bearer ${bearer}` } : {},
     })

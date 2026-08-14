@@ -1,4 +1,5 @@
 import { onMount, state } from 'stx'
+import { readyToken } from '../assets/scripts/auth'
 
 /**
  * Hydrate the `wl` store's territories from the live API
@@ -64,7 +65,7 @@ export async function loadTerritories(
       query.set('max_lat', String(viewport.maxLat))
       query.set('max_lng', String(viewport.maxLng))
     }
-    const bearer = typeof localStorage === 'undefined' ? null : localStorage.getItem('auth_token')
+    const bearer = await readyToken()
     const res = await fetch(`/api/territories/map?${query}`, {
       headers: bearer ? { Authorization: `Bearer ${bearer}` } : undefined,
     })

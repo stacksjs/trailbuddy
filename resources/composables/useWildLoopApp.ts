@@ -1,4 +1,5 @@
 import { useStore } from 'stx'
+import { initializeAuthSession, readyToken, signOut } from '../assets/scripts/auth'
 import { useActivityCatalog } from './useActivityCatalog'
 import { useBattleFeed } from './useBattleFeed'
 import { useFollows } from './useFollows'
@@ -44,16 +45,13 @@ function cachedUser(): BootstrapUser | null {
 }
 
 async function serverUser(): Promise<BootstrapUser | null> {
-  if (typeof localStorage === 'undefined')
-    return null
-  const bearer = localStorage.getItem('auth_token')
+  const bearer = await readyToken()
   if (!bearer)
     return null
   try {
     const response = await fetch('/api/me', { headers: { Authorization: `Bearer ${bearer}` } })
     if (response.status === 401) {
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('auth_user')
+      await signOut()
       return null
     }
     if (!response.ok)
@@ -97,9 +95,10 @@ let identityStarted = false
 
 /** Initialize the shared WildLoop store and its browser-side data sources. */
 export function useWildLoopApp(): void {
+  void initializeAuthSession()
   const wl = useStore('wl') as WildLoopAppStore
   const localUser = cachedUser()
-  const hasSession = typeof localStorage !== 'undefined' && !!localStorage.getItem('auth_token')
+  const hasSession = Boolean(localUser)
   const pathname = typeof location === 'undefined' ? '/' : location.pathname
   const needs = dataNeedsForPath(pathname)
 

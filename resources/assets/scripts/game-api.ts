@@ -41,9 +41,9 @@ export interface ConquestResult {
   totalXp?: number
 }
 
-// The browser auth client (@stacksjs/browser) stores the bearer token under
-// `auth_token`; reuse the same key so our calls authenticate the same session.
-const TOKEN_KEY = 'auth_token'
+import { initializeAuthSession, readyToken, token } from './auth'
+
+void initializeAuthSession()
 
 /**
  * Read the double-submit CSRF cookie the framework middleware plants on safe
@@ -66,9 +66,9 @@ function csrfToken(): string | null {
 
 function authHeaders(): Record<string, string> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  const token = typeof localStorage !== 'undefined' ? localStorage.getItem(TOKEN_KEY) : null
-  if (token)
-    headers.Authorization = `Bearer ${token}`
+  const bearer = token()
+  if (bearer)
+    headers.Authorization = `Bearer ${bearer}`
 
   // CSRF is default-on for unsafe methods. A bearer token exempts the request
   // server-side, but the very first call is the sign-in that mints that token,
@@ -87,7 +87,7 @@ function authHeaders(): Record<string, string> {
  * in or register, and the API remains the authority for every write.
  */
 export function ensureSession(): Promise<void> {
-  return Promise.resolve()
+  return readyToken().then(() => undefined)
 }
 
 /** Convert recorded [lat, lng] points to a GeoJSON LineString string the engine parses. */

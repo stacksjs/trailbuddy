@@ -1,4 +1,6 @@
 <script client>
+  import { initializeAuthSession, token } from '../assets/scripts/auth'
+
   if (typeof navLinks === 'undefined') var navLinks = state([
     { to: '/trails', label: 'Trails' },
     { to: '/feed', label: 'Feed' },
@@ -17,7 +19,7 @@
   // declarations it finds at the top level of the script, so wrapping this in
   // an `if { … }` block keeps `signedIn` out of the component scope and every
   // `:if` that reads it silently drops its element.
-  if (typeof signedIn === 'undefined') var signedIn = state(typeof localStorage !== 'undefined' && !!localStorage.getItem('auth_token'))
+  if (typeof signedIn === 'undefined') var signedIn = state(!!token())
 
   // The avatar showed a hardcoded "Y" (from the seeded demo athlete, "You"),
   // so every signed-in person saw someone else's initial. Read it from the
@@ -34,6 +36,7 @@
   if (typeof isAdmin === 'undefined') var isAdmin = state(false)
 
   onMount(() => {
+    void initializeAuthSession().then(() => signedIn.set(!!token()))
     const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_user') : null
     if (!raw) return
     try {

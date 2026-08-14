@@ -14,12 +14,63 @@
  */
 
 import { describeResponseError, describeThrownError, type UserFacingError } from './request-error'
+import { secureStorage } from '@stacksjs/mobile'
 
 /** Where the bearer token lives. `game-api.ts` reads the same key. */
 export const TOKEN_KEY = 'auth_token'
 
 /** Where the signed-in user is cached between full page navigations. */
 const USER_KEY = 'auth_user'
+const SESSION_TOKEN_KEY = 'wildloop_auth_token'
+let memoryToken: string | null = null
+let sessionInitialization: Promise<void> | null = null
+
+function isCraftHost(): boolean {
+  if (typeof globalThis === 'undefined') return false
+  const host = globalThis as typeof globalThis & {
+    CraftAndroid?: unknown
+    craft?: unknown
+    webkit?: { messageHandlers?: { craft?: unknown } }
+  }
+  return Boolean(host.craft || host.CraftAndroid || host.webkit?.messageHandlers?.craft)
+}
+
+async function waitForCraftReady(): Promise<void> {
+  if (!isCraftHost() || (globalThis as typeof globalThis & { craft?: unknown }).craft) return
+  await new Promise<void>((resolve) => {
+    const done = () => {
+      globalThis.removeEventListener('craftReady', done)
+      resolve()
+    }
+    globalThis.addEventListener('craftReady', done, { once: true })
+  })
+}
+
+/** Migrate persistent native credentials into Keychain/Keystore once per page. */
+export function initializeAuthSession(): Promise<void> {
+  if (sessionInitialization) return sessionInitialization
+  sessionInitialization = (async () => {
+    if (typeof localStorage === 'undefined') return
+    if (!isCraftHost()) {
+      memoryToken = localStorage.getItem(TOKEN_KEY)
+      return
+    }
+    await waitForCraftReady()
+    const legacy = localStorage.getItem(TOKEN_KEY)
+    const secured = await secureStorage.get(TOKEN_KEY).catch(() => null)
+    memoryToken = secured ?? legacy
+    if (legacy && !secured) await secureStorage.set(TOKEN_KEY, legacy)
+    localStorage.removeItem(TOKEN_KEY)
+    if (memoryToken && typeof sessionStorage !== 'undefined') sessionStorage.setItem(SESSION_TOKEN_KEY, memoryToken)
+    globalThis.dispatchEvent(new CustomEvent('wildloop:auth-ready', { detail: { signedIn: Boolean(memoryToken) } }))
+  })()
+  return sessionInitialization
+}
+
+export async function readyToken(): Promise<string | null> {
+  await initializeAuthSession()
+  return token()
+}
 
 export interface AuthUser {
   id: number
@@ -65,6 +116,11 @@ function headers(): Record<string, string> {
 }
 
 export function token(): string | null {
+  if (memoryToken) return memoryToken
+  if (typeof sessionStorage !== 'undefined') {
+    const current = sessionStorage.getItem(SESSION_TOKEN_KEY)
+    if (current) return current
+  }
   return typeof localStorage === 'undefined' ? null : localStorage.getItem(TOKEN_KEY)
 }
 
@@ -89,20 +145,33 @@ export function currentUser(): AuthUser | null {
   }
 }
 
-function persist(data: { token?: string, user?: AuthUser }): void {
+async function persist(data: { token?: string, user?: AuthUser }): Promise<void> {
   if (typeof localStorage === 'undefined')
     return
-  if (data.token)
-    localStorage.setItem(TOKEN_KEY, data.token)
+  if (data.token) {
+    memoryToken = data.token
+    if (isCraftHost()) {
+      await waitForCraftReady()
+      await secureStorage.set(TOKEN_KEY, data.token)
+      localStorage.removeItem(TOKEN_KEY)
+      if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(SESSION_TOKEN_KEY, data.token)
+    }
+    else {
+      localStorage.setItem(TOKEN_KEY, data.token)
+    }
+  }
   if (data.user)
     localStorage.setItem(USER_KEY, JSON.stringify(data.user))
 }
 
-export function signOut(): void {
+export async function signOut(): Promise<void> {
   if (typeof localStorage === 'undefined')
     return
+  memoryToken = null
+  if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem(SESSION_TOKEN_KEY)
   localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(USER_KEY)
+  if (isCraftHost()) await secureStorage.delete(TOKEN_KEY).catch(() => undefined)
 }
 
 /**
@@ -124,7 +193,7 @@ export async function refreshCurrentUser(): Promise<AuthUser | null> {
     })
 
     if (response.status === 401) {
-      signOut()
+      await signOut()
       return null
     }
     if (!response.ok)
@@ -135,7 +204,7 @@ export async function refreshCurrentUser(): Promise<AuthUser | null> {
     if (!user?.id)
       return currentUser()
 
-    persist({ user })
+    await persist({ user })
     return user
   }
   catch {
@@ -183,7 +252,7 @@ async function submit(path: string, body: Record<string, unknown>, context: stri
       }
     }
 
-    persist({ token: payload.token, user: payload.user })
+    await persist({ token: payload.token, user: payload.user })
     return { ok: true, user: payload.user }
   }
   catch (error) {
