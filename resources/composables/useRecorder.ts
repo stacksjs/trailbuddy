@@ -160,7 +160,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
   const elapsed = state(0)
   const distance = state(0)
   const elevation = state(0)
-  const gpsStatus = state<GpsStatus>('searching')
+  const gpsStatus = state<GpsStatus>('stopped')
   const selectedTrailId = state<number>(wl?.trails()[0]?.id ?? 0)
   const conqueredIds = state<number[]>([])
   const captureProgress = state<Record<number, number>>({})
@@ -193,7 +193,6 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     samples: RecorderSample[]
     /** Wall-clock start of the run - elapsed time includes pauses (#960). */
     startedAtMs: number | null
-    hereMarker: CircleMarkerType | null
     elapsedTimer: ReturnType<typeof setInterval> | null
     simTimer: ReturnType<typeof setInterval> | null
     watchId: number | null
@@ -214,7 +213,6 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     routeCoords: [],
     samples: [],
     startedAtMs: null,
-    hereMarker: null,
     elapsedTimer: null,
     simTimer: null,
     watchId: null,
@@ -895,24 +893,6 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
 
       if (bounds.length) refs.mapHandle.fitPoints(bounds, [40, 40])
       else refs.map.setView([37.7749, -122.4194], 5)
-
-      if (isNativeMobile() || navigator.geolocation) {
-        void location.getCurrentPosition({ enableHighAccuracy: true })
-          .then(async (position) => {
-            const { CircleMarker } = await ensureTsMaps()
-            const here = new CircleMarker([position.latitude, position.longitude], {
-              radius: 8,
-              color: '#ffffff',
-              weight: 3,
-              fillColor: '#3b82f6',
-              fillOpacity: 1,
-            }).addTo(refs.map!).bindPopup('You are here')
-            refs.hereMarker = here
-            gpsStatus.set('active')
-            refs.map!.setView([position.latitude, position.longitude], 14)
-          })
-          .catch(() => gpsStatus.set('searching'))
-      }
 
       await recoverRecording()
       if (isNativeMobile() && device.isIOS()) {

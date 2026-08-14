@@ -16,4 +16,5 @@ onFlowComplete:
     timeout: 15000
 - tapOn: "^Record$"
 - assertVisible: Capture Run
+- assertNotVisible: "would like to use your current location"
 - takeScreenshot: offline-bundle
