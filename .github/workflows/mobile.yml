@@ -23,6 +23,8 @@ on:
 
 jobs:
   source-projects:
+    env:
+      ANDROID_GOOGLE_SERVICES_JSON: ${{ secrets.ANDROID_GOOGLE_SERVICES_JSON }}
     strategy:
       matrix:
         include:
@@ -56,9 +58,9 @@ jobs:
           repository: home-lang/craft
           path: .craft
       - name: Configure Firebase
-        if: matrix.platform == 'android' && secrets.ANDROID_GOOGLE_SERVICES_JSON != ''
+        if: matrix.platform == 'android' && env.ANDROID_GOOGLE_SERVICES_JSON != ''
         env:
-          GOOGLE_SERVICES_JSON: ${{ secrets.ANDROID_GOOGLE_SERVICES_JSON }}
+          GOOGLE_SERVICES_JSON: ${{ env.ANDROID_GOOGLE_SERVICES_JSON }}
         run: |
           mkdir -p .mobile-secrets
           printf '%s' "$GOOGLE_SERVICES_JSON" > .mobile-secrets/google-services.json
