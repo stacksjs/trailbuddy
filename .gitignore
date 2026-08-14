@@ -41,6 +41,8 @@ resources/assets/fonts/*.woff
 resources/assets/fonts/*.woff2
 stacks.log
 /pantry_modules
+/.craft
+/.stx-source
 .stx
 .stx-serve
 /storage/framework/stx
