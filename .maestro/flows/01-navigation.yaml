@@ -31,6 +31,7 @@ tags:
     element:
       text: Start recording
     direction: DOWN
+    centerElement: true
     timeout: 10000
 - assertVisible:
     text: Start recording
@@ -48,6 +49,6 @@ tags:
 - takeScreenshot: profile
 - tapOn: "^Settings$"
 - extendedWaitUntil:
-    visible: Welcome Back
+    visible: Log In - WildLoop
     timeout: 10000
 - takeScreenshot: sign-in
