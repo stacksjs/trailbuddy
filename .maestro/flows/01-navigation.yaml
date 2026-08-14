@@ -20,6 +20,11 @@ tags:
 - takeScreenshot: trails
 - tapOn: "^Record$"
 - assertVisible: Capture Run
+- scrollUntilVisible:
+    element:
+      text: Start recording
+    direction: DOWN
+    timeout: 10000
 - assertVisible:
     text: Start recording
     enabled: true
