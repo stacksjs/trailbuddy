@@ -15,6 +15,11 @@ export declare const notifications: NotificationsApi;
 export declare const permissions: PermissionsApi;
 export declare const secureStorage: SecureStorageApi;
 export declare const share: ShareApi;
+export declare const appReview: AppReviewApi;
+export declare const deepLinks: DeepLinksApi;
+export declare const keepAwake: KeepAwakeApi;
+export declare const network: NetworkApi;
+export declare const pushNotifications: PushNotificationsApi;
 export declare function isNativeMobile(): boolean;
 export declare function onMobileReady(callback: (event: CraftReadyEvent) => void): () => void;
 export declare function withNativeFeedback<T>(action: () => T | Promise<T>): Promise<T>;
@@ -38,6 +43,7 @@ export declare interface DeviceCapabilities {
   nfc: boolean
   bluetooth: boolean
   gps: boolean
+  backgroundLocation?: boolean
   accelerometer: boolean
   gyroscope: boolean
   haptics: boolean
@@ -88,6 +94,16 @@ export declare interface LocationOptions {
   enableHighAccuracy?: boolean
   timeout?: number
   maximumAge?: number
+}
+export declare interface LocationRecordingState {
+  id: string | null
+  active: boolean
+  paused: boolean
+  startedAt: number | null
+  sampleCount?: number
+}
+export declare interface LocationRecordingResult extends LocationRecordingState {
+  locations: Location[]
 }
 export declare interface ShareOptions {
   text?: string
@@ -147,6 +163,12 @@ export declare interface LocationApi {
   getCurrentPosition: (options?: LocationOptions) => Promise<Location>
   watchPosition: (callback: (location: Location) => void, options?: LocationOptions) => number
   clearWatch: (watchId: number) => void
+  startRecording: (options?: LocationOptions) => Promise<LocationRecordingState>
+  pauseRecording: () => Promise<LocationRecordingState>
+  resumeRecording: () => Promise<LocationRecordingState>
+  stopRecording: () => Promise<LocationRecordingResult>
+  getRecordingState: () => Promise<LocationRecordingState>
+  readRecording: () => Promise<Location[]>
 }
 export declare interface ShareApi {
   share: (options: ShareOptions) => Promise<void>
@@ -161,4 +183,28 @@ export declare interface NotificationsApi {
   schedule: (options: NotificationOptions) => Promise<void>
   cancelAll: () => Promise<void>
   setBadge: (count: number) => Promise<void>
+}
+export declare interface KeepAwakeApi {
+  enable: () => Promise<void>
+  disable: () => Promise<void>
+}
+export declare interface DeepLinksApi {
+  getInitialURL: () => Promise<string | null>
+  onLink: (callback: (url: string) => void) => () => void
+}
+export declare interface NetworkStatus {
+  type: 'wifi' | 'cellular' | 'ethernet' | 'none' | 'unknown'
+  isConnected: boolean
+}
+export declare interface NetworkApi {
+  getStatus: () => Promise<NetworkStatus>
+  onChange: (callback: (status: NetworkStatus) => void) => () => void
+}
+export declare interface AppReviewApi {
+  request: () => Promise<boolean>
+}
+export declare interface PushNotificationsApi {
+  register: () => Promise<string>
+  onToken: (callback: (token: string) => void) => () => void
+  onNotification: (callback: (data: Record<string, unknown>) => void) => () => void
 }

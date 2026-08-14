@@ -1,7 +1,4 @@
 import { dts } from 'bun-plugin-dtsx'
-import { frameworkExternal, intro, outro } from '../build/src'
-
-const { startTime } = await intro({ dir: import.meta.dir })
 
 const result = await Bun.build({
   entrypoints: ['./src/index.ts'],
@@ -9,8 +6,10 @@ const result = await Bun.build({
   format: 'esm',
   target: 'browser',
   minify: true,
-  external: frameworkExternal(),
   plugins: [dts({ root: './src', outdir: './dist', bundle: true })],
 })
 
-await outro({ dir: import.meta.dir, startTime, result })
+if (!result.success) {
+  for (const message of result.logs) console.error(message)
+  throw new Error('Failed to build @stacksjs/mobile')
+}

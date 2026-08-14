@@ -6,6 +6,8 @@ import { log } from '@stacksjs/cli'
 import { projectPath, storagePath } from '@stacksjs/path'
 import { resolveMobilePath, toCraftIosConfig, validateIosMobileConfig } from './ios-config'
 
+process.exitCode = 1
+
 interface CraftIosBuilder {
   init(options: {
     name: string
@@ -48,7 +50,9 @@ validateIosMobileConfig(config)
 
 const output = resolveMobilePath(projectPath(), config.output) ?? storagePath('framework/mobile/ios')
 const webAssets = resolveMobilePath(projectPath(), config.webAssets)
+const fallbackWebAssets = resolveMobilePath(projectPath(), config.fallbackWebAssets)
 const craftConfig = toCraftIosConfig(config)
+craftConfig.appIconPath = resolveMobilePath(projectPath(), config.appIcon)
 const builder = await loadCraftIosBuilder()
 
 await builder.init({
@@ -61,8 +65,8 @@ await builder.init({
 
 await builder.build({
   output,
-  htmlPath: webAssets,
-  devServer: webAssets ? undefined : craftConfig.devServerURL as string | undefined,
+  htmlPath: webAssets ?? fallbackWebAssets,
+  devServer: craftConfig.devServerURL as string | undefined,
   generateProject: process.env.STACKS_IOS_SKIP_XCODEGEN !== '1',
 })
 
@@ -73,9 +77,14 @@ writeFileSync(`${output}/stacks-mobile.json`, `${JSON.stringify({
   schemaVersion: '1.0.0',
   platform: 'ios',
   sourceRevision,
-  source: webAssets ? { kind: 'bundled', path: webAssets } : { kind: 'remote', url: craftConfig.devServerURL },
+  source: webAssets ? { kind: 'bundled', path: webAssets } : {
+    kind: 'remote',
+    url: craftConfig.devServerURL,
+    fallback: fallbackWebAssets ? { kind: 'bundled', path: fallbackWebAssets } : undefined,
+  },
   capabilities: config.capabilities ?? {},
   craft: generatedConfig,
 }, null, 2)}\n`)
 
 log.success(`Built the Craft iOS project in ${output}`)
+process.exitCode = 0
