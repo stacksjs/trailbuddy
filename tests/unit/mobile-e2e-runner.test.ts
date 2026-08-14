@@ -1,5 +1,8 @@
+import { existsSync, mkdirSync, mkdtempSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'bun:test'
-import { maestroReportSummary, parseAdbDevices, requestedPlatform, selectIosSimulator } from '../../scripts/run-mobile-e2e'
+import { maestroReportSummary, parseAdbDevices, prepareIosSimulatorBundle, requestedPlatform, selectIosSimulator } from '../../scripts/run-mobile-e2e'
 
 describe('mobile E2E runner', () => {
   it('selects a booted iPhone before a shutdown simulator', () => {
@@ -33,5 +36,15 @@ describe('mobile E2E runner', () => {
         <testcase name="fail"><failure>not visible</failure></testcase>
       </testsuite>
     `)).toEqual({ failures: 1, tests: 2 })
+  })
+
+  it('removes only the embedded Watch app from simulator products', () => {
+    const app = mkdtempSync(join(tmpdir(), 'wildloop-ios-simulator-'))
+    mkdirSync(join(app, 'Watch'))
+    mkdirSync(join(app, 'PlugIns'))
+
+    expect(prepareIosSimulatorBundle(app)).toBe(app)
+    expect(existsSync(join(app, 'Watch'))).toBe(false)
+    expect(existsSync(join(app, 'PlugIns'))).toBe(true)
   })
 })

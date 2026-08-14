@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import process from 'node:process'
 
@@ -69,6 +69,14 @@ export function maestroReportSummary(xml: string): { failures: number, tests: nu
     failures: xml.match(/<(?:failure|error)\b/g)?.length ?? 0,
     tests: xml.match(/<testcase\b/g)?.length ?? 0,
   }
+}
+
+export function prepareIosSimulatorBundle(app: string): string {
+  // CoreSimulator can reject an otherwise valid iOS app when an embedded
+  // watchOS companion is present. The phone app itself is unchanged; only the
+  // generated simulator product loses its separately-tested Watch directory.
+  rmSync(join(app, 'Watch'), { force: true, recursive: true })
+  return app
 }
 
 function craftSource(platform: MobilePlatform): string | undefined {
@@ -184,7 +192,7 @@ function runIos(preview: boolean): void {
   const app = process.env.MOBILE_E2E_APP
     ?? join(derivedData, 'Build/Products/Debug-iphonesimulator/WildLoop.app')
   requirePath(app, 'iOS E2E app')
-  execute(['xcrun', 'simctl', 'install', device.udid, app])
+  execute(['xcrun', 'simctl', 'install', device.udid, prepareIosSimulatorBundle(app)])
   if (preview) {
     requireCommand('open')
     execute(['open', '-a', 'Simulator'])
