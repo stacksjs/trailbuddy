@@ -8,8 +8,10 @@ on:
       - 'config/mobile.ts'
       - 'resources/**'
       - 'storage/framework/core/mobile/**'
+      - 'storage/framework/core/types/src/mobile.ts'
       - 'storage/framework/core/actions/src/build/ios*.ts'
       - 'storage/framework/core/actions/src/build/android*.ts'
+      - 'storage/framework/defaults/resources/components/Native*.stx'
       - '.github/workflows/mobile.yml'
   pull_request:
     paths:
@@ -17,8 +19,10 @@ on:
       - 'config/mobile.ts'
       - 'resources/**'
       - 'storage/framework/core/mobile/**'
+      - 'storage/framework/core/types/src/mobile.ts'
       - 'storage/framework/core/actions/src/build/ios*.ts'
       - 'storage/framework/core/actions/src/build/android*.ts'
+      - 'storage/framework/defaults/resources/components/Native*.stx'
       - '.github/workflows/mobile.yml'
 
 jobs:
@@ -77,8 +81,15 @@ jobs:
       - name: Compile iOS simulator app
         if: matrix.platform == 'ios'
         run: xcodebuild -project storage/framework/mobile/ios/WildLoop.xcodeproj -scheme WildLoop -sdk iphonesimulator -configuration Debug CODE_SIGNING_ALLOWED=NO build
+      - name: Compile watchOS simulator companion
+        if: matrix.platform == 'ios'
+        run: xcodebuild -project storage/framework/mobile/ios/WildLoop.xcodeproj -scheme WildLoopWatch -sdk watchsimulator -configuration Debug CODE_SIGNING_ALLOWED=NO build
       - name: Generate Android project
         if: matrix.platform == 'android'
         run: CRAFT_ANDROID_SRC="$PWD/.craft/packages/android/src/index.ts" bun run build:android
+      - name: Compile Android release app
+        if: matrix.platform == 'android'
+        working-directory: storage/framework/mobile/android
+        run: ./gradlew assembleRelease
       - name: Verify provenance
         run: bun -e "JSON.parse(await Bun.file('storage/framework/mobile/${{ matrix.platform }}/stacks-mobile.json').text())"
