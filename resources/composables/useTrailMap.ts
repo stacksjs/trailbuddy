@@ -84,7 +84,9 @@ export async function createTrailMap(
 
     tileLayer(OSM_TILES, {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      crossOrigin: true,
       maxZoom: 19,
+      offlineCache: true,
     }).addTo(map)
 
     ;(el as HTMLElement & { _tsMap?: TsMapType })._tsMap = map

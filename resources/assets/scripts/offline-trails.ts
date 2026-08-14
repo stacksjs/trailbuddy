@@ -8,16 +8,18 @@ export interface OfflineTrail {
   trail: UiTrail
   route: LatLng[]
   savedAt: string
+  tiles?: { saved: number, failed: number, skipped: number }
 }
 
 function database(): Promise<IDBDatabase | null> {
   if (typeof indexedDB === 'undefined') return Promise.resolve(null)
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DATABASE_NAME, 2)
+    const request = indexedDB.open(DATABASE_NAME, 3)
     request.onupgradeneeded = () => {
       const db = request.result
       if (!db.objectStoreNames.contains('run-uploads')) db.createObjectStore('run-uploads', { keyPath: 'uploadId' })
       if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' })
+      if (!db.objectStoreNames.contains('recording-checkpoints')) db.createObjectStore('recording-checkpoints', { keyPath: 'id' })
     }
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
@@ -38,7 +40,29 @@ async function request<T>(mode: IDBTransactionMode, operation: (store: IDBObject
 
 export async function saveTrailOffline(trail: UiTrail, route: LatLng[]): Promise<void> {
   if (route.length < 2) throw new Error('This trail has no verified route geometry to download')
-  await request('readwrite', store => store.put({ id: trail.id, trail, route, savedAt: new Date().toISOString() }))
+  let tiles: OfflineTrail['tiles']
+  try {
+    const mapsModuleUrl = '/js/ts-maps.mjs'
+    const module = await import(/* @vite-ignore */ mapsModuleUrl) as typeof import('ts-maps')
+    const latitudes = route.map(point => point[0])
+    const longitudes = route.map(point => point[1])
+    const padding = 0.01
+    tiles = await module.saveOfflineRegion({
+      bounds: [
+        Math.min(...longitudes) - padding,
+        Math.min(...latitudes) - padding,
+        Math.max(...longitudes) + padding,
+        Math.max(...latitudes) + padding,
+      ],
+      zoomRange: [10, 14],
+      tileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      concurrency: 4,
+    })
+  }
+  catch (error) {
+    console.warn('Offline basemap download failed; route geometry remains available', error)
+  }
+  await request('readwrite', store => store.put({ id: trail.id, trail, route, tiles, savedAt: new Date().toISOString() }))
 }
 
 export async function removeOfflineTrail(id: number): Promise<void> {
@@ -52,4 +76,3 @@ export async function offlineTrail(id: number): Promise<OfflineTrail | null> {
 export async function isTrailOffline(id: number): Promise<boolean> {
   return !!await offlineTrail(id)
 }
-

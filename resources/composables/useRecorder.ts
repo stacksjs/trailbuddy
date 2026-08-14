@@ -1,5 +1,5 @@
 import { derived, onDestroy, onMount, state, useStore } from 'stx'
-import { haptics, isNativeMobile, location } from '@stacksjs/mobile'
+import { appReview, haptics, isNativeMobile, keepAwake, lifecycle, location } from '@stacksjs/mobile'
 import type { CircleMarker as CircleMarkerType } from 'ts-maps'
 import type { Polygon as PolygonType } from 'ts-maps'
 import type { Polyline as PolylineType } from 'ts-maps'
@@ -27,6 +27,12 @@ import {
 } from '../functions/splits'
 import { loadTerritories } from './useTerritoryCatalog'
 import { loadActivityVisibilityDefault } from '../assets/scripts/privacy-defaults'
+import {
+  clearRecordingCheckpoint,
+  loadRecordingCheckpoint,
+  mergeNativeLocationSamples,
+  saveRecordingCheckpoint,
+} from '../assets/scripts/recording-checkpoint'
 
 type ActivityType = 'Trail Run' | 'Hike' | 'Walk' | 'Bike'
 type RecordMode = 'idle' | 'simulated' | 'manual'
@@ -112,6 +118,39 @@ function pointInPolygon(pt: LatLng, poly: LatLng[]): boolean {
   return inside
 }
 
+interface TerritoryBounds {
+  minLat: number
+  maxLat: number
+  minLng: number
+  maxLng: number
+}
+
+function polygonBounds(poly: LatLng[]): TerritoryBounds {
+  let minLat = Number.POSITIVE_INFINITY
+  let maxLat = Number.NEGATIVE_INFINITY
+  let minLng = Number.POSITIVE_INFINITY
+  let maxLng = Number.NEGATIVE_INFINITY
+  for (const [lat, lng] of poly) {
+    minLat = Math.min(minLat, lat)
+    maxLat = Math.max(maxLat, lat)
+    minLng = Math.min(minLng, lng)
+    maxLng = Math.max(maxLng, lng)
+  }
+  return { minLat, maxLat, minLng, maxLng }
+}
+
+function boundsContain(bounds: TerritoryBounds, lat: number, lng: number): boolean {
+  return lat >= bounds.minLat && lat <= bounds.maxLat && lng >= bounds.minLng && lng <= bounds.maxLng
+}
+
+async function maybeRequestNativeReview(): Promise<void> {
+  if (!isNativeMobile() || typeof localStorage === 'undefined') return
+  const key = 'wildloop_completed_activities'
+  const count = Number(localStorage.getItem(key) ?? '0') + 1
+  localStorage.setItem(key, String(count))
+  if (count === 3) await appReview.request().catch(() => false)
+}
+
 export function useRecorder({ mapElId, wl }: RecorderOptions) {
   const recording = state(false)
   const paused = state(false)
@@ -146,6 +185,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     mapHandle: Awaited<ReturnType<typeof createTrailMap>> | null
     map: TsMapType | null
     territoryLayers: Record<number, PolygonType>
+    territoryBounds: Record<number, TerritoryBounds>
     trailMarkers: Record<number, CircleMarkerType>
     routeLine: PolylineType | null
     routeCoords: LatLng[]
@@ -158,11 +198,14 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     simTimer: ReturnType<typeof setInterval> | null
     watchId: number | null
     toastTimer: ReturnType<typeof setTimeout> | null
-    wakeLock: { release: () => Promise<void> } | null
+    lastPanAt: number
+    checkpointPending: boolean
+    lifecycleCleanup: (() => void) | null
   } = {
     mapHandle: null,
     map: null,
     territoryLayers: {},
+    territoryBounds: {},
     trailMarkers: {},
     routeLine: null,
     routeCoords: [],
@@ -173,7 +216,9 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     simTimer: null,
     watchId: null,
     toastTimer: null,
-    wakeLock: null,
+    lastPanAt: 0,
+    checkpointPending: false,
+    lifecycleCleanup: null,
   }
 
   function paintTerritory(territoryId: number, mine: boolean, progress = 0) {
@@ -204,6 +249,69 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
       paintTerritory(t.id, t.user_id === uid)
   }
 
+  async function checkpointRecording(): Promise<void> {
+    if (!recording() || mode() !== 'manual' || !refs.startedAtMs || refs.checkpointPending) return
+    refs.checkpointPending = true
+    try {
+      await saveRecordingCheckpoint({
+        activityType: activityType(),
+        visibility: visibility(),
+        runMode: runMode(),
+        targetTerritoryId: targetTerritoryId(),
+        startedAtMs: refs.startedAtMs,
+        elapsed: elapsed(),
+        distance: distance(),
+        elevation: elevation(),
+        paused: paused(),
+        samples: [...refs.samples],
+      })
+    }
+    catch (error) {
+      console.error('recording checkpoint failed:', error)
+    }
+    finally {
+      refs.checkpointPending = false
+    }
+  }
+
+  function rebuildTrackFromSamples(samples: RecorderSample[]): void {
+    refs.samples = samples
+    refs.routeCoords = samples.map(sample => [sample.lat, sample.lng])
+    let miles = 0
+    let gainFeet = 0
+    for (let index = 1; index < samples.length; index++) {
+      const previous = samples[index - 1]
+      const current = samples[index]
+      miles += haversine([previous.lat, previous.lng], [current.lat, current.lng])
+      if (previous.eleFt != null && current.eleFt != null) {
+        const delta = current.eleFt - previous.eleFt
+        if (delta >= ELEVATION_NOISE_FLOOR_FT) gainFeet += delta
+      }
+    }
+    distance.set(miles)
+    elevation.set(Math.round(gainFeet))
+    refs.routeLine?.setLatLngs(refs.routeCoords)
+  }
+
+  async function mergeNativeTrack(): Promise<void> {
+    if (!isNativeMobile() || mode() !== 'manual') return
+    try {
+      const nativeSamples = await location.readRecording()
+      const merged = mergeNativeLocationSamples(refs.samples, nativeSamples)
+      if (merged.length === refs.samples.length) return
+      const startedAt = refs.startedAtMs ?? merged[0]?.t ?? Date.now()
+      for (const sample of merged) {
+        if (sample.movingS === 0 && sample.t > startedAt)
+          sample.movingS = Math.max(0, Math.round((sample.t - startedAt) / 1000))
+      }
+      rebuildTrackFromSamples(merged)
+      await checkpointRecording()
+    }
+    catch (error) {
+      console.error('native recording recovery failed:', error)
+    }
+  }
+
 
   // Live, VISUAL-ONLY feedback while running through enemy territory. The
   // authoritative capture is decided by the backend on stop (closed-loop claim
@@ -221,6 +329,8 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
       if (t.user_id === uid) continue
       const poly = polys[t.id]
       if (!poly) continue
+      const bounds = refs.territoryBounds[t.id] ??= polygonBounds(poly)
+      if (!boundsContain(bounds, lat, lng)) continue
       if (!pointInPolygon([lat, lng], poly)) continue
 
       // Fill the meter as a "you're on enemy turf" cue (capped just under full
@@ -255,7 +365,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     }
     refs.samples.push({ lat, lng, t: Date.now(), eleFt, movingS: elapsed(), accuracy })
 
-    refs.routeLine.setLatLngs(coords)
+    refs.routeLine.addLatLng([lat, lng])
     if (mode() === 'manual' && wl) {
       const guide = wl.trailRoutes()[selectedTrailId()] ?? []
       if (guide.length > 1) {
@@ -264,6 +374,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
       }
     }
     checkConquest(lat, lng)
+    if (refs.samples.length % 10 === 0) void checkpointRecording()
   }
 
   function clearTimers() {
@@ -277,6 +388,8 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
 
   function resetRun() {
     clearTimers()
+    void clearRecordingCheckpoint()
+    void keepAwake.disable().catch(() => undefined)
     elapsed.set(0)
     distance.set(0)
     elevation.set(0)
@@ -292,6 +405,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     refs.routeCoords = []
     refs.samples = []
     refs.startedAtMs = null
+    refs.lastPanAt = 0
     if (refs.routeLine && refs.map) {
       refs.map.removeLayer(refs.routeLine)
       refs.routeLine = null
@@ -366,7 +480,9 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     refs.routeCoords = []
     refs.routeLine = await createLiveRouteLine(refs.map, YOURS)
 
-    const beginTracking = (startLat: number, startLng: number, startAltM: number | null, accuracy: number | null) => {
+    const beginTracking = async (startLat: number, startLng: number, startAltM: number | null, accuracy: number | null) => {
+      if (isNativeMobile())
+        await location.startRecording({ enableHighAccuracy: true, maximumAge: 0, timeout: 10000 })
       recording.set(true)
       gpsStatus.set('active')
       void haptics.impact('medium')
@@ -374,16 +490,20 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
       addRoutePoint(startLat, startLng, startAltM, accuracy)
       refs.map!.setView([startLat, startLng], 17)
       startTicker()
+      void keepAwake.enable().catch(() => undefined)
       refs.watchId = location.watchPosition(
         (position) => {
           gpsStatus.set('active')
           addRoutePoint(position.latitude, position.longitude, position.altitude ?? null, position.accuracy)
-          refs.map!.panTo([position.latitude, position.longitude])
+          const now = Date.now()
+          if (now - refs.lastPanAt >= 1_500) {
+            refs.lastPanAt = now
+            refs.map!.panTo([position.latitude, position.longitude])
+          }
         },
         { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 },
       )
-      const wakeLock = (navigator as Navigator & { wakeLock?: { request: (type: 'screen') => Promise<{ release: () => Promise<void> }> } }).wakeLock
-      void wakeLock?.request('screen').then(lock => refs.wakeLock = lock).catch(() => undefined)
+      await checkpointRecording()
     }
 
     void location.getCurrentPosition({ enableHighAccuracy: true, maximumAge: 0, timeout: 15000 })
@@ -401,9 +521,20 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
       })
   }
 
-  function togglePause() {
-    paused.set(!paused())
+  async function togglePause() {
+    const shouldPause = !paused()
+    if (isNativeMobile() && mode() === 'manual') {
+      try {
+        if (shouldPause) await location.pauseRecording()
+        else await location.resumeRecording()
+      }
+      catch (error) {
+        console.error('native recording pause failed:', error)
+      }
+    }
+    paused.set(shouldPause)
     void haptics.impact(paused() ? 'soft' : 'medium')
+    await checkpointRecording()
   }
 
   interface RunMetrics {
@@ -474,15 +605,28 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
   }
 
   async function stop() {
+    if (isNativeMobile() && mode() === 'manual') {
+      try {
+        const nativeResult = await location.stopRecording()
+        const merged = mergeNativeLocationSamples(refs.samples, nativeResult.locations)
+        const startedAt = refs.startedAtMs ?? merged[0]?.t ?? Date.now()
+        for (const sample of merged) {
+          if (sample.movingS === 0 && sample.t > startedAt)
+            sample.movingS = Math.max(0, Math.round((sample.t - startedAt) / 1000))
+        }
+        rebuildTrackFromSamples(merged)
+      }
+      catch (error) {
+        console.error('native recording stop failed:', error)
+        await mergeNativeTrack()
+      }
+    }
     recording.set(false)
     paused.set(false)
     gpsStatus.set('stopped')
     void haptics.notification('success')
     clearTimers()
-    if (refs.wakeLock) {
-      void refs.wakeLock.release().catch(() => undefined)
-      refs.wakeLock = null
-    }
+    void keepAwake.disable().catch(() => undefined)
     if (distance() > 0 && wl) {
       const trail = mode() === 'simulated' ? wl.findTrail(selectedTrailId()) : null
 
@@ -529,8 +673,69 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
         visibility: visibility(),
         hasGps: true,
       })
+      if (activityId) void maybeRequestNativeReview()
     }
+    await clearRecordingCheckpoint().catch(() => undefined)
     mode.set('idle')
+  }
+
+  async function recoverRecording(): Promise<void> {
+    const checkpoint = await loadRecordingCheckpoint().catch(() => null)
+    let nativeState = null
+    if (isNativeMobile())
+      nativeState = await location.getRecordingState().catch(() => null)
+    if (!checkpoint && !nativeState?.active) return
+    if (checkpoint && Date.now() - checkpoint.savedAt > 24 * 60 * 60 * 1000 && !nativeState?.active) {
+      await clearRecordingCheckpoint().catch(() => undefined)
+      return
+    }
+
+    const restored = checkpoint
+    mode.set('manual')
+    recording.set(true)
+    paused.set(nativeState?.paused ?? restored?.paused ?? false)
+    gpsStatus.set('active')
+    if (restored) {
+      activityType.set(restored.activityType)
+      visibility.set(restored.visibility)
+      runMode.set(restored.runMode)
+      targetTerritoryId.set(restored.targetTerritoryId)
+      refs.startedAtMs = restored.startedAtMs
+      elapsed.set(restored.elapsed)
+      distance.set(restored.distance)
+      elevation.set(restored.elevation)
+      refs.samples = restored.samples
+      refs.routeCoords = restored.samples.map(sample => [sample.lat, sample.lng])
+    }
+    else {
+      refs.startedAtMs = nativeState?.startedAt ?? Date.now()
+    }
+
+    refs.routeLine = await createLiveRouteLine(refs.map!, YOURS)
+    if (refs.samples.length) refs.routeLine.setLatLngs(refs.routeCoords)
+    if (isNativeMobile()) {
+      if (!nativeState?.active)
+        await location.startRecording({ enableHighAccuracy: true, maximumAge: 0, timeout: 10000 })
+      await mergeNativeTrack()
+    }
+
+    const lastSample = refs.samples[refs.samples.length - 1]
+    if (lastSample && refs.startedAtMs && !paused())
+      elapsed.set(Math.max(elapsed(), Math.round((lastSample.t - refs.startedAtMs) / 1000)))
+    refs.watchId = location.watchPosition((position) => {
+      gpsStatus.set('active')
+      addRoutePoint(position.latitude, position.longitude, position.altitude ?? null, position.accuracy)
+      const now = Date.now()
+      if (now - refs.lastPanAt >= 1_500) {
+        refs.lastPanAt = now
+        refs.map?.panTo([position.latitude, position.longitude])
+      }
+    }, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 })
+    if (lastSample) refs.map?.setView([lastSample.lat, lastSample.lng], 17)
+    startTicker()
+    void keepAwake.enable().catch(() => undefined)
+    saveStatus.set('queued')
+    saveMessage.set('Recovered your in-progress activity')
   }
 
   async function initRecordMap() {
@@ -564,6 +769,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
           continue
 
         refs.territoryLayers[t.id] = layer
+        refs.territoryBounds[t.id] = polygonBounds(poly)
         bounds.push(...poly)
       }
 
@@ -598,6 +804,13 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
           })
           .catch(() => gpsStatus.set('searching'))
       }
+
+      await recoverRecording()
+      refs.lifecycleCleanup = lifecycle.onStateChange((appState) => {
+        if (!recording()) return
+        if (appState === 'background') void checkpointRecording()
+        if (appState === 'active') void mergeNativeTrack()
+      })
     }
     catch (err) {
       console.error('record map init failed:', err)
@@ -605,8 +818,11 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
   }
 
   onDestroy(() => {
+    void checkpointRecording()
     clearTimers()
-    if (refs.wakeLock) void refs.wakeLock.release().catch(() => undefined)
+    void keepAwake.disable().catch(() => undefined)
+    refs.lifecycleCleanup?.()
+    refs.lifecycleCleanup = null
     if (refs.toastTimer) clearTimeout(refs.toastTimer)
     refs.mapHandle?.destroy()
     refs.mapHandle = null

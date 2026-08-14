@@ -32,13 +32,15 @@ function openDatabase(): Promise<IDBDatabase | null> {
     return Promise.resolve(null)
 
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DATABASE_NAME, 2)
+    const request = indexedDB.open(DATABASE_NAME, 3)
     request.onupgradeneeded = () => {
       const database = request.result
       if (!database.objectStoreNames.contains(STORE_NAME))
         database.createObjectStore(STORE_NAME, { keyPath: 'uploadId' })
       if (!database.objectStoreNames.contains('trail-routes'))
         database.createObjectStore('trail-routes', { keyPath: 'id' })
+      if (!database.objectStoreNames.contains('recording-checkpoints'))
+        database.createObjectStore('recording-checkpoints', { keyPath: 'id' })
     }
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
