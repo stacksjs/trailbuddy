@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import process from 'node:process'
 
@@ -19,6 +19,7 @@ const projectRoot = resolve(import.meta.dir, '..')
 const generatedRoot = join(projectRoot, 'storage/framework/mobile')
 const resultsRoot = join(projectRoot, 'storage/framework/runtime/e2e')
 const flowRoot = join(projectRoot, '.maestro/flows')
+const requiredReactivePages = ['feed.html', 'trails.html']
 
 function normalizedEnvironment(extra: Record<string, string | undefined> = {}): Record<string, string> {
   return Object.fromEntries(
@@ -79,6 +80,27 @@ export function prepareIosSimulatorBundle(app: string): string {
   return app
 }
 
+export function validateBundledFrontend(outputRoot: string): void {
+  for (const page of requiredReactivePages) {
+    const file = join(outputRoot, page)
+    requirePath(file, `built ${page}`)
+    const html = readFileSync(file, 'utf8')
+    if (!html.includes('__stx_latestSetup')) {
+      throw new Error(`Built ${page} is missing its reactive STX page setup`)
+    }
+  }
+}
+
+export function validateIosAppBundle(app: string): string {
+  const index = readdirSync(app, { recursive: true })
+    .map(path => path.toString())
+    .find(path => path === 'index.html' || path.endsWith('/index.html'))
+  if (!index) throw new Error(`Built iOS app is missing its bundled index.html: ${app}`)
+  const bundledIndex = join(app, index)
+  console.log(`Verified bundled iOS entry point: ${bundledIndex}`)
+  return bundledIndex
+}
+
 function craftSource(platform: MobilePlatform): string | undefined {
   const envName = platform === 'ios' ? 'CRAFT_IOS_SRC' : 'CRAFT_ANDROID_SRC'
   if (process.env[envName]) return process.env[envName]
@@ -87,20 +109,24 @@ function craftSource(platform: MobilePlatform): string | undefined {
   return existsSync(local) ? local : undefined
 }
 
+function stxSourceRoot(): string | undefined {
+  if (process.env.STX_SOURCE_ROOT) return process.env.STX_SOURCE_ROOT
+  const local = resolve(projectRoot, '../../Tools/stx')
+  return existsSync(join(local, 'packages/stx/src/build.ts')) ? local : undefined
+}
+
 function buildGeneratedApp(platform: MobilePlatform): void {
   const envName = platform === 'ios' ? 'CRAFT_IOS_SRC' : 'CRAFT_ANDROID_SRC'
   const source = craftSource(platform)
-  execute([
-    'bunx',
-    '--bun',
-    '@stacksjs/stx',
-    'build',
-    '--pages',
-    'resources/views',
-    '--out',
-    'dist',
-    '--no-cache',
-  ], { env: { MOBILE_E2E: '1' } })
+  // Use the project script so Bun applies the checked-in STX patch. `bunx
+  // @stacksjs/stx` may execute an isolated cache copy and silently bypass it.
+  execute(['bun', 'run', 'build:frontend'], {
+    env: {
+      MOBILE_E2E: '1',
+      ...(stxSourceRoot() ? { STX_SOURCE_ROOT: stxSourceRoot() } : {}),
+    },
+  })
+  validateBundledFrontend(join(projectRoot, 'dist'))
   execute(['bun', 'run', `build:${platform}`], {
     env: {
       MOBILE_E2E: '1',
@@ -109,12 +135,13 @@ function buildGeneratedApp(platform: MobilePlatform): void {
   })
 }
 
-function runMaestro(platform: MobilePlatform, deviceId: string): void {
+function runMaestroFlow(platform: MobilePlatform, deviceId: string, flow: string): void {
   requireCommand('maestro')
   requirePath(flowRoot, 'Maestro flow directory')
 
   const platformResults = join(resultsRoot, platform)
-  const report = join(platformResults, 'report.xml')
+  const slug = flow.replace(/\.yaml$/, '')
+  const report = join(platformResults, `${slug}.xml`)
   mkdirSync(platformResults, { recursive: true })
   execute([
     'maestro',
@@ -128,15 +155,38 @@ function runMaestro(platform: MobilePlatform, deviceId: string): void {
     '--output',
     report,
     '--debug-output',
-    join(platformResults, 'debug'),
+    join(platformResults, 'debug', slug),
     '--test-output-dir',
-    join(platformResults, 'tests'),
-    flowRoot,
+    join(platformResults, 'tests', slug),
+    join(flowRoot, flow),
   ])
 
   const summary = maestroReportSummary(readFileSync(report, 'utf8'))
   if (summary.tests === 0) throw new Error(`Maestro ran no ${platform} tests`)
   if (summary.failures > 0) throw new Error(`Maestro reported ${summary.failures} failed ${platform} test(s)`)
+}
+
+function runMaestroJourneys(platform: MobilePlatform, deviceId: string): void {
+  runMaestroFlow(platform, deviceId, '01-navigation.yaml')
+  runMaestroFlow(platform, deviceId, '03-offline-bundle.yaml')
+
+  if (platform === 'android') {
+    const target = execute([
+      'adb', '-s', deviceId, 'shell', 'cmd', 'package', 'query-activities', '--brief',
+      '-a', 'android.intent.action.VIEW', '-c', 'android.intent.category.BROWSABLE', '-d', 'wildloop://record',
+    ], { capture: true })
+    if (!target.includes(appId('android'))) throw new Error(`Android did not register wildloop:// for ${appId('android')}`)
+    execute([
+      'adb', '-s', deviceId, 'shell', 'am', 'start', '-W',
+      '-a', 'android.intent.action.VIEW', '-c', 'android.intent.category.BROWSABLE',
+      '-d', 'wildloop://record', appId('android'),
+    ])
+  }
+  else {
+    execute(['xcrun', 'simctl', 'openurl', deviceId, 'wildloop://record'])
+  }
+
+  runMaestroFlow(platform, deviceId, '02-deep-link.yaml')
 }
 
 function appId(platform: MobilePlatform): string {
@@ -160,7 +210,7 @@ function runAndroid(preview: boolean): void {
     console.log(`WildLoop is open on Android device ${devices[0]}.`)
   }
   else {
-    runMaestro('android', devices[0])
+    runMaestroJourneys('android', devices[0])
   }
 }
 
@@ -192,6 +242,7 @@ function runIos(preview: boolean): void {
   const app = process.env.MOBILE_E2E_APP
     ?? join(derivedData, 'Build/Products/Debug-iphonesimulator/WildLoop.app')
   requirePath(app, 'iOS E2E app')
+  validateIosAppBundle(app)
   execute(['xcrun', 'simctl', 'install', device.udid, prepareIosSimulatorBundle(app)])
   if (preview) {
     requireCommand('open')
@@ -200,7 +251,7 @@ function runIos(preview: boolean): void {
     console.log(`WildLoop is open in Simulator on ${device.name}.`)
   }
   else {
-    runMaestro('ios', device.udid)
+    runMaestroJourneys('ios', device.udid)
   }
 }
 

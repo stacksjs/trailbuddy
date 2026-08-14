@@ -29,7 +29,8 @@ jobs:
   source-projects:
     env:
       ANDROID_GOOGLE_SERVICES_JSON: ${{ secrets.ANDROID_GOOGLE_SERVICES_JSON }}
-      CRAFT_REVISION: 5d0338799cc49d5611965e9f4c0175866be197c1
+      CRAFT_REVISION: 3d55ba70c6c53219fa310cd2625104f605288b59
+      STX_REVISION: cc0604b4e8bd5ff22ffbeaedf2c108fdd277bbb2
     strategy:
       fail-fast: false
       matrix:
@@ -58,7 +59,15 @@ jobs:
         run: brew install xcodegen
       - name: Install dependencies
         run: bun install --frozen-lockfile
+      - name: Checkout STX
+        uses: actions/checkout@v5
+        with:
+          repository: stacksjs/stx
+          ref: ${{ env.STX_REVISION }}
+          path: .stx-source
       - name: Build shared STX application
+        env:
+          STX_SOURCE_ROOT: ${{ github.workspace }}/.stx-source
         run: bun run build
       - name: Checkout Craft
         uses: actions/checkout@v5

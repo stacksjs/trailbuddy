@@ -1,8 +1,8 @@
-import { existsSync, mkdirSync, mkdtempSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'bun:test'
-import { maestroReportSummary, parseAdbDevices, prepareIosSimulatorBundle, requestedPlatform, selectIosSimulator } from '../../scripts/run-mobile-e2e'
+import { maestroReportSummary, parseAdbDevices, prepareIosSimulatorBundle, requestedPlatform, selectIosSimulator, validateBundledFrontend, validateIosAppBundle } from '../../scripts/run-mobile-e2e'
 
 describe('mobile E2E runner', () => {
   it('selects a booted iPhone before a shutdown simulator', () => {
@@ -46,5 +46,29 @@ describe('mobile E2E runner', () => {
     expect(prepareIosSimulatorBundle(app)).toBe(app)
     expect(existsSync(join(app, 'Watch'))).toBe(false)
     expect(existsSync(join(app, 'PlugIns'))).toBe(true)
+  })
+
+  it('rejects a mobile bundle that lost reactive page setup', () => {
+    const output = mkdtempSync(join(tmpdir(), 'wildloop-mobile-dist-'))
+    writeFileSync(join(output, 'feed.html'), '<script>window.__stx_latestSetup = () => ({})</script>')
+    writeFileSync(join(output, 'trails.html'), '<main>Trails</main>')
+
+    expect(() => validateBundledFrontend(output)).toThrow('trails.html is missing its reactive STX page setup')
+  })
+
+  it('locates the bundled iOS entry point before simulator installation', () => {
+    const root = mkdtempSync(join(tmpdir(), 'wildloop-ios-app-'))
+    const resources = join(root, 'WildLoop.app', 'dist')
+    mkdirSync(resources, { recursive: true })
+    writeFileSync(join(resources, 'index.html'), '<main>WildLoop</main>')
+
+    expect(validateIosAppBundle(join(root, 'WildLoop.app'))).toBe(join(resources, 'index.html'))
+  })
+
+  it('rejects an iOS app product with no bundled entry point', () => {
+    const root = mkdtempSync(join(tmpdir(), 'wildloop-empty-app-'))
+    mkdirSync(join(root, 'WildLoop.app'), { recursive: true })
+
+    expect(() => validateIosAppBundle(join(root, 'WildLoop.app'))).toThrow('missing its bundled index.html')
   })
 })

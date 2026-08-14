@@ -4,14 +4,6 @@ tags:
   - deep-link
   - mobile
 ---
-- launchApp:
-    clearState: true
-    permissions:
-      all: allow
-- openLink: wildloop://record
-- tapOn:
-    text: Open
-    optional: true
 - extendedWaitUntil:
     visible: Capture Run
     timeout: 10000

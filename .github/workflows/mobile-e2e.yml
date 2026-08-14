@@ -29,7 +29,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CRAFT_REVISION: 33480239c59ffbf1b9aa7cf744ed5f91493c7a73
+  CRAFT_REVISION: 3d55ba70c6c53219fa310cd2625104f605288b59
+  STX_REVISION: cc0604b4e8bd5ff22ffbeaedf2c108fdd277bbb2
   MAESTRO_SHA256: b3e561161904fb391875ca5834d5b22cf0b01c052dd1b408ad83e30d8f8951b3
   MAESTRO_VERSION: cli-2.8.0
 
@@ -56,6 +57,12 @@ jobs:
           echo "$RUNNER_TEMP/maestro-cli/maestro/bin" >> "$GITHUB_PATH"
       - name: Install dependencies
         run: bun install --frozen-lockfile
+      - name: Checkout STX
+        uses: actions/checkout@v5
+        with:
+          repository: stacksjs/stx
+          ref: ${{ env.STX_REVISION }}
+          path: .stx-source
       - name: Checkout Craft
         uses: actions/checkout@v5
         with:
@@ -65,16 +72,14 @@ jobs:
       - name: Run iOS E2E flows
         env:
           CRAFT_IOS_SRC: ${{ github.workspace }}/.craft/packages/ios/src/index.ts
+          STX_SOURCE_ROOT: ${{ github.workspace }}/.stx-source
         run: bun scripts/run-mobile-e2e.ts ios
       - name: Upload iOS diagnostics
         if: always()
         uses: actions/upload-artifact@v5
         with:
           name: mobile-e2e-ios
-          path: |
-            storage/framework/runtime/e2e/ios/report.xml
-            storage/framework/runtime/e2e/ios/debug
-            storage/framework/runtime/e2e/ios/tests
+          path: storage/framework/runtime/e2e/ios
           if-no-files-found: warn
 
   android:
@@ -105,6 +110,12 @@ jobs:
           echo "$RUNNER_TEMP/maestro-cli/maestro/bin" >> "$GITHUB_PATH"
       - name: Install dependencies
         run: bun install --frozen-lockfile
+      - name: Checkout STX
+        uses: actions/checkout@v5
+        with:
+          repository: stacksjs/stx
+          ref: ${{ env.STX_REVISION }}
+          path: .stx-source
       - name: Checkout Craft
         uses: actions/checkout@v5
         with:
@@ -114,6 +125,7 @@ jobs:
       - name: Build Android E2E app
         env:
           CRAFT_ANDROID_SRC: ${{ github.workspace }}/.craft/packages/android/src/index.ts
+          STX_SOURCE_ROOT: ${{ github.workspace }}/.stx-source
         run: bun scripts/run-mobile-e2e.ts android --build-only
       - name: Run Android E2E flows
         uses: reactivecircus/android-emulator-runner@v2
@@ -129,8 +141,5 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: mobile-e2e-android
-          path: |
-            storage/framework/runtime/e2e/android/report.xml
-            storage/framework/runtime/e2e/android/debug
-            storage/framework/runtime/e2e/android/tests
+          path: storage/framework/runtime/e2e/android
           if-no-files-found: warn
