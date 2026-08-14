@@ -80,6 +80,10 @@ export function maestroReportSummary(xml: string): { failures: number, tests: nu
   }
 }
 
+export function deepLinkFlow(platform: MobilePlatform): string {
+  return platform === 'ios' ? '02-deep-link-ios.yaml' : '02-deep-link.yaml'
+}
+
 export function prepareIosSimulatorBundle(app: string): string {
   // CoreSimulator can reject an otherwise valid iOS app when an embedded
   // watchOS companion is present. The phone app itself is unchanged; only the
@@ -196,7 +200,7 @@ function runMaestroJourneys(platform: MobilePlatform, deviceId: string): void {
     execute(['xcrun', 'simctl', 'openurl', deviceId, 'wildloop://record'])
   }
 
-  runMaestroFlow(platform, deviceId, '02-deep-link.yaml')
+  runMaestroFlow(platform, deviceId, deepLinkFlow(platform))
 }
 
 function appId(platform: MobilePlatform): string {

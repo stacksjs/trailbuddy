@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'bun:test'
-import { maestroReportSummary, parseAdbDevices, prepareIosSimulatorBundle, requestedPlatform, selectAndroidDeepLinkActivity, selectIosSimulator, validateBundledFrontend, validateIosAppBundle } from '../../scripts/run-mobile-e2e'
+import { deepLinkFlow, maestroReportSummary, parseAdbDevices, prepareIosSimulatorBundle, requestedPlatform, selectAndroidDeepLinkActivity, selectIosSimulator, validateBundledFrontend, validateIosAppBundle } from '../../scripts/run-mobile-e2e'
 
 describe('mobile E2E runner', () => {
   it('selects a booted iPhone before a shutdown simulator', () => {
@@ -33,6 +33,11 @@ describe('mobile E2E runner', () => {
     expect(requestedPlatform(['--verbose', 'android'])).toBe('android')
     expect(requestedPlatform(['ios'])).toBe('ios')
     expect(() => requestedPlatform(['web'])).toThrow('Usage:')
+  })
+
+  it('uses the flow matching each platform link confirmation behavior', () => {
+    expect(deepLinkFlow('android')).toBe('02-deep-link.yaml')
+    expect(deepLinkFlow('ios')).toBe('02-deep-link-ios.yaml')
   })
 
   it('reads failures from Maestro JUnit even when its process exits successfully', () => {

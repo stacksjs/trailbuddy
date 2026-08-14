@@ -1,9 +1,14 @@
 appId: ${APP_ID}
-name: Native deep link routing
+name: Native deep link routing on iOS
 tags:
   - deep-link
+  - ios
   - mobile
 ---
+- extendedWaitUntil:
+    visible: Open
+    timeout: 10000
+- tapOn: "^Open$"
 - extendedWaitUntil:
     visible: Capture Run
     timeout: 10000
