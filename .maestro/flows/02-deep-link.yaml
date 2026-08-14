@@ -10,6 +10,11 @@ tags:
 - extendedWaitUntil:
     visible: Capture Run
     timeout: 10000
+- scrollUntilVisible:
+    element:
+      text: Start recording
+    direction: DOWN
+    timeout: 10000
 - assertVisible:
     text: Start recording
     enabled: true
