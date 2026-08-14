@@ -11,19 +11,25 @@ tags:
 - extendedWaitUntil:
     visible: "Find your line.*"
     timeout: 15000
+- takeScreenshot: home
 - tapOn: "^Feed$"
 - assertVisible: Activity Feed
+- takeScreenshot: feed
 - tapOn: "^Trails$"
 - assertVisible: Every trail we know
+- takeScreenshot: trails
 - tapOn: "^Record$"
 - assertVisible: Capture Run
 - assertVisible:
     text: Start recording
     enabled: true
+- takeScreenshot: record
 - tapOn: "^Territory$"
 - assertVisible: Your territory map
+- takeScreenshot: territory
 - tapOn: "^Profile$"
 - assertVisible: Activities
+- takeScreenshot: profile
 - tapOn: "^Settings$"
-- assertVisible: Privacy & location safety
-- takeScreenshot: navigation
+- assertVisible: Welcome Back
+- takeScreenshot: sign-in

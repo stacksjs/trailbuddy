@@ -71,7 +71,10 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: mobile-e2e-ios
-          path: storage/framework/runtime/e2e/ios
+          path: |
+            storage/framework/runtime/e2e/ios/report.xml
+            storage/framework/runtime/e2e/ios/debug
+            storage/framework/runtime/e2e/ios/tests
           if-no-files-found: warn
 
   android:
@@ -126,5 +129,8 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: mobile-e2e-android
-          path: storage/framework/runtime/e2e/android
+          path: |
+            storage/framework/runtime/e2e/android/report.xml
+            storage/framework/runtime/e2e/android/debug
+            storage/framework/runtime/e2e/android/tests
           if-no-files-found: warn
