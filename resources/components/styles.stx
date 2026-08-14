@@ -11,6 +11,7 @@
   :root {
     --r-card: 1rem;
     --r-control: 0.625rem;
+    --native-safe-area-background: #fff;
 
     --accent: #059669;
     --accent-bright: #34d399;
@@ -117,6 +118,8 @@
   }
 
   html.dark {
+    --native-safe-area-background: #0f172a;
+
     background: #0f172a;
     color-scheme: dark;
   }
