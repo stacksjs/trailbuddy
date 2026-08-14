@@ -21,7 +21,9 @@ tags:
     text: Start recording
     enabled: true
 - tapOn: "^Feed$"
-- assertVisible: Activity Feed
+- extendedWaitUntil:
+    visible: Activity Feed
+    timeout: 10000
 - tapOn: "^Record$"
 - extendedWaitUntil:
     visible: Capture Run

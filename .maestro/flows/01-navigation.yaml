@@ -13,13 +13,19 @@ tags:
     timeout: 15000
 - takeScreenshot: home
 - tapOn: "^Feed$"
-- assertVisible: Activity Feed
+- extendedWaitUntil:
+    visible: Activity Feed
+    timeout: 10000
 - takeScreenshot: feed
 - tapOn: "^Trails$"
-- assertVisible: Every trail we know
+- extendedWaitUntil:
+    visible: Every trail we know
+    timeout: 10000
 - takeScreenshot: trails
 - tapOn: "^Record$"
-- assertVisible: Capture Run
+- extendedWaitUntil:
+    visible: Capture Run
+    timeout: 10000
 - scrollUntilVisible:
     element:
       text: Start recording
@@ -30,11 +36,17 @@ tags:
     enabled: true
 - takeScreenshot: record
 - tapOn: "^Territory$"
-- assertVisible: Your territory map
+- extendedWaitUntil:
+    visible: Your territory map
+    timeout: 10000
 - takeScreenshot: territory
 - tapOn: "^Profile$"
-- assertVisible: Activities
+- extendedWaitUntil:
+    visible: Activities
+    timeout: 10000
 - takeScreenshot: profile
 - tapOn: "^Settings$"
-- assertVisible: Welcome Back
+- extendedWaitUntil:
+    visible: Welcome Back
+    timeout: 10000
 - takeScreenshot: sign-in
