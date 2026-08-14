@@ -1,5 +1,27 @@
-import { describe, expect, it } from 'bun:test'
-import { health, isNativeMobile, liveActivities, onMobileReady, watchConnectivity, withNativeFeedback } from '../dist/index.js'
+import { describe, expect, it, mock } from 'bun:test'
+
+mock.module('craft-native/mobile', () => ({
+  appReview: {},
+  biometrics: {},
+  camera: {},
+  deepLinks: {},
+  device: { isMobile: () => false },
+  haptics: { impact: async () => {}, notification: async () => {} },
+  health: { getData: async () => ({ unit: 'count', value: 0 }), saveWorkout: async () => ({ id: 'workout' }) },
+  keepAwake: {},
+  lifecycle: {},
+  liveActivities: { start: async () => ({ id: 'test' }) },
+  location: {},
+  network: {},
+  notifications: {},
+  permissions: {},
+  pushNotifications: {},
+  secureStorage: {},
+  share: {},
+  watchConnectivity: { isReachable: async () => false },
+}))
+
+const { health, isNativeMobile, liveActivities, onMobileReady, watchConnectivity, withNativeFeedback } = await import('../src')
 
 describe('@stacksjs/mobile', () => {
   it('stays browser-safe when the Craft host is absent', () => {
@@ -13,6 +35,7 @@ describe('@stacksjs/mobile', () => {
 
   it('exposes typed native activity services', () => {
     expect(typeof health.getData).toBe('function')
+    expect(typeof health.saveWorkout).toBe('function')
     expect(typeof liveActivities.start).toBe('function')
     expect(typeof watchConnectivity.isReachable).toBe('function')
   })
