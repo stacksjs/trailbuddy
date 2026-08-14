@@ -29,6 +29,27 @@ bun install
 
 The frontend and API are served by Stacks. Views are STX, application actions/models live under `app/`, and migrations live under `database/migrations/`.
 
+## Mobile UI testing
+
+Build, install, and open the current shared STX app for hands-on testing:
+
+```bash
+bun run preview:ios
+bun run preview:android
+```
+
+Run the same native iOS and Android journeys used in CI:
+
+```bash
+bun run test:e2e:ios
+bun run test:e2e:android
+```
+
+The E2E suite validates navigation, an offline cold start, and native deep-link
+routing, then saves screenshots and JUnit reports. See
+[Mobile end-to-end tests](docs/mobile-e2e.md) for prerequisites and artifact
+locations.
+
 ## Quality gates
 
 ```bash
