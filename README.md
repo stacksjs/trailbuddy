@@ -34,9 +34,15 @@ The frontend and API are served by Stacks. Views are STX, application actions/mo
 Build, install, and open the current shared STX app for hands-on testing:
 
 ```bash
+bun run preview:iphone
 bun run preview:ios
 bun run preview:android
 ```
+
+`preview:iphone` creates a Release device build, signs it, installs it on the
+single connected iPhone, and launches WildLoop. Use
+`bun run preview:iphone:bundled` to test the exact local frontend and its
+offline behavior. The `preview:ios` command targets the iOS Simulator.
 
 Run the same native iOS and Android journeys used in CI:
 

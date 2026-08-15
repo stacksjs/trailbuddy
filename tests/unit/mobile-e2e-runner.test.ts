@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'bun:test'
 import { deepLinkFlow, maestroReportSummary, parseAdbDevices, prepareIosSimulatorBundle, requestedPlatform, selectAndroidDeepLinkActivity, selectIosSimulator, validateBundledFrontend, validateIosAppBundle } from '../../scripts/run-mobile-e2e'
+import { inferDevelopmentTeam, selectAvailableIphone } from '../../scripts/run-ios-device'
 
 describe('mobile E2E runner', () => {
   it('selects a booted iPhone before a shutdown simulator', () => {
@@ -21,6 +22,36 @@ describe('mobile E2E runner', () => {
 
   it('returns only ready Android devices', () => {
     expect(parseAdbDevices('List of devices attached\nemulator-5554\tdevice\nemulator-5556\toffline\n')).toEqual(['emulator-5554'])
+  })
+
+  it('selects only an available physical iPhone', () => {
+    expect(selectAvailableIphone({
+      result: {
+        devices: [
+          {
+            identifier: 'core-unavailable',
+            properties: {
+              connection: { state: 'unavailable' },
+              hardware: { deviceType: 'iPhone', platform: 'iOS', udid: 'phone-offline' },
+              state: { name: 'Offline iPhone' },
+            },
+          },
+          {
+            identifier: 'core-ready',
+            properties: {
+              connection: { state: 'available' },
+              hardware: { deviceType: 'iPhone', platform: 'iOS', udid: 'phone-ready' },
+              state: { name: 'Trail Phone' },
+            },
+          },
+        ],
+      },
+    })?.udid).toBe('phone-ready')
+  })
+
+  it('infers an unambiguous Apple development team', () => {
+    expect(inferDevelopmentTeam('1) ABC "Apple Development: Chris (DXBQ84FJL4)"')).toBe('DXBQ84FJL4')
+    expect(inferDevelopmentTeam('0 valid identities found')).toBeNull()
   })
 
   it('selects the app activity registered for an Android deep link', () => {

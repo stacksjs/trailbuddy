@@ -13,6 +13,61 @@ bundled cold-start path because iOS Simulator does not expose airplane mode.
 - For iOS: Xcode, XcodeGen, and an installed iPhone Simulator
 - For Android: Android SDK tools and exactly one running emulator
 
+## Test on a physical iPhone
+
+One-time Apple setup is required before macOS can sign an app for a phone:
+
+1. Open Xcode, accept its license, and add the Apple developer account under
+   **Xcode > Settings > Accounts**.
+2. Connect and unlock the iPhone, trust the Mac, and enable Developer Mode on
+   the phone.
+3. Install XcodeGen (`brew install xcodegen`) if it is not already available.
+
+Then build a Release app, sign every embedded target, install it, and open it:
+
+```bash
+bun run preview:iphone
+```
+
+The default device build connects to `https://wildloop.org` and retains the
+current `dist` output as its offline cold-start fallback. To make `dist` the
+primary content source and test the exact local commit without a server:
+
+```bash
+bun run preview:iphone:bundled
+```
+
+The command discovers a single connected iPhone and an unambiguous Apple
+Development team automatically. Set `APPLE_TEAM_ID` when several teams are
+installed, and `IOS_DEVICE_ID` when several phones are connected. Generated
+device products live under `storage/framework/runtime/ios-device/`.
+
+To validate the complete arm64 iPhone product without signing or connecting a
+phone, including the Live Activity extension, watch app, bundled frontend, and
+property lists:
+
+```bash
+bun run check:iphone
+```
+
+After installation, exercise the real-device-only surfaces that simulators
+cannot faithfully reproduce:
+
+- Start a recording, accept When In Use location access, lock the screen, walk
+  a short loop, reopen WildLoop, and stop/save the activity.
+- Confirm the Live Activity updates while recording and the route survives a
+  background/foreground transition.
+- Open `wildloop://record` from Safari and confirm it reaches Capture Run.
+- Disable Wi-Fi and cellular data, force-quit, relaunch, and confirm the bundled
+  feed and recorder fallback remain usable.
+- Confirm selection haptics, native sharing, file import, Health access, push
+  permission handling, and Watch recording controls.
+
+Maestro currently supports automated iOS runs on Simulators, not physical
+iPhones. The checked-in simulator suite therefore remains the repeatable UI E2E
+gate, while the commands above make the signed phone build and the small set of
+hardware-only checks reproducible.
+
 ## Run locally
 
 To build, install, and open WildLoop for hands-on testing without running the
