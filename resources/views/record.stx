@@ -80,9 +80,9 @@
     <div x-class="runMode === 'capture' && !recording ? 'mb-4 card border-2 border-orange-200 dark:border-orange-800/50' : 'hidden'">
       <p class="mb-2 font-semibold text-sm dark:text-white">Target a zone to attack</p>
       <div class="flex flex-wrap gap-2 items-center">
-        <button @click="targetTerritoryId.set(null)" x-class="!targetTerritoryId ? 'ring-2 ring-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'bg-gray-100 dark:bg-slate-700'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition">Any nearby</button>
+        <button @click="targetTerritoryId.set(null)" :aria-pressed="targetTerritoryId === null" x-class="targetTerritoryId === null ? 'ring-2 ring-emerald-500' : ''" class="px-3 py-1.5 text-xs font-medium text-slate-900 dark:text-white bg-gray-100 dark:bg-slate-700 rounded-lg transition">Any nearby</button>
         <template :for="zone in attackable">
-          <button @click="targetTerritoryId.set(zone.id)" x-class="targetTerritoryId === zone.id ? 'ring-2 ring-orange-500 bg-orange-50 dark:bg-orange-900/20' : 'bg-gray-100 dark:bg-slate-700'" class="px-3 py-1.5 text-xs font-medium rounded-lg transition">{{ zone.name }}</button>
+          <button @click="targetTerritoryId.set(zone.id)" :aria-pressed="targetTerritoryId === zone.id" x-class="targetTerritoryId === zone.id ? 'ring-2 ring-orange-500' : ''" class="px-3 py-1.5 text-xs font-medium text-slate-900 dark:text-white bg-gray-100 dark:bg-slate-700 rounded-lg transition">{{ zone.name }}</button>
         </template>
         <span :if="attackable.length === 0" class="text-xs text-gray-500 dark:text-slate-400">No claimable zones in range yet. Head toward the orange areas on the map.</span>
       </div>
