@@ -1,5 +1,5 @@
 import { onDestroy, onMount } from 'stx'
-import { deepLinks, device, isNativeMobile, onMobileReady, pushNotifications } from '@stacksjs/mobile'
+import { deepLinks, device, isNativeMobile, onMobileReady, pushNotifications } from '~/storage/framework/core/mobile/dist/index.js'
 import { readyToken } from '../assets/scripts/auth'
 
 export function deepLinkPath(value: string): string | null {

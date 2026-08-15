@@ -27,25 +27,18 @@ describe('mobile Buddy commands', () => {
     const packageJson = await Bun.file(new URL('../../package.json', import.meta.url)).json()
     const gitignore = await Bun.file(new URL('../../.gitignore', import.meta.url)).text()
     const runtime = await Bun.file(new URL('../../storage/framework/core/mobile/dist/index.js', import.meta.url)).text()
+    const projectRoot = new URL('../../', import.meta.url).pathname
+    const clientSources: string[] = []
+    for await (const path of new Bun.Glob('resources/**/*.{stx,ts}').scan({ cwd: projectRoot, absolute: true }))
+      clientSources.push(await Bun.file(path).text())
 
-    // From npm, not the vendored path. Production excludes the whole
-
-    // storage/framework tree on purpose (see SOURCE_RELEASE_EXCLUDES and
-
-    // app/ProductionPreloader.ts), so a file: dependency into that tree
-
-    // cannot install on the server — the release shipped it gutted and the
-
-    // deploy died on `ENOENT: failed opening cache/package/version dir`.
-
-    // @stacksjs/mobile is published now, which it was not when this was
-
-    // vendored; the built runtime asserted below still ships in the repo,
-
-    // so clean iOS builds keep the self-contained copy this test guards.
-
+    // Production installs from npm because storage/framework is excluded from
+    // server releases. STX clients deliberately import the checked-in bundle,
+    // which carries Craft's browser runtime without an unresolved native peer.
     expect(packageJson.dependencies['@stacksjs/mobile']).toMatch(/^\^0\.70\./)
     expect(gitignore).toContain('!storage/framework/core/mobile/dist/**')
     expect(runtime).not.toContain('craft-native/mobile')
+    expect(clientSources.some(source => source.includes('~/storage/framework/core/mobile/dist/index.js'))).toBe(true)
+    expect(clientSources.every(source => !source.includes("from '@stacksjs/mobile'"))).toBe(true)
   })
 })

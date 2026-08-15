@@ -1,5 +1,5 @@
 <script client>
-import { haptics, share } from '@stacksjs/mobile'
+import { haptics, share } from '~/storage/framework/core/mobile/dist/index.js'
 
 const title = useReactiveProp<string | undefined>('title', undefined)
 const text = useReactiveProp<string | undefined>('text', undefined)

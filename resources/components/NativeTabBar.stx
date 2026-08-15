@@ -7,7 +7,7 @@ const { label = 'App navigation' } = defineProps<NativeTabBarProps>()
 </script>
 
 <script client>
-import { haptics } from '@stacksjs/mobile'
+import { haptics } from '~/storage/framework/core/mobile/dist/index.js'
 
 function selectTab(): void {
   void haptics.selection()

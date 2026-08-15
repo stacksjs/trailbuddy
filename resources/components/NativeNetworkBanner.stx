@@ -1,5 +1,5 @@
 <script client>
-import { network } from '@stacksjs/mobile'
+import { network } from '~/storage/framework/core/mobile/dist/index.js'
 import { onDestroy, onMount } from 'stx'
 
 const className = useReactiveProp<string>('class', '')

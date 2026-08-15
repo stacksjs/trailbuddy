@@ -1,5 +1,5 @@
 import { derived, state } from 'stx'
-import { haptics } from '@stacksjs/mobile'
+import { haptics } from '~/storage/framework/core/mobile/dist/index.js'
 import type { ActivityShareCardPreset, ActivitySharePoint } from 'ts-images/activity-card'
 import { activitySharePreview, downloadActivityShareImage, shareActivityImage, type ShareableActivity } from '../functions/activity-share'
 

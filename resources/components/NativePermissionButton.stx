@@ -1,6 +1,6 @@
 <script client>
-import type { PermissionStatus, PermissionType } from '@stacksjs/mobile'
-import { haptics, permissions } from '@stacksjs/mobile'
+import type { PermissionStatus, PermissionType } from '~/storage/framework/core/mobile/dist/index.js'
+import { haptics, permissions } from '~/storage/framework/core/mobile/dist/index.js'
 import { onMount } from 'stx'
 
 const permission = useReactiveProp<PermissionType>('permission', 'location')
