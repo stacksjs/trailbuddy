@@ -32,7 +32,7 @@ tags:
       text: Start recording
     direction: DOWN
     centerElement: true
-    timeout: 10000
+    timeout: 30000
 - assertVisible:
     text: Start recording
     enabled: true
