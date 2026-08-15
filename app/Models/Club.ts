@@ -66,7 +66,7 @@ export default defineModel({
       validation: {
         rule: schema.string().max(120),
       },
-      factory: faker => `${faker.location.city()}, ${faker.location.state({ abbreviated: true })}`,
+      factory: faker => `${faker.location.city()}, ${faker.location.stateAbbr()}`,
     },
 
     club_type: {

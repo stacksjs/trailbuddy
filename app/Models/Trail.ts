@@ -110,7 +110,7 @@ export default defineModel({
           required: 'Location is required',
         },
       },
-      factory: faker => `${faker.location.city()}, ${faker.location.state({ abbreviated: true })}`,
+      factory: faker => `${faker.location.city()}, ${faker.location.stateAbbr()}`,
     },
 
     distance: {
@@ -316,7 +316,7 @@ export default defineModel({
       validation: {
         rule: schema.string().max(6),
       },
-      factory: faker => faker.location.state({ abbreviated: true }),
+      factory: faker => faker.location.stateAbbr(),
     },
 
     stateName: {
