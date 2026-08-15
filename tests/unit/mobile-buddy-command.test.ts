@@ -28,7 +28,23 @@ describe('mobile Buddy commands', () => {
     const gitignore = await Bun.file(new URL('../../.gitignore', import.meta.url)).text()
     const runtime = await Bun.file(new URL('../../storage/framework/core/mobile/dist/index.js', import.meta.url)).text()
 
-    expect(packageJson.dependencies['@stacksjs/mobile']).toBe('file:storage/framework/core/mobile')
+    // From npm, not the vendored path. Production excludes the whole
+
+    // storage/framework tree on purpose (see SOURCE_RELEASE_EXCLUDES and
+
+    // app/ProductionPreloader.ts), so a file: dependency into that tree
+
+    // cannot install on the server — the release shipped it gutted and the
+
+    // deploy died on `ENOENT: failed opening cache/package/version dir`.
+
+    // @stacksjs/mobile is published now, which it was not when this was
+
+    // vendored; the built runtime asserted below still ships in the repo,
+
+    // so clean iOS builds keep the self-contained copy this test guards.
+
+    expect(packageJson.dependencies['@stacksjs/mobile']).toMatch(/^\^0\.70\./)
     expect(gitignore).toContain('!storage/framework/core/mobile/dist/**')
     expect(runtime).not.toContain('craft-native/mobile')
   })
