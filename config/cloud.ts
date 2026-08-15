@@ -78,7 +78,15 @@ const SOURCE_RELEASE_EXCLUDES = [
   'coverage',
   'database/*.sqlite',
   'database/*.sqlite-*',
-  'dist',
+  // NOT 'dist'. tar matches that against every path component, and the
+  // vendored mobile runtime lives in storage/framework/core/mobile/dist —
+  // the self-contained build `tests/unit/mobile-buddy-command.test.ts`
+  // guarantees for clean iOS builds. Excluding it shipped that dependency
+  // gutted, and the install died on the box with `ENOENT: failed opening
+  // cache/package/version dir for package @stacksjs/mobile`. bsdtar has no
+  // anchored form that keeps one dist and drops the other, so the root build
+  // output rides along: ~13 MB on a release that already moves 29 MB, which
+  // is the cheaper half of the trade.
   'node_modules',
   'pantry',
   'storage/cloud',
