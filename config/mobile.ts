@@ -25,6 +25,7 @@ export default {
     darkMode: true,
     urlSchemes: ['wildloop'],
     orientations: ['portrait'],
+    deviceFamilies: ['iphone'],
     privacy: {
       tracking: false,
       collectedDataTypes: [
