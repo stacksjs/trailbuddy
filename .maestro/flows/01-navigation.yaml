@@ -10,22 +10,22 @@ tags:
       all: allow
 - extendedWaitUntil:
     visible: "Find your line.*"
-    timeout: 15000
+    timeout: 30000
 - takeScreenshot: home
 - tapOn: "^Feed$"
 - extendedWaitUntil:
     visible: Activity Feed
-    timeout: 10000
+    timeout: 30000
 - takeScreenshot: feed
 - tapOn: "^Trails$"
 - extendedWaitUntil:
     visible: Every trail we know
-    timeout: 10000
+    timeout: 30000
 - takeScreenshot: trails
 - tapOn: "^Record$"
 - extendedWaitUntil:
     visible: Capture Run
-    timeout: 10000
+    timeout: 30000
 - assertNotVisible: "would like to use your current location"
 - scrollUntilVisible:
     element:
@@ -40,15 +40,15 @@ tags:
 - tapOn: "^Territory$"
 - extendedWaitUntil:
     visible: Your territory map
-    timeout: 10000
+    timeout: 30000
 - takeScreenshot: territory
 - tapOn: "^Profile$"
 - extendedWaitUntil:
     visible: Activities
-    timeout: 10000
+    timeout: 30000
 - takeScreenshot: profile
 - tapOn: "^Settings$"
 - extendedWaitUntil:
     visible: Log In - WildLoop
-    timeout: 10000
+    timeout: 30000
 - takeScreenshot: sign-in

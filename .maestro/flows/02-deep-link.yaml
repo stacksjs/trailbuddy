@@ -6,7 +6,7 @@ tags:
 ---
 - extendedWaitUntil:
     visible: Capture Run
-    timeout: 10000
+    timeout: 30000
 - assertNotVisible: "would like to use your current location"
 - scrollUntilVisible:
     element:

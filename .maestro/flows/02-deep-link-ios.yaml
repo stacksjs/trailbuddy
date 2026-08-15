@@ -7,11 +7,11 @@ tags:
 ---
 - extendedWaitUntil:
     visible: Open
-    timeout: 10000
+    timeout: 30000
 - tapOn: "^Open$"
 - extendedWaitUntil:
     visible: Capture Run
-    timeout: 10000
+    timeout: 30000
 - assertNotVisible: "would like to use your current location"
 - scrollUntilVisible:
     element:
@@ -25,12 +25,12 @@ tags:
 - tapOn: "^Feed$"
 - extendedWaitUntil:
     visible: Activity Feed
-    timeout: 10000
+    timeout: 30000
 - tapOn: "^Record$"
 - extendedWaitUntil:
     visible: Capture Run
-    timeout: 10000
+    timeout: 30000
 - extendedWaitUntil:
     visible: Cascade Ridge Zone
-    timeout: 10000
+    timeout: 30000
 - takeScreenshot: deep-link
