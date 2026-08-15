@@ -52,4 +52,12 @@ export default {
     file: 'RecomputeCounters',
     enabled: true,
   },
+  // Compatibility bridge for the mobile build commands introduced after the
+  // currently pinned Buddy release. Mobile.ts only registers names that the
+  // installed framework does not already provide, so it disappears cleanly
+  // as Buddy gains the upstream commands.
+  'build:mobile': {
+    file: 'Mobile',
+    enabled: true,
+  },
 } satisfies CommandRegistry
