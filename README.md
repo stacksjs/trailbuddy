@@ -31,17 +31,33 @@ The frontend and API are served by Stacks. Views are STX, application actions/mo
 
 ## Mobile UI testing
 
+Generate both native projects, or only the platform currently under test:
+
+```bash
+./buddy build:mobile
+./buddy build:ios
+./buddy build:android
+```
+
+Compile the complete unsigned Release product for a physical iPhone, including
+the Live Activity and Watch targets:
+
+```bash
+./buddy build:iphone
+```
+
 Build, install, and open the current shared STX app for hands-on testing:
 
 ```bash
-bun run preview:iphone
+./buddy preview:iphone
+./buddy preview:iphone --bundled
 bun run preview:ios
 bun run preview:android
 ```
 
-`preview:iphone` creates a Release device build, signs it, installs it on the
+`buddy preview:iphone` creates a Release device build, signs it, installs it on the
 single connected iPhone, and launches WildLoop. Use
-`bun run preview:iphone:bundled` to test the exact local frontend and its
+`--bundled` to test the exact local frontend and its
 offline behavior. The `preview:ios` command targets the iOS Simulator.
 
 Run the same native iOS and Android journeys used in CI:

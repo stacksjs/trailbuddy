@@ -26,7 +26,7 @@ One-time Apple setup is required before macOS can sign an app for a phone:
 Then build a Release app, sign every embedded target, install it, and open it:
 
 ```bash
-bun run preview:iphone
+./buddy preview:iphone
 ```
 
 The default device build connects to `https://wildloop.org` and retains the
@@ -34,7 +34,7 @@ current `dist` output as its offline cold-start fallback. To make `dist` the
 primary content source and test the exact local commit without a server:
 
 ```bash
-bun run preview:iphone:bundled
+./buddy preview:iphone --bundled
 ```
 
 The command discovers a single connected iPhone and an unambiguous Apple
@@ -47,7 +47,7 @@ phone, including the Live Activity extension, watch app, bundled frontend, and
 property lists:
 
 ```bash
-bun run check:iphone
+./buddy build:iphone
 ```
 
 After installation, exercise the real-device-only surfaces that simulators
