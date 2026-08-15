@@ -22,4 +22,14 @@ describe('mobile Buddy commands', () => {
 
     expect(buddy.commands.filter(command => command.rawName === 'build:ios')).toHaveLength(1)
   })
+
+  it('ships the self-contained mobile runtime used by clean builds', async () => {
+    const packageJson = await Bun.file(new URL('../../package.json', import.meta.url)).json()
+    const gitignore = await Bun.file(new URL('../../.gitignore', import.meta.url)).text()
+    const runtime = await Bun.file(new URL('../../storage/framework/core/mobile/dist/index.js', import.meta.url)).text()
+
+    expect(packageJson.dependencies['@stacksjs/mobile']).toBe('file:storage/framework/core/mobile')
+    expect(gitignore).toContain('!storage/framework/core/mobile/dist/**')
+    expect(runtime).not.toContain('craft-native/mobile')
+  })
 })

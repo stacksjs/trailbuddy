@@ -19,6 +19,8 @@ temp
 updates
 tests/unit/coverage
 dist*
+!storage/framework/core/mobile/dist/
+!storage/framework/core/mobile/dist/**
 
 data.ms
 !.gitkeep
