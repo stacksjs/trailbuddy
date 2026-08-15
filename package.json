@@ -9,7 +9,7 @@
   "dependencies": {
     "@iconify-json/lucide": "^1.2.120",
     "@stacksjs/buddy": "^0.70.375",
-    "@stacksjs/mobile": "file:storage/framework/core/mobile",
+    "@stacksjs/mobile": "^0.70.375",
     "@stacksjs/ts-cloud": "^0.7.126",
     "bun-query-builder": "^0.1.63",
     "stacks": "^0.70.375",
