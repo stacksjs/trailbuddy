@@ -10,7 +10,7 @@
     "@iconify-json/lucide": "^1.2.120",
     "@stacksjs/buddy": "0.70.207",
     "@stacksjs/mobile": "file:storage/framework/core/mobile",
-    "@stacksjs/ts-cloud": "0.7.119",
+    "@stacksjs/ts-cloud": "^0.7.125",
     "bun-query-builder": "^0.1.63",
     "stacks": "0.70.207",
     "ts-health": "0.1.0",
@@ -18,13 +18,15 @@
     "ts-web-scraper": "^0.1.6"
   },
   "devDependencies": {
-    "@stacksjs/stx": "0.2.179",
-    "bun-plugin-stx": "0.2.179",
+    "@stacksjs/stx": "^0.2.181",
+    "bun-plugin-stx": "^0.2.181",
     "ts-maps": "0.3.1"
   },
   "overrides": {
     "@stacksjs/browser": "0.70.281",
-    "bunfig": "0.15.15"
+    "bunfig": "0.15.15",
+    "@stacksjs/stx": "^0.2.181",
+    "@stacksjs/ts-cloud": "^0.7.125"
   },
   "bugs": {
     "url": "https://github.com/stacksjs/wildloop/issues"
