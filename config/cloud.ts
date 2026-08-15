@@ -215,6 +215,30 @@ export const tsCloud: TsCloudConfig = {
       deploy: 'server',
       start: 'bun storage/framework/runtime/production/ingest.js',
       port: 3051,
+      /*
+       * Stop the old worker before starting the new one.
+       *
+       * The overlap cutover is right for the two sites above, where two
+       * instances briefly sharing a port is exactly the point. It is wrong
+       * here twice over. This worker claims shards from the database, so two
+       * of them running at once is not a smoother deploy, it is the same tile
+       * fetched twice against an Overpass endpoint already rationed to two
+       * requests a minute. And the status port makes it look like a server to
+       * the cutover: the new instance cannot bind 3051 while the old one is
+       * draining, so it crash-looped on EADDRINUSE until systemd gave up —
+       * which is how a deploy left this worker stopped entirely.
+       */
+      zeroDowntime: false,
+      /*
+       * Let it finish the shard it is holding.
+       *
+       * On SIGTERM this worker logs `finishing current shard` and drains,
+       * because a shard abandoned mid-write has to be redone from the start.
+       * systemd's default gives it 90 seconds and then SIGKILLs it, which it
+       * did — killing the very thing the drain exists to protect. A shard is
+       * minutes of Overpass-rationed work, so it gets minutes.
+       */
+      stopTimeout: '10min',
       preStart: [
         LINK_ENV_KEYS,
         INSTALL_DEPS,
