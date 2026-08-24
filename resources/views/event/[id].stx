@@ -1,0 +1,418 @@
+@extends('layouts/default')
+
+@section('title', 'Live Event - WildLoop')
+
+@section('content')
+<script client>
+  import { useLiveEvent } from '../../composables/useLiveEvent'
+  import { readRouteParam } from '../../composables/useRouteParam'
+  import { createTrailMap, drawTrailRoute, runWhenMapReady, type TrailMapHandle } from '../../composables/useTrailMap'
+  import { formatClock } from '../../functions/backyard'
+
+  useHead({ title: 'Live Event - WildLoop' })
+
+  // -1 is a no-match sentinel so an unresolved param renders "not found"
+  // rather than silently loading event 1.
+  const eventId = readRouteParam('id') ?? -1
+
+  const {
+    event, board, me, loading, notFound, actionError, working,
+    countdown, yardProgress, standings, recentLaps, stillIn, currentYard, isLive,
+    toggleEntry, changeStatus, recordLap,
+  } = useLiveEvent(eventId > 0 ? eventId : null)
+
+  const copied = state(false)
+  const consoleOpen = state(false)
+
+  const TYPE_LABELS = {
+    backyard: 'Backyard ultra',
+    race: 'Race',
+    group_run: 'Group run',
+    time_trial: 'Time trial',
+  }
+
+  function typeLabel(type) {
+    return TYPE_LABELS[type] ?? type
+  }
+
+  function whenLabel(iso) {
+    const date = new Date(iso)
+    if (Number.isNaN(date.getTime())) return 'Date to be confirmed'
+    return date.toLocaleString(undefined, {
+      weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit',
+    })
+  }
+
+  function timeLabel(iso) {
+    const date = new Date(iso)
+    if (Number.isNaN(date.getTime())) return '—'
+    return date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit', second: '2-digit' })
+  }
+
+  function lapDuration(seconds) {
+    return formatClock((seconds ?? 0) * 1000)
+  }
+
+  const statusLabels = {
+    registered: 'In',
+    running: 'In',
+    winner: 'Winner',
+    timed_out: 'Timed out',
+    dnf: 'DNS',
+    withdrawn: 'Withdrew',
+  }
+
+  function statusLabel(entry) {
+    if (entry.status === 'winner') return 'Winner'
+    return entry.stillIn ? 'In' : (statusLabels[entry.status] ?? 'Out')
+  }
+
+  // Sharing the board is the point of live reporting, so make the link one tap
+  // away rather than something to select out of the address bar.
+  async function copyLink() {
+    if (typeof navigator === 'undefined') return
+    const url = window.location.href
+    if (navigator.share) {
+      await navigator.share({ title: event()?.name ?? 'WildLoop event', url }).catch(() => {})
+      return
+    }
+    await navigator.clipboard?.writeText(url).catch(() => {})
+    copied.set(true)
+    setTimeout(() => copied.set(false), 2000)
+  }
+
+  let loopMap: TrailMapHandle | null = null
+
+  async function mountLoopMap() {
+    const route = event()?.loopRoute
+    if (!route || route.length < 2) return
+    loopMap?.destroy()
+    loopMap = await createTrailMap('event-loop-map', { scrollWheelZoom: false })
+    if (!loopMap) return
+    await drawTrailRoute(loopMap.map, route, { color: '#059669', weight: 5 })
+    loopMap.fitPoints(route, [28, 28])
+  }
+
+  onMount(() => runWhenMapReady('event-loop-map', mountLoopMap))
+
+  onDestroy(() => {
+    loopMap?.destroy()
+    loopMap = null
+  })
+</script>
+
+  <div :if="loading" class="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
+    <div class="card h-40 animate-pulse bg-slate-100 dark:bg-slate-800"></div>
+  </div>
+
+  <div :if="notFound" class="py-32 text-center">
+    <p class="font-medium text-gray-500">Event not found</p>
+    <StxLink to="/events" class="mt-4 inline-block rounded-lg bg-emerald-600 px-6 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">Back to events</StxLink>
+  </div>
+
+  <div :if="event">
+    <!-- ── Corral header ────────────────────────────────────────────────── -->
+    <section class="event-header">
+      <div class="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+        <div class="flex flex-wrap items-start justify-between gap-6">
+          <div class="min-w-0">
+            <div class="mb-3 flex flex-wrap items-center gap-2">
+              <span :if="event.status === 'live'" class="inline-flex items-center gap-1.5 rounded-full bg-red-500 px-3 py-1 text-xs font-bold uppercase tracking-[0.1em] text-white">
+                <span class="live-pip" aria-hidden="true"></span> Live
+              </span>
+              <span :if="event.status === 'scheduled'" class="rounded-full bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-[0.1em] text-white">Scheduled</span>
+              <span :if="event.status === 'finished'" class="rounded-full bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-[0.1em] text-white">Finished</span>
+              <span :if="event.status === 'cancelled'" class="rounded-full bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-[0.1em] text-white">Cancelled</span>
+              <span class="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white/90">{{ typeLabel(event.type) }}</span>
+            </div>
+            <h1 class="font-display text-3xl font-bold tracking-[-0.03em] text-white md:text-4xl">{{ event.name }}</h1>
+            <p class="mt-2 text-white/75">
+              {{ whenLabel(event.startTime) }}<span :if="event.location">{{ ' · ' + event.location }}</span>
+            </p>
+            <p :if="event.clubName" class="mt-1 text-sm text-white/60">{{ 'Hosted by ' + event.clubName }}</p>
+            <p :if="!event.clubName" class="mt-1 text-sm text-white/60">{{ 'Hosted by ' + event.hostName }}</p>
+          </div>
+
+          <div class="flex shrink-0 flex-wrap items-center gap-2">
+            <button @click="copyLink()" class="rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/25">
+              {{ copied ? 'Link copied' : 'Share the board' }}
+            </button>
+            <button :if="!me.entered && event.status !== 'finished' && event.status !== 'cancelled'" @click="toggleEntry()" x-disabled="working()" class="rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-emerald-800 shadow-lg transition hover:bg-emerald-50 disabled:opacity-60">Enter</button>
+            <button :if="me.entered && event.status === 'scheduled'" @click="toggleEntry()" x-disabled="working()" class="rounded-xl bg-white/15 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/25 disabled:opacity-60">Withdraw</button>
+          </div>
+        </div>
+
+        <!-- The corral clock. The single most important number on the page for
+             anyone at the start line, so it is the biggest thing on it. -->
+        <div :if="event.status === 'live' || event.status === 'scheduled'" class="mt-8 grid gap-5 sm:grid-cols-[1.2fr_1fr_1fr]">
+          <div class="corral">
+            <p class="corral-label">{{ event.status === 'live' ? 'Next start' : 'Starts in' }}</p>
+            <p class="corral-clock">{{ countdown }}</p>
+            <div :if="event.status === 'live'" class="corral-bar" role="progressbar" :aria-valuenow="yardProgress" aria-valuemin="0" aria-valuemax="100">
+              <div class="corral-bar-fill" :style="'width:' + yardProgress() + '%'"></div>
+            </div>
+          </div>
+          <div class="corral">
+            <p class="corral-label">{{ event.type === 'backyard' ? 'Yard' : 'Lap' }}</p>
+            <p class="corral-metric">{{ event.status === 'live' ? currentYard() : '—' }}</p>
+          </div>
+          <div class="corral">
+            <p class="corral-label">Still in</p>
+            <p class="corral-metric">{{ stillIn() + ' / ' + (board()?.entrantCount ?? 0) }}</p>
+          </div>
+        </div>
+
+        <div :if="event.status === 'finished'" class="mt-8">
+          <div :if="board()?.winnerId" class="winner-banner">
+            <i class="i-lucide-trophy h-6 w-6" aria-hidden="true"></i>
+            <div>
+              <p class="text-xs font-bold uppercase tracking-[0.14em] opacity-70">Last one standing</p>
+              <p class="mt-0.5 text-xl font-bold">{{ standings().find(s => s.userId === board().winnerId)?.name ?? 'Unknown' }}</p>
+              <p class="text-sm opacity-80">{{ (board()?.leaderYards ?? 0) + ' yards · ' + (standings().find(s => s.userId === board().winnerId)?.miles ?? 0) + ' mi' }}</p>
+            </div>
+          </div>
+          <p :if="!board()?.winnerId" class="rounded-2xl bg-white/10 px-5 py-4 text-sm text-white/80">
+            The field emptied without a last one standing — the final runners timed out on the same yard.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <p :if="actionError" role="alert" class="mb-5 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">{{ actionError }}</p>
+
+      <!-- Host console -->
+      <div :if="event.isHost" class="mb-8 card border-2 border-emerald-200 dark:border-emerald-800/60">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="font-bold dark:text-white">Host console</h2>
+            <p class="mt-0.5 text-sm text-gray-500 dark:text-slate-400">You are running this event.</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button :if="event.status === 'scheduled'" @click="changeStatus('live')" x-disabled="working()" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60">Start the race</button>
+            <button :if="event.status === 'live'" @click="changeStatus('finished')" x-disabled="working()" class="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-900 disabled:opacity-60">Call it</button>
+            <button :if="event.status === 'scheduled'" @click="changeStatus('cancelled')" x-disabled="working()" class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50 disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Cancel</button>
+            <button :if="event.status === 'live'" @click="consoleOpen.set(!consoleOpen())" class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
+              {{ consoleOpen ? 'Hide lap entry' : 'Record laps' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- By yard 20 half the field's phones are dead. The host has to be
+             able to bank a lap on somebody's behalf, or the board stops being
+             true exactly when it matters most. -->
+        <div :show="consoleOpen() && event.status === 'live'" x-cloak class="mt-4 border-t border-gray-100 pt-4 dark:border-slate-700">
+          <p class="mb-3 text-xs text-gray-500 dark:text-slate-400">{{ 'Tap a runner as they cross the line to bank yard ' + currentYard() + ' for them.' }}</p>
+          <div class="flex flex-wrap gap-2">
+            <template :for="entry in standings">
+              <button
+                :if="entry.stillIn"
+                @click="recordLap({ userId: entry.userId })"
+                x-disabled="working() || entry.yardsCompleted >= currentYard()"
+                class="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-slate-800 transition hover:border-emerald-400 hover:bg-emerald-50 disabled:opacity-40 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-emerald-900/20"
+              >
+                {{ entry.name }}
+                <span class="ml-1 text-xs tabular-nums opacity-60">{{ entry.yardsCompleted }}</span>
+              </button>
+            </template>
+          </div>
+        </div>
+      </div>
+
+      <!-- The runner's own control: one button, because it is pressed with
+           dead legs and cold hands. -->
+      <div :if="me.entered && event.status === 'live'" class="mb-8 card border-2 border-emerald-200 dark:border-emerald-800/60">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-400">Your race</p>
+            <p class="mt-1 font-display text-2xl font-bold dark:text-white">{{ (me.yardsCompleted ?? 0) + ' yards banked' }}</p>
+            <p class="mt-0.5 text-sm text-gray-500 dark:text-slate-400">{{ 'Next start in ' + countdown() }}</p>
+          </div>
+          <button
+            @click="recordLap()"
+            x-disabled="working() || (me.yardsCompleted ?? 0) >= currentYard()"
+            class="rounded-full bg-emerald-600 px-7 py-4 text-base font-bold text-white transition hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-40"
+          >
+            {{ (me.yardsCompleted ?? 0) >= currentYard() ? 'Yard banked' : 'I finished yard ' + currentYard() }}
+          </button>
+        </div>
+      </div>
+
+      <div class="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
+        <!-- Standings -->
+        <div>
+          <h2 class="mb-4 font-bold text-xl dark:text-white">Standings</h2>
+
+          <div class="overflow-hidden rounded-2xl border border-gray-100 dark:border-slate-700">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-400 dark:bg-slate-800 dark:text-slate-500">
+                <tr>
+                  <th class="px-4 py-3 font-semibold">#</th>
+                  <th class="px-4 py-3 font-semibold">Runner</th>
+                  <th class="px-4 py-3 text-right font-semibold">{{ event.type === 'backyard' ? 'Yards' : 'Laps' }}</th>
+                  <th class="px-4 py-3 text-right font-semibold">Miles</th>
+                  <th class="px-4 py-3 text-right font-semibold">State</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template :for="entry in standings">
+                  <tr class="border-t border-gray-100 dark:border-slate-700">
+                    <td class="px-4 py-3 font-mono text-xs text-gray-400">{{ entry.rank }}</td>
+                    <td class="px-4 py-3">
+                      <StxLink x-to="'/athlete/' + entry.userId" class="font-semibold text-slate-900 transition hover:text-emerald-600 dark:text-white dark:hover:text-emerald-400">{{ entry.name }}</StxLink>
+                      <span :if="entry.exitNote" class="ml-2 text-xs text-gray-400">{{ entry.exitNote }}</span>
+                    </td>
+                    <td class="px-4 py-3 text-right font-bold tabular-nums dark:text-white">{{ entry.yardsCompleted }}</td>
+                    <td class="px-4 py-3 text-right tabular-nums text-gray-500 dark:text-slate-400">{{ entry.miles.toFixed(1) }}</td>
+                    <td class="px-4 py-3 text-right">
+                      <span
+                        class="rounded-full px-2 py-1 text-[0.65rem] font-bold uppercase tracking-wide"
+                        x-class="entry.status === 'winner' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' : entry.stillIn ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-400'"
+                      >{{ statusLabel(entry) }}</span>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+
+            <p :if="standings().length === 0" class="px-4 py-10 text-center text-sm text-gray-400">Nobody has entered yet.</p>
+          </div>
+
+          <div :if="event.loopRoute" class="mt-6">
+            <h3 class="mb-3 font-bold dark:text-white">The yard</h3>
+            <div class="card overflow-hidden p-0">
+              <div id="event-loop-map" data-stx-ignore class="ts-map-container h-72"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live lap feed -->
+        <div>
+          <h2 class="mb-4 flex items-center gap-2 font-bold text-xl dark:text-white">
+            Lap feed
+            <span :if="isLive" class="live-pip" aria-hidden="true"></span>
+          </h2>
+
+          <div class="space-y-2">
+            <template :for="lap in recentLaps">
+              <div class="flex items-center gap-3 rounded-xl border border-gray-100 px-3 py-2.5 dark:border-slate-700">
+                <span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-50 text-xs font-bold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">{{ lap.yard }}</span>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-semibold dark:text-white">{{ lap.name }}</p>
+                  <p class="text-xs text-gray-500 dark:text-slate-400">{{ timeLabel(lap.finishedAt) + ' · ' + lapDuration(lap.durationSeconds) }}</p>
+                </div>
+                <StxLink :if="lap.activityId" x-to="'/activity/' + lap.activityId" class="shrink-0 text-xs font-semibold text-emerald-700 dark:text-emerald-400">Run</StxLink>
+              </div>
+            </template>
+
+            <p :if="recentLaps().length === 0" class="rounded-xl border border-dashed border-gray-200 px-4 py-10 text-center text-sm text-gray-400 dark:border-slate-700">
+              No laps yet. They appear here the moment they land.
+            </p>
+          </div>
+
+          <div :if="event.description" class="mt-8 card">
+            <h3 class="mb-2 font-bold dark:text-white">Details</h3>
+            <p class="whitespace-pre-line text-sm leading-relaxed text-gray-600 dark:text-slate-300">{{ event.description }}</p>
+          </div>
+
+          <div :if="event.type === 'backyard'" class="mt-6 card">
+            <h3 class="mb-2 font-bold dark:text-white">How a backyard works</h3>
+            <ol class="space-y-2 text-sm text-gray-600 dark:text-slate-300">
+              <li class="flex gap-2"><span class="font-bold text-emerald-600">1.</span><span>{{ 'Everyone starts the same ' + event.loopDistance.toFixed(2) + ' mi loop together.' }}</span></li>
+              <li class="flex gap-2"><span class="font-bold text-emerald-600">2.</span><span>{{ 'Finish inside ' + event.yardMinutes + ' minutes. Whatever is left is your rest.' }}</span></li>
+              <li class="flex gap-2"><span class="font-bold text-emerald-600">3.</span><span>Miss the next start and you are out.</span></li>
+              <li class="flex gap-2"><span class="font-bold text-emerald-600">4.</span><span>It ends when one runner completes a yard nobody else does.</span></li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<style>
+  .event-header {
+    background: linear-gradient(135deg, #047857 0%, #0d9488 55%, #059669 100%);
+  }
+
+  .corral {
+    padding: 1.1rem 1.25rem;
+    border: 1px solid rgb(255 255 255 / 16%);
+    border-radius: 1.25rem;
+    background: rgb(255 255 255 / 12%);
+    backdrop-filter: blur(6px);
+  }
+
+  .corral-label {
+    color: rgb(255 255 255 / 70%);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .corral-clock {
+    margin-top: 0.3rem;
+    color: #fff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: clamp(2.25rem, 6vw, 3.25rem);
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .corral-metric {
+    margin-top: 0.3rem;
+    color: #fff;
+    font-family: 'Outfit', system-ui, sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .corral-bar {
+    margin-top: 0.9rem;
+    overflow: hidden;
+    height: 0.35rem;
+    background: rgb(255 255 255 / 22%);
+    border-radius: 9999px;
+  }
+
+  .corral-bar-fill {
+    height: 100%;
+    background: #fff;
+    border-radius: 9999px;
+    transition: width 1s linear;
+  }
+
+  .winner-banner {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    color: #fff;
+    border: 1px solid rgb(255 255 255 / 20%);
+    border-radius: 1.25rem;
+    background: rgb(255 255 255 / 14%);
+  }
+
+  .live-pip {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    background: #ef4444;
+    border-radius: 9999px;
+    box-shadow: 0 0 0 0 rgb(239 68 68 / 60%);
+    animation: live-pulse 1.8s ease-out infinite;
+  }
+
+  @keyframes live-pulse {
+    to { box-shadow: 0 0 0 0.6rem rgb(239 68 68 / 0%); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .live-pip { animation: none; }
+    .corral-bar-fill { transition: none; }
+  }
+</style>
+@endsection

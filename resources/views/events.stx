@@ -1,0 +1,249 @@
+@extends('layouts/default')
+
+@section('title', 'Events - WildLoop')
+
+@section('content')
+<script client>
+  import { useEvents } from '../composables/useEvents'
+
+  useHead({ title: 'Events - WildLoop' })
+
+  const {
+    events, loading, loadError, typeFilter, statusFilter, applyFilter,
+    createOpen, submitting, createError,
+    fName, fType, fLocation, fDescription, fStart, fYardMinutes, fLoopDistance, fVisibility,
+    openCreate, closeCreate, submitCreate,
+  } = useEvents()
+
+  const TYPE_LABELS = {
+    backyard: 'Backyard ultra',
+    race: 'Race',
+    group_run: 'Group run',
+    time_trial: 'Time trial',
+  }
+
+  function typeLabel(type) {
+    return TYPE_LABELS[type] ?? type
+  }
+
+  function whenLabel(iso) {
+    const date = new Date(iso)
+    if (Number.isNaN(date.getTime())) return 'Date to be confirmed'
+    return date.toLocaleString(undefined, {
+      weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+    })
+  }
+
+  const liveEvents = derived(() => events().filter(e => e.status === 'live'))
+  const upcoming = derived(() => events().filter(e => e.status === 'scheduled'))
+  const past = derived(() => events().filter(e => e.status === 'finished' || e.status === 'cancelled'))
+</script>
+
+  <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+      <div>
+        <h1 class="font-display text-3xl font-bold tracking-[-0.03em] dark:text-white">Events</h1>
+        <p class="mt-1.5 max-w-[52ch] text-sm leading-relaxed text-gray-500 dark:text-slate-400">
+          Backyard ultras, races, and group runs. A live event reports every lap as it lands, so anyone with the link can follow along.
+        </p>
+      </div>
+      <button @click="openCreate()" class="shrink-0 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 active:scale-[0.98]">
+        Host an event
+      </button>
+    </div>
+
+    <div class="mb-6 flex flex-wrap gap-2">
+      <button @click="applyFilter({ status: 'all', type: 'all' })" x-class="statusFilter === 'all' &amp;&amp; typeFilter === 'all' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'" class="rounded-full px-4 py-2 text-sm font-medium transition active:scale-[0.98]">Everything</button>
+      <button @click="applyFilter({ status: 'live' })" x-class="statusFilter === 'live' ? 'bg-red-600 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'" class="rounded-full px-4 py-2 text-sm font-medium transition active:scale-[0.98]">Live now</button>
+      <button @click="applyFilter({ status: 'scheduled' })" x-class="statusFilter === 'scheduled' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'" class="rounded-full px-4 py-2 text-sm font-medium transition active:scale-[0.98]">Upcoming</button>
+      <button @click="applyFilter({ type: 'backyard', status: 'all' })" x-class="typeFilter === 'backyard' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'" class="rounded-full px-4 py-2 text-sm font-medium transition active:scale-[0.98]">Backyard ultras</button>
+      <button @click="applyFilter({ status: 'finished' })" x-class="statusFilter === 'finished' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'" class="rounded-full px-4 py-2 text-sm font-medium transition active:scale-[0.98]">Results</button>
+    </div>
+
+    <p :if="loadError" class="mb-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">{{ loadError }}</p>
+
+    <template :if="loading() && events().length === 0">
+      <div class="space-y-3">
+        <div class="card h-28 animate-pulse bg-slate-100 dark:bg-slate-800"></div>
+        <div class="card h-28 animate-pulse bg-slate-100 dark:bg-slate-800"></div>
+        <div class="card h-28 animate-pulse bg-slate-100 dark:bg-slate-800"></div>
+      </div>
+    </template>
+
+    <!-- Live first. Somebody opening this page during a race wants the race. -->
+    <section :if="liveEvents().length > 0" class="mb-10">
+      <h2 class="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-red-600 dark:text-red-400">
+        <span class="live-pip" aria-hidden="true"></span>
+        Live now
+      </h2>
+      <div class="space-y-3">
+        <template :for="event in liveEvents">
+          <StxLink x-to="'/event/' + event.id" class="card block transition hover:border-emerald-300 dark:hover:border-emerald-700">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-xs font-semibold uppercase tracking-[0.1em] text-red-600 dark:text-red-400">{{ 'Yard ' + event.currentYard + ' · ' + typeLabel(event.type) }}</p>
+                <h3 class="mt-1 truncate font-bold text-lg dark:text-white">{{ event.name }}</h3>
+                <p class="mt-0.5 truncate text-sm text-gray-500 dark:text-slate-400">{{ event.location || 'Location to be confirmed' }}</p>
+              </div>
+              <div class="shrink-0 text-right">
+                <p class="font-display text-2xl font-bold tabular-nums dark:text-white">{{ event.stillIn }}</p>
+                <p class="text-xs text-gray-500 dark:text-slate-400">{{ 'of ' + event.entrantCount + ' still in' }}</p>
+              </div>
+            </div>
+          </StxLink>
+        </template>
+      </div>
+    </section>
+
+    <section :if="upcoming().length > 0" class="mb-10">
+      <h2 class="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">Upcoming</h2>
+      <div class="space-y-3">
+        <template :for="event in upcoming">
+          <StxLink x-to="'/event/' + event.id" class="card block transition hover:border-emerald-300 dark:hover:border-emerald-700">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-xs font-semibold uppercase tracking-[0.1em] text-emerald-700 dark:text-emerald-400">{{ typeLabel(event.type) }}</p>
+                <h3 class="mt-1 truncate font-bold text-lg dark:text-white">{{ event.name }}</h3>
+                <p class="mt-0.5 truncate text-sm text-gray-500 dark:text-slate-400">
+                  {{ whenLabel(event.startTime) }}<span :if="event.location">{{ ' · ' + event.location }}</span>
+                </p>
+              </div>
+              <div class="shrink-0 text-right">
+                <p class="font-display text-2xl font-bold tabular-nums dark:text-white">{{ event.entrantCount }}</p>
+                <p class="text-xs text-gray-500 dark:text-slate-400">entered</p>
+                <span :if="event.isEntered" class="mt-1 inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">You're in</span>
+              </div>
+            </div>
+            <p :if="event.type === 'backyard'" class="mt-3 border-t border-gray-100 pt-3 text-xs text-gray-500 dark:border-slate-700 dark:text-slate-400">
+              {{ event.loopDistance.toFixed(2) + ' mi yard every ' + event.yardMinutes + ' min · last one standing' }}
+            </p>
+          </StxLink>
+        </template>
+      </div>
+    </section>
+
+    <section :if="past().length > 0">
+      <h2 class="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">Results</h2>
+      <div class="space-y-3">
+        <template :for="event in past">
+          <StxLink x-to="'/event/' + event.id" class="card block opacity-90 transition hover:opacity-100">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-xs font-semibold uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">{{ typeLabel(event.type) + ' · ' + (event.status === 'cancelled' ? 'Cancelled' : 'Finished') }}</p>
+                <h3 class="mt-1 truncate font-bold dark:text-white">{{ event.name }}</h3>
+                <p class="mt-0.5 truncate text-sm text-gray-500 dark:text-slate-400">{{ whenLabel(event.startTime) }}</p>
+              </div>
+              <div class="shrink-0 text-right">
+                <p class="font-display text-xl font-bold tabular-nums dark:text-white">{{ event.leaderYards }}</p>
+                <p class="text-xs text-gray-500 dark:text-slate-400">{{ event.type === 'backyard' ? 'yards' : 'laps' }}</p>
+              </div>
+            </div>
+          </StxLink>
+        </template>
+      </div>
+    </section>
+
+    <div :if="!loading() && events().length === 0" class="py-20 text-center">
+      <div class="mx-auto mb-6 grid h-20 w-20 place-items-center rounded-2xl bg-emerald-50 dark:bg-emerald-900/20">
+        <i class="i-lucide-timer h-9 w-9 text-emerald-500" aria-hidden="true"></i>
+      </div>
+      <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Nothing on the calendar yet</h3>
+      <p class="mx-auto mb-6 max-w-sm text-gray-500 dark:text-slate-400">
+        Host a backyard ultra and WildLoop runs the corral clock, records every lap, and publishes the standings live.
+      </p>
+      <button @click="openCreate()" class="rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700">Host an event</button>
+    </div>
+  </div>
+
+  <!-- Host an event -->
+  <div :if="createOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div @click="closeCreate()" class="absolute inset-0 bg-black/40"></div>
+    <div class="card relative max-h-[90vh] w-full max-w-lg overflow-y-auto">
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-lg font-bold dark:text-white">Host an event</h2>
+        <button @click="closeCreate()" aria-label="Close" class="text-xl leading-none text-gray-400 hover:text-gray-600 dark:hover:text-slate-200">×</button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">Name</label>
+          <input type="text" placeholder="Cascade Backyard Ultra" x-value="fName" @input="e => fName.set(e.target.value)" class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">Format</label>
+            <select x-value="fType" @change="e => fType.set(e.target.value)" class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700">
+              <option value="backyard">Backyard ultra</option>
+              <option value="race">Race</option>
+              <option value="group_run">Group run</option>
+              <option value="time_trial">Time trial</option>
+            </select>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">Who can see it</label>
+            <select x-value="fVisibility" @change="e => fVisibility.set(e.target.value)" class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700">
+              <option value="public">Anyone</option>
+              <option value="private">Entrants only</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">First start</label>
+          <input type="datetime-local" x-value="fStart" @input="e => fStart.set(e.target.value)" class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700" />
+          <p class="mt-1 text-xs text-gray-400 dark:text-slate-500">In your local time. Everyone watching sees their own.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">Yard length (minutes)</label>
+            <input type="number" min="5" max="720" x-value="fYardMinutes" @input="e => fYardMinutes.set(e.target.value)" class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">Loop distance (miles)</label>
+            <input type="number" min="0.1" step="0.001" x-value="fLoopDistance" @input="e => fLoopDistance.set(e.target.value)" class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700" />
+          </div>
+        </div>
+        <p class="text-xs text-gray-400 dark:text-slate-500">The classic backyard yard is 4.167 mi (6.706 km) every 60 minutes — 24 of them make 100 miles.</p>
+
+        <div>
+          <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">Location</label>
+          <input type="text" placeholder="Mill Valley, CA" x-value="fLocation" @input="e => fLocation.set(e.target.value)" class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700" />
+        </div>
+
+        <div>
+          <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">Details</label>
+          <textarea rows="2" placeholder="Where the corral is, what the loop looks like, aid." x-value="fDescription" @input="e => fDescription.set(e.target.value)" class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700"></textarea>
+        </div>
+
+        <p :if="createError" class="text-sm text-red-500">{{ createError }}</p>
+
+        <div class="flex gap-2 pt-1">
+          <button @click="submitCreate()" class="flex-1 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700">{{ submitting ? 'Creating…' : 'Create event' }}</button>
+          <button @click="closeCreate()" class="px-4 py-2.5 text-sm font-medium text-gray-500 transition hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<style>
+  .live-pip {
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    background: #ef4444;
+    border-radius: 9999px;
+    box-shadow: 0 0 0 0 rgb(239 68 68 / 60%);
+    animation: live-pulse 1.8s ease-out infinite;
+  }
+
+  @keyframes live-pulse {
+    to { box-shadow: 0 0 0 0.6rem rgb(239 68 68 / 0%); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .live-pip { animation: none; }
+  }
+</style>
+@endsection
