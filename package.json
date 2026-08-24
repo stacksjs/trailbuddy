@@ -13,6 +13,7 @@
     "ts-health": "^0.1.0",
     "ts-images": "^0.2.12",
     "ts-maps": "^0.3.1",
+    "ts-qr-codes": "^0.1.4",
     "ts-web-scraper": "^0.1.10"
   },
   "bugs": {

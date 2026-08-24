@@ -3,6 +3,14 @@
 @section('title', 'Get the WildLoop app')
 
 @section('content')
+<script server>
+  import { qrSvgMarkup } from '../functions/qr'
+
+  // The address is fixed, so the code is built once at render time rather than
+  // shipped as an encoder the browser has to run.
+  const installQr = qrSvgMarkup('https://wildloop.org', { title: 'Scan to open wildloop.org' })
+</script>
+
 <script client>
   import { useAppInstall } from '../composables/useAppInstall'
 
@@ -85,17 +93,21 @@
         </div>
       </div>
 
-      <!-- Getting from a desktop to a phone. -->
-      <div :if="platform === 'desktop'" class="mt-6 rounded-2xl border border-slate-200 p-6 dark:border-slate-700">
-        <h2 class="font-bold dark:text-white">Reading this on a computer?</h2>
-        <p class="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-          WildLoop earns its keep on the phone you take outside. Open this address there and install it in two taps.
-        </p>
-        <div class="mt-4 flex flex-wrap items-center gap-3">
-          <code class="rounded-lg bg-slate-100 px-4 py-2.5 font-mono text-sm dark:bg-slate-800 dark:text-slate-200">wildloop.org</code>
-          <button @click="copyAddress()" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold transition hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800">
-            {{ copied ? 'Copied' : 'Copy address' }}
-          </button>
+      <!-- Getting from a desktop to a phone. The QR is the whole point of this
+           block: retyping a URL on a phone keyboard is the step people skip. -->
+      <div class="mt-6 flex flex-col gap-6 rounded-2xl border border-slate-200 p-6 sm:flex-row sm:items-center dark:border-slate-700">
+        <div class="qr-frame" aria-hidden="false">{!! installQr !!}</div>
+        <div class="min-w-0">
+          <h2 class="font-bold dark:text-white">Point your camera at this</h2>
+          <p class="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+            WildLoop earns its keep on the phone you take outside. Scan the code to open it there, then install it in two taps.
+          </p>
+          <div class="mt-4 flex flex-wrap items-center gap-3">
+            <code class="rounded-lg bg-slate-100 px-4 py-2.5 font-mono text-sm dark:bg-slate-800 dark:text-slate-200">wildloop.org</code>
+            <button @click="copyAddress()" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold transition hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800">
+              {{ copied ? 'Copied' : 'Copy address' }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -221,6 +233,24 @@
     font-size: 0.78rem;
     line-height: 1.55;
     color: color-mix(in srgb, currentColor 58%, transparent);
+  }
+
+  /* A white field with a little padding around the code. A QR flush against
+     surrounding artwork frequently will not acquire. */
+  .qr-frame {
+    flex: none;
+    width: 9.5rem;
+    height: 9.5rem;
+    padding: 0.5rem;
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 6px 20px -10px rgb(9 20 16 / 40%);
+  }
+
+  .qr-frame svg {
+    display: block;
+    width: 100%;
+    height: 100%;
   }
 
   .feature {

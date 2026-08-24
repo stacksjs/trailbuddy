@@ -3,6 +3,14 @@
 @section('title', 'WildLoop - Find your next adventure')
 
 @section('content')
+<script server>
+  import { qrSvgMarkup } from '../functions/qr'
+
+  // Built once at render time. The address never changes, so there is nothing
+  // for the browser to compute and no encoder to ship to it.
+  const appQr = qrSvgMarkup('https://wildloop.org/app', { title: 'Scan to get WildLoop on your phone' })
+</script>
+
 <script client>
   import { fetchCoverage, queryTrails } from '../composables/useTrailCatalog'
   import { useAppInstall } from '../composables/useAppInstall'
@@ -428,6 +436,14 @@
         </p>
       </div>
 
+      <div class="app-visual">
+        <!-- The desktop-to-phone handoff. Hidden on small screens: somebody
+             already holding a phone cannot scan a code on it. -->
+        <div class="qr-card">
+          <div class="qr-frame">{!! appQr !!}</div>
+          <p class="qr-caption">Scan to open it on your phone</p>
+        </div>
+
       <div class="phone-frame" aria-hidden="true">
         <div class="phone-screen">
           <div class="phone-status"><span>9:41</span><span class="phone-status-icons"><i class="i-lucide-signal h-3 w-3"></i><i class="i-lucide-wifi h-3 w-3"></i><i class="i-lucide-battery-full h-3.5 w-3.5"></i></span></div>
@@ -443,6 +459,7 @@
           </div>
           <div class="phone-tabs"><span class="phone-tab-on"></span><span></span><span></span><span></span></div>
         </div>
+      </div>
       </div>
     </div>
   </section>
@@ -946,6 +963,52 @@
   }
 
   /* ── Phone ──────────────────────────────────────────────────────────── */
+
+  .app-visual {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+    align-items: center;
+  }
+
+  .qr-card {
+    display: none;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 1rem 1rem 0.85rem;
+    border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+    border-radius: 1.25rem;
+    background: var(--page-paper);
+  }
+
+  /* A QR is only useful to someone holding a DIFFERENT device. */
+  @media (min-width: 1024px) {
+    .qr-card { display: flex; }
+  }
+
+  /* White field with padding: a code flush against artwork often will not
+     acquire on a phone camera. */
+  .qr-frame {
+    width: 8.5rem;
+    height: 8.5rem;
+    padding: 0.45rem;
+    background: #fff;
+    border-radius: 0.85rem;
+  }
+
+  .qr-frame svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .qr-caption {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+    color: color-mix(in srgb, currentColor 60%, transparent);
+  }
 
   .phone-frame {
     justify-self: center;
