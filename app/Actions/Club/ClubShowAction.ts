@@ -98,6 +98,8 @@ export default new Action({
           location: club.location,
           type: club.club_type,
           isPrivate: !!club.is_private,
+          joinPolicy: club.join_policy ?? 'open',
+          website: club.website ?? null,
           creatorId: club.creator_id,
           memberCount: members.length,
           members,

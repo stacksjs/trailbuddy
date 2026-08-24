@@ -37,6 +37,19 @@ export default new Action({
         joined = false
       }
       else {
+        // A closed club is not joined, it is entered. `is_private` only ever
+        // hid a club from the listing; `join_policy` is what says whether a
+        // stranger may walk in. Rappid Run is the first team where the answer
+        // is no — you get in because a member invited you, and redeeming that
+        // invite is what creates the membership row.
+        if (club.join_policy === 'invite_only') {
+          return response.json({
+            success: false,
+            error: 'This club is invite only. Ask a member for an invite code, then redeem it to join.',
+            joinPolicy: 'invite_only',
+          }, 403)
+        }
+
         joined = true
         try {
           await ClubMember.forceCreate({ club_id: clubId, user_id: userId, role: 'member' })

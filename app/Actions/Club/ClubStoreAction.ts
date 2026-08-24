@@ -5,6 +5,7 @@
 // club starts with one member.
 
 const CLUB_TYPES = ['Running', 'Hiking', 'Mixed', 'Territory Game']
+const JOIN_POLICIES = ['open', 'request', 'invite_only']
 
 export default new Action({
   name: 'Club Store',
@@ -22,6 +23,8 @@ export default new Action({
     const description = boundedString(request.get('description'), 500)
     const location = boundedString(request.get('location'), 120)
     const isPrivate = request.get('is_private') === true || request.get('is_private') === 'true'
+    const joinPolicy = request.get<string>('join_policy') ?? request.get<string>('joinPolicy') ?? 'open'
+    const website = readWebsite(request.get('website'))
 
     // Field validation (#977) - distinguish missing/short from too-long.
     const fields: Record<string, string> = {}
@@ -31,6 +34,8 @@ export default new Action({
       fields.name = 'must be at most 100 characters'
     if (!CLUB_TYPES.includes(clubType))
       fields.club_type = `must be one of: ${CLUB_TYPES.join(', ')}`
+    if (!JOIN_POLICIES.includes(joinPolicy))
+      fields.join_policy = `must be one of: ${JOIN_POLICIES.join(', ')}`
     if (Object.keys(fields).length)
       return response.json({ success: false, error: 'Validation failed', fields }, 422)
 
@@ -42,6 +47,8 @@ export default new Action({
         location: location ?? null,
         club_type: clubType,
         is_private: isPrivate,
+        join_policy: joinPolicy,
+        website,
       })
 
       // The creator owns the club they just made.
@@ -60,6 +67,8 @@ export default new Action({
           location: club.location,
           type: club.club_type,
           isPrivate: !!club.is_private,
+          joinPolicy: club.join_policy ?? 'open',
+          website: club.website ?? null,
           creatorId: club.creator_id,
           members: [userId],
           memberCount: 1,
@@ -76,3 +85,24 @@ export default new Action({
     }
   },
 })
+
+/**
+ * A club's own site, when it has one.
+ *
+ * http/https only: a `javascript:` or `data:` URL stored here would be
+ * rendered as a link on the club page and run in the reader's session.
+ */
+function readWebsite(raw: unknown): string | null {
+  if (typeof raw !== 'string')
+    return null
+  const value = raw.trim()
+  if (!value || value.length > 200)
+    return null
+  try {
+    const url = new URL(value)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : null
+  }
+  catch {
+    return null
+  }
+}

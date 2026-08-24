@@ -319,7 +319,11 @@ export interface ClubPayload {
   club_type: string
   description?: string | null
   location?: string | null
+  /** Visibility: whether the club is listed to non-members at all. */
   is_private?: boolean
+  /** Whether a stranger may join. A closed team needs a ClubInvite instead. */
+  join_policy?: 'open' | 'request' | 'invite_only'
+  website?: string | null
 }
 
 /** List clubs (public; private clubs only when the session user is a member). */

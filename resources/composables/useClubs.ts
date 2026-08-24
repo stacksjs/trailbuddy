@@ -15,6 +15,7 @@ interface ClubStoreLike {
 }
 
 const CLUB_TYPES = ['Running', 'Hiking', 'Mixed', 'Territory Game']
+const JOIN_POLICIES = ['open', 'invite_only']
 
 let clubsStarted = false
 
@@ -28,6 +29,7 @@ export function useClubs(wl: ClubStoreLike | null) {
   const fLocation = state('')
   const fDescription = state('')
   const fPrivate = state(false)
+  const fJoinPolicy = state('open')
 
   onMount(async () => {
     if (!wl || clubsStarted)
@@ -68,6 +70,7 @@ export function useClubs(wl: ClubStoreLike | null) {
     fLocation.set('')
     fDescription.set('')
     fPrivate.set(false)
+    fJoinPolicy.set('open')
     createError.set(null)
     createOpen.set(true)
   }
@@ -89,6 +92,10 @@ export function useClubs(wl: ClubStoreLike | null) {
       createError.set('Pick a club type.')
       return
     }
+    if (!JOIN_POLICIES.includes(fJoinPolicy())) {
+      createError.set('Pick who can join.')
+      return
+    }
     submitting.set(true)
     createError.set(null)
     const res = await createClub({
@@ -97,6 +104,7 @@ export function useClubs(wl: ClubStoreLike | null) {
       location: fLocation().trim() || null,
       description: fDescription().trim() || null,
       is_private: fPrivate(),
+      join_policy: fJoinPolicy(),
     })
     submitting.set(false)
     if (res && res.success && res.club) {
@@ -117,6 +125,7 @@ export function useClubs(wl: ClubStoreLike | null) {
     fLocation,
     fDescription,
     fPrivate,
+    fJoinPolicy,
     isMember,
     onToggleMembership,
     openCreate,

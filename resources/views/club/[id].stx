@@ -5,6 +5,7 @@
 @section('content')
 <script client>
   import { deleteClub, fetchClubDetail, toggleClubMembership } from '../../assets/scripts/game-api'
+  import { fetchClubInvites, inviteToClub, redeemClubInvite } from '../../assets/scripts/events-api'
   import { readRouteParam } from '../../composables/useRouteParam'
 
   useHead({ title: 'Club - WildLoop' })
@@ -30,14 +31,106 @@
 
   onMount(() => { void loadClub() })
 
+  // A closed club answers a Join with a 403 and an explanation. Surfacing that
+  // sentence is the whole difference between "nothing happened" and "ask a
+  // member for a code".
+  const joinError = state<string | null>(null)
+
   async function onToggle() {
     if (!club() || busy()) return
     busy.set(true)
+    joinError.set(null)
     const res = await toggleClubMembership(clubId)
     busy.set(false)
     if (res && res.success) {
       club.set({ ...club(), isMember: !!res.joined, memberCount: res.memberCount ?? club().memberCount })
+      return
     }
+    joinError.set(res?.error ?? 'Could not update your membership.')
+  }
+
+  /* ── Invites ─────────────────────────────────────────────────────────── */
+
+  const inviteOpen = state(false)
+  const inviteEmail = state('')
+  const inviteNote = state('')
+  const inviteError = state<string | null>(null)
+  const inviteWorking = state(false)
+  const invites = state<any[]>([])
+  const copiedCode = state<string | null>(null)
+
+  const isInviteOnly = derived(() => club()?.joinPolicy === 'invite_only')
+  const canInvite = derived(() => {
+    const current = club()
+    if (!current || !wl) return false
+    const me = (current.members ?? []).find((m: any) => m.userId === wl.currentUserId())
+    return me?.role === 'owner' || me?.role === 'admin'
+  })
+
+  async function loadInvites() {
+    if (!canInvite()) return
+    const list = await fetchClubInvites(clubId)
+    if (list) invites.set(list)
+  }
+
+  function openInvite() {
+    inviteEmail.set('')
+    inviteNote.set('')
+    inviteError.set(null)
+    inviteOpen.set(true)
+    void loadInvites()
+  }
+
+  async function sendInvite() {
+    if (inviteWorking()) return
+    const email = inviteEmail().trim()
+    if (!email) {
+      inviteError.set('Enter the email address to invite.')
+      return
+    }
+    inviteWorking.set(true)
+    inviteError.set(null)
+    const res = await inviteToClub(clubId, { email, note: inviteNote().trim() || undefined })
+    inviteWorking.set(false)
+    if (res?.success) {
+      inviteEmail.set('')
+      inviteNote.set('')
+      await loadInvites()
+      return
+    }
+    inviteError.set(res?.fields ? Object.values(res.fields)[0] as string : (res?.error ?? 'Could not create the invite.'))
+  }
+
+  async function copyInvite(code) {
+    if (typeof navigator === 'undefined') return
+    await navigator.clipboard?.writeText(code).catch(() => {})
+    copiedCode.set(code)
+    setTimeout(() => copiedCode.set(null), 2000)
+  }
+
+  /* ── Redeeming ───────────────────────────────────────────────────────── */
+
+  const redeemCode = state('')
+  const redeemError = state<string | null>(null)
+  const redeemWorking = state(false)
+
+  async function submitRedeem() {
+    if (redeemWorking()) return
+    const code = redeemCode().trim()
+    if (code.length < 8) {
+      redeemError.set('Enter the invite code you were sent.')
+      return
+    }
+    redeemWorking.set(true)
+    redeemError.set(null)
+    const res = await redeemClubInvite(code)
+    redeemWorking.set(false)
+    if (res?.success) {
+      redeemCode.set('')
+      await loadClub()
+      return
+    }
+    redeemError.set(res?.error ?? 'That code did not work.')
   }
 
   const isOwner = derived(() => !!(wl && club() && club().creatorId === wl.currentUserId()))
@@ -81,14 +174,39 @@
                   <span>{{ club.memberCount + ' members' }}</span>
                   <span class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-700 font-medium">{{ club.type }}</span>
                   <span :if="club.isPrivate" class="px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-medium">Private</span>
+                  <span :if="club.joinPolicy === 'invite_only'" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-medium">
+                    <i class="i-lucide-lock h-3 w-3" aria-hidden="true"></i>Invite only
+                  </span>
+                  <a :if="club.website" x-href="club.website" rel="noopener" class="text-emerald-700 dark:text-emerald-400 font-medium underline underline-offset-2">{{ club.website.replace(/^https?:\/\//, '') }}</a>
                 </div>
               </div>
               <div class="flex items-center gap-2 shrink-0">
-                <button :if="!isOwner" @click="onToggle()" x-disabled="busy" class="px-4 py-2 text-sm font-semibold rounded-lg transition disabled:opacity-60" x-class="club.isMember ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'">{{ club.isMember ? 'Joined' : 'Join' }}</button>
+                <button :if="canInvite" @click="openInvite()" class="px-4 py-2 text-sm font-semibold rounded-lg border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition">Invite</button>
+                <!-- A closed club shows no Join button at all. Offering one that
+                     is guaranteed to be refused is worse than not offering it. -->
+                <button :if="!isOwner && (!isInviteOnly || club.isMember)" @click="onToggle()" x-disabled="busy" class="px-4 py-2 text-sm font-semibold rounded-lg transition disabled:opacity-60" x-class="club.isMember ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'">{{ club.isMember ? 'Joined' : 'Join' }}</button>
                 <button :if="isOwner" @click="onDelete()" x-disabled="busy" class="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-200 dark:border-slate-600 text-red-500 hover:border-red-400 transition disabled:opacity-60">Delete club</button>
               </div>
             </div>
             <p class="text-sm text-gray-600 dark:text-slate-400 mt-3">{{ club.description }}</p>
+            <p :if="joinError" role="alert" class="mt-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">{{ joinError }}</p>
+
+            <!-- The way in to a closed club: a code from somebody already inside. -->
+            <div :if="isInviteOnly && !club.isMember" class="mt-4 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+              <p class="text-sm font-semibold dark:text-white">This team is invite only</p>
+              <p class="mt-1 text-xs text-gray-500 dark:text-slate-400">A member has to invite you. Already have a code? Redeem it here.</p>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <input
+                  type="text"
+                  placeholder="ABCDE-FGHIJ-KLMNO-PQRST"
+                  x-value="redeemCode"
+                  @input="e => redeemCode.set(e.target.value)"
+                  class="min-w-0 flex-1 rounded-lg border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-3 py-2 font-mono text-sm uppercase tracking-wide"
+                />
+                <button @click="submitRedeem()" x-disabled="redeemWorking()" class="rounded-lg bg-slate-900 dark:bg-white px-4 py-2 text-sm font-semibold text-white dark:text-slate-900 transition disabled:opacity-60">{{ redeemWorking ? 'Checking…' : 'Redeem' }}</button>
+              </div>
+              <p :if="redeemError" role="alert" class="mt-2 text-sm text-red-500">{{ redeemError }}</p>
+            </div>
             <div class="flex items-center gap-6 pt-3 mt-3 border-t border-gray-100 dark:border-slate-700 text-sm">
               <div><span class="font-semibold dark:text-white">{{ club.weeklyDistance + ' mi' }}</span> <span class="text-gray-500 dark:text-slate-400">this week</span></div>
               <div><span class="font-semibold dark:text-white">{{ club.activitiesThisWeek }}</span> <span class="text-gray-500 dark:text-slate-400">activities</span></div>
@@ -152,5 +270,52 @@
         </div>
       </div>
     </template>
+  </div>
+
+  <!-- Invite somebody in. Owners and admins only; the endpoint re-checks. -->
+  <div :if="inviteOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div @click="inviteOpen.set(false)" class="absolute inset-0 bg-black/40"></div>
+    <div class="card relative max-h-[85vh] w-full max-w-lg overflow-y-auto">
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-lg font-bold dark:text-white">Invite to the team</h2>
+        <button @click="inviteOpen.set(false)" aria-label="Close" class="text-xl leading-none text-gray-400 hover:text-gray-600 dark:hover:text-slate-200">×</button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">Email</label>
+          <input type="email" placeholder="runner@example.com" x-value="inviteEmail" @input="e => inviteEmail.set(e.target.value)" class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700" />
+          <p class="mt-1 text-xs text-gray-400 dark:text-slate-500">If they already have a WildLoop account, the invite is addressed to it.</p>
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-gray-500 dark:text-slate-400">Note (optional)</label>
+          <input type="text" placeholder="Tuesday sessions start at 6." x-value="inviteNote" @input="e => inviteNote.set(e.target.value)" class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700" />
+        </div>
+        <p :if="inviteError" class="text-sm text-red-500">{{ inviteError }}</p>
+        <button @click="sendInvite()" x-disabled="inviteWorking()" class="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60">{{ inviteWorking ? 'Creating…' : 'Create invite' }}</button>
+      </div>
+
+      <div class="mt-6 border-t border-gray-100 pt-4 dark:border-slate-700">
+        <h3 class="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-gray-400 dark:text-slate-500">Invites</h3>
+        <div class="space-y-2">
+          <template :for="invite in invites">
+            <div class="flex items-center gap-3 rounded-lg border border-gray-100 px-3 py-2 dark:border-slate-700">
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-medium dark:text-white">{{ invite.invitedName || invite.invitedEmail || 'Open invite' }}</p>
+                <p class="truncate font-mono text-xs text-gray-400">{{ invite.code }}</p>
+              </div>
+              <span
+                class="shrink-0 rounded-full px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide"
+                x-class="invite.status === 'accepted' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : invite.status === 'pending' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-slate-400'"
+              >{{ invite.status }}</span>
+              <button :if="invite.status === 'pending'" @click="copyInvite(invite.code)" class="shrink-0 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                {{ copiedCode === invite.code ? 'Copied' : 'Copy' }}
+              </button>
+            </div>
+          </template>
+          <p :if="invites().length === 0" class="py-6 text-center text-sm text-gray-400">No invites yet.</p>
+        </div>
+      </div>
+    </div>
   </div>
 @endsection

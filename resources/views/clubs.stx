@@ -13,7 +13,7 @@
 
   const {
     createOpen, submitting, createError,
-    fName, fType, fLocation, fDescription, fPrivate,
+    fName, fType, fLocation, fDescription, fPrivate, fJoinPolicy,
     isMember, onToggleMembership, openCreate, closeCreate, submitCreate,
   } = useClubs(wl)
 
@@ -57,9 +57,13 @@
                     <span>{{ club.memberCount + ' members' }}</span>
                     <span class="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-slate-700 font-medium">{{ club.type }}</span>
                     <span :if="club.isPrivate" class="px-1.5 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 font-medium">Private</span>
+                    <span :if="club.joinPolicy === 'invite_only'" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-medium">
+                      <i class="i-lucide-lock h-3 w-3" aria-hidden="true"></i>Invite only
+                    </span>
                   </div>
                 </div>
-                <button @click="onToggleMembership(club)" class="shrink-0 px-4 py-2 text-sm font-semibold rounded-lg transition" x-class="isMember(club) ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'">{{ isMember(club) ? 'Joined' : 'Join' }}</button>
+                <StxLink :if="club.joinPolicy === 'invite_only' && !isMember(club)" x-to="'/club/' + club.id" class="shrink-0 px-4 py-2 text-sm font-semibold rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 transition hover:bg-slate-50 dark:hover:bg-slate-800">Invite only</StxLink>
+                <button :if="club.joinPolicy !== 'invite_only' || isMember(club)" @click="onToggleMembership(club)" class="shrink-0 px-4 py-2 text-sm font-semibold rounded-lg transition" x-class="isMember(club) ? 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300' : 'bg-emerald-600 text-white hover:bg-emerald-700'">{{ isMember(club) ? 'Joined' : 'Join' }}</button>
               </div>
               <p class="text-sm text-gray-600 dark:text-slate-400 mb-4">{{ club.description }}</p>
               <div class="flex items-center gap-6 pt-3 border-t border-gray-100 dark:border-slate-700 text-sm">
@@ -119,6 +123,13 @@
         <div>
           <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Description</label>
           <textarea rows="2" placeholder="What's your club about?" x-value="fDescription" @input="fDescription.set($event.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Who can join</label>
+          <select x-value="fJoinPolicy" @change="fJoinPolicy.set($event.target.value)" class="w-full px-3 py-2 border border-gray-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-sm">
+            <option value="open">Anyone can join</option>
+            <option value="invite_only">Invite only</option>
+          </select>
         </div>
         <label class="flex items-center gap-2 text-sm text-gray-600 dark:text-slate-300">
           <input type="checkbox" x-checked="fPrivate" @change="fPrivate.set($event.target.checked)" class="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />

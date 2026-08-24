@@ -64,6 +64,8 @@ export default new Action({
             location: c.location,
             type: c.club_type,
             isPrivate: !!c.is_private,
+            joinPolicy: c.join_policy ?? 'open',
+            website: c.website ?? null,
             creatorId: c.creator_id,
             // Note: the raw member-id roster is intentionally NOT exposed on the
             // public listing; memberCount + isMember drive the UI.

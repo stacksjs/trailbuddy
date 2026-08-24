@@ -8,6 +8,16 @@ import { schema } from '@stacksjs/validation'
 
 const clubTypes = ['Running', 'Hiking', 'Mixed', 'Territory Game'] as const
 
+/**
+ * How somebody gets in.
+ *
+ * `is_private` only ever hid a club from the listing, which is a different
+ * question from whether a stranger may join it. A closed team — Rappid Run is
+ * the first — is visible but unjoinable: you get in because a member asked
+ * you, and the ClubInvite table is that record.
+ */
+const joinPolicies = ['open', 'request', 'invite_only'] as const
+
 export default defineModel({
   name: 'Club',
   table: 'clubs',
@@ -21,7 +31,7 @@ export default defineModel({
       displayable: ['id', 'name', 'location', 'clubType'],
       searchable: ['name', 'description', 'location'],
       sortable: ['createdAt', 'name'],
-      filterable: ['clubType', 'isPrivate'],
+      filterable: ['clubType', 'isPrivate', 'joinPolicy'],
     },
     useApi: {
       uri: 'clubs',
@@ -85,6 +95,24 @@ export default defineModel({
         rule: schema.boolean(),
       },
       factory: faker => faker.datatype.boolean(),
+    },
+
+    join_policy: {
+      order: 6,
+      fillable: true,
+      validation: {
+        rule: schema.enum(joinPolicies).required(),
+      },
+      factory: (): typeof joinPolicies[number] => 'open',
+    },
+
+    website: {
+      order: 7,
+      fillable: true,
+      nullable: true,
+      validation: {
+        rule: schema.string().max(200),
+      },
     },
   },
 

@@ -419,6 +419,20 @@ route.get('/users/{id}', 'Actions/Social/AthleteShowAction')
 route.get('/clubs', 'Actions/Club/ClubIndexAction')
 route.get('/clubs/{id}', 'Actions/Club/ClubShowAction')
 
+// Events - the directory, one event, and the live board.
+//
+// All three are public reads on purpose. A backyard ultra is watched by crew
+// and family who have no reason to hold a WildLoop account, and the whole
+// point of live reporting is that a link to it just works. The actions still
+// decide per event: a club or private event resolves only for people who may
+// see it.
+//
+// `/events/{id}/live` is the poll target, registered before `/events/{id}` so
+// the id pattern cannot swallow it.
+route.get('/events', 'Actions/Event/EventIndexAction')
+route.get('/events/{id}/live', 'Actions/Event/EventLiveAction')
+route.get('/events/{id}', 'Actions/Event/EventShowAction')
+
 // Writes that act on behalf of a user MUST be authenticated - the acting
 // user is derived from the session (Auth.user()), never from the request body,
 // so a caller can't record/kudos/claim/conquer as someone else (#939).
@@ -437,6 +451,10 @@ route.group({ middleware: 'auth' }, () => {
   route.group({ middleware: 'throttle:30,1' }, () => {
     route.post('/territories/claim', 'Actions/Territory/ClaimTerritoryAction')
     route.post('/territories/process-conquest', 'Actions/Territory/ProcessActivityConquestAction')
+    // Lap reporting. One lap per runner per yard is the honest rate, but a
+    // phone that regains signal replays a queue of them at once, so the limit
+    // has to leave room for a backlog without becoming a megaphone.
+    route.post('/events/{id}/laps', 'Actions/Event/EventLapStoreAction')
   })
 
   // Full-table sweeps - event hooks keep these fresh; manual calls are rare
@@ -469,6 +487,15 @@ route.group({ middleware: 'auth' }, () => {
     route.post('/clubs', 'Actions/Club/ClubStoreAction')
     route.post('/clubs/{id}/join', 'Actions/Club/ClubMembershipToggleAction')
     route.delete('/clubs/{id}', 'Actions/Club/ClubDestroyAction')
+    // Invite-only clubs. `accept` is registered before `{id}/invites` because
+    // it is redeemed by code in the body, not by a club id in the path.
+    route.post('/clubs/invites/accept', 'Actions/Club/ClubInviteAcceptAction')
+    route.get('/clubs/{id}/invites', 'Actions/Club/ClubInviteIndexAction')
+    route.post('/clubs/{id}/invites', 'Actions/Club/ClubInviteStoreAction')
+    // Events - host, enter, and run one
+    route.post('/events', 'Actions/Event/EventStoreAction')
+    route.post('/events/{id}/join', 'Actions/Event/EventJoinAction')
+    route.post('/events/{id}/status', 'Actions/Event/EventStatusAction')
     // Challenges - the user's challenges + create/respond/resolve (#965)
     route.get('/challenges', 'Actions/Challenge/ChallengeIndexAction')
     route.post('/challenges', 'Actions/Challenge/ChallengeStoreAction')
