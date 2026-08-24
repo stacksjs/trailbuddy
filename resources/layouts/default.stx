@@ -27,7 +27,7 @@
     @slot('content')
   </main>
 
-  <div class="hidden md:block">
+  <div class="mt-auto hidden shrink-0 md:block">
     @include('../components/footer')
   </div>
 
@@ -45,6 +45,17 @@
 </NativeAppShell>
 
 <style>
+  /* The shell reserves a full viewport, but its content was a plain block, so
+     `main.flex-1` and the footer's `mt-auto` had nothing to grow against. On a
+     short page — a territory with little history, an empty state — the footer
+     sat wherever the content ended and left dead space under it. Making the
+     content a column is what puts the footer on the bottom of the viewport
+     when the page is short, and below the content when it is not. */
+  [data-native-app-shell] .native-app-content {
+    display: flex;
+    flex-direction: column;
+  }
+
   @media (min-width: 768px) {
     [data-native-app-shell] .native-app-content {
       padding-bottom: 0;

@@ -1,13 +1,16 @@
 @extends('layouts/default')
 
-@section('title', 'WildLoop - Find your line. Claim your ground.')
+@section('title', 'WildLoop - Find your next adventure')
 
 @section('content')
 <script client>
-  import { fetchCoverage } from '../composables/useTrailCatalog'
+  import { fetchCoverage, queryTrails } from '../composables/useTrailCatalog'
+  import { useAppInstall } from '../composables/useAppInstall'
   import { activitySharePreview } from '../functions/activity-share'
 
-  useHead({ title: 'WildLoop - Find your line. Claim your ground.' })
+  useHead({ title: 'WildLoop - Find your next adventure' })
+
+  const { canPrompt, installed, platform, promptInstall } = useAppInstall()
 
   // Last known production snapshot: render useful proof immediately, then
   // replace it with the minute-cached live catalog response. A cold API used
@@ -24,20 +27,69 @@
     sources: [],
   })
 
-  onMount(() => {
-    // Keep the catalog refresh behind the hero/runtime critical path. The
-    // snapshot above is already useful and the live value is supplementary.
-    setTimeout(() => {
-      fetchCoverage().then((value) => {
-        if (value.total > 0)
-          coverage.set(value)
-      })
-    }, 800)
-  })
+  const search = state('')
+  const featured = state([])
+  const featuredLabel = state('Popular right now')
+  const featuredLoading = state(true)
+  const locating = state(false)
+  const topTrails = state([])
 
   const trailCount = derived(() => coverage().total)
   const regionCount = derived(() => coverage().states.length || 102)
   const countryCount = derived(() => coverage().countries.length)
+
+  const COUNTRY_NAMES = {
+    AT: 'Austria', AU: 'Australia', CA: 'Canada', CH: 'Switzerland', DE: 'Germany',
+    ES: 'Spain', FR: 'France', GB: 'United Kingdom', IT: 'Italy', NO: 'Norway',
+    NZ: 'New Zealand', SE: 'Sweden', US: 'United States',
+  }
+
+  function countryName(code) {
+    return COUNTRY_NAMES[code] ?? code
+  }
+
+  const topCountries = derived(() => coverage().countries.slice(0, 12))
+  const topRegions = derived(() => coverage().states.slice(0, 16))
+
+  function submitSearch(event) {
+    event.preventDefault()
+    const term = search().trim()
+    navigate(term ? `/trails?q=${encodeURIComponent(term)}` : '/trails')
+  }
+
+  async function loadFeatured(query, label) {
+    featuredLoading.set(true)
+    try {
+      const result = await queryTrails({ sort: 'featured', limit: 4, ...query })
+      featured.set(result.trails)
+      featuredLabel.set(label)
+    }
+    catch {
+      // The homepage is not the place to shout about a catalog hiccup. An
+      // empty shelf simply does not render; every other section still works.
+      featured.set([])
+    }
+    featuredLoading.set(false)
+  }
+
+  // Ask for a position only when someone asks for one. A location prompt on
+  // first paint is the fastest way to get told no for the rest of the session.
+  function findNearMe() {
+    if (typeof navigator === 'undefined' || !navigator.geolocation)
+      return
+    locating.set(true)
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        locating.set(false)
+        void loadFeatured(
+          { lat: position.coords.latitude, lng: position.coords.longitude, radius: 40 },
+          'Local favorites near you',
+        )
+      },
+      () => locating.set(false),
+      { enableHighAccuracy: false, maximumAge: 600000, timeout: 8000 },
+    )
+  }
 
   const sampleActivity = {
     activityType: 'Trail Run',
@@ -64,58 +116,127 @@
 
   const sampleSquare = activitySharePreview(sampleActivity, sampleRoute, 'square')
   const sampleStory = activitySharePreview(sampleActivity, sampleRoute, 'story')
+
+  onMount(() => {
+    void loadFeatured({}, 'Popular right now')
+
+    // Keep the catalog refresh behind the hero/runtime critical path. The
+    // snapshot above is already useful and the live value is supplementary.
+    setTimeout(() => {
+      void fetchCoverage().then((value) => {
+        if (value.total > 0)
+          coverage.set(value)
+      })
+      void queryTrails({ sort: 'rating', limit: 14 })
+        .then(result => topTrails.set(result.trails))
+        .catch(() => {})
+    }, 600)
+  })
 </script>
 
-<main class="marketing-page overflow-hidden">
-  <section class="hero-field">
-    <div class="mx-auto grid max-w-7xl gap-10 px-4 pb-14 pt-12 sm:px-6 lg:grid-cols-[0.83fr_1.17fr] lg:items-center lg:gap-16 lg:px-8 lg:pb-24 lg:pt-20">
-      <div class="hero-copy relative z-10">
-        <h1 class="font-display text-[clamp(2.75rem,5vw,5rem)] font-bold leading-[0.9] tracking-[-0.06em] text-[#eef4f0]">
-          Find your line.<br />Claim your ground.
-        </h1>
-        <p class="mt-7 max-w-[36rem] text-lg leading-relaxed text-[#acbbb4] sm:text-xl">
-          Record every effort, discover better trails, and turn closed loops into territory worth defending.
-        </p>
-        <div class="mt-9 flex flex-col gap-3 sm:flex-row">
-          <StxLink to="/record" class="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-500 px-7 py-3.5 text-sm font-bold text-[#07110f] transition hover:bg-emerald-400 active:scale-[0.98]">
-            <i class="i-lucide-navigation h-4 w-4" aria-hidden="true"></i>
-            Start an activity
-          </StxLink>
-          <StxLink to="/trails" class="inline-flex items-center justify-center gap-2 rounded-full border border-[#7d9188]/45 px-7 py-3.5 text-sm font-bold text-[#eef4f0] transition hover:border-emerald-400 hover:text-emerald-300 active:scale-[0.98]">
-            Explore trails
-            <i class="i-lucide-arrow-up-right h-4 w-4" aria-hidden="true"></i>
-          </StxLink>
-        </div>
+<div class="marketing-page overflow-hidden">
+
+  <!-- ── Above the fold ─────────────────────────────────────────────────────
+       One photograph, one promise, one search box. Everything else on this
+       page is below the fold on purpose: the first thing a visitor wants is
+       somewhere to go this weekend, not a feature list. -->
+  <section class="hero-stage">
+    <picture>
+      <source srcset="/images/marketing/wildloop-ridge-runner.webp" type="image/webp" />
+      <img
+        src="/images/marketing/wildloop-ridge-runner.jpg"
+        alt=""
+        width="1440"
+        height="960"
+        fetchpriority="high"
+        class="hero-photo"
+      />
+    </picture>
+
+    <div class="hero-inner">
+      <h1 class="hero-title">Find your next adventure</h1>
+
+      <form @submit="submitSearch" class="hero-search" role="search">
+        <label for="hero-search-input" class="sr-only">Search by city, park, or trail name</label>
+        <span class="hero-search-icon" aria-hidden="true"><i class="i-lucide-search h-5 w-5"></i></span>
+        <input
+          id="hero-search-input"
+          type="search"
+          x-value="search"
+          @input="e => search.set(e.target.value)"
+          placeholder="Search by city, park, or trail name"
+          autocomplete="off"
+        />
+        <button type="submit" class="hero-search-go">Search</button>
+      </form>
+
+      <div class="hero-links">
+        <button type="button" @click="findNearMe()" x-disabled="locating()">
+          {{ locating ? 'Finding you…' : 'Explore nearby trails' }}
+        </button>
+        <StxLink to="/routes">Create a route</StxLink>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Local favorites ──────────────────────────────────────────────────── -->
+  <section class="section-paper">
+    <div class="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
+      <div class="flex flex-wrap items-baseline justify-between gap-3">
+        <h2 class="font-display text-2xl font-bold tracking-[-0.03em] sm:text-3xl">{{ featuredLabel }}</h2>
+        <StxLink to="/trails" class="text-sm font-semibold text-emerald-700 underline underline-offset-4 dark:text-emerald-400">See all trails</StxLink>
       </div>
 
-      <figure class="hero-visual">
-        <picture>
-          <source srcset="/images/marketing/wildloop-ridge-runner.webp" type="image/webp" />
-          <img
-            src="/images/marketing/wildloop-ridge-runner.jpg"
-            alt="A trail runner following an alpine ridge above cloud-filled valleys"
-            width="1440"
-            height="960"
-            fetchpriority="high"
-            class="h-[420px] w-full object-cover sm:h-[560px] lg:h-[650px]"
-          />
-        </picture>
-      </figure>
+      <div class="mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <template :if="featuredLoading() && featured().length === 0">
+          <div class="trail-tile animate-pulse"><div class="trail-tile-photo bg-slate-200 dark:bg-slate-700"></div><div class="mt-3 h-4 w-3/4 rounded bg-slate-200 dark:bg-slate-700"></div><div class="mt-2 h-3 w-1/2 rounded bg-slate-200 dark:bg-slate-700"></div></div>
+          <div class="trail-tile animate-pulse"><div class="trail-tile-photo bg-slate-200 dark:bg-slate-700"></div><div class="mt-3 h-4 w-2/3 rounded bg-slate-200 dark:bg-slate-700"></div><div class="mt-2 h-3 w-2/5 rounded bg-slate-200 dark:bg-slate-700"></div></div>
+          <div class="trail-tile animate-pulse"><div class="trail-tile-photo bg-slate-200 dark:bg-slate-700"></div><div class="mt-3 h-4 w-4/5 rounded bg-slate-200 dark:bg-slate-700"></div><div class="mt-2 h-3 w-1/2 rounded bg-slate-200 dark:bg-slate-700"></div></div>
+          <div class="trail-tile animate-pulse"><div class="trail-tile-photo bg-slate-200 dark:bg-slate-700"></div><div class="mt-3 h-4 w-3/5 rounded bg-slate-200 dark:bg-slate-700"></div><div class="mt-2 h-3 w-2/5 rounded bg-slate-200 dark:bg-slate-700"></div></div>
+        </template>
+
+        <template :for="trail in featured">
+          <StxLink x-to="'/trail/' + trail.id" class="trail-tile group">
+            <div class="trail-tile-photo">
+              <img :if="trail.image" x-src="trail.image" x-alt="trail.name" loading="lazy" class="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]" />
+              <div :if="!trail.image" class="trail-tile-blank" aria-hidden="true">
+                <i class="i-lucide-mountain h-8 w-8"></i>
+              </div>
+            </div>
+            <h3 class="mt-3 truncate font-semibold">{{ trail.name }}</h3>
+            <p class="mt-0.5 truncate text-sm text-current/55">{{ trail.location || trail.managedBy || '—' }}</p>
+            <p class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-current/70">
+              <span class="inline-flex items-center gap-1 font-semibold">
+                <i class="i-lucide-star h-3.5 w-3.5 text-amber-500" aria-hidden="true"></i>{{ trail.rating ? trail.rating.toFixed(1) : '—' }}
+              </span>
+              <span aria-hidden="true">·</span>
+              <span class="capitalize">{{ trail.difficulty }}</span>
+              <span aria-hidden="true">·</span>
+              <span class="tabular-nums">{{ trail.distance.toFixed(1) + ' mi' }}</span>
+            </p>
+          </StxLink>
+        </template>
+
+        <p :if="!featuredLoading() && featured().length === 0" class="text-sm text-current/60">
+          The catalog is not reachable right now.
+          <StxLink to="/trails" class="underline underline-offset-2">Try the full trail search</StxLink>.
+        </p>
+      </div>
     </div>
   </section>
 
   <section class="data-ribbon border-y border-emerald-950/10 dark:border-white/10">
     <div class="mx-auto grid max-w-7xl grid-cols-2 gap-x-6 gap-y-9 px-4 py-10 sm:px-6 lg:grid-cols-[1.35fr_1fr_1fr_1.35fr] lg:px-8">
       <div>
-        <p class="font-display text-3xl font-bold tracking-tight tabular-nums">{{ trailCount().toLocaleString() }}</p>
+        <p class="font-display text-3xl font-bold tabular-nums tracking-tight">{{ trailCount().toLocaleString() }}</p>
         <p class="mt-1 text-sm text-current/60">Trails ready to explore</p>
       </div>
       <div>
-        <p class="font-display text-3xl font-bold tracking-tight tabular-nums">{{ countryCount() }}</p>
+        <p class="font-display text-3xl font-bold tabular-nums tracking-tight">{{ countryCount() }}</p>
         <p class="mt-1 text-sm text-current/60">Countries covered</p>
       </div>
       <div>
-        <p class="font-display text-3xl font-bold tracking-tight tabular-nums">{{ regionCount() }}</p>
+        <p class="font-display text-3xl font-bold tabular-nums tracking-tight">{{ regionCount() }}</p>
         <p class="mt-1 text-sm text-current/60">States and regions</p>
       </div>
       <div class="col-span-2 lg:col-span-1">
@@ -125,6 +246,7 @@
     </div>
   </section>
 
+  <!-- ── Territory ──────────────────────────────────────────────────────── -->
   <section class="section-paper">
     <div class="mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[0.78fr_1.22fr] lg:items-center lg:gap-20 lg:px-8 lg:py-28">
       <div class="section-rise">
@@ -170,9 +292,51 @@
     </div>
   </section>
 
+  <!-- ── Live events ──────────────────────────────────────────────────────── -->
+  <section class="live-stage">
+    <div class="mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-20 lg:px-8 lg:py-28">
+      <div class="section-rise">
+        <p class="section-kicker text-emerald-300">Live from the yard</p>
+        <h2 class="mt-4 max-w-[14ch] font-display text-4xl font-bold leading-[0.98] tracking-[-0.045em] text-[#eff6f2] sm:text-5xl">Backyard ultras, lap by lap.</h2>
+        <p class="mt-6 max-w-[34rem] text-lg leading-relaxed text-[#a9bab2]">
+          A yard every hour until one runner is left. WildLoop runs the corral clock, records each lap as it lands, and publishes
+          the standings live — so anyone with the link can watch the field shrink from wherever they are.
+        </p>
+        <ul class="mt-8 space-y-4 text-sm font-semibold text-[#dce7e1]">
+          <li class="flex items-center gap-3"><i class="i-lucide-timer h-4 w-4 text-emerald-400" aria-hidden="true"></i> Corral clock counts down to every start</li>
+          <li class="flex items-center gap-3"><i class="i-lucide-radio h-4 w-4 text-emerald-400" aria-hidden="true"></i> Laps report themselves straight from the recorder</li>
+          <li class="flex items-center gap-3"><i class="i-lucide-users h-4 w-4 text-emerald-400" aria-hidden="true"></i> Crew and spectators follow without an account</li>
+        </ul>
+        <div class="mt-9 flex flex-col gap-3 sm:flex-row">
+          <StxLink to="/events" class="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-500 px-7 py-3.5 text-sm font-bold text-[#07110f] transition hover:bg-emerald-400 active:scale-[0.98]">
+            Watch a live event
+            <i class="i-lucide-arrow-right h-4 w-4" aria-hidden="true"></i>
+          </StxLink>
+          <StxLink to="/events/new" class="inline-flex items-center justify-center gap-2 rounded-full border border-[#7d9188]/45 px-7 py-3.5 text-sm font-bold text-[#eef4f0] transition hover:border-emerald-400 hover:text-emerald-300 active:scale-[0.98]">
+            Host your own
+          </StxLink>
+        </div>
+      </div>
+
+      <div class="yard-board section-rise" aria-hidden="true">
+        <div class="yard-board-head">
+          <span class="yard-live"><span></span>LIVE</span>
+          <span class="yard-clock">Yard 14 · 41:08 to go</span>
+        </div>
+        <div class="yard-row"><span class="yard-rank">1</span><span class="yard-name">Dana Whitfield</span><span class="yard-yards">14 yards</span><span class="yard-state yard-in">In</span></div>
+        <div class="yard-row"><span class="yard-rank">2</span><span class="yard-name">Ade Okonjo</span><span class="yard-yards">14 yards</span><span class="yard-state yard-in">In</span></div>
+        <div class="yard-row"><span class="yard-rank">3</span><span class="yard-name">Marta Ferrán</span><span class="yard-yards">14 yards</span><span class="yard-state yard-in">In</span></div>
+        <div class="yard-row"><span class="yard-rank">4</span><span class="yard-name">Sam Petersen</span><span class="yard-yards">13 yards</span><span class="yard-state yard-out">Timed out</span></div>
+        <div class="yard-row"><span class="yard-rank">5</span><span class="yard-name">Iris Lindqvist</span><span class="yard-yards">11 yards</span><span class="yard-state yard-out">Timed out</span></div>
+        <p class="yard-foot">58.3 mi covered · 3 of 24 still in</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Product ──────────────────────────────────────────────────────────── -->
   <section class="section-muted">
     <div class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
-      <div class="grid gap-5 md:grid-cols-12 md:auto-rows-[190px]">
+      <div class="grid gap-5 md:auto-rows-[190px] md:grid-cols-12">
         <div class="bento-copy md:col-span-7 md:row-span-2">
           <i class="i-lucide-map h-7 w-7 text-emerald-600 dark:text-emerald-400" aria-hidden="true"></i>
           <div>
@@ -219,28 +383,127 @@
     </div>
   </section>
 
-  <section class="section-paper">
-    <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8 lg:py-28">
-      <div class="grid gap-10 lg:grid-cols-[0.7fr_1.3fr] lg:gap-20">
-        <h2 class="font-display text-4xl font-bold leading-none tracking-[-0.04em] sm:text-5xl">From idea to claimed.</h2>
-        <ol class="process-list">
-          <li>
-            <span>01</span>
-            <div><h3>Find the trail</h3><p>Search the catalog or draw the route you want to follow.</p></div>
-          </li>
-          <li>
-            <span>02</span>
-            <div><h3>Record the effort</h3><p>Track live with your phone, sync a watch, or import an activity file.</p></div>
-          </li>
-          <li>
-            <span>03</span>
-            <div><h3>Close the loop</h3><p>Your verified route becomes the boundary for a territory claim.</p></div>
-          </li>
-          <li>
-            <span>04</span>
-            <div><h3>Share the proof</h3><p>Send a route-rich activity image straight to the social app you use.</p></div>
-          </li>
-        </ol>
+  <!-- ── Get the app ──────────────────────────────────────────────────────── -->
+  <section class="section-paper" id="get-the-app">
+    <div class="mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[1fr_0.85fr] lg:items-center lg:gap-20 lg:px-8 lg:py-24">
+      <div>
+        <p class="section-kicker">Take it with you</p>
+        <h2 class="mt-4 max-w-[16ch] font-display text-4xl font-bold leading-[0.99] tracking-[-0.04em] sm:text-5xl">Put WildLoop on your phone.</h2>
+        <p class="mt-6 max-w-[36rem] text-lg leading-relaxed text-current/65">
+          Live GPS, offline maps, and lap reporting in your pocket. It installs straight from this page — no store account,
+          no download queue, and it updates itself.
+        </p>
+
+        <div class="mt-8 flex flex-wrap items-center gap-3">
+          <p :if="installed" class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <i class="i-lucide-check h-4 w-4" aria-hidden="true"></i>
+            Installed — open it from your home screen
+          </p>
+
+          <button
+            :if="!installed && canPrompt"
+            @click="promptInstall()"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-7 py-3.5 text-sm font-bold text-white transition hover:bg-emerald-700 active:scale-[0.98]"
+          >
+            <i class="i-lucide-download h-4 w-4" aria-hidden="true"></i>
+            Install WildLoop
+          </button>
+
+          <StxLink :if="!installed" to="/app" class="inline-flex items-center justify-center gap-2 rounded-full border border-current/20 px-7 py-3.5 text-sm font-bold transition hover:border-emerald-500 hover:text-emerald-700 active:scale-[0.98] dark:hover:text-emerald-300">
+            How it works on my phone
+            <i class="i-lucide-arrow-up-right h-4 w-4" aria-hidden="true"></i>
+          </StxLink>
+        </div>
+
+        <!-- iOS has no programmatic install, so name the two taps instead of
+             offering a button that cannot do anything. -->
+        <p :if="!installed && !canPrompt && platform === 'ios'" class="mt-5 max-w-[36rem] rounded-2xl border border-current/12 px-5 py-4 text-sm leading-relaxed text-current/70">
+          <span class="font-semibold">On iPhone and iPad:</span> open this page in Safari, tap
+          <span class="font-semibold">Share</span> <i class="i-lucide-share h-3.5 w-3.5 align-[-2px]" aria-hidden="true"></i>, then
+          <span class="font-semibold">Add to Home Screen</span>. WildLoop then opens full screen, with its own icon.
+        </p>
+        <p :if="!installed && !canPrompt && platform === 'desktop'" class="mt-5 max-w-[36rem] text-sm leading-relaxed text-current/60">
+          On a computer your browser may offer the install button in the address bar. The phone is where WildLoop earns its keep, though —
+          open <span class="font-semibold">wildloop.org</span> there and install it in two taps.
+        </p>
+      </div>
+
+      <div class="phone-frame" aria-hidden="true">
+        <div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span class="phone-status-icons"><i class="i-lucide-signal h-3 w-3"></i><i class="i-lucide-wifi h-3 w-3"></i><i class="i-lucide-battery-full h-3.5 w-3.5"></i></span></div>
+          <p class="phone-eyebrow">Recording</p>
+          <p class="phone-metric">4.17<span>mi</span></p>
+          <p class="phone-sub">Yard 14 · 41:08 to the next start</p>
+          <div class="phone-map">
+            <svg viewBox="0 0 240 180">
+              <path class="phone-route-casing" d="M28 140 C40 84 92 60 132 74 C176 90 196 44 214 36" />
+              <path class="phone-route" d="M28 140 C40 84 92 60 132 74 C176 90 196 44 214 36" />
+              <circle cx="28" cy="140" r="6" class="phone-dot" />
+            </svg>
+          </div>
+          <div class="phone-tabs"><span class="phone-tab-on"></span><span></span><span></span><span></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Adventure anywhere ───────────────────────────────────────────────── -->
+  <section class="section-muted">
+    <div class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-24">
+      <h2 class="font-display text-4xl font-bold leading-none tracking-[-0.04em] sm:text-5xl">Adventure anywhere</h2>
+
+      <div class="mt-12 grid gap-x-10 gap-y-12 lg:grid-cols-2">
+        <div>
+          <h3 class="directory-heading">Top regions</h3>
+          <div class="directory-columns">
+            <template :for="region in topRegions">
+              <StxLink x-to="'/trails?state=' + region.code" class="directory-link">{{ region.name }}</StxLink>
+            </template>
+            <p :if="topRegions().length === 0" class="text-sm text-current/50">Loading regions…</p>
+          </div>
+          <StxLink to="/trails" class="directory-more">Show more</StxLink>
+        </div>
+
+        <div>
+          <h3 class="directory-heading">Top countries</h3>
+          <div class="directory-columns">
+            <template :for="country in topCountries">
+              <StxLink x-to="'/trails?country=' + country.code" class="directory-link">{{ countryName(country.code) }}</StxLink>
+            </template>
+            <p :if="topCountries().length === 0" class="text-sm text-current/50">Loading countries…</p>
+          </div>
+          <StxLink to="/trails" class="directory-more">Show more</StxLink>
+        </div>
+
+        <div>
+          <h3 class="directory-heading">Top trails</h3>
+          <div class="directory-columns">
+            <template :for="trail in topTrails">
+              <StxLink x-to="'/trail/' + trail.id" class="directory-link">{{ trail.name }}</StxLink>
+            </template>
+            <p :if="topTrails().length === 0" class="text-sm text-current/50">Loading trails…</p>
+          </div>
+          <StxLink to="/trails?sort=rating" class="directory-more">Show more</StxLink>
+        </div>
+
+        <div>
+          <h3 class="directory-heading">Ways to play</h3>
+          <div class="directory-columns">
+            <StxLink to="/territories" class="directory-link">Territory map</StxLink>
+            <StxLink to="/events" class="directory-link">Live events</StxLink>
+            <StxLink to="/events?type=backyard" class="directory-link">Backyard ultras</StxLink>
+            <StxLink to="/battles" class="directory-link">Territory battles</StxLink>
+            <StxLink to="/conquests" class="directory-link">Conquest feed</StxLink>
+            <StxLink to="/challenges" class="directory-link">Challenges</StxLink>
+            <StxLink to="/leaderboard" class="directory-link">Leaderboard</StxLink>
+            <StxLink to="/clubs" class="directory-link">Clubs</StxLink>
+            <StxLink to="/athletes" class="directory-link">Athletes</StxLink>
+            <StxLink to="/routes" class="directory-link">Route planner</StxLink>
+            <StxLink to="/record" class="directory-link">Record a run</StxLink>
+            <StxLink to="/stats" class="directory-link">Your stats</StxLink>
+          </div>
+          <StxLink to="/feed" class="directory-more">Show more</StxLink>
+        </div>
       </div>
     </div>
   </section>
@@ -256,7 +519,7 @@
       </StxLink>
     </div>
   </section>
-</main>
+</div>
 
 <style>
   .marketing-page {
@@ -273,33 +536,175 @@
     --page-ink: #e8f0eb;
   }
 
-  .hero-field,
-  .closing-field {
+  /* ── Hero ───────────────────────────────────────────────────────────── */
+
+  .hero-stage {
+    position: relative;
+    display: grid;
+    place-items: center;
+    /* Tall enough that the photograph is the page, short enough that the row
+       of trails below it still peeks in and invites the scroll. */
+    min-height: min(78vh, 44rem);
+    overflow: hidden;
     background: #07110f;
+    isolation: isolate;
   }
 
-  .hero-visual {
-    overflow: hidden;
-    border-radius: 1.5rem 1.5rem 6rem 1.5rem;
-    box-shadow: 0 32px 80px rgb(0 0 0 / 35%);
+  .hero-photo {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 42%;
   }
+
+  /* The scrim exists for the text, not the mood: white type over a bright sky
+     is the single most common way a hero like this becomes unreadable. */
+  .hero-stage::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(180deg, rgb(6 17 14 / 55%) 0%, rgb(6 17 14 / 18%) 38%, rgb(6 17 14 / 62%) 100%),
+      radial-gradient(120% 80% at 50% 50%, transparent 35%, rgb(6 17 14 / 45%) 100%);
+  }
+
+  .hero-inner {
+    width: 100%;
+    max-width: 46rem;
+    padding: 5rem 1.25rem 4rem;
+    text-align: center;
+  }
+
+  .hero-title {
+    color: #fff;
+    font-family: 'Outfit', system-ui, sans-serif;
+    font-size: clamp(2.5rem, 6.2vw, 5rem);
+    font-weight: 700;
+    line-height: 0.95;
+    letter-spacing: -0.045em;
+    text-shadow: 0 2px 24px rgb(4 12 10 / 45%);
+  }
+
+  .hero-search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 2.25rem;
+    padding: 0.4rem 0.4rem 0.4rem 1.25rem;
+    background: #fff;
+    border-radius: 9999px;
+    box-shadow: 0 18px 48px -12px rgb(4 12 10 / 45%);
+  }
+
+  .hero-search-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    color: #64748b;
+  }
+
+  .hero-search input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.85rem 0.25rem;
+    color: #0f172a;
+    font-size: 1rem;
+    background: transparent;
+    border: 0;
+  }
+
+  .hero-search input::placeholder { color: #7c8a95; }
+  .hero-search input:focus { outline: none; }
+  .hero-search input::-webkit-search-cancel-button { -webkit-appearance: none; }
+
+  .hero-search-go {
+    flex: none;
+    padding: 0.85rem 1.6rem;
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 700;
+    background: #059669;
+    border-radius: 9999px;
+    transition: background 0.2s ease, transform 0.12s ease;
+  }
+
+  .hero-search-go:hover { background: #047857; }
+  .hero-search-go:active { transform: scale(0.98); }
+
+  .hero-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.75rem;
+    justify-content: center;
+    margin-top: 1.75rem;
+  }
+
+  .hero-links button,
+  .hero-links a {
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 5px;
+    text-shadow: 0 1px 14px rgb(4 12 10 / 50%);
+    transition: color 0.2s ease;
+  }
+
+  .hero-links button:hover,
+  .hero-links a:hover { color: #6ee7b7; }
+  .hero-links button:disabled { opacity: 0.7; }
+
+  @media (max-width: 640px) {
+    .hero-search {
+      flex-wrap: wrap;
+      padding: 0.75rem 1rem;
+      border-radius: 1.5rem;
+    }
+
+    .hero-search input { padding: 0.5rem 0.25rem; }
+
+    .hero-search-go {
+      width: 100%;
+      margin-top: 0.25rem;
+    }
+  }
+
+  /* ── Trail shelf ────────────────────────────────────────────────────── */
+
+  .trail-tile { display: block; }
+
+  .trail-tile-photo {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+    border-radius: 1rem;
+    background: color-mix(in srgb, currentColor 8%, transparent);
+  }
+
+  .trail-tile-blank {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    color: color-mix(in srgb, currentColor 35%, transparent);
+    background: color-mix(in srgb, currentColor 6%, transparent);
+  }
+
+  /* ── Shared section furniture ───────────────────────────────────────── */
 
   .data-ribbon {
     color: var(--page-ink);
     background: #d9e8df;
   }
 
-  .dark .data-ribbon {
-    background: #10251e;
-  }
+  .dark .data-ribbon { background: #10251e; }
 
-  .section-paper {
-    background: var(--page-paper);
-  }
-
-  .section-muted {
-    background: var(--page-muted);
-  }
+  .section-paper { background: var(--page-paper); }
+  .section-muted { background: var(--page-muted); }
 
   .section-kicker {
     color: #08784c;
@@ -309,9 +714,7 @@
     text-transform: uppercase;
   }
 
-  .dark .section-kicker {
-    color: #6ee7b7;
-  }
+  .dark .section-kicker { color: #6ee7b7; }
 
   .feature-rule {
     display: flex;
@@ -383,9 +786,7 @@
   }
 
   .plot-caption span,
-  .plot-caption strong {
-    display: block;
-  }
+  .plot-caption strong { display: block; }
 
   .plot-caption span {
     font-size: 0.7rem;
@@ -397,9 +798,106 @@
 
   .plot-caption strong {
     margin-top: 0.2rem;
-    font-size: 1.15rem;
     color: var(--page-ink);
+    font-size: 1.15rem;
   }
+
+  /* ── Live event board ───────────────────────────────────────────────── */
+
+  .live-stage { background: #07110f; }
+
+  .yard-board {
+    padding: 1.5rem;
+    border: 1px solid rgb(255 255 255 / 10%);
+    border-radius: 1.5rem;
+    background: linear-gradient(180deg, #0d1c17 0%, #0a1512 100%);
+    box-shadow: 0 28px 80px rgb(0 0 0 / 46%);
+  }
+
+  .yard-board-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgb(255 255 255 / 8%);
+  }
+
+  .yard-live {
+    display: inline-flex;
+    gap: 0.45rem;
+    align-items: center;
+    color: #fca5a5;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+  }
+
+  .yard-live span {
+    width: 0.5rem;
+    height: 0.5rem;
+    background: #ef4444;
+    border-radius: 9999px;
+  }
+
+  .yard-clock {
+    color: #9fb3aa;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.78rem;
+  }
+
+  .yard-row {
+    display: grid;
+    grid-template-columns: 1.5rem 1fr auto auto;
+    gap: 0.85rem;
+    align-items: center;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid rgb(255 255 255 / 6%);
+  }
+
+  .yard-rank {
+    color: #6b8479;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75rem;
+  }
+
+  .yard-name {
+    color: #e7efeb;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .yard-yards {
+    color: #9fb3aa;
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .yard-state {
+    padding: 0.18rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .yard-in {
+    color: #6ee7b7;
+    background: rgb(16 185 129 / 14%);
+  }
+
+  .yard-out {
+    color: #cbb9a4;
+    background: rgb(255 255 255 / 6%);
+  }
+
+  .yard-foot {
+    margin-top: 1rem;
+    color: #7f948b;
+    font-size: 0.75rem;
+  }
+
+  /* ── Bento + share ──────────────────────────────────────────────────── */
 
   .bento-copy,
   .bento-small {
@@ -411,9 +909,7 @@
     background: var(--page-paper);
   }
 
-  .bento-copy {
-    justify-content: space-between;
-  }
+  .bento-copy { justify-content: space-between; }
 
   .bento-image {
     overflow: hidden;
@@ -421,9 +917,7 @@
     border-radius: 1.5rem 4.5rem 1.5rem 1.5rem;
   }
 
-  .share-stage {
-    background: #07110f;
-  }
+  .share-stage { background: #07110f; }
 
   .share-cards {
     position: relative;
@@ -440,73 +934,188 @@
   }
 
   .share-square {
-    left: 0;
     bottom: 0;
+    left: 0;
     width: 74%;
   }
 
   .share-story {
-    right: 0;
     top: 0;
+    right: 0;
     width: 42%;
   }
 
-  .process-list li {
-    display: grid;
-    grid-template-columns: 3rem 1fr;
-    gap: 1.25rem;
-    padding: 1.35rem 0;
-    border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  /* ── Phone ──────────────────────────────────────────────────────────── */
+
+  .phone-frame {
+    justify-self: center;
+    width: min(20rem, 84vw);
+    padding: 0.7rem;
+    border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+    border-radius: 2.75rem;
+    background: #0b1512;
+    box-shadow: 0 34px 80px -24px rgb(6 18 14 / 55%);
   }
 
-  .process-list li:last-child {
-    border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  .phone-screen {
+    padding: 1.15rem 1.15rem 1rem;
+    color: #e7efeb;
+    border-radius: 2.15rem;
+    background: linear-gradient(180deg, #10221c 0%, #0a1512 100%);
   }
 
-  .process-list span {
-    color: #0d9560;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  .phone-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #8ea79c;
+    font-size: 0.68rem;
+    font-weight: 600;
+  }
+
+  .phone-status-icons {
+    display: inline-flex;
+    gap: 0.3rem;
+    align-items: center;
+  }
+
+  .phone-eyebrow {
+    margin-top: 1.5rem;
+    color: #6ee7b7;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .phone-metric {
+    margin-top: 0.15rem;
+    font-family: 'Outfit', system-ui, sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+
+  .phone-metric span {
+    margin-left: 0.35rem;
+    color: #8ea79c;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .phone-sub {
+    margin-top: 0.4rem;
+    color: #8ea79c;
     font-size: 0.78rem;
-    font-weight: 800;
   }
 
-  .process-list h3 {
-    font-size: 1.05rem;
-    font-weight: 800;
+  .phone-map {
+    margin-top: 1.1rem;
+    overflow: hidden;
+    border-radius: 1.25rem;
+    background: #14251f;
   }
 
-  .process-list p {
-    margin-top: 0.3rem;
-    color: color-mix(in srgb, currentColor 62%, transparent);
-    line-height: 1.65;
+  .phone-map svg {
+    display: block;
+    width: 100%;
   }
+
+  .phone-route-casing {
+    fill: none;
+    stroke: #061310;
+    stroke-width: 9;
+    stroke-linecap: round;
+  }
+
+  .phone-route {
+    fill: none;
+    stroke: #10b981;
+    stroke-width: 5;
+    stroke-linecap: round;
+  }
+
+  .phone-dot {
+    fill: #eafff6;
+    stroke: #0b1b15;
+    stroke-width: 3;
+  }
+
+  .phone-tabs {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-top: 1.1rem;
+  }
+
+  .phone-tabs span {
+    width: 1.6rem;
+    height: 0.25rem;
+    background: rgb(255 255 255 / 12%);
+    border-radius: 9999px;
+  }
+
+  .phone-tab-on { background: #10b981 !important; }
+
+  /* ── Directory ──────────────────────────────────────────────────────── */
+
+  .directory-heading {
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .directory-columns {
+    columns: 2;
+    column-gap: 2.5rem;
+    margin-top: 1.1rem;
+  }
+
+  .directory-link {
+    display: block;
+    padding: 0.28rem 0;
+    color: color-mix(in srgb, currentColor 72%, transparent);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    break-inside: avoid;
+    transition: color 0.15s ease;
+  }
+
+  .directory-link:hover {
+    color: #047857;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .dark .directory-link:hover { color: #6ee7b7; }
+
+  .directory-more {
+    display: inline-block;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+
+  .closing-field { background: #07110f; }
 
   @media (max-width: 767px) {
-    .hero-visual {
-      border-radius: 1.25rem 1.25rem 3.5rem 1.25rem;
-    }
-
     .territory-plot {
       min-height: 24rem;
       border-radius: 3rem 1.25rem 1.25rem;
     }
 
-    .territory-plot svg {
-      min-height: 24rem;
-    }
-
-    .share-cards {
-      min-height: 31rem;
-    }
+    .territory-plot svg { min-height: 24rem; }
+    .share-cards { min-height: 31rem; }
+    .directory-columns { columns: 1; }
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    .hero-copy {
+    .hero-inner {
       animation: hero-arrive 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
-    }
-
-    .hero-visual {
-      animation: hero-arrive 0.9s 0.08s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 
     .section-rise {

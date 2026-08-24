@@ -1,15 +1,84 @@
-<footer class="mt-auto bg-slate-50 dark:bg-slate-800 border-slate-200 border-t dark:border-slate-700">
-  <div class="mx-auto px-4 py-10 sm:px-6 lg:px-8 max-w-7xl">
-    <div class="flex flex-col gap-4 items-start justify-between md:flex-row md:items-center">
-      <div class="flex gap-2 items-center">
-        <span class="relative inline-block h-5 w-5 shrink-0 rounded-full border-2 border-emerald-500" aria-hidden="true">
-          <span class="absolute -top-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-emerald-400"></span>
-        </span>
-        <span class="font-semibold gradient-text">WildLoop</span>
+<script client>
+  import { useAppInstall } from '../composables/useAppInstall'
+
+  const { canPrompt, installed, platform, promptInstall } = useAppInstall()
+
+  const year = new Date().getFullYear()
+</script>
+
+<footer class="mt-auto border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
+  <div class="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+    <div class="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr] lg:gap-14">
+
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="relative inline-block h-5 w-5 shrink-0 rounded-full border-2 border-emerald-500" aria-hidden="true">
+            <span class="absolute -top-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-emerald-400"></span>
+          </span>
+          <span class="font-display text-base font-bold tracking-wide">WildLoop</span>
+        </div>
+        <p class="mt-3 max-w-[28ch] text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+          Find trails. Track miles. Hold ground.
+        </p>
+
+        <!-- The install path that actually works today. A visitor on Android or
+             desktop Chrome gets the real prompt; on iOS there is no programmatic
+             install, so say what to tap instead of offering a dead button. -->
+        <div class="mt-6">
+          <p :if="installed" class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3.5 py-2 text-sm font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <i class="i-lucide-check h-4 w-4" aria-hidden="true"></i>
+            App installed
+          </p>
+          <button
+            :if="!installed && canPrompt"
+            @click="promptInstall()"
+            class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 active:scale-[0.98] dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
+          >
+            <i class="i-lucide-download h-4 w-4" aria-hidden="true"></i>
+            Install the app
+          </button>
+          <p :if="!installed && !canPrompt && platform === 'ios'" class="max-w-[30ch] text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+            On iPhone: tap <span class="font-semibold text-slate-700 dark:text-slate-200">Share</span>, then
+            <span class="font-semibold text-slate-700 dark:text-slate-200">Add to Home Screen</span>.
+          </p>
+          <StxLink :if="!installed && !canPrompt && platform !== 'ios'" to="/app" class="inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-white dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
+            <i class="i-lucide-smartphone h-4 w-4" aria-hidden="true"></i>
+            Get the app
+          </StxLink>
+        </div>
       </div>
-      <p class="text-slate-500 text-sm dark:text-slate-400">
-        Find trails. Track miles. Hold ground.
-      </p>
+
+      <div>
+        <h2 class="text-xs font-bold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">Explore</h2>
+        <ul class="mt-4 space-y-2.5 text-sm">
+          <li><StxLink to="/trails" class="text-slate-600 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">Find trails</StxLink></li>
+          <li><StxLink to="/routes" class="text-slate-600 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">Plan a route</StxLink></li>
+          <li><StxLink to="/record" class="text-slate-600 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">Record an activity</StxLink></li>
+          <li><StxLink to="/territories" class="text-slate-600 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">Territory map</StxLink></li>
+          <li><StxLink to="/leaderboard" class="text-slate-600 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">Leaderboard</StxLink></li>
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="text-xs font-bold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">Community</h2>
+        <ul class="mt-4 space-y-2.5 text-sm">
+          <li><StxLink to="/events" class="text-slate-600 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">Live events</StxLink></li>
+          <li><StxLink to="/events?type=backyard" class="text-slate-600 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">Backyard ultras</StxLink></li>
+          <li><StxLink to="/clubs" class="text-slate-600 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">Clubs</StxLink></li>
+          <li><StxLink to="/challenges" class="text-slate-600 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">Challenges</StxLink></li>
+          <li><StxLink to="/athletes" class="text-slate-600 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">Athletes</StxLink></li>
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="text-xs font-bold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">Company</h2>
+        <ul class="mt-4 space-y-2.5 text-sm">
+          <li><StxLink to="/app" class="text-slate-600 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">Mobile app</StxLink></li>
+          <li><StxLink to="/privacy" class="text-slate-600 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">Privacy</StxLink></li>
+          <li><StxLink to="/terms" class="text-slate-600 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">Terms</StxLink></li>
+          <li><a href="https://github.com/stacksjs/wildloop" rel="noopener" class="text-slate-600 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">Source</a></li>
+        </ul>
+      </div>
     </div>
 
     <!--
@@ -19,15 +88,16 @@
       permission, but saying where a trail came from is what lets someone judge
       whether to trust it.
     -->
-    <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
-      <p class="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+    <div class="mt-12 flex flex-col gap-4 border-t border-slate-200 pt-6 dark:border-slate-800 md:flex-row md:items-start md:justify-between">
+      <p class="max-w-3xl text-xs leading-relaxed text-slate-500 dark:text-slate-400">
         Trail data from
-        <a href="https://www.openstreetmap.org/copyright" rel="noopener" class="underline decoration-slate-300 dark:decoration-slate-600 underline-offset-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition">OpenStreetMap contributors</a>
-        (<a href="https://opendatacommons.org/licenses/odbl/" rel="noopener" class="underline decoration-slate-300 dark:decoration-slate-600 underline-offset-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition">ODbL</a>),
-        the <a href="https://data.fs.usda.gov/geodata/edw/datasets.php" rel="noopener" class="underline decoration-slate-300 dark:decoration-slate-600 underline-offset-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition">USDA Forest Service</a>
-        and the <a href="https://public-nps.opendata.arcgis.com/" rel="noopener" class="underline decoration-slate-300 dark:decoration-slate-600 underline-offset-2 hover:text-emerald-600 dark:hover:text-emerald-400 transition">National Park Service</a>.
+        <a href="https://www.openstreetmap.org/copyright" rel="noopener" class="underline decoration-slate-300 underline-offset-2 transition hover:text-emerald-600 dark:decoration-slate-600 dark:hover:text-emerald-400">OpenStreetMap contributors</a>
+        (<a href="https://opendatacommons.org/licenses/odbl/" rel="noopener" class="underline decoration-slate-300 underline-offset-2 transition hover:text-emerald-600 dark:decoration-slate-600 dark:hover:text-emerald-400">ODbL</a>),
+        the <a href="https://data.fs.usda.gov/geodata/edw/datasets.php" rel="noopener" class="underline decoration-slate-300 underline-offset-2 transition hover:text-emerald-600 dark:decoration-slate-600 dark:hover:text-emerald-400">USDA Forest Service</a>
+        and the <a href="https://public-nps.opendata.arcgis.com/" rel="noopener" class="underline decoration-slate-300 underline-offset-2 transition hover:text-emerald-600 dark:decoration-slate-600 dark:hover:text-emerald-400">National Park Service</a>.
         Conditions change. Check with the land manager before you go.
       </p>
+      <p class="shrink-0 text-xs text-slate-400 dark:text-slate-500">© {{ year }} WildLoop</p>
     </div>
   </div>
 </footer>

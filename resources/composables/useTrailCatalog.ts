@@ -25,6 +25,11 @@ export interface TrailQuery {
   difficulty?: string
   routeType?: string
   sort?: string
+  /** Centre of a "near me" search. Paired with `lng`; the API ignores one alone. */
+  lat?: number
+  lng?: number
+  /** Miles around `lat`/`lng`. The API defaults this when omitted. */
+  radius?: number
   limit?: number
   offset?: number
 }
@@ -141,6 +146,12 @@ export async function queryTrails(query: TrailQuery): Promise<TrailQueryResult> 
     params.set('routeType', query.routeType)
   if (query.sort)
     params.set('sort', query.sort)
+  if (Number.isFinite(query.lat) && Number.isFinite(query.lng)) {
+    params.set('lat', String(query.lat))
+    params.set('lng', String(query.lng))
+    if (query.radius)
+      params.set('radius', String(query.radius))
+  }
 
   params.set('limit', String(query.limit ?? 60))
   params.set('offset', String(query.offset ?? 0))

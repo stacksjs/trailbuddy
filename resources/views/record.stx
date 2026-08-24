@@ -1,13 +1,14 @@
 @extends('layouts/default')
 
-@section('title', 'Capture Run - WildLoop')
+@section('title', 'Record - WildLoop')
 
 @section('content')
 <script client>
   import { useRecorder } from '../composables/useRecorder'
   import { useActivityImport } from '../composables/useActivityImport'
+  import { useMyLiveEvent } from '../composables/useMyLiveEvent'
 
-  useHead({ title: 'Capture Run - WildLoop' })
+  useHead({ title: 'Record - WildLoop' })
 
   const wl = useStore('wl')
   const { importing, importMessage, importError, importFile } = useActivityImport(wl)
@@ -40,7 +41,14 @@
     mountRecordMap,
   } = useRecorder({ mapElId: 'record-map', wl })
 
+  const { event: liveEvent, yard, countdown, yardsBanked, banking, bankError, bankYard } = useMyLiveEvent()
+
   onMount(() => mountRecordMap())
+
+  // The pre-run setup is noise once the watch is running, and the only thing
+  // that matters mid-run is the map and the numbers. `setupOpen` keeps the
+  // options one tap away without letting them crowd the screen.
+  const setupOpen = state(false)
 
   const attackable = derived(() => wl ? wl.attackableTerritories() : [])
   const targetZone = derived(() => {
@@ -54,156 +62,499 @@
       .filter(([, pct]) => pct > 0 && pct < 100)
       .map(([id, pct]) => ({ id: Number(id), pct, name: wl?.findTerritory(Number(id))?.name ?? 'Zone' }))
   })
+
+  const pace = derived(() => distance() > 0.01 ? fmtDuration(Math.round(elapsed() / distance())) : '--:--')
+
+  const gpsLabel = derived(() => {
+    if (gpsStatus() === 'active') return mode() === 'simulated' ? 'Simulating' : 'GPS locked'
+    if (gpsStatus() === 'searching') return 'Finding satellites…'
+    return 'GPS off'
+  })
 </script>
 
-  <div class="mx-auto px-4 py-6 max-w-4xl">
-    <div class="flex flex-col gap-2 items-center mb-4 sm:flex-row sm:justify-between">
-      <div class="text-center sm:text-left">
-        <h1 class="font-bold text-2xl dark:text-white">Capture Run</h1>
-        <p class="text-gray-500 text-sm dark:text-slate-400">Live pace, distance and elevation. Close a loop and the ground inside it is yours.</p>
-      </div>
-      <div class="flex items-center gap-2">
-        <StxLink :if="!recording" to="/routes" class="px-3 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-lg">Plan route</StxLink>
-        <select x-value="visibility" @change="visibility.set($event.target.value)" x-class="recording ? 'hidden' : ''" class="px-3 py-2 text-xs font-medium bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-400 rounded-lg border-0" aria-label="Activity visibility">
-          <option value="public">🌐 Public</option>
-          <option value="followers">👥 Followers</option>
-          <option value="private">🔒 Private</option>
-        </select>
-        <div class="flex gap-2 p-1 bg-gray-100 dark:bg-slate-800 rounded-lg">
-          <button @click="runMode.set('capture')" x-class="runMode === 'capture' ? 'bg-emerald-600 text-white shadow' : 'text-gray-600 dark:text-slate-400'" class="px-4 py-2 font-semibold text-xs rounded-md transition">Capture</button>
-          <button @click="runMode.set('free')" x-class="runMode === 'free' ? 'bg-emerald-600 text-white shadow' : 'text-gray-600 dark:text-slate-400'" class="px-4 py-2 font-semibold text-xs rounded-md transition">Free Run</button>
+  <div class="record-page">
+    <div class="mx-auto max-w-4xl px-4 pb-28 pt-6 sm:px-6 lg:px-8">
+
+      <!-- ── Header ──────────────────────────────────────────────────────── -->
+      <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 class="font-display text-2xl font-bold tracking-[-0.03em] dark:text-white">Record</h1>
+          <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+            <span :if="!recording">Close a loop and the ground inside it is yours.</span>
+            <span :if="recording">{{ runMode === 'capture' ? 'Stay inside the highlighted zone to fill the capture meter.' : 'Free run — no territory capture.' }}</span>
+          </p>
         </div>
-      </div>
-    </div>
 
-    <!-- Target zone (capture mode) -->
-    <div x-class="runMode === 'capture' && !recording ? 'mb-4 card border-2 border-orange-200 dark:border-orange-800/50' : 'hidden'">
-      <p class="mb-2 font-semibold text-sm dark:text-white">Target a zone to attack</p>
-      <div class="flex flex-wrap gap-2 items-center">
-        <button @click="targetTerritoryId.set(null)" :aria-pressed="targetTerritoryId === null" x-class="targetTerritoryId === null ? 'ring-2 ring-emerald-500' : ''" class="px-3 py-1.5 text-xs font-medium text-slate-900 dark:text-white bg-gray-100 dark:bg-slate-700 rounded-lg transition">Any nearby</button>
-        <template :for="zone in attackable">
-          <button @click="targetTerritoryId.set(zone.id)" :aria-pressed="targetTerritoryId === zone.id" x-class="targetTerritoryId === zone.id ? 'ring-2 ring-orange-500' : ''" class="px-3 py-1.5 text-xs font-medium text-slate-900 dark:text-white bg-gray-100 dark:bg-slate-700 rounded-lg transition">{{ zone.name }}</button>
-        </template>
-        <span :if="attackable.length === 0" class="text-xs text-gray-500 dark:text-slate-400">No claimable zones in range yet. Head toward the orange areas on the map.</span>
-      </div>
-      <p :if="targetZone" class="mt-2 text-orange-600 text-xs">Focus run: cross <span class="font-semibold">{{ targetZone.name }}</span> to fill the capture meter</p>
-    </div>
-
-    <!-- Map -->
-    <div class="relative mb-4 rounded-2xl overflow-hidden shadow-md ring-1 ring-slate-200 dark:ring-slate-700">
-      <div id="record-map" data-stx-ignore class="ts-map-container h-[22rem] sm:h-[28rem] w-full"></div>
-
-      <div class="flex absolute right-3 top-3 z-[1000] gap-1.5 items-center px-2.5 py-1 font-medium text-xs rounded-full bg-white/90 backdrop-blur-sm shadow-sm" x-class="gpsStatus === 'active' ? 'text-emerald-700' : gpsStatus === 'searching' ? 'text-yellow-700' : 'text-gray-600'">
-        <div class="h-2 w-2 rounded-full" x-class="gpsStatus === 'active' ? 'bg-emerald-500 animate-pulse' : gpsStatus === 'searching' ? 'bg-yellow-500 animate-pulse' : 'bg-gray-400'"></div>
-        <span>{{ gpsStatus === 'active' ? (mode === 'simulated' ? 'Simulating' : 'GPS Active') : gpsStatus === 'searching' ? 'Searching...' : 'GPS Off' }}</span>
-      </div>
-
-      <div class="absolute bottom-3 left-3 z-[1000] px-3 py-2 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm">
-        <div class="flex flex-wrap gap-3 items-center text-xs">
-          <span class="flex gap-1 items-center"><span class="h-3 w-3 bg-emerald-500 rounded"></span>Yours</span>
-          <span class="flex gap-1 items-center"><span class="h-3 w-3 bg-amber-500 rounded"></span>Enemy</span>
-          <span class="flex gap-1 items-center"><span class="h-3 w-3 bg-purple-500 rounded"></span>Capturing</span>
-          <span class="flex gap-1 items-center"><span class="h-2 w-2 bg-sky-500 rounded-full"></span>Route</span>
-        </div>
-      </div>
-
-      <div :if="conquestToast" class="capture-toast absolute top-3 left-1/2 -translate-x-1/2 z-[1000] px-5 py-2.5 font-bold text-white bg-emerald-600 rounded-full shadow-xl">{{ conquestToast }}</div>
-    </div>
-
-    <!-- Live capture meters -->
-    <div :if="recording && activeCaptures.length > 0" class="mb-4 space-y-2">
-      <template :for="cap in activeCaptures">
-        <div class="card py-3">
-          <div class="flex justify-between mb-1 text-xs">
-            <span class="font-semibold dark:text-white">{{ 'Capturing ' + cap.name }}</span>
-            <span class="text-purple-600 font-bold">{{ cap.pct + '%' }}</span>
+        <div :if="!recording" class="flex flex-wrap items-center gap-2">
+          <div class="mode-switch" role="group" aria-label="Run mode">
+            <button @click="runMode.set('capture')" :aria-pressed="runMode === 'capture'" x-class="runMode === 'capture' ? 'mode-on' : ''">Capture</button>
+            <button @click="runMode.set('free')" :aria-pressed="runMode === 'free'" x-class="runMode === 'free' ? 'mode-on' : ''">Free run</button>
           </div>
-          <div class="capture-bar"><div class="capture-bar-fill" :style="'width:' + cap.pct + '%'"></div></div>
-        </div>
-      </template>
-    </div>
-
-    <!-- Live activity stats -->
-    <div class="mb-6 card">
-      <div class="mb-4 text-center">
-        <p class="font-bold font-mono text-5xl sm:text-6xl tracking-tight dark:text-white">{{ fmtDuration(elapsed) }}</p>
-        <p class="mt-1 metric-label">Elapsed</p>
-      </div>
-      <div class="grid gap-4 grid-cols-2 sm:grid-cols-5">
-        <div class="stat-tile">
-          <p class="font-bold text-2xl dark:text-white">{{ distance.toFixed(2) }}</p>
-          <p class="metric-label">Miles</p>
-        </div>
-        <div class="stat-tile">
-          <p class="font-bold text-2xl dark:text-white">{{ distance > 0.01 ? fmtDuration(Math.round(elapsed / distance)) : '--:--' }}</p>
-          <p class="metric-label">Pace</p>
-        </div>
-        <div class="stat-tile">
-          <p class="font-bold text-2xl dark:text-white">{{ elevation.toLocaleString() }}</p>
-          <p class="metric-label">Elev ft</p>
-        </div>
-        <div class="stat-tile">
-          <p class="font-bold text-2xl text-emerald-600">{{ conqueredIds.length }}</p>
-          <p class="metric-label">Captured</p>
-        </div>
-        <div class="stat-tile">
-          <p class="font-bold text-2xl text-purple-600">{{ sessionXp }}</p>
-          <p class="metric-label">XP</p>
+          <button @click="setupOpen.set(!setupOpen())" :aria-expanded="setupOpen" class="ghost-btn">
+            <i class="i-lucide-sliders-horizontal h-4 w-4" aria-hidden="true"></i>
+            Options
+          </button>
         </div>
       </div>
-    </div>
 
-    <div :if="saveMessage" class="mb-4 px-4 py-3 text-sm rounded-xl" x-class="saveStatus === 'saved' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20' : saveStatus === 'queued' ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20' : saveStatus === 'error' ? 'bg-red-50 text-red-700 dark:bg-red-900/20' : 'bg-sky-50 text-sky-700 dark:bg-sky-900/20'">
-      <span class="font-semibold">{{ saveMessage }}</span>
-    </div>
-    <div :if="wrongTurn && recording" role="alert" class="mb-4 px-4 py-3 font-semibold text-sm text-amber-800 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-200 rounded-xl">
-      Wrong-turn alert: you are more than about 425 ft from the selected trail route.
-    </div>
-
-    <!-- Simulate -->
-    <div x-class="recording ? 'hidden' : 'mb-6 card'">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="font-semibold text-sm dark:text-white">Quick simulate</h3>
-        <span class="text-xs text-gray-500">Preview a trail route • saved as simulation • never scores</span>
+      <!-- ── Live event ──────────────────────────────────────────────────── -->
+      <div :if="liveEvent" class="yard-strip">
+        <div class="min-w-0">
+          <p class="yard-strip-label"><span class="live-pip" aria-hidden="true"></span>{{ 'Yard ' + yard() + ' · next start in ' + countdown() }}</p>
+          <StxLink x-to="'/event/' + liveEvent.id" class="mt-0.5 block truncate font-bold text-white hover:underline">{{ liveEvent.name }}</StxLink>
+          <p class="text-xs text-white/60">{{ yardsBanked() + ' banked · ' + liveEvent.stillIn + ' of ' + liveEvent.entrantCount + ' still in' }}</p>
+        </div>
+        <button @click="bankYard()" x-disabled="banking()" class="yard-bank">
+          {{ banking ? 'Recording…' : 'Bank yard ' + yard() }}
+        </button>
       </div>
-      <div class="flex gap-2">
-        <select @change="selectedTrailId.set(Number($event.target.value))" x-disabled="trailOptions.length === 0" class="flex-1 px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg disabled:opacity-50">
-          <option :if="trailOptions.length === 0" disabled>No trails available yet</option>
-          <template :for="opt in trailOptions">
-            <option x-value="opt.id" x-selected="opt.id === selectedTrailId" :text="opt.name"></option>
-          </template>
-        </select>
-        <button @click="simulate()" x-disabled="trailOptions.length === 0" class="px-4 py-2 font-semibold text-sm text-white bg-sky-600 hover:bg-sky-700 rounded-lg transition whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">Preview route</button>
+      <p :if="bankError" role="alert" class="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">{{ bankError }}</p>
+
+      <!-- ── Options ─────────────────────────────────────────────────────── -->
+      <div :show="setupOpen() && !recording" x-cloak class="mb-5 space-y-4 rounded-2xl border border-slate-200 p-5 dark:border-slate-700">
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="record-visibility" class="field-label">Who can see it</label>
+            <select id="record-visibility" x-value="visibility" @change="visibility.set($event.target.value)" class="field">
+              <option value="public">Everyone</option>
+              <option value="followers">Followers</option>
+              <option value="private">Only me</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">Plan ahead</label>
+            <StxLink to="/routes" class="ghost-btn w-full justify-center">
+              <i class="i-lucide-route h-4 w-4" aria-hidden="true"></i>
+              Plan a route
+            </StxLink>
+          </div>
+        </div>
+
+        <!-- Target zone (capture mode) -->
+        <div x-class="runMode === 'capture' ? '' : 'hidden'">
+          <p class="field-label">Target a zone to attack</p>
+          <div class="flex flex-wrap items-center gap-2">
+            <button @click="targetTerritoryId.set(null)" :aria-pressed="targetTerritoryId === null" x-class="targetTerritoryId === null ? 'chip chip-on' : 'chip'">Any nearby</button>
+            <template :for="zone in attackable">
+              <button @click="targetTerritoryId.set(zone.id)" :aria-pressed="targetTerritoryId === zone.id" x-class="targetTerritoryId === zone.id ? 'chip chip-target' : 'chip'">{{ zone.name }}</button>
+            </template>
+            <span :if="attackable.length === 0" class="text-xs text-slate-500 dark:text-slate-400">No claimable zones in range yet. Head toward the orange areas on the map.</span>
+          </div>
+          <p :if="targetZone" class="mt-2 text-xs text-orange-600 dark:text-orange-400">Focus run: cross <span class="font-semibold">{{ targetZone.name }}</span> to fill the capture meter.</p>
+        </div>
+
+        <!-- Simulate -->
+        <div class="border-t border-slate-100 pt-4 dark:border-slate-700">
+          <div class="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+            <p class="field-label mb-0">Preview a trail</p>
+            <span class="text-xs text-slate-400 dark:text-slate-500">Saved as a simulation · never scores</span>
+          </div>
+          <div class="flex gap-2">
+            <select @change="selectedTrailId.set(Number($event.target.value))" x-disabled="trailOptions.length === 0" class="field flex-1">
+              <option :if="trailOptions.length === 0" disabled>No trails available yet</option>
+              <template :for="opt in trailOptions">
+                <option x-value="opt.id" x-selected="opt.id === selectedTrailId" :text="opt.name"></option>
+              </template>
+            </select>
+            <button @click="simulate()" x-disabled="trailOptions.length === 0" class="ghost-btn shrink-0">Preview</button>
+          </div>
+        </div>
+
+        <!-- Import -->
+        <div class="border-t border-slate-100 pt-4 dark:border-slate-700">
+          <p class="field-label">Import an activity</p>
+          <p class="mb-2 text-xs text-slate-500 dark:text-slate-400">GPX, TCX, and checksum-validated FIT files import privately. Imported tracks cannot capture territory.</p>
+          <label class="ghost-btn inline-flex cursor-pointer">
+            <i class="i-lucide-upload h-4 w-4" aria-hidden="true"></i>
+            {{ importing ? 'Importing…' : 'Choose a file' }}
+            <input type="file" accept=".gpx,.tcx,.fit,application/gpx+xml,application/vnd.garmin.tcx+xml" @change="importFile($event)" class="sr-only" />
+          </label>
+          <p :if="importMessage" class="mt-2 text-sm text-emerald-600">{{ importMessage }}</p>
+          <p :if="importError" class="mt-2 text-sm text-red-500">{{ importError }}</p>
+        </div>
+      </div>
+
+      <!-- ── Map ─────────────────────────────────────────────────────────── -->
+      <div class="map-frame">
+        <div id="record-map" data-stx-ignore class="ts-map-container h-[24rem] w-full sm:h-[30rem]"></div>
+
+        <div class="map-badge" x-class="gpsStatus === 'active' ? 'text-emerald-700' : gpsStatus === 'searching' ? 'text-amber-700' : 'text-slate-600'">
+          <span class="map-dot" x-class="gpsStatus === 'active' ? 'bg-emerald-500 animate-pulse' : gpsStatus === 'searching' ? 'bg-amber-500 animate-pulse' : 'bg-slate-400'"></span>
+          {{ gpsLabel() }}
+        </div>
+
+        <div class="map-legend">
+          <span><i class="legend-swatch bg-emerald-500"></i>Yours</span>
+          <span><i class="legend-swatch bg-amber-500"></i>Enemy</span>
+          <span><i class="legend-swatch bg-purple-500"></i>Capturing</span>
+          <span><i class="legend-swatch rounded-full bg-sky-500"></i>Route</span>
+        </div>
+
+        <div :if="conquestToast" class="capture-toast absolute left-1/2 top-3 z-[1000] -translate-x-1/2 rounded-full bg-emerald-600 px-5 py-2.5 font-bold text-white shadow-xl">{{ conquestToast }}</div>
+      </div>
+
+      <!-- ── Capture meters ──────────────────────────────────────────────── -->
+      <div :if="recording && activeCaptures.length > 0" class="mt-4 space-y-2">
+        <template :for="cap in activeCaptures">
+          <div class="rounded-2xl border border-slate-200 px-4 py-3 dark:border-slate-700">
+            <div class="mb-1.5 flex justify-between text-xs">
+              <span class="font-semibold dark:text-white">{{ 'Capturing ' + cap.name }}</span>
+              <span class="font-bold text-purple-600 tabular-nums">{{ cap.pct + '%' }}</span>
+            </div>
+            <div class="capture-bar"><div class="capture-bar-fill" :style="'width:' + cap.pct + '%'"></div></div>
+          </div>
+        </template>
+      </div>
+
+      <!-- ── Live numbers ────────────────────────────────────────────────── -->
+      <div class="metrics">
+        <div class="metric-hero">
+          <p class="metric-clock">{{ fmtDuration(elapsed) }}</p>
+          <p class="metric-caption">Elapsed</p>
+        </div>
+
+        <div class="metric-grid">
+          <div class="metric">
+            <p class="metric-value">{{ distance.toFixed(2) }}</p>
+            <p class="metric-caption">Miles</p>
+          </div>
+          <div class="metric">
+            <p class="metric-value">{{ pace() }}</p>
+            <p class="metric-caption">Pace</p>
+          </div>
+          <div class="metric">
+            <p class="metric-value">{{ elevation.toLocaleString() }}</p>
+            <p class="metric-caption">Elev ft</p>
+          </div>
+          <div class="metric">
+            <p class="metric-value text-emerald-600 dark:text-emerald-400">{{ conqueredIds.length }}</p>
+            <p class="metric-caption">Captured</p>
+          </div>
+          <div class="metric">
+            <p class="metric-value text-purple-600 dark:text-purple-400">{{ sessionXp }}</p>
+            <p class="metric-caption">XP</p>
+          </div>
+        </div>
+      </div>
+
+      <div :if="saveMessage" class="mt-4 rounded-xl px-4 py-3 text-sm font-semibold" x-class="saveStatus === 'saved' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300' : saveStatus === 'queued' ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300' : saveStatus === 'error' ? 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300' : 'bg-sky-50 text-sky-700 dark:bg-sky-900/20 dark:text-sky-300'">
+        {{ saveMessage }}
+      </div>
+
+      <div :if="wrongTurn && recording" role="alert" class="mt-4 rounded-xl bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+        Wrong-turn alert: you are more than about 425 ft from the selected trail route.
       </div>
     </div>
 
-    <!-- Controls -->
-    <div class="flex gap-4 items-center justify-center">
-      <button @click="startManual()" aria-label="Start recording" x-class="recording ? 'hidden' : 'record-btn-start'">
-        <i class="i-lucide-play h-8 w-8" aria-hidden="true"></i>
-      </button>
-      <button @click="togglePause()" :aria-label="paused ? 'Resume recording' : 'Pause recording'" x-class="!recording ? 'hidden' : paused ? 'record-btn-resume' : 'record-btn-pause'">
-        <i x-class="paused ? 'i-lucide-play h-7 w-7' : 'i-lucide-pause h-7 w-7'" aria-hidden="true"></i>
-      </button>
-      <button @click="stop()" aria-label="Finish recording" x-class="recording ? 'record-btn-stop' : 'hidden'">
-        <i class="i-lucide-square h-7 w-7" aria-hidden="true"></i>
-      </button>
+    <!-- ── Controls ──────────────────────────────────────────────────────
+         Docked, not inline. This is the one thing that gets pressed with
+         cold hands halfway up a climb, so it stays reachable no matter how
+         far the page has scrolled. -->
+    <div class="control-dock">
+      <div class="control-inner">
+        <button @click="startManual()" aria-label="Start recording" x-class="recording ? 'hidden' : 'record-btn-start'">
+          <i class="i-lucide-play h-8 w-8" aria-hidden="true"></i>
+        </button>
+        <button @click="togglePause()" :aria-label="paused ? 'Resume recording' : 'Pause recording'" x-class="!recording ? 'hidden' : paused ? 'record-btn-resume' : 'record-btn-pause'">
+          <i x-class="paused ? 'i-lucide-play h-7 w-7' : 'i-lucide-pause h-7 w-7'" aria-hidden="true"></i>
+        </button>
+        <button @click="stop()" aria-label="Finish recording" x-class="recording ? 'record-btn-stop' : 'hidden'">
+          <i class="i-lucide-square h-7 w-7" aria-hidden="true"></i>
+        </button>
+      </div>
+      <p class="control-hint">
+        <span :if="!recording">Tap to start GPS capture</span>
+        <span :if="recording && !paused">Recording</span>
+        <span :if="recording && paused">Paused</span>
+      </p>
     </div>
-
-    <div x-class="recording ? 'hidden' : 'mt-8 card'">
-      <h2 class="font-semibold text-sm dark:text-white">Import an activity</h2>
-      <p class="mt-1 text-xs text-gray-500 dark:text-slate-400">GPX, TCX, and checksum-validated FIT files import privately. Imported tracks cannot capture territory.</p>
-      <label class="inline-flex mt-3 px-4 py-2 font-semibold text-sm text-white bg-slate-700 hover:bg-slate-800 rounded-lg cursor-pointer">
-        {{ importing ? 'Importing…' : 'Choose file' }}
-        <input type="file" accept=".gpx,.tcx,.fit,application/gpx+xml,application/vnd.garmin.tcx+xml" @change="importFile($event)" class="sr-only" />
-      </label>
-      <p :if="importMessage" class="mt-2 text-sm text-emerald-600">{{ importMessage }}</p>
-      <p :if="importError" class="mt-2 text-sm text-red-500">{{ importError }}</p>
-    </div>
-
-    <p class="mt-4 text-center text-gray-500 text-sm dark:text-slate-400">
-      <span :if="!recording">Tap start to begin GPS capture, or simulate a trail route</span>
-      <span :if="recording">{{ runMode === 'capture' ? 'Stay inside the highlighted zone. The capture bar fills as you run' : 'Free run, no territory capture' }}</span>
-    </p>
   </div>
+
+<style>
+  .record-page { position: relative; }
+
+  .field-label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, currentColor 55%, transparent);
+  }
+
+  .field {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.875rem;
+    color: inherit;
+    background: transparent;
+    border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+    border-radius: 0.75rem;
+  }
+
+  .ghost-btn {
+    display: inline-flex;
+    gap: 0.45rem;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: inherit;
+    border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+    border-radius: 9999px;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  .ghost-btn:hover {
+    border-color: #10b981;
+    background: color-mix(in srgb, #10b981 8%, transparent);
+  }
+
+  .mode-switch {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    background: color-mix(in srgb, currentColor 8%, transparent);
+    border-radius: 9999px;
+  }
+
+  .mode-switch button {
+    padding: 0.5rem 1.1rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: color-mix(in srgb, currentColor 65%, transparent);
+    border-radius: 9999px;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .mode-on {
+    color: #fff !important;
+    background: #059669;
+  }
+
+  .chip {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: inherit;
+    background: color-mix(in srgb, currentColor 8%, transparent);
+    border-radius: 0.6rem;
+    transition: box-shadow 0.15s ease;
+  }
+
+  .chip-on { box-shadow: 0 0 0 2px #10b981; }
+  .chip-target { box-shadow: 0 0 0 2px #f97316; }
+
+  /* ── Live event strip ─────────────────────────────────────────────── */
+
+  .yard-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    padding: 1rem 1.25rem;
+    border-radius: 1.25rem;
+    background: linear-gradient(120deg, #06231b 0%, #0b3a2c 100%);
+  }
+
+  .yard-strip-label {
+    display: inline-flex;
+    gap: 0.5rem;
+    align-items: center;
+    color: #9fd6c0;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .yard-bank {
+    flex: none;
+    padding: 0.85rem 1.5rem;
+    color: #06231b;
+    font-size: 0.9rem;
+    font-weight: 800;
+    background: #6ee7b7;
+    border-radius: 9999px;
+    transition: background 0.15s ease, transform 0.12s ease;
+  }
+
+  .yard-bank:hover { background: #34d399; }
+  .yard-bank:active { transform: scale(0.98); }
+  .yard-bank:disabled { opacity: 0.55; }
+
+  .live-pip {
+    display: inline-block;
+    width: 0.45rem;
+    height: 0.45rem;
+    background: #ef4444;
+    border-radius: 9999px;
+    box-shadow: 0 0 0 0 rgb(239 68 68 / 60%);
+    animation: live-pulse 1.8s ease-out infinite;
+  }
+
+  @keyframes live-pulse {
+    to { box-shadow: 0 0 0 0.5rem rgb(239 68 68 / 0%); }
+  }
+
+  /* ── Map ──────────────────────────────────────────────────────────── */
+
+  .map-frame {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+    border-radius: 1.5rem;
+    box-shadow: 0 12px 40px -20px rgb(9 20 16 / 45%);
+  }
+
+  .map-badge {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.85rem;
+    z-index: 1000;
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: rgb(255 255 255 / 92%);
+    border-radius: 9999px;
+    box-shadow: 0 2px 10px rgb(9 20 16 / 12%);
+    backdrop-filter: blur(6px);
+  }
+
+  .map-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+  }
+
+  .map-legend {
+    position: absolute;
+    bottom: 0.85rem;
+    left: 0.85rem;
+    z-index: 1000;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.5rem 0.8rem;
+    color: #1e293b;
+    font-size: 0.7rem;
+    font-weight: 500;
+    background: rgb(255 255 255 / 92%);
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 10px rgb(9 20 16 / 12%);
+    backdrop-filter: blur(6px);
+  }
+
+  .map-legend span {
+    display: inline-flex;
+    gap: 0.35rem;
+    align-items: center;
+  }
+
+  .legend-swatch {
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 0.2rem;
+  }
+
+  /* ── Metrics ──────────────────────────────────────────────────────── */
+
+  .metrics {
+    margin-top: 1rem;
+    padding: 1.75rem 1.5rem 1.5rem;
+    border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+    border-radius: 1.5rem;
+  }
+
+  .metric-hero { text-align: center; }
+
+  .metric-clock {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: clamp(3rem, 12vw, 4.5rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .metric-caption {
+    margin-top: 0.35rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, currentColor 50%, transparent);
+  }
+
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    margin-top: 1.75rem;
+    overflow: hidden;
+    background: color-mix(in srgb, currentColor 12%, transparent);
+    border-radius: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .metric-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  }
+
+  .metric {
+    padding: 1rem 0.5rem;
+    text-align: center;
+    background: var(--surface, #fff);
+  }
+
+  .dark .metric { background: #0f1b17; }
+
+  .metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .metric .metric-caption { margin-top: 0.2rem; }
+
+  /* ── Docked controls ──────────────────────────────────────────────── */
+
+  .control-dock {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
+    text-align: center;
+    background: linear-gradient(180deg, transparent 0%, var(--dock-bg, #fff) 45%);
+  }
+
+  .dark .control-dock { --dock-bg: #0b1512; }
+
+  .control-inner {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .control-hint {
+    margin-top: 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, currentColor 45%, transparent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .live-pip { animation: none; }
+  }
+</style>
 @endsection

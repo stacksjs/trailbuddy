@@ -1,0 +1,255 @@
+@extends('layouts/default')
+
+@section('title', 'Get the WildLoop app')
+
+@section('content')
+<script client>
+  import { useAppInstall } from '../composables/useAppInstall'
+
+  useHead({ title: 'Get the WildLoop app' })
+
+  const { canPrompt, installed, platform, outcome, promptInstall } = useAppInstall()
+
+  const copied = state(false)
+
+  async function copyAddress() {
+    if (typeof navigator === 'undefined') return
+    await navigator.clipboard?.writeText('https://wildloop.org').catch(() => {})
+    copied.set(true)
+    setTimeout(() => copied.set(false), 2000)
+  }
+</script>
+
+  <div class="app-page">
+    <div class="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
+      <p class="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">WildLoop on your phone</p>
+      <h1 class="mt-4 font-display text-4xl font-bold leading-[1] tracking-[-0.04em] sm:text-5xl dark:text-white">
+        Install it in two taps.
+      </h1>
+      <p class="mt-5 max-w-[46ch] text-lg leading-relaxed text-slate-600 dark:text-slate-400">
+        WildLoop installs straight from the web — no store account, no download queue, and it updates itself.
+        You get live GPS, offline maps, background tracking, and lap reporting on the home screen.
+      </p>
+
+      <!-- The install control, or the honest reason there isn't one. -->
+      <div class="mt-9">
+        <div :if="installed" class="inline-flex items-center gap-3 rounded-2xl bg-emerald-50 px-5 py-4 dark:bg-emerald-950/40">
+          <i class="i-lucide-circle-check h-6 w-6 text-emerald-600 dark:text-emerald-400" aria-hidden="true"></i>
+          <div>
+            <p class="font-bold text-emerald-800 dark:text-emerald-200">WildLoop is installed</p>
+            <p class="text-sm text-emerald-700/80 dark:text-emerald-300/80">Open it from your home screen to record with the screen off.</p>
+          </div>
+        </div>
+
+        <button
+          :if="!installed && canPrompt"
+          @click="promptInstall()"
+          class="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-8 py-4 text-base font-bold text-white transition hover:bg-emerald-700 active:scale-[0.98]"
+        >
+          <i class="i-lucide-download h-5 w-5" aria-hidden="true"></i>
+          Install WildLoop
+        </button>
+
+        <p :if="outcome === 'dismissed'" class="mt-3 text-sm text-slate-500 dark:text-slate-400">
+          No problem — you can install any time from this page.
+        </p>
+      </div>
+
+      <!-- Platform instructions. iOS genuinely has no install API, so the
+           steps are the product rather than a fallback. -->
+      <div class="mt-12 grid gap-4 sm:grid-cols-2">
+        <div class="install-card" x-class="platform === 'ios' ? 'install-card-active' : ''">
+          <div class="install-head">
+            <i class="i-lucide-apple h-5 w-5" aria-hidden="true"></i>
+            <h2>iPhone &amp; iPad</h2>
+          </div>
+          <ol class="install-steps">
+            <li><span>1</span>Open <strong>wildloop.org</strong> in Safari</li>
+            <li><span>2</span>Tap <strong>Share</strong> <i class="i-lucide-share h-3.5 w-3.5 align-[-2px]" aria-hidden="true"></i> in the toolbar</li>
+            <li><span>3</span>Choose <strong>Add to Home Screen</strong></li>
+          </ol>
+          <p class="install-note">Safari is the only browser on iOS that can install a web app — Chrome and Firefox on iPhone cannot.</p>
+        </div>
+
+        <div class="install-card" x-class="platform === 'android' ? 'install-card-active' : ''">
+          <div class="install-head">
+            <i class="i-lucide-smartphone h-5 w-5" aria-hidden="true"></i>
+            <h2>Android</h2>
+          </div>
+          <ol class="install-steps">
+            <li><span>1</span>Open <strong>wildloop.org</strong> in Chrome</li>
+            <li><span>2</span>Tap the <strong>⋮</strong> menu</li>
+            <li><span>3</span>Choose <strong>Install app</strong></li>
+          </ol>
+          <p class="install-note">Chrome usually offers the install button on this page directly — use it if you see it.</p>
+        </div>
+      </div>
+
+      <!-- Getting from a desktop to a phone. -->
+      <div :if="platform === 'desktop'" class="mt-6 rounded-2xl border border-slate-200 p-6 dark:border-slate-700">
+        <h2 class="font-bold dark:text-white">Reading this on a computer?</h2>
+        <p class="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+          WildLoop earns its keep on the phone you take outside. Open this address there and install it in two taps.
+        </p>
+        <div class="mt-4 flex flex-wrap items-center gap-3">
+          <code class="rounded-lg bg-slate-100 px-4 py-2.5 font-mono text-sm dark:bg-slate-800 dark:text-slate-200">wildloop.org</code>
+          <button @click="copyAddress()" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold transition hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800">
+            {{ copied ? 'Copied' : 'Copy address' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-14 border-t border-slate-200 pt-10 dark:border-slate-700">
+        <h2 class="font-display text-2xl font-bold tracking-[-0.03em] dark:text-white">What you get on the phone</h2>
+        <div class="mt-6 grid gap-6 sm:grid-cols-2">
+          <div class="feature">
+            <i class="i-lucide-navigation h-5 w-5" aria-hidden="true"></i>
+            <div>
+              <h3>Live GPS recording</h3>
+              <p>Distance, pace, and climb as you move — and the loop you close becomes territory.</p>
+            </div>
+          </div>
+          <div class="feature">
+            <i class="i-lucide-map-pinned h-5 w-5" aria-hidden="true"></i>
+            <div>
+              <h3>Offline maps</h3>
+              <p>Save a trail before you go and the map keeps working where the signal does not.</p>
+            </div>
+          </div>
+          <div class="feature">
+            <i class="i-lucide-timer h-5 w-5" aria-hidden="true"></i>
+            <div>
+              <h3>Lap reporting</h3>
+              <p>Bank a backyard yard with one tap. Queued offline and replayed when signal returns.</p>
+            </div>
+          </div>
+          <div class="feature">
+            <i class="i-lucide-heart-pulse h-5 w-5" aria-hidden="true"></i>
+            <div>
+              <h3>Watch and health sync</h3>
+              <p>Import FIT, GPX, and TCX activities with their health metrics intact.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-12 rounded-2xl bg-slate-50 p-6 dark:bg-slate-800/60">
+        <h2 class="font-bold dark:text-white">Native App Store builds</h2>
+        <p class="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+          Native iOS and Android builds are in progress. The installed web app already runs full screen with its own icon,
+          records in the background, and updates itself — so there is nothing to wait for.
+        </p>
+      </div>
+    </div>
+  </div>
+
+<style>
+  .app-page {
+    background: #f7f9f7;
+  }
+
+  .dark .app-page {
+    background: #0c1512;
+  }
+
+  .install-card {
+    padding: 1.5rem;
+    border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+    border-radius: 1.25rem;
+    background: #fff;
+  }
+
+  .dark .install-card {
+    background: #111e19;
+  }
+
+  /* The platform the reader is actually holding gets the emphasis. */
+  .install-card-active {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgb(16 185 129 / 12%);
+  }
+
+  .install-head {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    color: #047857;
+  }
+
+  .dark .install-head {
+    color: #6ee7b7;
+  }
+
+  .install-head h2 {
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .install-steps {
+    margin-top: 1.1rem;
+    display: grid;
+    gap: 0.7rem;
+  }
+
+  .install-steps li {
+    display: grid;
+    grid-template-columns: 1.4rem 1fr;
+    gap: 0.7rem;
+    align-items: baseline;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .install-steps span {
+    display: grid;
+    place-items: center;
+    width: 1.4rem;
+    height: 1.4rem;
+    color: #047857;
+    font-size: 0.7rem;
+    font-weight: 800;
+    background: rgb(16 185 129 / 14%);
+    border-radius: 9999px;
+  }
+
+  .dark .install-steps span {
+    color: #6ee7b7;
+  }
+
+  .install-note {
+    margin-top: 1.1rem;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    color: color-mix(in srgb, currentColor 58%, transparent);
+  }
+
+  .feature {
+    display: flex;
+    gap: 0.85rem;
+    padding-top: 1rem;
+    border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+    color: inherit;
+  }
+
+  .feature > i {
+    flex: none;
+    color: #059669;
+  }
+
+  .dark .feature > i {
+    color: #6ee7b7;
+  }
+
+  .feature h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .feature p {
+    margin-top: 0.3rem;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: color-mix(in srgb, currentColor 62%, transparent);
+  }
+</style>
+@endsection
