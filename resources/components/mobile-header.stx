@@ -1,5 +1,5 @@
 <script client>
-import { haptics } from '~/storage/framework/core/mobile/dist/index.js'
+import { haptics } from '@stacksjs/mobile'
 
 function tap(): void {
   void haptics.selection()

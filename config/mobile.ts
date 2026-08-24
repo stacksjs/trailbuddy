@@ -1,4 +1,4 @@
-import type { MobileConfig } from '../storage/framework/core/types/src/mobile'
+import type { MobileConfig } from '@stacksjs/types/mobile'
 
 const envVars = typeof Bun !== 'undefined' ? Bun.env : process.env
 const mobileContent = envVars.MOBILE_E2E === '1'

@@ -52,11 +52,10 @@ export default {
     file: 'RecomputeCounters',
     enabled: true,
   },
-  // Compatibility bridge for the mobile build commands introduced after the
-  // currently pinned Buddy release. Mobile.ts only registers names that the
-  // installed framework does not already provide, so it disappears cleanly
-  // as Buddy gains the upstream commands.
-  'build:mobile': {
+  // Physical-iPhone build and preview. Buddy supplies build:android,
+  // build:ios, and build:mobile itself; these two drive repo-local scripts
+  // that have no upstream equivalent.
+  'build:iphone': {
     file: 'Mobile',
     enabled: true,
   },

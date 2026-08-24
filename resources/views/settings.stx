@@ -4,7 +4,7 @@
 
 @section('content')
 <script client>
-  import { device, health, isNativeMobile, secureStorage } from '~/storage/framework/core/mobile/dist/index.js'
+  import { device, health, isNativeMobile, secureStorage } from '@stacksjs/mobile'
   import { isSignedIn, redirectTo, token } from '../assets/scripts/auth'
   import { describeResponseError, describeThrownError } from '../assets/scripts/request-error'
 

@@ -7,22 +7,16 @@ on:
     paths:
       - 'app/**'
       - 'config/mobile.ts'
+      - 'bun.lock'
       - 'resources/**'
-      - 'storage/framework/core/mobile/**'
-      - 'storage/framework/core/types/src/mobile.ts'
-      - 'storage/framework/core/actions/src/build/ios*.ts'
-      - 'storage/framework/core/actions/src/build/android*.ts'
       - 'storage/framework/defaults/resources/components/Native*.stx'
       - '.github/workflows/mobile.yml'
   pull_request:
     paths:
       - 'app/**'
       - 'config/mobile.ts'
+      - 'bun.lock'
       - 'resources/**'
-      - 'storage/framework/core/mobile/**'
-      - 'storage/framework/core/types/src/mobile.ts'
-      - 'storage/framework/core/actions/src/build/ios*.ts'
-      - 'storage/framework/core/actions/src/build/android*.ts'
       - 'storage/framework/defaults/resources/components/Native*.stx'
       - '.github/workflows/mobile.yml'
 

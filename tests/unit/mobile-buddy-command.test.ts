@@ -3,42 +3,49 @@ import { cli } from '@stacksjs/cli'
 import registerMobileCommands from '../../app/Commands/Mobile'
 
 describe('mobile Buddy commands', () => {
-  it('registers every native build and iPhone preview entry point', () => {
+  it('registers the physical-iPhone entry points', () => {
     const buddy = cli('buddy')
     registerMobileCommands(buddy)
 
     const names = buddy.commands.map(command => command.rawName)
-    expect(names).toContain('build:android')
-    expect(names).toContain('build:ios')
-    expect(names).toContain('build:mobile')
     expect(names).toContain('build:iphone')
     expect(names).toContain('preview:iphone')
   })
 
-  it('does not shadow commands supplied by a newer Buddy release', () => {
+  it('leaves the native build commands to Buddy', () => {
+    // build:android, build:ios, and build:mobile ship with Buddy and run the
+    // framework's own build actions. Registering our own would shadow them
+    // with a shim that re-enters `bun run build:ios`, which is this repo's
+    // script for `./buddy build:ios` — an infinite loop.
     const buddy = cli('buddy')
-    buddy.command('build:ios', 'Framework iOS build')
     registerMobileCommands(buddy)
 
-    expect(buddy.commands.filter(command => command.rawName === 'build:ios')).toHaveLength(1)
+    const names = buddy.commands.map(command => command.rawName)
+    expect(names).not.toContain('build:android')
+    expect(names).not.toContain('build:ios')
+    expect(names).not.toContain('build:mobile')
   })
 
-  it('ships the self-contained mobile runtime used by clean builds', async () => {
+  it('does not shadow a command supplied by a newer Buddy release', () => {
+    const buddy = cli('buddy')
+    buddy.command('preview:iphone', 'Framework iPhone preview')
+    registerMobileCommands(buddy)
+
+    expect(buddy.commands.filter(command => command.rawName === 'preview:iphone')).toHaveLength(1)
+  })
+
+  it('takes the native mobile runtime from npm, not a vendored copy', async () => {
     const packageJson = await Bun.file(new URL('../../package.json', import.meta.url)).json()
-    const gitignore = await Bun.file(new URL('../../.gitignore', import.meta.url)).text()
-    const runtime = await Bun.file(new URL('../../storage/framework/core/mobile/dist/index.js', import.meta.url)).text()
     const projectRoot = new URL('../../', import.meta.url).pathname
     const clientSources: string[] = []
     for await (const path of new Bun.Glob('resources/**/*.{stx,ts}').scan({ cwd: projectRoot, absolute: true }))
       clientSources.push(await Bun.file(path).text())
 
-    // Production installs from npm because storage/framework is excluded from
-    // server releases. STX clients deliberately import the checked-in bundle,
-    // which carries Craft's browser runtime without an unresolved native peer.
-    expect(packageJson.dependencies['@stacksjs/mobile']).toMatch(/^\^0\.70\./)
-    expect(gitignore).toContain('!storage/framework/core/mobile/dist/**')
-    expect(runtime).not.toContain('craft-native/mobile')
-    expect(clientSources.some(source => source.includes('~/storage/framework/core/mobile/dist/index.js'))).toBe(true)
-    expect(clientSources.every(source => !source.includes("from '@stacksjs/mobile'"))).toBe(true)
+    // @stacksjs/mobile bundles Craft's browser runtime, so importing the
+    // published package is enough for a web build, an STX client bundle, and
+    // a native WebView alike. Nothing may reach back into storage/framework.
+    expect(packageJson.dependencies['@stacksjs/mobile']).toBeString()
+    expect(clientSources.some(source => source.includes("from '@stacksjs/mobile'"))).toBe(true)
+    expect(clientSources.every(source => !source.includes('storage/framework/core'))).toBe(true)
   })
 })

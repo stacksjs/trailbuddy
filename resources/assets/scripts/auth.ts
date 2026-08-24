@@ -14,7 +14,7 @@
  */
 
 import { describeResponseError, describeThrownError, type UserFacingError } from './request-error'
-import { secureStorage } from '~/storage/framework/core/mobile/dist/index.js'
+import { secureStorage } from '@stacksjs/mobile'
 
 /** Where the bearer token lives. `game-api.ts` reads the same key. */
 export const TOKEN_KEY = 'auth_token'

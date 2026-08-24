@@ -44,39 +44,16 @@ async function runScript(script: string, label: string): Promise<boolean> {
   return true
 }
 
-function registerBuildCommand(cli: CLI, platform: 'android' | 'ios'): void {
-  const name = `build:${platform}`
-  if (hasCommand(cli, name)) return
-
-  cli
-    .command(name, `Build the native ${platform === 'ios' ? 'iOS' : 'Android'} application`)
-    .alias(`prod:${platform}`)
-    .action(async () => {
-      const perf = await intro(`buddy ${name}`)
-      if (!await runScript(name, `${platform === 'ios' ? 'iOS' : 'Android'} build`))
-        process.exit(ExitCode.FatalError)
-      await outro(`${platform === 'ios' ? 'iOS' : 'Android'} application built`, { startTime: perf, useSeconds: true })
-    })
-}
-
+/**
+ * WildLoop's physical-iPhone commands.
+ *
+ * `build:android`, `build:ios`, and `build:mobile` are NOT registered here:
+ * Buddy ships them itself and runs the framework's own build actions. The two
+ * commands below drive scripts that only exist in this repository — compiling
+ * an unsigned Release build for a real handset, and installing it — so they
+ * have no upstream equivalent to defer to.
+ */
 export default function (cli: CLI): void {
-  registerBuildCommand(cli, 'android')
-  registerBuildCommand(cli, 'ios')
-
-  if (!hasCommand(cli, 'build:mobile')) {
-    cli
-      .command('build:mobile', 'Build the native iOS and Android applications')
-      .alias('prod:mobile')
-      .action(async () => {
-        const perf = await intro('buddy build:mobile')
-        const androidSucceeded = await runScript('build:android', 'Android build')
-        const iosSucceeded = await runScript('build:ios', 'iOS build')
-        if (!androidSucceeded || !iosSucceeded)
-          process.exit(ExitCode.FatalError)
-        await outro('iOS and Android applications built', { startTime: perf, useSeconds: true })
-      })
-  }
-
   if (!hasCommand(cli, 'build:iphone')) {
     cli
       .command('build:iphone', 'Compile and validate an unsigned Release build for a physical iPhone')

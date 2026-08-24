@@ -8,20 +8,18 @@ on:
       - '.maestro/**'
       - 'app/**'
       - 'config/mobile.ts'
+      - 'bun.lock'
       - 'resources/**'
       - 'scripts/run-mobile-e2e.ts'
-      - 'storage/framework/core/actions/src/build/**'
-      - 'storage/framework/core/mobile/**'
       - '.github/workflows/mobile-e2e.yml'
   pull_request:
     paths:
       - '.maestro/**'
       - 'app/**'
       - 'config/mobile.ts'
+      - 'bun.lock'
       - 'resources/**'
       - 'scripts/run-mobile-e2e.ts'
-      - 'storage/framework/core/actions/src/build/**'
-      - 'storage/framework/core/mobile/**'
       - '.github/workflows/mobile-e2e.yml'
 
 concurrency:

@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.126",
-    "stacks": "^0.72.57",
+    "@stacksjs/mobile": "^0.72.60",
+    "stacks": "^0.72.60",
     "ts-health": "^0.1.0",
     "ts-images": "^0.2.12",
     "ts-maps": "^0.3.1",
@@ -49,8 +50,8 @@
     "build": "bun build.ts",
     "build:frontend": "bun build.ts",
     "build:stacks": "./buddy build",
-    "build:android": "bun storage/framework/core/actions/src/build/android.ts",
-    "build:ios": "bun storage/framework/core/actions/src/build/ios.ts",
+    "build:android": "./buddy build:android",
+    "build:ios": "./buddy build:ios",
     "preview": "./buddy preview",
     "start": "./buddy serve",
     "prod": "./buddy build",
@@ -99,8 +100,5 @@
     "bud": "./buddy",
     "stx": "./buddy"
   },
-  "type": "module",
-  "patchedDependencies": {
-    "@stacksjs/stx@0.2.179": "patches/@stacksjs%2Fstx@0.2.179.patch"
-  }
+  "type": "module"
 }

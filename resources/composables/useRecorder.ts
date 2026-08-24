@@ -1,5 +1,5 @@
 import { derived, onDestroy, onMount, state, useStore } from 'stx'
-import { appReview, device, haptics, health, isNativeMobile, keepAwake, lifecycle, liveActivities, location, secureStorage, watchConnectivity } from '~/storage/framework/core/mobile/dist/index.js'
+import { appReview, device, haptics, health, isNativeMobile, keepAwake, lifecycle, liveActivities, location, secureStorage, watchConnectivity } from '@stacksjs/mobile'
 import type { CircleMarker as CircleMarkerType } from 'ts-maps'
 import type { Polygon as PolygonType } from 'ts-maps'
 import type { Polyline as PolylineType } from 'ts-maps'
