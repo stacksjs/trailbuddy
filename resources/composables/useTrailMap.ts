@@ -7,7 +7,49 @@ export type LatLng = [number, number]
 
 type TsMapsModule = typeof import('ts-maps')
 
-const OSM_TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+/**
+ * The basemap is a three-layer stack rather than one flat tile sheet, which is
+ * what makes it read like a modern map app instead of raw OpenStreetMap carto:
+ *
+ *   1. terrain    — hillshaded relief, so a ridge looks like a ridge
+ *   2. land       — muted roads, water, and parks with the labels held back
+ *   3. labels     — place names composited last, so nothing prints over them
+ *
+ * Every raster layer requests `{r}` (`@2x` on a HiDPI screen) and runs with
+ * `detectRetina`, so a phone or a Retina laptop gets true 512px tiles. The old
+ * single-layer 1x OpenStreetMap sheet is the whole reason the maps looked soft.
+ */
+const BASEMAPS = {
+  light: {
+    land: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png',
+    labels: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png',
+    terrainOpacity: 0.42,
+  },
+  dark: {
+    land: 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}/{y}{r}.png',
+    labels: 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_only_labels/{z}/{x}/{y}{r}.png',
+    terrainOpacity: 0.3,
+  },
+} as const
+
+const TERRAIN_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}'
+
+const CARTO_SUBDOMAINS = 'abcd'
+const MAX_ZOOM = 20
+
+const BASEMAP_ATTRIBUTION = [
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  '&copy; <a href="https://carto.com/attributions">CARTO</a>',
+  'Terrain: Esri',
+].join(' | ')
+
+type BasemapTheme = keyof typeof BASEMAPS
+
+function currentTheme(): BasemapTheme {
+  if (typeof document === 'undefined')
+    return 'light'
+  return document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+}
 
 let mapsModule: TsMapsModule | null = null
 let mapsLoad: Promise<TsMapsModule> | null = null
@@ -93,16 +135,65 @@ export async function createTrailMap(
     })
     mapElement._tsMap = map
 
-    tileLayer(OSM_TILES, {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    let theme = currentTheme()
+
+    // Relief first, at the bottom of the stack. Multiply-blended by the
+    // stylesheet so it darkens the slopes underneath the land layer instead of
+    // washing a grey film over it.
+    tileLayer(TERRAIN_TILES, {
+      attribution: '',
+      className: 'wl-map-terrain',
       crossOrigin: true,
-      maxZoom: 19,
-      offlineCache: true,
+      maxNativeZoom: 16,
+      maxZoom: MAX_ZOOM,
+      opacity: BASEMAPS[theme].terrainOpacity,
+      zIndex: 1,
     }).addTo(map)
+
+    const land = tileLayer(BASEMAPS[theme].land, {
+      attribution: BASEMAP_ATTRIBUTION,
+      crossOrigin: true,
+      detectRetina: true,
+      maxZoom: MAX_ZOOM,
+      offlineCache: true,
+      subdomains: CARTO_SUBDOMAINS,
+      zIndex: 2,
+    }).addTo(map)
+
+    // Labels last, so a route line drawn on the overlay pane still sits below
+    // the place names rather than cutting through them.
+    const labels = tileLayer(BASEMAPS[theme].labels, {
+      attribution: '',
+      className: 'wl-map-labels',
+      crossOrigin: true,
+      detectRetina: true,
+      maxZoom: MAX_ZOOM,
+      offlineCache: true,
+      subdomains: CARTO_SUBDOMAINS,
+      zIndex: 3,
+    }).addTo(map)
+
+    // Follow the app's dark-mode toggle. Swapping the URL re-requests tiles in
+    // place, which is far cheaper than tearing the map down and rebuilding
+    // every route, marker, and territory drawn on it.
+    let themeWatcher: MutationObserver | null = null
+    if (typeof MutationObserver !== 'undefined') {
+      themeWatcher = new MutationObserver(() => {
+        const next = currentTheme()
+        if (next === theme)
+          return
+        theme = next
+        land.setUrl(BASEMAPS[next].land)
+        labels.setUrl(BASEMAPS[next].labels)
+      })
+      themeWatcher.observe(document.documentElement, { attributeFilter: ['class'] })
+    }
 
     const handle: TrailMapHandle = {
       map,
       destroy() {
+        themeWatcher?.disconnect()
+        themeWatcher = null
         try { map.remove() }
         catch { /* noop */ }
         if (mapElement._tsMap === map) {
@@ -171,15 +262,32 @@ export function runWhenMapReady(
 export async function drawTrailRoute(
   map: TsMapType,
   coords: LatLng[],
-  options?: { color?: string, weight?: number, opacity?: number },
+  options?: { color?: string, weight?: number, opacity?: number, casing?: boolean },
 ): Promise<PolylineType | null> {
   if (coords.length < 2)
     return null
   const { Polyline } = await ensureTsMaps()
+  const weight = options?.weight ?? 5
+
+  // A single flat stroke disappears against a green hillside or a grey road.
+  // Every map app draws the route twice — a dark casing, then the colour on
+  // top — which is what gives the line an edge at any zoom.
+  if (options?.casing !== false) {
+    new Polyline(coords, {
+      color: '#0b1b15',
+      weight: weight + 3.5,
+      opacity: 0.35,
+      lineCap: 'round',
+      lineJoin: 'round',
+    }).addTo(map)
+  }
+
   return new Polyline(coords, {
     color: options?.color ?? '#059669',
-    weight: options?.weight ?? 4,
-    opacity: options?.opacity ?? 0.9,
+    weight,
+    opacity: options?.opacity ?? 0.95,
+    lineCap: 'round',
+    lineJoin: 'round',
   }).addTo(map)
 }
 
@@ -234,9 +342,11 @@ export async function drawTrailMarker(
   const marker = new CircleMarker([lat, lng], {
     radius: options.radius ?? 7,
     color: '#ffffff',
-    weight: 2,
+    weight: 2.5,
+    opacity: 1,
     fillColor: fill,
-    fillOpacity: 0.95,
+    fillOpacity: 1,
+    className: 'wl-map-pin',
   }).addTo(map)
   if (options.popupHtml)
     marker.bindPopup(options.popupHtml)
@@ -250,5 +360,5 @@ export async function createLiveRouteLine(
   color: string,
 ): Promise<PolylineType> {
   const { Polyline } = await ensureTsMaps()
-  return new Polyline([], { color, weight: 5, opacity: 0.9 }).addTo(map)
+  return new Polyline([], { color, weight: 5, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }).addTo(map)
 }

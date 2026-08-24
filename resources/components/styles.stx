@@ -38,6 +38,40 @@
     font-size: 9px !important;
   }
 
+  /* The basemap is a three-layer stack (see useTrailMap): hillshade, then the
+     land style, then labels. Multiplying the relief is what turns a flat grey
+     wash into terrain — the slopes darken the greens and greys beneath them
+     instead of veiling the whole map. */
+  .wl-map-terrain {
+    mix-blend-mode: multiply;
+    filter: saturate(0);
+  }
+
+  .dark .wl-map-terrain {
+    mix-blend-mode: soft-light;
+    filter: saturate(0) invert(1);
+  }
+
+  /* Labels ride above the route lines and territory fills drawn on the overlay
+     pane, so a place name is never cut in half by a track. */
+  .wl-map-labels {
+    pointer-events: none;
+  }
+
+  /* Trail pins get a soft drop shadow rather than sitting flat on the tiles. */
+  .wl-map-pin {
+    filter: drop-shadow(0 1px 2px rgb(9 20 16 / 45%));
+  }
+
+  /* Rounded corners on a map container clip the tiles, not just the frame. */
+  .ts-map-container {
+    background: #e7ece8;
+  }
+
+  .dark .ts-map-container {
+    background: #101a17;
+  }
+
   /* Geist over Inter: Inter is the default every generated site reaches for.
      15px base because 14px body copy on a content-led product reads cramped. */
   body {
