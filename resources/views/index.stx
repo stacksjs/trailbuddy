@@ -312,7 +312,7 @@
             Watch a live event
             <i class="i-lucide-arrow-right h-4 w-4" aria-hidden="true"></i>
           </StxLink>
-          <StxLink to="/events/new" class="inline-flex items-center justify-center gap-2 rounded-full border border-[#7d9188]/45 px-7 py-3.5 text-sm font-bold text-[#eef4f0] transition hover:border-emerald-400 hover:text-emerald-300 active:scale-[0.98]">
+          <StxLink to="/events" class="inline-flex items-center justify-center gap-2 rounded-full border border-[#7d9188]/45 px-7 py-3.5 text-sm font-bold text-[#eef4f0] transition hover:border-emerald-400 hover:text-emerald-300 active:scale-[0.98]">
             Host your own
           </StxLink>
         </div>
