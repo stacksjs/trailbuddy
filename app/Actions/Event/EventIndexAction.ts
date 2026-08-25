@@ -12,6 +12,8 @@
 // enter.
 
 import { Auth } from '@stacksjs/auth'
+import Event from '../../Models/Event'
+import EventEntrant from '../../Models/EventEntrant'
 
 import { currentYard, standings } from '../../../resources/functions/backyard'
 

@@ -12,6 +12,8 @@
 // which is exactly what a race director does with a start list.
 
 import { Auth } from '@stacksjs/auth'
+import Event from '../../Models/Event'
+import EventEntrant from '../../Models/EventEntrant'
 
 import { resolveOutcome } from '../../../resources/functions/backyard'
 import { scheduleOf } from './event-support'

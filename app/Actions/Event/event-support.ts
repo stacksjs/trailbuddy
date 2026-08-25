@@ -7,6 +7,10 @@
  * than being written three times with three subtly different eligibility rules.
  */
 
+import Event from '../../Models/Event'
+import EventEntrant from '../../Models/EventEntrant'
+import EventLap from '../../Models/EventLap'
+
 import type { BackyardEntrantState, BackyardSchedule } from '../../../resources/functions/backyard'
 import { currentYard, isStillIn, msIntoCurrentYard, msToNextStart, resolveOutcome, standings, yardStartsAt } from '../../../resources/functions/backyard'
 

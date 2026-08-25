@@ -12,6 +12,8 @@
 // no WildLoop account.
 
 import { Auth } from '@stacksjs/auth'
+import Event from '../../Models/Event'
+import EventEntrant from '../../Models/EventEntrant'
 
 import { buildLiveBoard, canViewEvent, syncFieldStatus } from './event-support'
 

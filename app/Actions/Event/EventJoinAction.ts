@@ -12,6 +12,8 @@
 // started, and deleting the row would erase laps already run from the board.
 
 import { Auth } from '@stacksjs/auth'
+import Event from '../../Models/Event'
+import EventEntrant from '../../Models/EventEntrant'
 
 import { canViewEvent } from './event-support'
 

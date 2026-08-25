@@ -14,6 +14,9 @@
 // has to resolve to "already recorded" rather than inflate a yard count.
 
 import { Auth } from '@stacksjs/auth'
+import Event from '../../Models/Event'
+import EventEntrant from '../../Models/EventEntrant'
+import EventLap from '../../Models/EventLap'
 
 import { currentYard, isStillIn, resolveOutcome, standings } from '../../../resources/functions/backyard'
 import { scheduleOf } from './event-support'

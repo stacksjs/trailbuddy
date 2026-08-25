@@ -8,6 +8,8 @@
 // ultra is running it unless they say otherwise.
 
 import { Auth } from '@stacksjs/auth'
+import Event from '../../Models/Event'
+import EventEntrant from '../../Models/EventEntrant'
 
 import { STANDARD_YARD_MILES, STANDARD_YARD_MINUTES } from '../../../resources/functions/backyard'
 
