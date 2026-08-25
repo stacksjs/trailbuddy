@@ -252,6 +252,14 @@ export const tsCloud: TsCloudConfig = {
         PORT: '3051',
         APP_ENV: 'production',
         NODE_ENV: 'production',
+        // Where `/api/**` goes, same target `main` uses.
+        //
+        // This worker has no domain and serves only its own status page, so
+        // nothing proxies through it today. The deploy preflight refuses
+        // without it anyway, and it is right to: the moment this site is
+        // published, every `/api/**` request through it answers 502, and that
+        // is a failure you would find in production rather than here.
+        PORT_API: '3050',
         // The same file the site and the API open. An ingest writing to its
         // own copy would build a catalog nobody could read.
         DB_DATABASE_PATH: SHARED_DATABASE,
