@@ -9,9 +9,9 @@
   "dependencies": {
     "@iconify-json/lucide": "^1.2.126",
     "@stacksjs/bun-router": "^0.1.8",
-    "@stacksjs/mobile": "^0.72.63",
+    "@stacksjs/mobile": "^0.72.66",
     "@stacksjs/stx": "^0.2.230",
-    "stacks": "^0.72.63",
+    "stacks": "^0.72.66",
     "ts-health": "^0.1.0",
     "ts-images": "^0.2.12",
     "ts-maps": "^0.3.1",
@@ -103,5 +103,8 @@
     "bud": "./buddy",
     "stx": "./buddy"
   },
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "^1.4.0"
+  }
 }

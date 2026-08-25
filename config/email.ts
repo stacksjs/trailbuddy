@@ -45,6 +45,15 @@ export default {
   server: {
     enabled: true,
     scan: true, // scans for spam and viruses
+
+    /**
+     * Let the deploy create these mailboxes without us inventing five secrets
+     * by hand first. Each generated password is written back to
+     * .env.production as MAIL_PASSWORD_<LOCALPART>, encrypted, before it is
+     * used — so it is retrievable, and the next deploy reads it back rather
+     * than rotating it out from under every configured client.
+     */
+    generatePasswords: true,
     subdomain: 'mail', // mail.wildloop.org
 
     /**

@@ -103,7 +103,12 @@ function writeHeaders(): Record<string, string> {
   return headers
 }
 
-async function post<T>(path: string, body: Record<string, unknown>): Promise<T | null> {
+// `object`, not `Record<string, unknown>`: TypeScript gives implicit index
+// signatures to type ALIASES but not to interfaces, so every typed payload
+// here — CreateEventInput, LapInput — was rejected at the call site despite
+// being a perfectly good JSON body. `object` accepts them and still rejects
+// primitives, which is the only thing JSON.stringify would mangle.
+async function post<T>(path: string, body: object): Promise<T | null> {
   await readyToken()
   try {
     const res = await fetch(path, {

@@ -15,7 +15,11 @@ interface ClubStoreLike {
 }
 
 const CLUB_TYPES = ['Running', 'Hiking', 'Mixed', 'Territory Game']
-const JOIN_POLICIES = ['open', 'invite_only']
+// `as const` so the array is a tuple of literals, which makes JoinPolicy a real
+// union rather than `string` — the form signal below is typed from it, so a
+// policy the API does not accept cannot be assigned in the first place.
+const JOIN_POLICIES = ['open', 'invite_only'] as const
+type JoinPolicy = typeof JOIN_POLICIES[number]
 
 let clubsStarted = false
 
@@ -29,7 +33,7 @@ export function useClubs(wl: ClubStoreLike | null) {
   const fLocation = state('')
   const fDescription = state('')
   const fPrivate = state(false)
-  const fJoinPolicy = state('open')
+  const fJoinPolicy = state<JoinPolicy>('open')
 
   onMount(async () => {
     if (!wl || clubsStarted)
@@ -92,7 +96,7 @@ export function useClubs(wl: ClubStoreLike | null) {
       createError.set('Pick a club type.')
       return
     }
-    if (!JOIN_POLICIES.includes(fJoinPolicy())) {
+    if (!JOIN_POLICIES.includes(fJoinPolicy() as JoinPolicy)) {
       createError.set('Pick who can join.')
       return
     }
