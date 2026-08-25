@@ -72,9 +72,9 @@
             <h2>iPhone &amp; iPad</h2>
           </div>
           <ol class="install-steps">
-            <li><span>1</span>Open <strong>wildloop.org</strong> in Safari</li>
-            <li><span>2</span>Tap <strong>Share</strong> <i class="i-lucide-share h-3.5 w-3.5 align-[-2px]" aria-hidden="true"></i> in the toolbar</li>
-            <li><span>3</span>Choose <strong>Add to Home Screen</strong></li>
+            <li><b class="step-n">1</b><span>Open <strong>wildloop.org</strong> in Safari</span></li>
+            <li><b class="step-n">2</b><span>Tap <strong>Share</strong> <i class="i-lucide-share h-3.5 w-3.5 align-[-2px]" aria-hidden="true"></i> in the toolbar</span></li>
+            <li><b class="step-n">3</b><span>Choose <strong>Add to Home Screen</strong></span></li>
           </ol>
           <p class="install-note">Safari is the only browser on iOS that can install a web app — Chrome and Firefox on iPhone cannot.</p>
         </div>
@@ -85,9 +85,9 @@
             <h2>Android</h2>
           </div>
           <ol class="install-steps">
-            <li><span>1</span>Open <strong>wildloop.org</strong> in Chrome</li>
-            <li><span>2</span>Tap the <strong>⋮</strong> menu</li>
-            <li><span>3</span>Choose <strong>Install app</strong></li>
+            <li><b class="step-n">1</b><span>Open <strong>wildloop.org</strong> in Chrome</span></li>
+            <li><b class="step-n">2</b><span>Tap the <strong>⋮</strong> menu</span></li>
+            <li><b class="step-n">3</b><span>Choose <strong>Install app</strong></span></li>
           </ol>
           <p class="install-note">Chrome usually offers the install button on this page directly — use it if you see it.</p>
         </div>
@@ -212,7 +212,11 @@
     line-height: 1.5;
   }
 
-  .install-steps span {
+  /* The badge only. The step's words live in a sibling <span> so the grid
+     sees TWO items — with the text as loose nodes, `<strong>wildloop.org</strong>`
+     became its own grid item and wrapped onto the next row, one fragment per
+     line. */
+  .install-steps .step-n {
     display: grid;
     place-items: center;
     width: 1.4rem;
@@ -224,7 +228,7 @@
     border-radius: 9999px;
   }
 
-  .dark .install-steps span {
+  .dark .install-steps .step-n {
     color: #6ee7b7;
   }
 
