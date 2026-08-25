@@ -54,6 +54,19 @@ export default {
      * than rotating it out from under every configured client.
      */
     generatePasswords: true,
+
+    dmarc: {
+      /**
+       * Aggregate reports come here, not to the from-address.
+       *
+       * This defaulted to the configured from-address, which the scaffold had
+       * left pointing at another domain — so wildloop.org published a DMARC
+       * record asking receivers to send its reports to stacksjs.com. Pinned
+       * explicitly so it stays with the domain the policy protects, whatever
+       * MAIL_FROM_ADDRESS happens to be.
+       */
+      reportTo: 'no-reply@wildloop.org',
+    },
     subdomain: 'mail', // mail.wildloop.org
 
     /**
