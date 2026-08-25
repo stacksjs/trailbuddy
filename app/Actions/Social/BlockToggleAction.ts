@@ -1,3 +1,5 @@
+import { Auth } from '@stacksjs/auth'
+
 import UserBlock from '../../Models/UserBlock'
 
 export default new Action({

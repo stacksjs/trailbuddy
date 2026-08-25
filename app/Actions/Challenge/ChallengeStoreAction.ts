@@ -1,9 +1,14 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // POST /api/challenges (auth) - throw down a challenge over a rival's
 // territory (#965). The challenger is the session user; the challenged athlete
 // and the area at stake are DERIVED from the chosen territory (you challenge
 // whoever currently holds it). Starts 'pending' until the defender responds.
+
+import { Auth } from '@stacksjs/auth'
 
 const DEFAULT_DEADLINE_DAYS = 7
 

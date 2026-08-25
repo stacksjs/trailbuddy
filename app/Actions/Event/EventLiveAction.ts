@@ -1,4 +1,7 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // GET /api/events/{id}/live - the poll target for the live page.
 //
@@ -7,6 +10,8 @@
 // event description and the host's name each time. Public events answer to
 // anybody, with no session, so a race link can be shared with a crew that has
 // no WildLoop account.
+
+import { Auth } from '@stacksjs/auth'
 
 import { buildLiveBoard, canViewEvent, syncFieldStatus } from './event-support'
 

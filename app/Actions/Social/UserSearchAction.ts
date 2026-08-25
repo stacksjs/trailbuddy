@@ -1,9 +1,14 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // GET /api/users/search?q= - find athletes by name (#971). With a query of
 // 2+ characters it's a case-insensitive LIKE search; with no/shorter query it
 // returns the most active athletes as a discover list. Public read; response
 // includes enough stats to render discover cards without extra calls.
+
+import { Auth } from '@stacksjs/auth'
 
 export default new Action({
   name: 'User Search',

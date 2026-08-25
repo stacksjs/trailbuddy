@@ -1,9 +1,14 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // Persists a recorded run as an Activity row. The recorder POSTs a GPS track
 // (GeoJSON LineString / JSON coords) in `gpx_data`; that payload is what the
 // territory engine (claim / process-conquest) later reads. Snake_case keys
 // match the ORM's column-based attributes.
+import { Auth } from '@stacksjs/auth'
+
 import { evaluateAchievementsForUser } from '../Achievement/EvaluateAchievementsAction'
 import { durationLabel, evaluateTrackIntegrity, isLiveGpsSource, type RecordingSource } from '../../../resources/functions/activity-integrity'
 import UserPrivacySetting from '../../Models/UserPrivacySetting'

@@ -1,3 +1,5 @@
+import { Auth } from '@stacksjs/auth'
+
 import ContentReport from '../../Models/ContentReport'
 import Activity from '../../Models/Activity'
 import ActivityComment from '../../Models/ActivityComment'

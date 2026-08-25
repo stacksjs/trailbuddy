@@ -1,4 +1,7 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // POST /api/events/{id}/laps (auth) - report a completed yard.
 //
@@ -9,6 +12,8 @@
 // The write is idempotent on (event, user, yard). Lap reports are queued and
 // replayed when a phone regains signal at the top of the field, so a duplicate
 // has to resolve to "already recorded" rather than inflate a yard count.
+
+import { Auth } from '@stacksjs/auth'
 
 import { currentYard, isStillIn, resolveOutcome, standings } from '../../../resources/functions/backyard'
 import { scheduleOf } from './event-support'

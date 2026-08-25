@@ -1,9 +1,14 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // GET /api/clubs - list clubs with derived member counts and this-week stats
 // (#964). Public read; private clubs are only listed to members. memberCount
 // comes from club_members; weeklyDistance/activitiesThisWeek are aggregated
 // from members' activities in the last 7 days (real data, not stored fiction).
+
+import { Auth } from '@stacksjs/auth'
 
 export default new Action({
   name: 'Club Index',

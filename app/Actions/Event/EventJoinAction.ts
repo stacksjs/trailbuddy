@@ -1,4 +1,7 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // POST /api/events/{id}/join (auth) - enter or withdraw from an event.
 //
@@ -7,6 +10,8 @@
 //
 // Withdrawing keeps the entrant row: a backyard result is a record of who
 // started, and deleting the row would erase laps already run from the board.
+
+import { Auth } from '@stacksjs/auth'
 
 import { canViewEvent } from './event-support'
 

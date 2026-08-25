@@ -1,3 +1,5 @@
+import { Auth } from '@stacksjs/auth'
+
 import CustomRoute from '../../Models/CustomRoute'
 
 export default new Action({

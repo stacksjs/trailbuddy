@@ -1,3 +1,5 @@
+import { Auth } from '@stacksjs/auth'
+
 const PERIOD_DAYS: Record<string, number | null> = { weekly: 7, monthly: 30, alltime: null }
 const METRICS = ['distance', 'elevation', 'activities']
 

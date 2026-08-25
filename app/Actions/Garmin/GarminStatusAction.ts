@@ -1,7 +1,12 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // What the settings screen needs to decide what to show: is the integration
 // available at all, and is this athlete already connected.
+
+import { Auth } from '@stacksjs/auth'
 
 import garminConfig from '../../../config/garmin'
 import { isConfigured } from './garmin'

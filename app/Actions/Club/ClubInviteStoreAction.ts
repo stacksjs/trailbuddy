@@ -1,4 +1,7 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // POST /api/clubs/{id}/invites (auth, owner/admin) - invite somebody into a
 // closed club.
@@ -6,6 +9,8 @@
 // An invite names either an athlete already on WildLoop or an email address
 // that is not yet an account. The redeemable code works either way, so an
 // invite link survives the recipient signing up after they receive it.
+
+import { Auth } from '@stacksjs/auth'
 
 const INVITE_TTL_DAYS = 30
 

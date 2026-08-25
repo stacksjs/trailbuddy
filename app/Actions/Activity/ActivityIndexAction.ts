@@ -1,8 +1,13 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // Lists activities for the feed / profile. Optional ?user_id filter. Joins the
 // owner's name and the trail name so the feed can render without extra lookups.
 // The ORM is snake_case; the response is camelCase for the frontend.
+
+import { Auth } from '@stacksjs/auth'
 
 function parseSplits(raw: string | null): Array<{ mile: number, pace: string, elev: number }> {
   if (!raw)

@@ -1,4 +1,7 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // The achievement unlock engine (#982). `evaluateAchievementsForUser` computes
 // every metric from source-of-truth rows, upserts user_achievements progress,
@@ -9,6 +12,8 @@
 // losing land) but is_complete/completed_at are sticky once earned.
 
 // eslint-disable-next-line pickier/no-unused-vars -- false positive: userId is used throughout the body
+import { Auth } from '@stacksjs/auth'
+
 export async function evaluateAchievementsForUser(userId: number): Promise<{
   evaluated: number
   unlocked: Array<{ id: number, name: string }>

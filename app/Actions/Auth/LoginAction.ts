@@ -1,4 +1,7 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 
 /**
  * The signed-in user's role names, for the UI to decide what to offer.
@@ -8,6 +11,8 @@
  * here degrades to "no roles", which shows a plain account rather than
  * blocking sign-in over a dashboard affordance.
  */
+import { Auth } from '@stacksjs/auth'
+
 async function roleNamesFor(userId?: number): Promise<string[]> {
   if (!userId)
     return []

@@ -1,8 +1,13 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // GET /api/events/{id} - the event page: everything static about the event,
 // plus the current live board so the first paint already has standings rather
 // than an empty table that fills in a poll later.
+
+import { Auth } from '@stacksjs/auth'
 
 import { buildLiveBoard, canViewEvent, syncFieldStatus } from './event-support'
 

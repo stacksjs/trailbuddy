@@ -1,4 +1,7 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // POST /api/events/{id}/status (auth, host only) - start, finish, or cancel.
 //
@@ -7,6 +10,8 @@
 // itself on the original time would put the whole field a yard behind before
 // anyone had run a step. Starting late therefore re-bases `start_time` to now,
 // which is exactly what a race director does with a start list.
+
+import { Auth } from '@stacksjs/auth'
 
 import { resolveOutcome } from '../../../resources/functions/backyard'
 import { scheduleOf } from './event-support'

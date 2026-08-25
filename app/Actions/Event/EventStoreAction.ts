@@ -1,8 +1,13 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // POST /api/events (auth) - host an event. The host is the session user, never
 // the body, and is entered automatically: somebody who sets up a backyard
 // ultra is running it unless they say otherwise.
+
+import { Auth } from '@stacksjs/auth'
 
 import { STANDARD_YARD_MILES, STANDARD_YARD_MINUTES } from '../../../resources/functions/backyard'
 

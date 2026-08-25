@@ -1,3 +1,5 @@
+import { Auth } from '@stacksjs/auth'
+
 const BATTLE_EVENTS = ['conquered', 'split', 'contested', 'defended']
 
 export default new Action({

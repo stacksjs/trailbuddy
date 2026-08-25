@@ -1,9 +1,14 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // Disconnecting has to be as easy as connecting, and it has to actually stop
 // the data: telling Garmin to deregister is what ends the push notifications.
 // Deleting only our row would leave Garmin sending activities for an athlete
 // who believes they have unplugged.
+
+import { Auth } from '@stacksjs/auth'
 
 import garminConfig from '../../../config/garmin'
 import { createGarminClient } from './garmin'

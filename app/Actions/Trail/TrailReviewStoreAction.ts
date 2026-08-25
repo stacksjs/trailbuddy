@@ -1,10 +1,15 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // POST /api/trails/{id}/reviews (auth) - create or update the session user's
 // review of a trail. One review per user per trail (#972 unique index); a
 // second submission updates the existing review instead of duplicating it.
 // After every write the trail's denormalized rating/review_count are
 // recomputed from the review rows (#973), so they can never drift.
+
+import { Auth } from '@stacksjs/auth'
 
 const REVIEW_CONDITIONS = ['excellent', 'good', 'fair', 'poor', 'muddy', 'icy']
 

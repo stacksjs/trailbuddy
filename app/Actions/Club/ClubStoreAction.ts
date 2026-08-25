@@ -1,8 +1,13 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // POST /api/clubs (auth) - create a club (#964). The creator is the session
 // user (never the body) and is auto-enrolled as the 'owner' member, so a new
 // club starts with one member.
+
+import { Auth } from '@stacksjs/auth'
 
 const CLUB_TYPES = ['Running', 'Hiking', 'Mixed', 'Territory Game']
 const JOIN_POLICIES = ['open', 'request', 'invite_only']

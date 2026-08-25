@@ -1,9 +1,14 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // POST /api/clubs/{id}/join (auth) - join or leave a club (#964). Idempotent:
 // the (club_id, user_id) unique index (#972) makes a concurrent double-join
 // resolve to "already a member". An owner can't leave their own club (they
 // must delete it), so a club always keeps at least its owner.
+
+import { Auth } from '@stacksjs/auth'
 
 export default new Action({
   name: 'Club Membership Toggle',

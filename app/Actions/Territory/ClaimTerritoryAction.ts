@@ -2,6 +2,8 @@
 // names like user_id / gpx_data / area_size). Reads and write keys below use
 // snake_case accordingly; the JSON response keeps camelCase for API consumers.
 
+import { Auth } from '@stacksjs/auth'
+
 import { evaluateAchievementsForUser } from '../Achievement/EvaluateAchievementsAction'
 import { recomputeTerritoryRanks } from './ComputeTerritoryRanksAction'
 import UserPrivacySetting from '../../Models/UserPrivacySetting'

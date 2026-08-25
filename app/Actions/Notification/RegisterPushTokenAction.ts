@@ -1,3 +1,5 @@
+import { Auth } from '@stacksjs/auth'
+
 import DevicePushToken from '../../Models/DevicePushToken'
 
 const PLATFORMS = ['ios', 'android']

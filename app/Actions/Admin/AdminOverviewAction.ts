@@ -1,4 +1,7 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // The admin dashboard's data source.
 //
@@ -8,6 +11,8 @@
 // role, and refuses otherwise - the page's own gate is a courtesy on top.
 
 /** Roles allowed to see the dashboard. */
+import { Auth } from '@stacksjs/auth'
+
 const ADMIN_ROLES = ['admin']
 
 /**

@@ -1,7 +1,12 @@
-// No imports needed - everything is auto-imported!
+// Auth is imported explicitly: it is NOT in the API server bundle's auto-imports,
+// so `Auth.user()` threw "Auth.user is not a function" at runtime in production
+// while type-checking clean against the declarations. Everything else here is
+// auto-imported as usual.
 //
 // GET /api/notifications (auth) - the session user's notifications (newest
 // first) + unread count. Recipient is the authenticated user (#939).
+
+import { Auth } from '@stacksjs/auth'
 
 export default new Action({
   name: 'Notification Index',

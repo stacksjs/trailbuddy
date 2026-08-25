@@ -1,3 +1,5 @@
+import { Auth } from '@stacksjs/auth'
+
 import { routeResponse } from './CustomRouteIndexAction'
 import CustomRoute from '../../Models/CustomRoute'
 

@@ -1,3 +1,5 @@
+import { Auth } from '@stacksjs/auth'
+
 import UserPrivacySetting from '../../Models/UserPrivacySetting'
 
 function settingsResponse(row: any) {

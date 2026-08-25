@@ -1,3 +1,5 @@
+import { Auth } from '@stacksjs/auth'
+
 import { evaluateAchievementsForUser } from '../Achievement/EvaluateAchievementsAction'
 import { classifyBattleOutcome } from '../../../resources/functions/territory-battle'
 import { recomputeTerritoryRanks } from './ComputeTerritoryRanksAction'
