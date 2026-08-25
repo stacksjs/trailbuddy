@@ -97,7 +97,7 @@ export default new Action({
  * Shared by the page query and the count query so the two can never disagree
  * about what "matching" means.
  */
-function applyFilters(query: any, request: { get: (key: string) => any }): any {
+function applyFilters(query: any, request: { get: (key: string) => any }, skipInferredCountry = false): any {
   const search = readString(request, 'q') ?? readString(request, 'search')
   if (search) {
     // Matched through the FTS index rather than three `LIKE '%term%'`
