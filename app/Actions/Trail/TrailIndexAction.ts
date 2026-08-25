@@ -32,13 +32,34 @@ export default new Action({
       // Built twice: once to count the matches, once to fetch the window.
       // A count over an indexed predicate is cheap, and it is the only way to
       // give the UI an honest "N trails match" without fetching all of them.
-      const rows = await applyFilters(Trail.query(), request)
-        .orderBy(...sortColumns(request))
-        .limit(page.limit)
-        .offset(page.offset)
-        .get()
+      const fetchPage = async (skipInferredCountry: boolean) => {
+        const rows = await applyFilters(Trail.query(), request, skipInferredCountry)
+          .orderBy(...sortColumns(request))
+          .limit(page.limit)
+          .offset(page.offset)
+          .get()
+        const total = await applyFilters(Trail.query(), request, skipInferredCountry).count()
+        return { rows, total }
+      }
 
-      const total = await applyFilters(Trail.query(), request).count()
+      let { rows, total } = await fetchPage(false)
+
+      /*
+       * An INFERRED country must never be able to empty the page.
+       *
+       * The catalog covers the US and the DACH countries. Inferring a country
+       * from the request means a visitor in London — whose Accept-Language
+       * says en-GB perfectly correctly — was filtered down to a country the
+       * catalog has no trails in, and got an empty result where before they
+       * saw everything. A guess that makes the product worse than no guess is
+       * not worth keeping.
+       *
+       * Only for the inferred case: an explicit `?country=GB` is a question
+       * with a real answer of "none", and answering it with the whole catalog
+       * would be a lie.
+       */
+      if (total === 0 && !readString(request, 'country'))
+        ({ rows, total } = await fetchPage(true))
 
       const trails = (rows ?? []).map((row: Record<string, unknown>) => ({
         ...row,
@@ -105,7 +126,7 @@ function applyFilters(query: any, request: { get: (key: string) => any }): any {
   // borders — a bounding box around Basel covers three of them.
   const explicitCountry = readString(request, 'country')
   const hasCoordinates = readNumber(request, 'lat') !== null && readNumber(request, 'lng') !== null
-  const country = explicitCountry ?? (hasCoordinates ? undefined : visitorCountry(request))
+  const country = explicitCountry ?? (skipInferredCountry || hasCoordinates ? undefined : visitorCountry(request))
 
   if (country && /^[a-z]{2}$/i.test(country))
     query = query.where('country', country.toUpperCase())
