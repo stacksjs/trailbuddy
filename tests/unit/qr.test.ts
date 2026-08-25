@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { qrSvg, qrSvgMarkup } from '../../resources/functions/qr'
+import { qrBrandedMarkup, qrSvg, qrSvgMarkup } from '../../resources/functions/qr'
 
 /**
  * These pin the geometry, because a QR that renders but does not scan looks
@@ -79,5 +79,55 @@ describe('qrSvgMarkup', () => {
     // A missing QR is a missing decoration; a thrown error on a marketing
     // page is an outage.
     expect(qrSvgMarkup('')).toBe('')
+  })
+})
+
+describe('qrBrandedMarkup', () => {
+  it('forces error correction H, which is what pays for the centre mark', () => {
+    // The mark destroys real modules; H (~30% recoverable) reconstructs them.
+    // A caller asking for M with a logo would get a code that scans on a desk
+    // and fails on a trailhead sign, so the level is forced rather than
+    // defaulted.
+    const branded = qrBrandedMarkup(URL, { level: 'L' })
+    const atH = qrSvg(URL, { level: 'H' })!
+    expect(branded).toContain(`viewBox="0 0 ${atH.modules + 8} ${atH.modules + 8}"`)
+  })
+
+  it('keeps the finder patterns at their spec geometry', () => {
+    // A scanner locates the code by these before decoding anything, so they
+    // may be recoloured and rounded but never resized.
+    const markup = qrBrandedMarkup(URL)
+    expect(markup).toContain('fill-rule="evenodd"')
+    // Three eyes, each drawn as three nested squares.
+    expect((markup.match(/#047857/g) ?? []).length).toBeGreaterThan(0)
+  })
+
+  it('never lets a corner radius exceed half the shape it is applied to', () => {
+    // The bug this pins: radius was a fraction of the side, so one value
+    // applied to both a 1-module square and a 7-module eye gave the eye a
+    // ~4-module corner on a 7-module box. The straight run between corners
+    // went negative, emitting `h--0.98`, and the malformed finder patterns
+    // made every scan fail — at every size, which is how it was caught.
+    for (const radius of [0.35, 1, 999]) {
+      const markup = qrBrandedMarkup(URL, { radius })
+      expect(markup).not.toContain('--')
+      expect(markup).not.toContain('NaN')
+    }
+  })
+
+  it('paints an opaque field so it survives a dark page', () => {
+    const markup = qrBrandedMarkup(URL, { background: '#ffffff' })
+    expect(markup).toContain('fill="#ffffff"')
+  })
+
+  it('can be asked for no mark at all', () => {
+    const withMark = qrBrandedMarkup(URL, { logo: true })
+    const without = qrBrandedMarkup(URL, { logo: false })
+    expect(withMark).toContain('<circle')
+    expect(without).not.toContain('<circle')
+  })
+
+  it('renders nothing rather than throwing when there is nothing to encode', () => {
+    expect(qrBrandedMarkup('')).toBe('')
   })
 })

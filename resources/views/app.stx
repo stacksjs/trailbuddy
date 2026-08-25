@@ -4,11 +4,11 @@
 
 @section('content')
 <script server>
-  import { qrSvgMarkup } from '../functions/qr'
+  import { qrBrandedMarkup } from '../functions/qr'
 
   // The address is fixed, so the code is built once at render time rather than
   // shipped as an encoder the browser has to run.
-  const installQr = qrSvgMarkup('https://wildloop.org', { title: 'Scan to open wildloop.org' })
+  const installQr = qrBrandedMarkup('https://wildloop.org', { title: 'Scan to open wildloop.org' })
 </script>
 
 <script client>
@@ -235,14 +235,12 @@
     color: color-mix(in srgb, currentColor 58%, transparent);
   }
 
-  /* A white field with a little padding around the code. A QR flush against
-     surrounding artwork frequently will not acquire. */
+  /* The code carries its own white field and rounded plate, so this only
+     sizes it and lifts it off the page. */
   .qr-frame {
     flex: none;
     width: 9.5rem;
     height: 9.5rem;
-    padding: 0.5rem;
-    background: #fff;
     border-radius: 1rem;
     box-shadow: 0 6px 20px -10px rgb(9 20 16 / 40%);
   }

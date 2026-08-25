@@ -4,11 +4,11 @@
 
 @section('content')
 <script server>
-  import { qrSvgMarkup } from '../functions/qr'
+  import { qrBrandedMarkup } from '../functions/qr'
 
   // Built once at render time. The address never changes, so there is nothing
   // for the browser to compute and no encoder to ship to it.
-  const appQr = qrSvgMarkup('https://wildloop.org/app', { title: 'Scan to get WildLoop on your phone' })
+  const appQr = qrBrandedMarkup('https://wildloop.org/app', { title: 'Scan to get WildLoop on your phone' })
 </script>
 
 <script client>
@@ -987,14 +987,10 @@
     .qr-card { display: flex; }
   }
 
-  /* White field with padding: a code flush against artwork often will not
-     acquire on a phone camera. */
+  /* The code paints its own white field and plate; this just sizes it. */
   .qr-frame {
     width: 8.5rem;
     height: 8.5rem;
-    padding: 0.45rem;
-    background: #fff;
-    border-radius: 0.85rem;
   }
 
   .qr-frame svg {
