@@ -23,6 +23,25 @@ export default {
     region: envVars.AWS_DEFAULT_REGION || 'us-east-1',
   },
 
+  /**
+   * Sign in with Apple.
+   *
+   * Offered alongside Google on the auth pages because this is a running app:
+   * the people signing up are on a phone at a trailhead, and on iOS Apple is
+   * the sign-in they already have. GitHub sat in that slot from the scaffold —
+   * a sensible default for a developer tool and the wrong one here.
+   *
+   * Apple issues a client SECRET as a short-lived ES256 JWT signed with the
+   * key from the developer portal, not a static string, so APPLE_CLIENT_SECRET
+   * has to be minted and rotated rather than pasted once.
+   */
+  apple: {
+    clientId: envVars.APPLE_CLIENT_ID || '',
+    clientSecret: envVars.APPLE_CLIENT_SECRET || '',
+    redirectUrl: envVars.APPLE_REDIRECT_URL || 'http://localhost:3000/auth/apple/callback',
+    scopes: ['name', 'email'],
+  },
+
   github: {
     clientId: envVars.GITHUB_CLIENT_ID || '',
     clientSecret: envVars.GITHUB_CLIENT_SECRET || '',

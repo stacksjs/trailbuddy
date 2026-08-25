@@ -80,6 +80,29 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /*
+   * Let the browser choose where headings break.
+   *
+   * Default wrapping is greedy: it fills each line to the edge and drops
+   * whatever is left onto the next one, so "Backyard ultras, lap by lap."
+   * broke as "Backyard ultras, lap" / "by lap." — twenty characters against
+   * seven, with the break landing mid-clause instead of at the comma sitting
+   * right there. `balance` optimises for even line lengths across the whole
+   * block, which puts the break at the punctuation almost every time, and it
+   * costs nothing: the browser does it at layout, with no markup and no
+   * hard-coded <br> to go stale when the copy changes.
+   *
+   * `pretty` on body copy is the cheaper cousin — it only prevents a single
+   * orphaned word on the last line, which is the failure mode paragraphs have.
+   */
+  h1, h2, h3, h4, .display, .hero-title {
+    text-wrap: balance;
+  }
+
+  p, .lede, blockquote, figcaption {
+    text-wrap: pretty;
+  }
+
   .font-display {
     font-family: 'Outfit', system-ui, sans-serif;
     letter-spacing: -0.02em;

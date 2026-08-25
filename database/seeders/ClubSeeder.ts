@@ -32,9 +32,14 @@ interface SeedClub {
 const CLUBS: SeedClub[] = [
   {
     name: 'Rappid Run',
+    // Their own words: rappid.run's tagline is "by inspiring others we
+    // inspire ourselves". Worth using rather than inventing copy for a real
+    // crew — a seeded club that misdescribes an actual team is worse than a
+    // generated one.
     description:
-      'A closed running team training for road and trail. Members are invited by the crew — '
-      + 'sessions, race plans, and the team calendar live behind the door.',
+      'By inspiring others we inspire ourselves. A closed running crew training for road and '
+      + 'trail, with its own kit and drops. Members are invited by the crew — sessions, race '
+      + 'plans, and the team calendar live behind the door.',
     location: null,
     club_type: 'Running',
     is_private: false,
@@ -44,10 +49,13 @@ const CLUBS: SeedClub[] = [
 ]
 
 export default class ClubSeeder extends Seeder {
+  // After UserSeeder — a club needs an owner.
+  static order = -90
+
   async run(): Promise<void> {
-    // Every club needs an owner. Seeding runs after users, so take the lowest
-    // id rather than inventing an account: on a fresh database that is the
-    // first real athlete, and on a demo database it is the demo one.
+    // Every club needs an owner. `static order` above guarantees UserSeeder
+    // has already run, so take the lowest id rather than inventing an
+    // account: on a fresh database that is the first seeded athlete.
     const owner = await User.orderBy('id', 'asc').first().catch(() => null)
     if (!owner) {
       console.warn('[seed] no users yet; skipping clubs')

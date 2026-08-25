@@ -1,3 +1,5 @@
+import { visitorCountry } from '../../Helpers/visitorCountry'
+
 const DIFFICULTIES = new Set(['easy', 'moderate', 'hard'])
 const ROUTE_TYPES = new Set(['loop', 'out-and-back', 'point-to-point', 'network'])
 const SOURCES = new Set(['osm', 'usfs', 'nps', 'manual'])
@@ -95,7 +97,16 @@ function applyFilters(query: any, request: { get: (key: string) => any }): any {
       : query.whereRaw('1 = 0')
   }
 
-  const country = readString(request, 'country')
+  // An explicit `?country=` always wins. Without one, fall back to where the
+  // request appears to come from: a visitor in Munich asking for "popular
+  // trails" and getting Colorado reads as the catalog being empty for them,
+  // not as the catalog being wrong. Skipped entirely for a coordinate search,
+  // which is already more precise than a country and legitimately crosses
+  // borders — a bounding box around Basel covers three of them.
+  const explicitCountry = readString(request, 'country')
+  const hasCoordinates = readNumber(request, 'lat') !== null && readNumber(request, 'lng') !== null
+  const country = explicitCountry ?? (hasCoordinates ? undefined : visitorCountry(request))
+
   if (country && /^[a-z]{2}$/i.test(country))
     query = query.where('country', country.toUpperCase())
 

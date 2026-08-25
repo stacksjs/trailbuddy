@@ -14,7 +14,7 @@
     "stacks": "^0.72.66",
     "ts-health": "^0.1.0",
     "ts-images": "^0.2.12",
-    "ts-maps": "^0.3.1",
+    "ts-maps": "^0.3.2",
     "ts-qr-codes": "^0.1.6",
     "ts-web-scraper": "^0.1.10"
   },

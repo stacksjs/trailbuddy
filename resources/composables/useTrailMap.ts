@@ -111,7 +111,7 @@ export async function createTrailMap(
   options?: { center?: LatLng, zoom?: number, scrollWheelZoom?: boolean },
 ): Promise<TrailMapHandle | null> {
   try {
-    const { TsMap, tileLayer, Polyline } = await ensureTsMaps()
+    const { TsMap, tileLayer, Polyline, LocateControl } = await ensureTsMaps()
     // Loading the map chunk yields to STX hydration. Resolve the target after
     // that await so a structural render cannot leave us mounting into a
     // detached copy of the original container.
@@ -134,6 +134,16 @@ export async function createTrailMap(
       scrollWheelZoom: options?.scrollWheelZoom ?? true,
     })
     mapElement._tsMap = map
+
+    // "Where am I". Geolocation is requested on press, never on load — a
+    // permission prompt nobody asked for is the fastest way to be denied for
+    // the rest of the session, and a denial cannot be re-requested without the
+    // user digging through browser settings.
+    if (typeof LocateControl === 'function') {
+      // `addTo`, not `map.addControl`: the latter is mixed onto TsMap at
+      // runtime and is not on its type, while every Control carries addTo.
+      new LocateControl({ position: 'topleft', zoom: 14 }).addTo(map)
+    }
 
     let theme = currentTheme()
 

@@ -40,6 +40,21 @@ export default {
     },
     router: {
       container: 'main',
+
+      /*
+       * Cross-fade between pages instead of swapping them.
+       *
+       * The client router replaces the contents of `container` in place, which
+       * without a transition is an instant repaint: the old page vanishes and
+       * the new one appears mid-scroll, with nothing to tell the eye the two
+       * are related. That reads as a glitch rather than a navigation.
+       *
+       * The browser's own View Transitions API does the tweening, so there is
+       * no animation library and no layout shift, and browsers without it get
+       * exactly the previous behaviour.
+       */
+      viewTransitions: true,
+      viewTransitionDuration: 180,
     },
   },
 }

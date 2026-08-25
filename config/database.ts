@@ -11,7 +11,12 @@ const envVars = typeof Bun !== 'undefined' ? Bun.env : process.env
  * you have any questions, feel free to reach out via Discord or GitHub Discussions.
  */
 export default {
-  default: envVars.DB_CONNECTION as SupportedDialect || 'mysql',
+  // SQLite, not MySQL. This app ships a file database (DB_DATABASE_PATH, the
+  // same file the API and ingest worker both open), and the scaffold's MySQL
+  // default meant an unset DB_CONNECTION configured a dialect the app never
+  // uses — which is what produced the "Configuring dialect 'mysql' overrides
+  // the previously configured dialect 'sqlite'" warning on every boot.
+  default: envVars.DB_CONNECTION as SupportedDialect || 'sqlite',
 
   connections: {
     sqlite: {
