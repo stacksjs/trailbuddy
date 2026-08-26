@@ -92,12 +92,23 @@ export default class ActivitySeeder extends Seeder {
     }
 
     const now = Date.now()
-    let dayOffset = 0
 
     for (const [name, sessions] of Object.entries(SESSIONS)) {
       const user = byName.get(name)
       if (!user)
         continue
+
+      /*
+       * Each athlete's days start over at 1 rather than continuing a running
+       * count across everybody.
+       *
+       * A shared counter pushed the fifteen sessions across fifteen days, and
+       * the leaderboard's default window is WEEKLY — so only the two athletes
+       * seeded first landed inside it and the board showed two names out of
+       * five. Per-athlete offsets keep every session inside the last four
+       * days, which is also what a real week of training looks like.
+       */
+      let dayOffset = 0
 
       for (const session of sessions) {
         dayOffset += 1
