@@ -141,7 +141,7 @@ auth/src/
 - `generateTwoFactorUri(user?, service?, secret?): string`
 - `createPersonalAccessClient(): Promise<Result<string, never>>`
 
-### Re-exported from @stacksjs/ts-auth:
+### Re-exported from @stacksjs/ts-auth
 - `generateTOTP`, `verifyTOTP`, `generateTOTPSecret`, `totpKeyUri`
 
 ## Authorization Gates (gate.ts)
@@ -166,7 +166,7 @@ auth/src/
 - `getPolicyFor<T>(model: T): Policy<T> | null`
 - `flush(): void` — clear all gates
 
-### Gate Facade — `Gate.define()`, `Gate.can()`, etc.
+### Gate Facade — `Gate.define()`, `Gate.can()`, etc
 
 ### AuthorizationResponse Class
 - `static allow(message?): AuthorizationResponse`
@@ -199,7 +199,7 @@ Protected helpers: `allow(message?)`, `deny(message?, code?)`, `denyIf(condition
 - `Rbac.assignRole(user, roleName, guardName?): Promise<void>`
 - `Rbac.removeRole(user, roleName, guardName?): Promise<void>`
 - `Rbac.removeAllRoles(user): Promise<void>`
-- `Rbac.syncRoles(user, roleNames[], guardName?): Promise<void>`
+- `Rbac.syncRoles(user, roleNames[], guardName?): Promise<void>` - replaces assignments for that guard and preserves roles from other guards
 - `Rbac.hasRole(user, roleName, guardName?): Promise<boolean>`
 - `Rbac.hasAnyRole(user, roleNames[], guardName?): Promise<boolean>`
 - `Rbac.hasAllRoles(user, roleNames[], guardName?): Promise<boolean>`
@@ -277,7 +277,7 @@ const result = await actions.resetPassword(token, newPassword)
 - `getUserPasskey(userId, passkeyId): Promise<PasskeyAttribute | undefined>`
 - `setCurrentRegistrationOptions(user, verified): Promise<void>`
 
-### Re-exported from @stacksjs/ts-auth:
+### Re-exported from @stacksjs/ts-auth
 - `generateRegistrationOptions`, `generateAuthenticationOptions`
 - `verifyRegistrationResponse`, `verifyAuthenticationResponse`
 - `startRegistration`, `startAuthentication` (browser)
@@ -333,7 +333,7 @@ await authUser.authorize('edit-post', post)  // throws if denied
   tokenExpiry: 30,         // days, AUTH_TOKEN_EXPIRY env
   tokenRotation: 7,        // days, AUTH_TOKEN_ROTATION env
   defaultAbilities: ['*'],
-  defaultTokenName: 'auth_token',
+  defaultTokenName: 'auth-token',
   passwordReset: { expire: 60, throttle: 60 }
 }
 ```
@@ -407,6 +407,7 @@ traits: {
 - Bearer tokens come from the `Authorization: Bearer <token>` header
 - `Auth.user()` internally calls `getBearerToken()` → `parseToken()` → `getTokenFromId()` → validates hash
 - RBAC has an internal cache (`userRoles`, `userPermissions`, `rolePermissions`) — call `Rbac.flushCache()` after direct DB changes
+- `syncRoles()` and `syncPermissions()` are guard-scoped replacements: they preserve assignments belonging to other guards
 - Gate `before` callbacks can short-circuit — return `true` to allow, `null` to continue checking
 - `withRbac()` and `withAuthorization()` return new objects with methods mixed in
 - The `RbacStore` interface must be implemented and set via `Rbac.setStore()` for RBAC to work

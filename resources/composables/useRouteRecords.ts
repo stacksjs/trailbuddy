@@ -149,11 +149,8 @@ export function useRecordsFeed() {
 /**
  * One route's board, for the trail page's records section.
  *
- * The returned keys are prefixed so a caller never has to rename them while
- * destructuring. That is not a style preference: stx collects the names to
- * hand a template by reading the KEY side of a destructuring pattern, so
- * `const { board: recordBoard } = …` publishes `board` — a name that does not
- * exist — and every expression using `recordBoard` silently renders nothing.
+ * The returned keys are prefixed so a caller can destructure them straight
+ * into a template that already has a `loading` and a `board` of its own.
  */
 export function useTrailRecords(trailId: number) {
   const recordBoard = state<TrailRecordsView | null>(null)
@@ -202,7 +199,7 @@ export function useTrailRecords(trailId: number) {
  */
 export function useRecordSubmission(defaults: { trailId?: number } = {}) {
   // Claim-prefixed for the same reason `useTrailRecords` prefixes its own
-  // keys: a caller must never need to rename these while destructuring.
+  // keys: the trail page hosts both composables at once.
   const claimOpen = state(false)
   const claimSubmitting = state(false)
   const claimError = state<string | null>(null)

@@ -1,11 +1,8 @@
+import type { RequestInstance } from '@stacksjs/types'
 import { Action } from '@stacksjs/actions'
 import { emailSDK } from '@stacksjs/email'
-import { config } from '@stacksjs/config'
-
-function defaultMailbox(): string {
-  const domain = (config as any)?.email?.domain || 'stacksjs.com'
-  return `chris@${domain}`
-}
+import { response } from '@stacksjs/router'
+import { dashboardMailbox, inboxActionError } from './inbox-request'
 
 export default new Action({
   name: 'InboxMarkReadAction',
@@ -13,24 +10,22 @@ export default new Action({
   method: 'POST',
   apiResponse: true,
 
-  async handle(request: any) {
+  async handle(request: RequestInstance) {
+    const messageId = String(request.get('messageId') || '')
+
+    if (!messageId)
+      return response.json({ message: 'messageId is required.' }, 422)
+
     try {
-      const body = request?.body || {}
-      const mailbox = body.mailbox || defaultMailbox()
-      const messageId = body.messageId
+      const mailbox = dashboardMailbox(request)
+      const success = await emailSDK.markAsRead(mailbox, messageId)
+      if (!success)
+        return response.json({ message: 'Email not found or its read state could not be updated.' }, 404)
 
-      if (!messageId) {
-        return { ok: false, error: 'messageId is required' }
-      }
-
-      const ok = await emailSDK.markAsRead(mailbox, messageId)
-      return { ok, mailbox, messageId }
+      return response.json({ success: true, mailbox, messageId })
     }
-    catch (err) {
-      return {
-        ok: false,
-        error: err instanceof Error ? err.message : 'unknown error',
-      }
+    catch (error) {
+      return inboxActionError(error, 'The email read state could not be updated.')
     }
   },
 })

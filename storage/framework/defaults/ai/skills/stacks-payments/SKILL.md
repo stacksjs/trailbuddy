@@ -276,14 +276,31 @@ Supported webhook event types: `payment_intent.succeeded`, `payment_intent.payme
 
 ### Setup Products from SaaS Config
 
-```typescript
-import { createStripeProduct } from '@stacksjs/payments'
+Prefer the command; it is what an app author can discover:
 
-const result = await createStripeProduct()
-// Creates Stripe products and prices from config/saas.ts plans
+```bash
+buddy stripe:setup --dry-run   # report the plan of record, write nothing
+buddy stripe:setup             # apply it
 ```
 
-This iterates `saas.plans`, creates a Stripe product per plan, then creates prices for each pricing option using `lookup_key` from the `key` field.
+```typescript
+import { createStripeProduct, formatSetupReport } from '@stacksjs/payments'
+
+const result = await createStripeProduct({ dryRun: true })
+if (!result.isErr)
+  console.log(formatSetupReport(result.value).join('\n'))
+```
+
+This iterates `saas.plans` and reconciles each one against the live account: a
+product is matched by name and reused, and each pricing option is matched by its
+`lookup_key` (from the `key` field). Prices are immutable in Stripe, so a changed
+amount is applied by creating a new price with `transfer_lookup_key: true`, which
+moves the key atomically and leaves the superseded price active so existing
+subscriptions keep billing.
+
+Re-running is safe and converges. It does not use `products.search` on purpose:
+that index is eventually consistent, so a second run inside the lag window would
+find nothing and create a duplicate.
 
 ### Utility Functions
 
@@ -305,6 +322,30 @@ await loadPaymentForm(clientSecret)   // loads Stripe Payment Element
 await handleAddPaymentMethod(clientSecret, elements)  // confirms card setup
 await handlePayment(elements)         // confirms payment
 ```
+
+`useBillable()` explicitly imports `usePaymentStore` from the default payment
+store. Keep that dependency explicit in imported billing modules. Browser
+auto-imports are injected into STX script entries and do not become lexical
+globals inside the TypeScript modules those entries bundle.
+
+`usePaymentStore()` is a callable wrapper around one STX `defineStore()`
+singleton. Its requests resolve the configured API origin, include the current
+bearer token, add the CSRF header for writes, and derive mutation route IDs from
+the authenticated user. Never restore a fixed localhost port or a hard-coded
+user ID.
+
+### Dashboard Billing
+
+`/settings/billing` is a thin route that renders `BillingSettings`. The
+component calls `GET /api/dashboard/billing`, an authenticated aggregate Action
+registered in `routes/dashboard-api.ts`. Do not call the root `/payments/*`
+group from the dashboard: `buddy dev --dashboard` delegates `/api/*` to the
+Stacks router and intentionally leaves root GET paths to STX page rendering.
+
+The aggregate always returns persisted `PaymentTransaction` records for the
+authenticated user. Subscription and payment-method reads are provider-backed
+and may be unavailable when the application User override is not billable.
+Render that as an explicit unavailable state, not sample plans or fake cards.
 
 ## config/payment.ts
 
@@ -357,6 +398,14 @@ The `UserModel` must have:
 - `hasStripeId()` method -- returns boolean
 - `update(data)` method -- for persisting `stripe_id`
 - `activeSubscription()` method -- for subscription updates
+
+The framework default `storage/framework/defaults/app/Models/User.ts` sets
+`billable: false` intentionally because not every application uses payments.
+Run `buddy publish:model User`, keep the override at `app/Models/User.ts`, and
+enable its `billable` trait before calling instance helpers such as
+`activeSubscription()`, `paymentMethods()`, or `createSetupIntent()`. A payment
+Action must report the missing trait clearly instead of calling an undefined
+method.
 
 ## Gotchas
 - Stripe API keys MUST be in `.env` as `STRIPE_SECRET_KEY` and `STRIPE_PUBLISHABLE_KEY` -- never hardcode them in config files

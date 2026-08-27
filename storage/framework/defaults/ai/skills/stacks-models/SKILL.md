@@ -99,7 +99,7 @@ generated model types stay precise.
 | `useTimestamps` (alias `timestampable`) | `created_at` / `updated_at`. On by default |
 | `useSoftDeletes` (alias `softDeletable`) | `deleted_at` plus soft-delete query scopes |
 | `useAuth` (alias `authenticatable`) | Auth columns; `{ usePasskey: true }` adds passkeys |
-| `useApi` | Generates REST actions and routes: `{ uri, routes }` |
+| `useApi` | Generates REST actions and routes: `{ uri, routes, middleware? }` |
 | `useSearch` (alias `searchable`) | Search-engine indexing: `{ displayable, searchable, sortable, filterable }` |
 | `useSocials` | OAuth identities, e.g. `['github']` |
 | `useActivityLog` | Writes an `Activity` row per change |
@@ -111,12 +111,91 @@ Also at the top level: `indexes: [{ name, columns, unique?, where? }]` for
 composite and partial-unique indexes, and `dashboard: { highlight: true }` to
 feature the model in the admin UI.
 
+`useApi` is an API capability, not a dashboard-view generator. Its generated
+routes are registered from the merged model registry. Framework defaults are
+loaded first, then recursive `app/Models/` definitions override matching model
+names. Protect non-public resources at the model:
+
+```ts
+useApi: {
+  uri: 'mail-preferences',
+  routes: ['index', 'store', 'show', 'update', 'destroy'],
+  middleware: ['auth'],
+}
+```
+
+Dashboard-specific endpoints may still use scoped Actions when their transport
+shape, authorization boundary, or aggregation differs from generic CRUD. Do
+not expose a sensitive model through unguarded generated routes just because a
+separate dashboard endpoint is protected.
+
+Generated store and update routes accept both spellings of every fillable
+attribute and each foreign key implied by `belongsTo`. Declaring Product as a
+belongs-to relation therefore accepts `productId` or `product_id` without
+duplicating that relationship column as an attribute.
+
 ### Relationships
 
 `hasOne`, `hasMany`, `belongsTo`, `belongsToMany`, `hasOneThrough`,
 `hasManyThrough`, `morphOne`, `morphMany`, `morphTo`, `morphToMany`,
 `morphedByMany`. Each takes an array of model names, or an object form when you
 need to name the foreign key.
+
+The object form is also where a `belongsTo` says what happens to its row when
+the row it points at is deleted:
+
+```ts
+belongsTo: [
+  { model: 'Repository', onDelete: 'cascade' },
+  { model: 'User', foreignKey: 'author_id', onDelete: 'set null' },
+],
+```
+
+`'cascade' | 'set null' | 'restrict' | 'no action'`, enforced by the database
+on the foreign key. Left off, the default applies: the delete is refused while
+a child still points at the row.
+
+Worth declaring rather than deleting children in application code. The order
+has to be right in every place that deletes, forever, and the place that misses
+one leaves rows nothing can reach - while the database applies the rule to
+deletes the application never made: a manual `DELETE`, a restore, another
+service sharing the schema. Not for a polymorphic pair (`commentable_id`
+beside `commentable_type`): those carry no foreign key at all, because a
+constraint would name one table and reject every row pointing at another.
+
+Use the named object form for a many-to-many relation that owns its pivot
+schema. It keeps the relation accessor, migration, pivot defaults, timestamps,
+and uniqueness in the model definition:
+
+```ts
+belongsToMany: {
+  tags: {
+    model: 'Tag',
+    table: 'taggable_models',
+    foreignKey: 'taggable_id',
+    relatedKey: 'tag_id',
+    pivot: {
+      columns: {
+        taggable_type: { default: 'posts' },
+      },
+      timestamps: true,
+      uniques: [['tag_id', 'taggable_id', 'taggable_type']],
+    },
+  },
+},
+```
+
+An instance then exposes the named relation directly:
+
+```ts
+const post = await Post.find(id)
+await post.tags().sync(tagIds)
+await post.tags().detach()
+```
+
+The legacy array form remains supported. Prefer the named form when the pivot
+has custom keys, columns, defaults, timestamps, or uniqueness. Run
+`buddy generate:migrations` after changing pivot metadata.
 
 ### Computed properties and scopes
 
@@ -165,7 +244,10 @@ traits: {
 ```
 
 `buddy seed` walks every model carrying the trait and fills its table from the
-attribute factories. Nothing else is needed - no seeder files, no registration.
+attribute factories. Model fixture data needs no separate seeder or registration.
+Idempotent application bootstrap work can live in `database/seeders` as a
+default-exported class extending `Seeder` from `@stacksjs/database`. Buddy runs
+those application seeders after the model factories.
 
 ```bash
 buddy seed                       # every model with a useSeeder trait

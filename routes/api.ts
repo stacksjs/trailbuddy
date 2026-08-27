@@ -517,20 +517,17 @@ route.group({ middleware: 'auth' }, () => {
     route.post('/notifications/push-token', 'Actions/Notification/RegisterPushTokenAction')
     // Route records - file an attempt, close it out, withdraw it. Reviewing is
     // the one write here that is not the athlete's own: it changes what the
-    // site publicly asserts, so it is restricted to admins.
+    // site publicly asserts, so it carries `role:admin` on top of `auth`.
     //
-    // That restriction is enforced inside RouteEffortReviewAction rather than
-    // by `.middleware('role:admin')`. The alias is not registered in
-    // app/Middleware.ts, and the RBAC gate behind it cannot see the
-    // authenticated user - every route carrying it (recompute-ranks,
-    // decay-sweep, recompute-counters) answers 500 "RBAC user id must be a
-    // positive number, got undefined" to admin and stranger alike. Adding it
-    // here would have broken the endpoint for everyone without authorising
-    // anything.
+    // RouteEffortReviewAction re-checks the role itself. That is not
+    // redundancy for its own sake: this middleware was returning 500 to admin
+    // and stranger alike until stacks 0.72.95, so an action that changes what
+    // the site publicly asserts does not delegate its only authorization check
+    // to a router registration staying correct.
     route.post('/route-efforts', 'Actions/Record/RouteEffortStoreAction')
     route.patch('/route-efforts/{id}', 'Actions/Record/RouteEffortUpdateAction')
     route.delete('/route-efforts/{id}', 'Actions/Record/RouteEffortDestroyAction')
-    route.post('/route-efforts/{id}/review', 'Actions/Record/RouteEffortReviewAction')
+    route.post('/route-efforts/{id}/review', 'Actions/Record/RouteEffortReviewAction').middleware('role:admin')
     route.get('/custom-routes', 'Actions/Route/CustomRouteIndexAction')
     route.post('/custom-routes', 'Actions/Route/CustomRouteStoreAction')
     route.delete('/custom-routes/{id}', 'Actions/Route/CustomRouteDestroyAction')

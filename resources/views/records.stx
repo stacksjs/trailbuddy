@@ -46,21 +46,12 @@
   // How many attempts are out on course, shown on the tab itself. Somebody is
   // either running right now or they are not, and that is the reason to open
   // this page at all — it should not take a click to find out.
-  //
-  // Keep these `derived` here rather than folding them into the composable:
-  // stx only compiles a view's script through its signal-aware bundler when
-  // the script calls a reactive primitive DIRECTLY. A view that gets all of
-  // its state from a composable takes the other path, which fails to export
-  // the script's bindings and leaves every expression on the page undefined.
   const trackingCount = derived(() => tracking().length)
   const recordCount = derived(() => records().length)
 
-  // Pill styling lives in these helpers rather than in `x-class` ternaries on
-  // the buttons, because crosswind only generates a utility it has actually
-  // seen — and it scans this script and plain `class` attributes, but not the
-  // string literals inside an `x-class` expression. A colour that appears
-  // only in an `x-class` gets no CSS rule, which is how an active tab ends up
-  // as white text on nothing.
+  // Pill styling lives in these helpers rather than in `x-class` ternaries
+  // repeated across ten buttons: the states are named once and every control
+  // that shares a state cannot drift from it.
   const PILL_ACTIVE = 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
   const PILL_LIVE = 'bg-red-600 text-white'
   const PILL_PICKED = 'bg-emerald-600 text-white'

@@ -23,10 +23,14 @@ export default defineModel({
 
     useApi: {
       uri: 'delivery-routes',
+      middleware: ['auth'],
     },
 
     observe: true,
   },
+
+  belongsTo: ['Driver'],
+  hasMany: ['DeliveryStop', 'DriverPing'],
 
   attributes: {
     driver: {
@@ -78,12 +82,42 @@ export default defineModel({
       order: 6,
       fillable: true,
       validation: {
-        rule: schema.timestamp().required(),
+        rule: schema.unix().required(),
       },
-      factory: (faker) => {
-        const date = faker.date.recent()
-        return date.toISOString().slice(0, 19).replace('T', ' ')
+      factory: faker => faker.date.recent().getTime(),
+    },
+
+    /*
+     * Route lifecycle. `stops` and `totalDistance` describe a route that has
+     * already run; a route being followed right now needs to say so, because
+     * that is the difference between a tracking map that draws a moving
+     * vehicle and one that draws yesterday's.
+     */
+    status: {
+      order: 7,
+      fillable: true,
+      default: 'planned',
+      validation: {
+        rule: schema.enum(['planned', 'active', 'completed', 'cancelled']),
+        message: {
+          enum: 'Status must be one of: planned, active, completed, cancelled',
+        },
       },
+      factory: faker => faker.helpers.arrayElement(['planned', 'active', 'completed']),
+    },
+
+    startedAt: {
+      order: 8,
+      fillable: true,
+      validation: { rule: schema.timestamp() },
+      factory: () => null,
+    },
+
+    completedAt: {
+      order: 9,
+      fillable: true,
+      validation: { rule: schema.timestamp() },
+      factory: () => null,
     },
   },
 

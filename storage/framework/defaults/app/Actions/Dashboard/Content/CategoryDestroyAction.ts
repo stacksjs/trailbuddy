@@ -1,14 +1,16 @@
 import type { RequestInstance } from '@stacksjs/types'
 import { Action } from '@stacksjs/actions'
 import { db } from '@stacksjs/database'
+import { transaction } from '@stacksjs/orm'
 import { response } from '@stacksjs/router'
-import { rowExists, rowId } from './content-input'
+import { dashboardOperationalError } from '../dashboard-response'
+import { rowId } from './content-input'
 
 /**
  * `DELETE /api/dashboard/categories/{id}` — deletes a CMS category.
  *
- * A plain row delete: this schema has no `categorizable_models` pivot table, so
- * there is nothing to cascade to.
+ * Detaches related posts through the model-declared pivot before removing the
+ * category, with both writes committed by the same transaction.
  */
 export default new Action({
   name: 'CategoryDestroyAction',
@@ -20,11 +22,29 @@ export default new Action({
     if (!id)
       return response.json({ message: 'A valid category id is required.' }, 422)
 
-    if (!await rowExists('categories', id))
-      return response.json({ message: 'Category not found.' }, 404)
+    try {
+      const deleted = await transaction(async (rawTrx) => {
+        const trx = rawTrx as unknown as typeof db
+        const category = await trx.selectFrom('categories').select(['id']).where('id', '=', id).executeTakeFirst()
+        if (!category)
+          return false
 
-    await db.deleteFrom('categories').where('id', '=', id).execute()
+        await trx
+          .deleteFrom('categorizable_models')
+          .where('category_id', '=', id)
+          .where('categorizable_type', '=', 'posts')
+          .execute()
+        await trx.deleteFrom('categories').where('id', '=', id).execute()
+        return true
+      })
 
-    return response.json({ message: 'Category deleted.', id })
+      if (!deleted)
+        return response.json({ message: 'Category not found.' }, 404)
+
+      return response.json({ message: 'Category deleted.', id })
+    }
+    catch (error) {
+      return dashboardOperationalError(error, 'Category could not be deleted.', 'CategoryDestroyAction', 500)
+    }
   },
 })

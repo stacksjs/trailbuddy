@@ -9,14 +9,17 @@
   "dependencies": {
     "@iconify-json/lucide": "^1.2.126",
     "@stacksjs/bun-router": "^0.1.8",
-    "@stacksjs/mobile": "^0.72.76",
-    "@stacksjs/stx": "^0.2.230",
-    "stacks": "^0.72.76",
+    "@stacksjs/mobile": "^0.72.95",
+    "@stacksjs/stx": "^0.2.235",
+    "stacks": "^0.72.95",
     "ts-health": "^0.1.0",
     "ts-images": "^0.2.12",
     "ts-maps": "^0.3.2",
     "ts-qr-codes": "^0.1.6",
     "ts-web-scraper": "^0.1.10"
+  },
+  "overrides": {
+    "@cwcss/crosswind": "^0.2.18"
   },
   "bugs": {
     "url": "https://github.com/stacksjs/wildloop/issues"
@@ -40,7 +43,7 @@
   "scripts": {
     "build:maps": "mkdir -p public/js public/css && bun build ts-maps --outfile public/js/ts-maps.mjs --format esm --minify && cp node_modules/ts-maps/src/core-map/ts-maps.css public/css/ts-maps.css",
     "build:mobile-associations": "bun scripts/generate-mobile-associations.ts",
-    "build:reset": "rm -rf node_modules && bun install && ./buddy generate:types && ./buddy lint:fix && cd storage/framework && bun run build && cd ../../",
+    "build:reset": "rm -rf node_modules pantry.lock && bun install && ./buddy generate:types && ./buddy lint:fix",
     "buddy": "./buddy",
     "stacks": "./buddy",
     "setup": "./bootstrap",
@@ -85,9 +88,9 @@
     "release": "./buddy release",
     "changelog": "./buddy changelog",
     "generate": "./buddy generate",
-    "typecheck": "bunx tsc --project tsconfig.app.json --noEmit",
-    "typecheck:app": "bunx tsc --project tsconfig.app.json --noEmit",
-    "types:check": "bun tsc --noEmit",
+    "typecheck": "bun x --bun tsc --noEmit -p tsconfig.json --pretty false",
+    "typecheck:app": "bun x --bun tsc --noEmit -p tsconfig.json --pretty false",
+    "types:check": "bun x --bun tsc --noEmit -p tsconfig.json --pretty false",
     "types:fix": "./buddy types:fix",
     "test": "./buddy test",
     "preview:android": "bun scripts/run-mobile-e2e.ts android --preview",

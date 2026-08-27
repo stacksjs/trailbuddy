@@ -104,8 +104,8 @@ export default defineModel({
       required: true,
       unique: false,
       validation: {
-        rule: schema.string().maxLength(100),
-        message: { maxLength: 'Name is too long' }
+        rule: schema.string().max(100),
+        message: { max: 'Name is too long' }
       },
       factory: (faker) => faker.lorem.word()
     },
@@ -195,6 +195,12 @@ await createUser('Alice', 'alice@example.com') // auto-wrapped
 ```
 
 Both `transaction()` and `savepoint()` delegate to `db.transaction()` and `db.savepoint()` from `@stacksjs/database`.
+
+### Transaction executor boundary
+
+Every query that must commit or roll back together must use the callback handle (`tx` or `sp`), including validation reads, pivot writes, and the final readback. Do not mix `Model.find()`, `Model.create()`, instance `update()` / `delete()`, or instance relation calls into a raw query-builder transaction. The model executor is a separate execution surface and is not rebound to the callback handle. On SQLite it may use a separate connection, so it cannot observe an uncommitted row written through `tx`.
+
+`runInTransactionScope()` buffers supported side effects until commit, but it does not rebind model queries. For a transaction-backed custom action, use the model definition as the schema and relationship source of truth, then execute the complete persistence workflow through `tx`. Read the created or updated row through `tx` before returning so a readback failure also rolls back the mutation.
 
 ## Trait Methods (traits/)
 
@@ -291,9 +297,23 @@ type UpdateModelData<T> = Partial<InferModelAttributes<Def<T>> & BelongsToForeig
 Each relationship type is processed into a `RelationConfig` object:
 - **hasOne / hasMany**: FK = `{parent_snake}_id`, model key = `{related_snake}_id`
 - **belongsTo**: FK is empty string (set on the owning model's side), supports custom `foreignKey`
-- **belongsToMany**: auto-creates pivot table name via `getPivotTableName()`, supports `pivotTable`, `firstForeignKey`, `secondForeignKey` overrides
+- **belongsToMany**: the legacy array form auto-creates a conventional pivot and supports `pivotTable`, `firstForeignKey`, and `secondForeignKey`; the named object form supports `table`, `foreignKey`, `relatedKey`, and `pivot` metadata (`columns`, `timestamps`, `uniques`)
 - **hasOneThrough**: includes `throughModel` and `throughForeignKey`
 - **morphOne**: uses `{modelName}able` pattern, generates `_type` and `_id` columns
+
+Named many-to-many relations are callable on model instances. Use their native
+relation builder for pivot writes:
+
+```ts
+const post = await Post.find(id)
+await post.categories().sync(categoryIds)
+await post.tags().attach(tagId)
+await post.tags().detach()
+```
+
+Declaring custom pivot columns in the model is required when those columns have
+defaults that `attach()` and `sync()` must write. `pivot.timestamps: true`
+causes both timestamps to be generated and maintained.
 
 ## Model Events (when `traits.observe: true`)
 `observe: true` emits all three events. `observe: ['create', 'update']` emits only those.

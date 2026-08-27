@@ -40,11 +40,6 @@
   // The route's fastest-known-time board. Read once at mount from the same
   // resolved param the rest of the page uses; the board changes on the scale
   // of weeks, so there is nothing here worth polling for.
-  // Destructured WITHOUT renaming, deliberately: stx reads the key side of a
-  // destructuring pattern to decide which names the template can see, so
-  // `{ board: recordBoard }` would publish `board` and leave every
-  // `recordBoard` expression on this page silently blank. The composables
-  // return pre-prefixed keys so no rename is ever needed.
   const { recordBoard, recordsLoading, recordsRankable } = useTrailRecords(readRouteParam('id') ?? -1)
   const {
     claimOpen, claimSubmitting, claimError, claimFieldErrors,
@@ -59,9 +54,7 @@
       navigate('/effort/' + filed.id)
   }
 
-  // Board row colouring lives here rather than in an `x-class` ternary:
-  // crosswind generates a utility only where it has seen it, and it scans
-  // this script and plain `class` attributes but not `x-class` expressions.
+  /** First on a board is the record; everything under it is a placing. */
   function rankTone(rank: number) {
     return rank === 1 ? 'text-yellow-500' : 'text-gray-400 dark:text-slate-500'
   }
