@@ -14,14 +14,6 @@ export default defineModel({
   autoIncrement: true,
 
   traits: {
-    // The model pass seeds every model that opts in, and a framework default
-    // of the same name opts in for us if this one does not — which is how
-    // `buddy seed` ended up inserting the DEFAULT Activity's shape into this
-    // app's table and failing on a column that only exists there. Opting in
-    // for zero rows overrides that default and hands the table to the
-    // application seeder in database/seeders/, which is what actually knows
-    // what belongs in it.
-    useSeeder: { count: 0 },
     useUuid: true,
     useTimestamps: true,
     useSearch: {

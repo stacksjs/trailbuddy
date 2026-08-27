@@ -298,23 +298,10 @@ export default class ActivitySeeder extends Seeder {
           created_at: completedAt,
         }
 
-        if (existing) {
+        if (existing)
           await Activity.forceUpdate(existing.id, payload)
-        }
-        else {
+        else
           await Activity.forceCreate(payload)
-          // `useTimestamps` stamps `created_at` on INSERT and ignores the one
-          // in the payload, so a freshly seeded database had every run dated
-          // to the second the seeder ran. It has to be written back after the
-          // insert — the update path above already honours it.
-          const created = await Activity
-            .where('user_id', '=', user.id)
-            .where('notes', '=', session.notes)
-            .first()
-            .catch(() => null)
-          if (created)
-            await Activity.forceUpdate(created.id, { created_at: completedAt })
-        }
       }
     }
   }

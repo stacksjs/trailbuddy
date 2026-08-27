@@ -204,22 +204,9 @@ export default class TerritoryHistorySeeder extends Seeder {
       .first()
       .catch(() => null)
 
-    if (existing) {
+    if (existing)
       await TerritoryHistory.forceUpdate(existing.id, payload)
-      return
-    }
-
-    await TerritoryHistory.forceCreate(payload)
-    // `useTimestamps` overwrites `created_at` on INSERT, so the date the
-    // battle actually happened has to be written back after it — otherwise
-    // every event on the board is stamped with the moment the seeder ran.
-    const created = await TerritoryHistory
-      .where('activity_id', '=', activity.id)
-      .where('territory_id', '=', parcel.id)
-      .where('event_type', '=', event.event_type as string)
-      .first()
-      .catch(() => null)
-    if (created)
-      await TerritoryHistory.forceUpdate(created.id, { created_at: payload.created_at })
+    else
+      await TerritoryHistory.forceCreate(payload)
   }
 }

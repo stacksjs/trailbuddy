@@ -206,25 +206,10 @@ export default class UserNotificationSeeder extends Seeder {
         .first()
         .catch(() => null)
 
-      if (existing) {
+      if (existing)
         await UserNotification.forceUpdate(existing.id, payload)
-        continue
-      }
-
-      await UserNotification.forceCreate(payload)
-      // `useTimestamps` overwrites `created_at` on INSERT, so the date of the
-      // event being reported has to be written back after it. Without this
-      // every notification arrives "just now" and the read/unread split below
-      // never has anything old enough to mark read.
-      const created = await UserNotification
-        .where('recipient_id', '=', notification.recipient_id)
-        .where('actor_id', '=', notification.actor_id)
-        .where('type', '=', notification.type)
-        .where('body', '=', notification.body)
-        .first()
-        .catch(() => null)
-      if (created)
-        await UserNotification.forceUpdate(created.id, { created_at: notification.created_at })
+      else
+        await UserNotification.forceCreate(payload)
     }
   }
 }

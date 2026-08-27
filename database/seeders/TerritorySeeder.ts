@@ -198,21 +198,10 @@ export default class TerritorySeeder extends Seeder {
         created_at: claimedAt,
       }
 
-      if (claim) {
+      if (claim)
         await TerritoryHistory.forceUpdate(claim.id, history)
-      }
-      else {
+      else
         await TerritoryHistory.forceCreate(history)
-        // `useTimestamps` overwrites `created_at` on INSERT, so the date the
-        // claim actually happened has to be written back after it.
-        const created = await TerritoryHistory
-          .where('activity_id', '=', activity.id)
-          .where('event_type', '=', 'claimed')
-          .first()
-          .catch(() => null)
-        if (created)
-          await TerritoryHistory.forceUpdate(created.id, { created_at: claimedAt })
-      }
     }
   }
 }
