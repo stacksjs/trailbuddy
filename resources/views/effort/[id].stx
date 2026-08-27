@@ -1,0 +1,221 @@
+@extends('layouts/default')
+
+@section('title', 'Record Attempt - WildLoop')
+
+@section('content')
+<script client>
+  import { useEffortDetail, toLocalInputValue, CATEGORY_LABELS, DIRECTION_LABELS, STATUS_LABELS, STYLE_LABELS } from '../../composables/useRouteRecords'
+  import { readRouteParam } from '../../composables/useRouteParam'
+
+  useHead({ title: 'Record Attempt - WildLoop' })
+
+  // -1 is a no-match sentinel so an unresolved param renders "not found"
+  // rather than silently loading attempt 1.
+  const effortId = readRouteParam('id') ?? -1
+
+  const {
+    effort, loading, loadError, working, actionError,
+    fFinishedAt, fReviewNote,
+    finish, markDnf, withdraw, verify, reject, reopen,
+  } = useEffortDetail(effortId)
+
+  const reviewOpen = state(false)
+  const finishOpen = state(false)
+
+  function openFinish() {
+    fFinishedAt.set(toLocalInputValue(new Date().toISOString()))
+    finishOpen.set(true)
+  }
+
+  function styleLabel(style) {
+    return STYLE_LABELS[style] ?? style
+  }
+
+  function categoryLabel(category) {
+    return CATEGORY_LABELS[category] ?? category
+  }
+
+  function directionLabel(direction) {
+    return DIRECTION_LABELS[direction] ?? direction
+  }
+
+  function statusLabel(status) {
+    return STATUS_LABELS[status] ?? status
+  }
+
+  function statusTone(status) {
+    if (status === 'verified') return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+    if (status === 'pending') return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+    if (status === 'rejected') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+    if (status === 'dnf') return 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+    return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+  }
+
+  function whenLabel(iso) {
+    const date = new Date(iso)
+    if (Number.isNaN(date.getTime())) return '—'
+    return date.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+  }
+
+  const rankLabel = derived(() => {
+    const current = effort()
+    if (!current || !current.rank) return ''
+    return current.rank + ' of ' + current.bucketSize + ' on this board'
+  })
+</script>
+
+  <div class="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+    <div :if="loading" class="py-20 text-center text-sm text-gray-400 dark:text-slate-500">Loading attempt…</div>
+
+    <div :if="!loading &amp;&amp; loadError" class="py-20 text-center">
+      <h1 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Attempt not found</h1>
+      <p class="mb-6 text-sm text-gray-500 dark:text-slate-400">{{ loadError }}</p>
+      <StxLink to="/records" class="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700">Back to records</StxLink>
+    </div>
+
+    <div :if="!loading &amp;&amp; effort">
+      <StxLink to="/records" class="mb-4 inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-emerald-600 dark:text-slate-400">
+        <Icon name="chevron-left" size="14" />
+        Records
+      </StxLink>
+
+      <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800/60">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="rounded-full px-2.5 py-1 text-[11px] font-semibold" x-class="statusTone(effort.status)">{{ statusLabel(effort.status) }}</span>
+          <!-- "Headline" means this time also beats every more restrictive
+               style on the route. A supported time slower than the standing
+               unsupported one belongs on its board, but it is not the fastest
+               anything, and saying otherwise is what discredits a board. -->
+          <span :if="effort.headline &amp;&amp; effort.status === 'verified'" class="rounded-full bg-yellow-100 px-2.5 py-1 text-[11px] font-semibold text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">Fastest known time</span>
+        </div>
+
+        <StxLink x-to="'/trail/' + effort.trailId" class="mt-3 block font-display text-2xl font-bold tracking-[-0.02em] text-slate-900 hover:text-emerald-600 dark:text-white">{{ effort.trailName }}</StxLink>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ effort.trailLocation || '' }}</p>
+
+        <div class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div>
+            <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Elapsed</p>
+            <p class="mt-1 text-2xl font-bold text-emerald-600">{{ effort.elapsedLabel }}</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Pace</p>
+            <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{{ effort.paceLabel }}</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Style</p>
+            <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{{ styleLabel(effort.style) }}</p>
+          </div>
+          <div>
+            <p class="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">Category</p>
+            <p class="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{{ categoryLabel(effort.category) + (effort.teamSize > 1 ? ' · Team of ' + effort.teamSize : '') }}</p>
+          </div>
+        </div>
+
+        <div class="mt-6 border-t border-slate-100 pt-5 text-sm dark:border-slate-700">
+          <dl class="grid gap-3 sm:grid-cols-2">
+            <div class="flex justify-between gap-4">
+              <dt class="text-slate-500 dark:text-slate-400">Athlete</dt>
+              <dd><StxLink x-to="'/athlete/' + effort.userId" class="font-semibold text-slate-900 hover:text-emerald-600 dark:text-white">{{ effort.userName }}</StxLink></dd>
+            </div>
+            <div class="flex justify-between gap-4">
+              <dt class="text-slate-500 dark:text-slate-400">Direction</dt>
+              <dd class="font-medium text-slate-900 dark:text-white">{{ directionLabel(effort.direction) }}</dd>
+            </div>
+            <div class="flex justify-between gap-4">
+              <dt class="text-slate-500 dark:text-slate-400">Started</dt>
+              <dd class="font-medium text-slate-900 dark:text-white">{{ whenLabel(effort.startedAt) }}</dd>
+            </div>
+            <div class="flex justify-between gap-4">
+              <dt class="text-slate-500 dark:text-slate-400">Finished</dt>
+              <dd class="font-medium text-slate-900 dark:text-white">{{ effort.finishedAt ? whenLabel(effort.finishedAt) : '—' }}</dd>
+            </div>
+            <div :if="effort.rank" class="flex justify-between gap-4">
+              <dt class="text-slate-500 dark:text-slate-400">Rank</dt>
+              <dd class="font-medium text-slate-900 dark:text-white">{{ rankLabel }}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <!-- Evidence. A record is a claim until somebody can check it, so the
+             trace is given the same prominence as the time itself. -->
+        <div class="mt-6 border-t border-slate-100 pt-5 dark:border-slate-700">
+          <h2 class="mb-3 text-sm font-bold text-slate-900 dark:text-white">Evidence</h2>
+          <div class="flex flex-wrap gap-2">
+            <StxLink :if="effort.activityId" x-to="'/activity/' + effort.activityId" class="rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700">WildLoop activity</StxLink>
+            <a :if="effort.evidenceUrl" x-href="effort.evidenceUrl" target="_blank" rel="noopener noreferrer nofollow" class="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700">
+              Recorded activity
+              <Icon name="external-link" size="12" />
+            </a>
+            <a :if="effort.gpxUrl" x-href="effort.gpxUrl" target="_blank" rel="noopener noreferrer nofollow" class="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-3.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700">
+              GPS file
+              <Icon name="external-link" size="12" />
+            </a>
+            <a :if="effort.trackerUrl" x-href="effort.trackerUrl" target="_blank" rel="noopener noreferrer nofollow" class="inline-flex items-center gap-1.5 rounded-full border border-red-300 px-3.5 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20">
+              Live tracker
+              <Icon name="external-link" size="12" />
+            </a>
+          </div>
+          <p :if="!effort.activityId &amp;&amp; !effort.evidenceUrl &amp;&amp; !effort.gpxUrl &amp;&amp; !effort.trackerUrl" class="text-sm text-slate-500 dark:text-slate-400">
+            No trace attached yet.
+          </p>
+        </div>
+
+        <div :if="effort.tripReport" class="mt-6 border-t border-slate-100 pt-5 dark:border-slate-700">
+          <h2 class="mb-3 text-sm font-bold text-slate-900 dark:text-white">Trip report</h2>
+          <p class="whitespace-pre-line text-sm leading-relaxed text-slate-600 dark:text-slate-300">{{ effort.tripReport }}</p>
+        </div>
+
+        <!-- Only the athlete and reviewers ever see this. Publishing "we did
+             not believe this person" is not the site's call to make. -->
+        <div :if="effort.reviewNote" class="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-900/40 dark:bg-amber-900/20">
+          <p class="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">Reviewer's note</p>
+          <p class="mt-1 text-sm text-amber-800 dark:text-amber-200">{{ effort.reviewNote }}</p>
+        </div>
+      </div>
+
+      <div :if="actionError" class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
+        {{ actionError }}
+      </div>
+
+      <!-- Owner tools. Closing out an attempt is the athlete's job, and a DNF
+           is a first-class outcome: an attempt that quietly vanishes from the
+           tracking board teaches people not to announce the next one. -->
+      <div :if="effort.isOwner &amp;&amp; effort.status !== 'verified'" class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800/60">
+        <h2 class="mb-3 text-sm font-bold text-slate-900 dark:text-white">Your attempt</h2>
+        <div class="flex flex-wrap gap-2">
+          <button :if="effort.status === 'in_progress'" @click="openFinish()" class="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">Log a finish</button>
+          <button :if="effort.status === 'in_progress'" @click="markDnf()" x-disabled="working" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700">Mark DNF</button>
+          <button @click="withdraw()" x-disabled="working" class="rounded-full border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20">Withdraw</button>
+        </div>
+
+        <div :show="finishOpen()" x-cloak class="mt-4 border-t border-slate-100 pt-4 dark:border-slate-700">
+          <label class="block text-xs font-medium text-slate-600 dark:text-slate-400" for="finished-at">Finish time</label>
+          <input id="finished-at" type="datetime-local" x-model="fFinishedAt" class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-white" />
+          <p class="mt-1.5 text-xs text-slate-400 dark:text-slate-500">Elapsed time from the trailhead, not moving time. Stops count.</p>
+          <div class="mt-3 flex gap-2">
+            <button @click="finish()" x-disabled="working" class="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50">Submit for review</button>
+            <button @click="finishOpen.set(false)" class="rounded-full px-4 py-2 text-sm font-medium text-slate-500 transition hover:text-slate-900 dark:hover:text-white">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reviewer tools. Every decision has an author, and a rejection
+           always carries a reason the athlete can act on. -->
+      <div :if="effort.canReview" class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800/60">
+        <button @click="reviewOpen.set(!reviewOpen())" class="flex w-full items-center justify-between text-sm font-bold text-slate-900 dark:text-white">
+          Review this claim
+          <i class="i-lucide-chevron-down h-4 w-4" aria-hidden="true"></i>
+        </button>
+        <div :show="reviewOpen()" x-cloak class="mt-4">
+          <label class="block text-xs font-medium text-slate-600 dark:text-slate-400" for="review-note">Note to the athlete</label>
+          <textarea id="review-note" x-model="fReviewNote" rows="3" placeholder="Required when rejecting: say what would make this verifiable." class="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-900 dark:text-white"></textarea>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button @click="verify()" x-disabled="working" class="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50">Verify</button>
+            <button @click="reject()" x-disabled="working" class="rounded-full border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20">Reject</button>
+            <button @click="reopen()" x-disabled="working" class="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700">Reopen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+@endsection

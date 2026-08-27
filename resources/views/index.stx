@@ -248,8 +248,8 @@
         <p class="mt-1 text-sm text-current/60">States and regions</p>
       </div>
       <div class="col-span-2 lg:col-span-1">
-        <p class="font-display text-xl font-bold tracking-tight">One map. Two reasons to move.</p>
-        <p class="mt-1 text-sm leading-relaxed text-current/60">Train for yourself, then compete for the terrain around you.</p>
+        <p class="font-display text-xl font-bold tracking-tight">One map. Three reasons to move.</p>
+        <p class="mt-1 text-sm leading-relaxed text-current/60">Train for yourself, hold the terrain around you, then go after the clock.</p>
       </div>
     </div>
   </section>
@@ -296,6 +296,81 @@
           <span>Closed loop</span>
           <strong>2.7 km² captured</strong>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Records ──────────────────────────────────────────────────────────── -->
+  <section class="section-muted">
+    <div class="mx-auto grid max-w-7xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:gap-20 lg:px-8 lg:py-28">
+      <div class="section-rise">
+        <p class="section-kicker">Fastest known times</p>
+        <h2 class="mt-4 max-w-[13ch] font-display text-4xl font-bold leading-[0.98] tracking-[-0.045em] sm:text-5xl">Every route keeps a record.</h2>
+        <p class="mt-6 max-w-[34rem] text-lg leading-relaxed text-current/65">
+          Not who ran the most miles this week — who covered <em>this</em> route fastest. Elapsed time from the trailhead,
+          filed under the rules it was run by, and checked against the GPS trace before it stands.
+        </p>
+        <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+          <div class="feature-rule">
+            <i class="i-lucide-backpack h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-hidden="true"></i>
+            <div>
+              <h3 class="font-bold">Three styles, three boards</h3>
+              <p class="mt-1 text-sm leading-relaxed text-current/60">Supported, self-supported, unsupported. A crewed time never sits next to one somebody carried.</p>
+            </div>
+          </div>
+          <div class="feature-rule">
+            <i class="i-lucide-file-check h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-hidden="true"></i>
+            <div>
+              <h3 class="font-bold">Verified by a person</h3>
+              <p class="mt-1 text-sm leading-relaxed text-current/60">Every claim needs a trace, and a human reads it. Nothing is accepted automatically.</p>
+            </div>
+          </div>
+          <div class="feature-rule">
+            <i class="i-lucide-radio-tower h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-hidden="true"></i>
+            <div>
+              <h3 class="font-bold">Watch it happen</h3>
+              <p class="mt-1 text-sm leading-relaxed text-current/60">Announce an attempt before you start and it goes on the tracking board, tracker link and all.</p>
+            </div>
+          </div>
+          <div class="feature-rule">
+            <i class="i-lucide-notebook-pen h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-hidden="true"></i>
+            <div>
+              <h3 class="font-bold">The story too</h3>
+              <p class="mt-1 text-sm leading-relaxed text-current/60">A trip report sits with the time, so the route page is still worth reading a year later.</p>
+            </div>
+          </div>
+        </div>
+        <div class="mt-9 flex flex-col gap-3 sm:flex-row">
+          <StxLink to="/records" class="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-7 py-3.5 text-sm font-bold text-white transition hover:bg-emerald-700 active:scale-[0.98]">
+            Browse the records
+            <i class="i-lucide-arrow-right h-4 w-4" aria-hidden="true"></i>
+          </StxLink>
+          <StxLink to="/trails" class="inline-flex items-center justify-center gap-2 rounded-full border border-current/20 px-7 py-3.5 text-sm font-bold transition hover:border-emerald-500 hover:text-emerald-700 active:scale-[0.98] dark:hover:text-emerald-300">
+            Claim one
+          </StxLink>
+        </div>
+      </div>
+
+      <div class="record-board section-rise" aria-hidden="true">
+        <div class="record-board-head">
+          <div>
+            <p class="record-route">Lost Coast Traverse</p>
+            <p class="record-meta">24.6 mi · 3,100 ft · point to point</p>
+          </div>
+          <span class="record-crown"><i class="i-lucide-crown h-3.5 w-3.5"></i>FKT</span>
+        </div>
+
+        <p class="record-group">Men's · Unsupported</p>
+        <div class="record-row"><span class="record-rank">1</span><span class="record-name">Harvey Lewis</span><span class="record-note">verified</span><span class="record-time">7h 24m</span></div>
+        <div class="record-row"><span class="record-rank">2</span><span class="record-name">Pawel Dregan</span><span class="record-note">verified</span><span class="record-time">8h 06m</span></div>
+
+        <p class="record-group">Women's · Unsupported</p>
+        <div class="record-row"><span class="record-rank">1</span><span class="record-name">Kim Gottwald</span><span class="record-note">verified</span><span class="record-time">8h 36m</span></div>
+
+        <p class="record-group">Men's · Supported</p>
+        <div class="record-row"><span class="record-rank">1</span><span class="record-name">Mark Dowdle</span><span class="record-note record-pending">pending review</span><span class="record-time">6h 54m</span></div>
+
+        <p class="record-live"><span></span>Ana Ferreira is on the route — started 4h 12m ago</p>
       </div>
     </div>
   </section>
@@ -509,6 +584,7 @@
             <StxLink to="/territories" class="directory-link">Territory map</StxLink>
             <StxLink to="/events" class="directory-link">Live events</StxLink>
             <StxLink to="/events?type=backyard" class="directory-link">Backyard ultras</StxLink>
+            <StxLink to="/records" class="directory-link">Fastest known times</StxLink>
             <StxLink to="/battles" class="directory-link">Territory battles</StxLink>
             <StxLink to="/conquests" class="directory-link">Conquest feed</StxLink>
             <StxLink to="/challenges" class="directory-link">Challenges</StxLink>
@@ -740,6 +816,25 @@
     border-top: 1px solid color-mix(in srgb, currentColor 16%, transparent);
   }
 
+  /* An icon is a flex item sitting next to a text block that wants all the
+     room, so without this it gets squashed to a 3px sliver — every feature
+     rule and checklist on this page was rendering its glyph as a smear.
+     `w-5`/`w-4` cannot win it back on their own: the `.i-lucide-*` utility
+     sets `width: 1em` and is emitted after the sizing utilities, so the size
+     is pinned here alongside `flex: none`. */
+  .feature-rule > i {
+    flex: none;
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .live-stage li > i,
+  .share-stage li > i {
+    flex: none;
+    width: 1rem;
+    height: 1rem;
+  }
+
   .territory-plot {
     position: relative;
     overflow: hidden;
@@ -817,6 +912,126 @@
     margin-top: 0.2rem;
     color: var(--page-ink);
     font-size: 1.15rem;
+  }
+
+  /* ── Records board ──────────────────────────────────────────────────── */
+
+  /* Deliberately the light-surface twin of `.yard-board` below: same card
+     geometry and row rhythm, repainted for a paper section so the two boards
+     read as one product rather than two designs. */
+  .record-board {
+    padding: 1.5rem;
+    border: 1px solid color-mix(in srgb, currentColor 11%, transparent);
+    border-radius: 1.5rem;
+    background: var(--page-paper);
+    box-shadow: 0 24px 60px rgb(6 32 24 / 8%);
+  }
+
+  .dark .record-board { box-shadow: 0 28px 80px rgb(0 0 0 / 40%); }
+
+  .record-board-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  }
+
+  .record-route {
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: -0.02em;
+  }
+
+  .record-meta {
+    margin-top: 0.2rem;
+    color: color-mix(in srgb, currentColor 55%, transparent);
+    font-size: 0.78rem;
+  }
+
+  .record-crown {
+    display: inline-flex;
+    flex-shrink: 0;
+    gap: 0.35rem;
+    align-items: center;
+    padding: 0.25rem 0.65rem;
+    border-radius: 9999px;
+    background: rgb(245 158 11 / 15%);
+    color: #b45309;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+  }
+
+  .dark .record-crown { color: #fbbf24; }
+
+  .record-group {
+    margin-top: 1.1rem;
+    color: color-mix(in srgb, currentColor 50%, transparent);
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .record-row {
+    display: grid;
+    grid-template-columns: 1.25rem 1fr auto auto;
+    gap: 0.85rem;
+    align-items: center;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid color-mix(in srgb, currentColor 7%, transparent);
+  }
+
+  .record-rank {
+    color: color-mix(in srgb, currentColor 45%, transparent);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75rem;
+  }
+
+  .record-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  /* A time nobody has checked yet still shows, and still says so. That
+     honesty is the whole reason the verified ones are worth anything. */
+  .record-note {
+    color: #059669;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .dark .record-note { color: #34d399; }
+
+  .record-pending { color: #b45309; }
+
+  .dark .record-pending { color: #fbbf24; }
+
+  .record-time {
+    font-weight: 700;
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .record-live {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 1.15rem;
+    color: color-mix(in srgb, currentColor 60%, transparent);
+    font-size: 0.75rem;
+  }
+
+  .record-live span {
+    width: 0.5rem;
+    height: 0.5rem;
+    flex-shrink: 0;
+    background: #ef4444;
+    border-radius: 9999px;
   }
 
   /* ── Live event board ───────────────────────────────────────────────── */

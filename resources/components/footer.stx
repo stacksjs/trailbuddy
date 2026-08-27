@@ -60,6 +60,7 @@
           <li><StxLink to="/routes" class="text-slate-600 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">Plan a route</StxLink></li>
           <li><StxLink to="/record" class="text-slate-600 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">Record an activity</StxLink></li>
           <li><StxLink to="/territories" class="text-slate-600 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">Territory map</StxLink></li>
+          <li><StxLink to="/records" class="text-slate-600 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">Fastest known times</StxLink></li>
           <li><StxLink to="/leaderboard" class="text-slate-600 transition hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400">Leaderboard</StxLink></li>
         </ul>
       </div>

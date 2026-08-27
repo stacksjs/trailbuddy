@@ -1,6 +1,6 @@
 # WildLoop
 
-WildLoop is an outdoor activity and trail platform with a territory game. It combines trail discovery, GPS recording, activity feeds, clubs, challenges, leaderboards, saved/offline routes, portable activity imports, and a server-authoritative capture engine.
+WildLoop is an outdoor activity and trail platform with a territory game. It combines trail discovery, GPS recording, activity feeds, clubs, challenges, leaderboards, route records (fastest known times), saved/offline routes, portable activity imports, and a server-authoritative capture engine.
 
 ## Product rules
 
@@ -10,6 +10,7 @@ WildLoop is an outdoor activity and trail platform with a territory game. It com
 - Activity writes are idempotent through `(user_id, upload_id)`. Transient recorder failures queue in IndexedDB and replay on reconnect.
 - Public routes mask their start and end. A protected home zone can prevent territory creation, and territory outlines are coarse unless the owner opts into precision.
 - Blocks apply in both directions to profiles, feeds, follows, comments, kudos, leaderboards, and game map reads.
+- Route records rank elapsed time on one route, bucketed by direction, category, support style, and solo-vs-team. A time is only a headline record if it also beats every more restrictive style. Nothing is verified automatically: a claim needs a GPS trace and a human decision, and a rejection needs a reason.
 
 See [Game rules](docs/wildloop/game-rules.md), [Security and privacy](docs/wildloop/security-privacy.md), [Architecture](docs/wildloop/architecture.md), and [Operations](docs/wildloop/operations.md).
 

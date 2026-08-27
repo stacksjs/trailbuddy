@@ -5,7 +5,9 @@
 @section('content')
 <script client>
   import { fetchAthlete, reportContent, toggleBlock, toggleFollow } from '../../assets/scripts/game-api'
+  import { fetchRecords } from '../../assets/scripts/records-api'
   import { readRouteParam } from '../../composables/useRouteParam'
+  import { CATEGORY_LABELS, STYLE_LABELS } from '../../functions/route-records'
 
   useHead({ title: 'Athlete - WildLoop' })
 
@@ -40,7 +42,34 @@
     loading.set(false)
   }
 
-  onMount(() => { void loadAthlete() })
+  // This athlete's verified records. Separate from the profile payload
+  // because it is a different question - "what have they held" rather than
+  // "what have they run" - and a profile that has none should not pay for the
+  // join on every load.
+  const records = state<any[]>([])
+
+  async function loadRecords() {
+    const result = await fetchRecords({ userId: athleteId, status: 'verified', limit: 20 })
+    records.set(result?.efforts ?? [])
+  }
+
+  onMount(() => {
+    void loadAthlete()
+    void loadRecords()
+  })
+
+  function styleLabel(style: string) {
+    return STYLE_LABELS[style] ?? style
+  }
+
+  function categoryLabel(category: string) {
+    return CATEGORY_LABELS[category] ?? category
+  }
+
+  function recordDate(iso: string) {
+    const date = new Date(iso)
+    return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+  }
 
   async function onFollow() {
     if (!wl || isSelf()) return
@@ -151,6 +180,25 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Records -->
+      <!-- Only verified times. An athlete's profile is where a record is read
+           as a credential, so a claim nobody has checked does not belong on
+           it - it lives on the route's board, marked as pending. -->
+      <div :if="records.length > 0" class="mb-6 card">
+        <h2 class="mb-4 font-bold text-lg dark:text-white">Records</h2>
+        <div class="space-y-2">
+          <template :for="record in records">
+            <StxLink x-to="'/effort/' + record.id" class="flex items-center justify-between gap-4 py-3 border-b border-gray-100 dark:border-slate-700 last:border-0">
+              <div class="min-w-0">
+                <p class="truncate font-semibold text-sm dark:text-white">{{ record.trailName }}</p>
+                <p class="text-gray-400 text-xs">{{ styleLabel(record.style) + ' · ' + categoryLabel(record.category) + ' · ' + recordDate(record.finishedAt || record.startedAt) }}</p>
+              </div>
+              <p class="shrink-0 font-bold text-emerald-600 text-sm">{{ record.elapsedLabel }}</p>
+            </StxLink>
+          </template>
         </div>
       </div>
 

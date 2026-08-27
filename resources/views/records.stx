@@ -1,0 +1,194 @@
+@extends('layouts/default')
+
+@section('title', 'Records - WildLoop')
+
+@section('content')
+<script client>
+  import { useRecordsFeed, CATEGORY_LABELS, STATUS_LABELS, STYLE_LABELS } from '../composables/useRouteRecords'
+  import { MIN_RECORD_DISTANCE_MI, MIN_RECORD_ELEVATION_FT } from '../functions/route-records'
+
+  useHead({ title: 'Records - WildLoop' })
+
+  const {
+    tab, records, tracking, loading, loadError,
+    styleFilter, categoryFilter, setTab, applyFilter,
+  } = useRecordsFeed()
+
+  function styleLabel(style) {
+    return STYLE_LABELS[style] ?? style
+  }
+
+  function categoryLabel(category) {
+    return CATEGORY_LABELS[category] ?? category
+  }
+
+  function statusLabel(status) {
+    return STATUS_LABELS[status] ?? status
+  }
+
+  function whenLabel(iso) {
+    const date = new Date(iso)
+    if (Number.isNaN(date.getTime())) return ''
+    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+  }
+
+  // A pending time is on the board but has not been looked at yet, and saying
+  // so plainly is what keeps the verified ones worth something.
+  function statusTone(status) {
+    if (status === 'verified') return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+    if (status === 'pending') return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+    if (status === 'dnf') return 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+    return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+  }
+
+  const eligibilityNote = `Routes carry a board once they are ${MIN_RECORD_DISTANCE_MI} miles or ${MIN_RECORD_ELEVATION_FT} feet of gain.`
+
+  // How many attempts are out on course, shown on the tab itself. Somebody is
+  // either running right now or they are not, and that is the reason to open
+  // this page at all — it should not take a click to find out.
+  //
+  // Keep these `derived` here rather than folding them into the composable:
+  // stx only compiles a view's script through its signal-aware bundler when
+  // the script calls a reactive primitive DIRECTLY. A view that gets all of
+  // its state from a composable takes the other path, which fails to export
+  // the script's bindings and leaves every expression on the page undefined.
+  const trackingCount = derived(() => tracking().length)
+  const recordCount = derived(() => records().length)
+
+  // Pill styling lives in these helpers rather than in `x-class` ternaries on
+  // the buttons, because crosswind only generates a utility it has actually
+  // seen — and it scans this script and plain `class` attributes, but not the
+  // string literals inside an `x-class` expression. A colour that appears
+  // only in an `x-class` gets no CSS rule, which is how an active tab ends up
+  // as white text on nothing.
+  const PILL_ACTIVE = 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+  const PILL_LIVE = 'bg-red-600 text-white'
+  const PILL_PICKED = 'bg-emerald-600 text-white'
+  const PILL_IDLE = 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+
+  function tabPill(name) {
+    if (tab() !== name) return PILL_IDLE
+    return name === 'tracking' ? PILL_LIVE : PILL_ACTIVE
+  }
+
+  function stylePill(value) {
+    if (value === 'all') return styleFilter() === 'all' && categoryFilter() === 'all' ? PILL_PICKED : PILL_IDLE
+    return styleFilter() === value ? PILL_PICKED : PILL_IDLE
+  }
+
+  function categoryPill(value) {
+    return categoryFilter() === value ? PILL_ACTIVE : PILL_IDLE
+  }
+</script>
+
+  <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+      <div>
+        <h1 class="font-display text-3xl font-bold tracking-[-0.03em] dark:text-white">Records</h1>
+        <p class="mt-1.5 max-w-[56ch] text-sm leading-relaxed text-gray-500 dark:text-slate-400">
+          The fastest known times on WildLoop's routes. Every time is filed under the style it was run in, verified against its GPS trace, and ranked on elapsed time from the trailhead.
+        </p>
+      </div>
+      <StxLink to="/trails" class="shrink-0 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 active:scale-[0.98]">
+        Find a route
+      </StxLink>
+    </div>
+
+    <div class="mb-6 flex gap-2">
+      <button @click="setTab('latest')" x-class="tabPill('latest')" class="rounded-full px-4 py-2 text-sm font-medium transition active:scale-[0.98]">
+        {{ recordCount > 0 ? 'Latest records · ' + recordCount : 'Latest records' }}
+      </button>
+      <button @click="setTab('tracking')" x-class="tabPill('tracking')" class="rounded-full px-4 py-2 text-sm font-medium transition active:scale-[0.98]">
+        {{ trackingCount > 0 ? 'Tracking now · ' + trackingCount : 'Tracking now' }}
+      </button>
+    </div>
+
+    <!-- Style and category narrow the latest feed. The tracking board is
+         deliberately unfiltered: there are rarely more than a handful of
+         attempts out at once, and hiding any of them defeats the point. -->
+    <div :if="tab === 'latest'" class="mb-6 flex flex-wrap gap-2">
+      <button @click="applyFilter({ style: 'all', category: 'all' })" x-class="stylePill('all')" class="rounded-full px-3.5 py-1.5 text-xs font-medium transition">All</button>
+      <button @click="applyFilter({ style: 'unsupported' })" x-class="stylePill('unsupported')" class="rounded-full px-3.5 py-1.5 text-xs font-medium transition">Unsupported</button>
+      <button @click="applyFilter({ style: 'self_supported' })" x-class="stylePill('self_supported')" class="rounded-full px-3.5 py-1.5 text-xs font-medium transition">Self-supported</button>
+      <button @click="applyFilter({ style: 'supported' })" x-class="stylePill('supported')" class="rounded-full px-3.5 py-1.5 text-xs font-medium transition">Supported</button>
+      <span class="mx-1 self-center text-slate-300 dark:text-slate-600">|</span>
+      <button @click="applyFilter({ category: 'womens' })" x-class="categoryPill('womens')" class="rounded-full px-3.5 py-1.5 text-xs font-medium transition">Women's</button>
+      <button @click="applyFilter({ category: 'mens' })" x-class="categoryPill('mens')" class="rounded-full px-3.5 py-1.5 text-xs font-medium transition">Men's</button>
+      <button @click="applyFilter({ category: 'nonbinary' })" x-class="categoryPill('nonbinary')" class="rounded-full px-3.5 py-1.5 text-xs font-medium transition">Non-binary</button>
+    </div>
+
+    <div :if="loadError" class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
+      {{ loadError }}
+    </div>
+
+    <div :if="loading" class="py-16 text-center text-sm text-gray-400 dark:text-slate-500">Loading records…</div>
+
+    <!-- Latest records -->
+    <div :if="!loading &amp;&amp; tab === 'latest'" class="space-y-2">
+      <template :for="record in records">
+        <StxLink x-to="'/effort/' + record.id" class="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 transition hover:border-emerald-300 dark:border-slate-700 dark:bg-slate-800/60 dark:hover:border-emerald-700">
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">{{ record.trailName }}</p>
+            <p class="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
+              {{ record.userName + ' · ' + styleLabel(record.style) + ' · ' + categoryLabel(record.category) }}
+            </p>
+          </div>
+          <div class="shrink-0 text-right">
+            <p class="font-bold text-sm text-emerald-600">{{ record.elapsedLabel }}</p>
+            <p class="text-xs text-slate-400 dark:text-slate-500">{{ whenLabel(record.finishedAt || record.startedAt) }}</p>
+          </div>
+          <span class="hidden shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold sm:inline" x-class="statusTone(record.status)">{{ statusLabel(record.status) }}</span>
+        </StxLink>
+      </template>
+
+      <div :if="records.length === 0" class="py-20 text-center">
+        <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-900/20">
+          <Icon name="award" size="40" class="text-emerald-500" />
+        </div>
+        <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">No records here yet</h3>
+        <p class="mx-auto mb-6 max-w-sm text-sm text-gray-500 dark:text-slate-400">
+          {{ eligibilityNote + ' Open a route and file the first time on it.' }}
+        </p>
+        <StxLink to="/trails" class="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700">Browse routes</StxLink>
+      </div>
+    </div>
+
+    <!-- Tracking now -->
+    <div :if="!loading &amp;&amp; tab === 'tracking'" class="space-y-2">
+      <template :for="attempt in tracking">
+        <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3.5 dark:border-slate-700 dark:bg-slate-800/60">
+          <div class="flex items-center gap-4">
+            <span class="relative flex h-2.5 w-2.5 shrink-0" aria-hidden="true">
+              <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+              <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500"></span>
+            </span>
+            <div class="min-w-0 flex-1">
+              <StxLink x-to="'/effort/' + attempt.id" class="block truncate text-sm font-semibold text-slate-900 hover:text-emerald-600 dark:text-white">{{ attempt.trailName }}</StxLink>
+              <p class="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">
+                {{ attempt.userName + ' · ' + styleLabel(attempt.style) + ' · started ' + whenLabel(attempt.startedAt) }}
+              </p>
+            </div>
+            <div class="shrink-0 text-right">
+              <p class="font-bold text-sm text-red-600 dark:text-red-400">{{ attempt.elapsedSoFarLabel }}</p>
+              <p class="text-xs text-slate-400 dark:text-slate-500">on the course</p>
+            </div>
+          </div>
+          <a :if="attempt.trackerUrl" x-href="attempt.trackerUrl" target="_blank" rel="noopener noreferrer nofollow" class="mt-2.5 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:underline">
+            Follow the live tracker
+            <Icon name="external-link" size="12" />
+          </a>
+        </div>
+      </template>
+
+      <div :if="tracking.length === 0" class="py-20 text-center">
+        <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800">
+          <Icon name="map-pin" size="40" class="text-slate-400" />
+        </div>
+        <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Nobody is out there right now</h3>
+        <p class="mx-auto max-w-sm text-sm text-gray-500 dark:text-slate-400">
+          Announce an attempt from a route page before you start and it shows up here, with your tracker link, for anyone who wants to follow along.
+        </p>
+      </div>
+    </div>
+  </div>
+@endsection

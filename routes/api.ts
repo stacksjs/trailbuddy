@@ -400,11 +400,21 @@ route.get('/trails', 'Actions/Trail/TrailIndexAction')
 route.get('/trails/stats', 'Actions/Trail/TrailStatsAction')
 route.get('/trails/{id}', 'Actions/Trail/TrailShowAction')
 route.get('/trails/{id}/reviews', 'Actions/Trail/TrailReviewIndexAction')
+// The route's fastest-known-time board. Public and session-free: a records
+// board is a reference work, and requiring a login to read who holds a route
+// would defeat the point of publishing it.
+route.get('/trails/{id}/records', 'Actions/Record/TrailRecordsAction')
 
 // Public reads - feed, activity detail, territory map/leaderboard/profile, follows.
 route.get('/activities', 'Actions/Activity/ActivityIndexAction')
 route.get('/activities/leaderboard', 'Actions/Activity/ActivityLeaderboardAction')
 route.get('/activities/{id}', 'Actions/Activity/ActivityShowAction')
+// Route records - the latest FKTs, what is being attempted right now, and one
+// attempt in full. `tracking` is registered BEFORE `{id}` so it is not
+// captured as an id, the same way `/users/search` is.
+route.get('/route-efforts', 'Actions/Record/RouteEffortIndexAction')
+route.get('/route-efforts/tracking', 'Actions/Record/RouteEffortTrackingAction')
+route.get('/route-efforts/{id}', 'Actions/Record/RouteEffortShowAction')
 route.get('/territories/map', 'Actions/Territory/GetTerritoriesForMapAction')
 route.get('/territories/leaderboard', 'Actions/Territory/TerritoryLeaderboardAction')
 route.get('/territories/battles', 'Actions/Territory/TerritoryBattleIndexAction')
@@ -505,6 +515,22 @@ route.group({ middleware: 'auth' }, () => {
     route.get('/notifications', 'Actions/Social/NotificationIndexAction')
     route.post('/notifications/read', 'Actions/Social/NotificationReadAction')
     route.post('/notifications/push-token', 'Actions/Notification/RegisterPushTokenAction')
+    // Route records - file an attempt, close it out, withdraw it. Reviewing is
+    // the one write here that is not the athlete's own: it changes what the
+    // site publicly asserts, so it is restricted to admins.
+    //
+    // That restriction is enforced inside RouteEffortReviewAction rather than
+    // by `.middleware('role:admin')`. The alias is not registered in
+    // app/Middleware.ts, and the RBAC gate behind it cannot see the
+    // authenticated user - every route carrying it (recompute-ranks,
+    // decay-sweep, recompute-counters) answers 500 "RBAC user id must be a
+    // positive number, got undefined" to admin and stranger alike. Adding it
+    // here would have broken the endpoint for everyone without authorising
+    // anything.
+    route.post('/route-efforts', 'Actions/Record/RouteEffortStoreAction')
+    route.patch('/route-efforts/{id}', 'Actions/Record/RouteEffortUpdateAction')
+    route.delete('/route-efforts/{id}', 'Actions/Record/RouteEffortDestroyAction')
+    route.post('/route-efforts/{id}/review', 'Actions/Record/RouteEffortReviewAction')
     route.get('/custom-routes', 'Actions/Route/CustomRouteIndexAction')
     route.post('/custom-routes', 'Actions/Route/CustomRouteStoreAction')
     route.delete('/custom-routes/{id}', 'Actions/Route/CustomRouteDestroyAction')

@@ -67,6 +67,7 @@
     "Receipt": true,
     "Release": true,
     "Review": true,
+    "RouteEffort": true,
     "SavedTrail": true,
     "ShippingMethod": true,
     "ShippingRate": true,
