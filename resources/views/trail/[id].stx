@@ -83,24 +83,45 @@
     return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
   }
 
-  async function mountDetailMap() {
-    const t = trail()
-    if (!t || !wl) return
-    detailMap?.destroy()
-    detailMap = await createTrailMap('trail-map', {
-      center: [t.lat, t.lng],
-      zoom: 13,
-      scrollWheelZoom: false,
-    })
-    if (!detailMap) return
-    const coords = wl.trailRoutes()[t.id]
-    if (coords && coords.length > 1) {
-      await drawTrailRoute(detailMap.map, coords, { color: '#059669', weight: 4, opacity: 0.9 })
-      detailMap.fitPoints(coords, [30, 30])
-    }
-    else {
-      detailMap.map.setView([t.lat, t.lng], 14)
-    }
+  // Two things ask for the map — `runWhenMapReady` once the container exists,
+  // and an effect on every change to `trail()` — and both are async. Without a
+  // gate they interleave: the second call reaches `createTrailMap` before the
+  // first has assigned `detailMap`, so the `destroy()` above it is a no-op and
+  // Leaflet refuses the container it already owns ("Map container is already
+  // initialized", four times on a normal page load).
+  //
+  // The gate is the in-flight promise itself: a caller that arrives mid-mount
+  // waits for it and then re-runs, so the last request still wins and the
+  // container is only ever built by one of them at a time.
+  let detailMapMount: Promise<void> | null = null
+
+  async function mountDetailMap(): Promise<void> {
+    while (detailMapMount)
+      await detailMapMount.catch(() => undefined)
+
+    const run = (async () => {
+      const t = trail()
+      if (!t || !wl) return
+      detailMap?.destroy()
+      detailMap = null
+      detailMap = await createTrailMap('trail-map', {
+        center: [t.lat, t.lng],
+        zoom: 13,
+        scrollWheelZoom: false,
+      })
+      if (!detailMap) return
+      const coords = wl.trailRoutes()[t.id]
+      if (coords && coords.length > 1) {
+        await drawTrailRoute(detailMap.map, coords, { color: '#059669', weight: 4, opacity: 0.9 })
+        detailMap.fitPoints(coords, [30, 30])
+      }
+      else {
+        detailMap.map.setView([t.lat, t.lng], 14)
+      }
+    })()
+
+    detailMapMount = run.finally(() => { detailMapMount = null })
+    return detailMapMount
   }
 
   onMount(() => {

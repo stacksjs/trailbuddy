@@ -24,6 +24,12 @@ export default {
   'env:staging': 'EnvStaging',
   'env:production': 'EnvProduction',
   'env:prod': 'EnvProduction',
+  // Authorization on top of `auth`. These were missing from the app's map
+  // while `role:admin` was already in use on the territory sweeps, so the
+  // alias resolved only by falling through to the framework's own defaults.
+  'role': 'Role',
+  'permission': 'Permission',
+  'verified': 'EnsureEmailIsVerified',
   // Add more middleware aliases here
   // Note: Use ! prefix for negation (e.g., '!auth', '!env:development')
 } satisfies Middleware
