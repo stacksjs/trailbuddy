@@ -9,17 +9,14 @@
   "dependencies": {
     "@iconify-json/lucide": "^1.2.126",
     "@stacksjs/bun-router": "^0.1.8",
-    "@stacksjs/mobile": "^0.72.95",
+    "@stacksjs/mobile": "^0.72.96",
     "@stacksjs/stx": "^0.2.235",
-    "stacks": "^0.72.95",
+    "stacks": "^0.72.96",
     "ts-health": "^0.1.0",
     "ts-images": "^0.2.12",
     "ts-maps": "^0.3.2",
     "ts-qr-codes": "^0.1.6",
     "ts-web-scraper": "^0.1.10"
-  },
-  "overrides": {
-    "@cwcss/crosswind": "^0.2.18"
   },
   "bugs": {
     "url": "https://github.com/stacksjs/wildloop/issues"
