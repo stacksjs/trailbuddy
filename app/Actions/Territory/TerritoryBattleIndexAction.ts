@@ -23,20 +23,61 @@ export default new Action({
     const territoryMap = new Map(territories.map((row: any) => [row.id, row]))
     const userMap = new Map(users.map((row: any) => [row.id, row]))
     const activityMap = new Map(activities.map((row: any) => [row.id, row]))
+    // The board reads every row as "<attacker> conquered / failed to conquer
+    // <territory> from <defender>", so both sides have to be real people on
+    // every event type. Only `conquered` and `split` name an attacker AND a
+    // previous owner on the row itself:
+    //
+    //   - `contested` records an attack that did not take the land, so the
+    //     defender is the owner, who has not changed.
+    //   - `defended` records the OWNER running their own contested land. Its
+    //     `user_id` is the defender, not an attacker — the attacker is
+    //     whoever contested the territory last, which is the event this one
+    //     answers.
+    //
+    // Reading them all off `row.user_id` reported a defence as "Mark Dowdle
+    // failed to conquer Defense held", and a repelled contest as a conquest.
+    const nameOf = (id: number | null | undefined, fallback: string): string =>
+      (id ? userMap.get(id)?.name : null) ?? fallback
+
+    /** The most recent contest on this territory before `row`. */
+    const contesterBefore = (row: any): number | null => {
+      // `rows` is newest-first, so the first contest after this row's position
+      // in the list is the most recent one that preceded it in time.
+      const index = rows.indexOf(row)
+      for (let i = index + 1; i < rows.length; i++) {
+        const earlier = rows[i]
+        if (earlier.territory_id === row.territory_id && earlier.event_type === 'contested')
+          return earlier.user_id ?? null
+      }
+      return null
+    }
+
     const battles = rows.map((row: any) => {
       const territory = territoryMap.get(row.territory_id)
       const activity = activityMap.get(row.activity_id)
-      const status = row.event_type === 'contested' && territory?.status === 'contested'
-        ? 'active'
-        : row.event_type === 'defended' ? 'defended' : 'conquered'
+
+      const takeover = row.event_type === 'conquered' || row.event_type === 'split'
+      const defence = row.event_type === 'defended'
+      // A contest is live only while the land is still marked contested; once
+      // the owner has run it back it is a defence that already happened.
+      const status = takeover
+        ? 'conquered'
+        : defence || territory?.status !== 'contested' ? 'defended' : 'active'
+
+      const attackerId = defence ? contesterBefore(row) : row.user_id
+      const defenderId = defence
+        ? row.user_id
+        : row.previous_owner_id ?? territory?.user_id ?? null
+
       return {
         id: row.id,
         territory_id: row.territory_id,
         territoryName: territory?.name ?? `Territory #${row.territory_id}`,
-        attacker_id: row.user_id,
-        attackerName: userMap.get(row.user_id)?.name ?? 'Athlete',
-        defender_id: row.previous_owner_id ?? territory?.user_id ?? 0,
-        defenderName: userMap.get(row.previous_owner_id)?.name ?? (row.event_type === 'defended' ? 'Defense held' : 'Former owner'),
+        attacker_id: attackerId ?? 0,
+        attackerName: nameOf(attackerId, 'An attacker'),
+        defender_id: defenderId ?? 0,
+        defenderName: nameOf(defenderId, 'the previous owner'),
         status,
         areaCaptured: row.area_at_event ?? 0,
         runDistance: activity?.distance ?? 0,

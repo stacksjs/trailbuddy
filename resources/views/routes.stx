@@ -8,6 +8,12 @@
 
   useHead({ title: 'Route Planner - WildLoop' })
   const wl = useStore('wl')
+
+  // The catalog itself is hydrated by the layout, which decides per path what
+  // this page needs — `/routes` was missing from that list, so the picker
+  // below listed the store's demo fixtures and offered trails that do not
+  // exist.
+
   const name = state('')
   const selectedTrailId = state(0)
   const routes = state<any[]>([])

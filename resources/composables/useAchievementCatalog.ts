@@ -4,7 +4,12 @@ import { fetchAchievements } from '../assets/scripts/game-api'
 /**
  * Hydrate the `wl` store's achievements from the live unlock engine
  * (`GET /api/users/{id}/achievements`, #982), mirroring useActivityCatalog.
- * Falls back silently to seed data when the API is empty/unreachable.
+ *
+ * An empty wall is a real answer, and the same reasoning the activity and
+ * territory catalogs record applies here: returning early on a zero-length
+ * list left the store's demo badges on screen, so an account that has earned
+ * nothing was shown achievements it never unlocked. Only an unreachable API
+ * falls back now.
  */
 
 interface AchievementStoreLike {
@@ -23,8 +28,10 @@ export function useAchievementCatalog(wl: AchievementStoreLike | null) {
     achievementsStarted = true
     const payload = await fetchAchievements(wl.currentUserId())
     const rows = Array.isArray(payload?.achievements) ? payload.achievements : []
-    if (!rows.length)
+    if (!payload) {
+      // The request itself failed; leave whatever the store already had.
       return
+    }
     wl.hydrateAchievements(rows.map((a: any) => ({
       id: a.id,
       name: a.name,

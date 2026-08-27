@@ -4,7 +4,14 @@ import { fetchNotifications } from '../assets/scripts/game-api'
 /**
  * Hydrate the current user's notifications from the API into the `wl` store so
  * the notifications page + nav unread badge reflect real kudos/comment/follow
- * events. Falls back to seed data when the API is empty/unreachable.
+ * events.
+ *
+ * An empty answer is an answer. This used to return early on a zero-length
+ * list and leave the store's demo notifications in place, so an account with
+ * nothing waiting for it was shown fabricated alerts about people who do not
+ * exist — including a "Territory Under Attack!" alarm — and an unread badge
+ * counting them. Only a failed request falls back now, which is the same rule
+ * the trail catalog applies for the same reason.
  */
 
 interface NotificationStoreLike {
@@ -21,7 +28,7 @@ export function useNotifications(wl: NotificationStoreLike | null) {
     notificationsStarted = true
     try {
       const data = await fetchNotifications()
-      if (!data || !Array.isArray(data.notifications) || data.notifications.length === 0)
+      if (!data || !Array.isArray(data.notifications))
         return
       // Map the API shape to the store's Notification shape.
       const mapped = data.notifications.map((n: any) => ({

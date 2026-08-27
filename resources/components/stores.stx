@@ -1,4 +1,7 @@
 <script client>
+  import { computeConquestRecord } from '../functions/conquest-stats'
+  import { computeTrainingStats } from '../functions/training-stats'
+
   // ===== Types =====
   interface User {
     id: number
@@ -477,6 +480,10 @@
         else
           this.users.push(normalized)
         this.currentUserId = user.id
+        // Activities and battles often land before /api/me answers, so both
+        // folds have to run again once we know whose page this is.
+        this.recomputeUserStats()
+        this.recomputeConquestStats()
       },
       clearAuthenticatedUser() {
         this.currentUserId = 0
@@ -501,19 +508,58 @@
       ) {
         this.territories = territories
         this.territoryPolygons = polygons
-        // Merge any owners we don't already know about so names resolve.
-        const known = new Set(this.users.map((u: User) => u.id))
+        // Upsert the owners, rather than only adding unfamiliar ones.
+        //
+        // The store ships demo users occupying ids 1..N, so a real owner whose
+        // id collided with one of them was skipped and the territory rendered
+        // under the fixture's name — "Owned by Jake Thompson" on land that
+        // belongs to a seeded athlete. The API's users are the truth here, so
+        // a matching id is overwritten and only genuinely new owners appended.
+        const next = [...this.users]
         for (const u of users) {
-          if (!known.has(u.id))
-            this.users.push(u)
+          const index = next.findIndex((candidate: User) => candidate.id === u.id)
+          if (index >= 0)
+            next[index] = { ...next[index], ...u }
+          else
+            next.push(u)
         }
+        this.users = next
       },
       /** Replace seed activities with live data from /api/activities. */
       hydrateActivitiesFromApi(activities: Activity[]) {
         this.activities = activities
+        this.recomputeUserStats()
+      },
+      /**
+       * Refold the signed-in athlete's training totals from their activities.
+       *
+       * `userStats` was a fixture and nothing ever replaced it, so /stats and
+       * /profile showed the same 78.4 miles and 12-day streak for every
+       * account — including one with no activities at all. There is no
+       * endpoint for these numbers (user_stats has no weekly or monthly
+       * split), and folding them from the activities already in the store is
+       * what keeps the summary and the feed below it in agreement.
+       */
+      recomputeUserStats() {
+        if (!this.currentUserId)
+          return
+        this.userStats = computeTrainingStats(this.currentUserId, this.activities)
       },
       hydrateConquestsFromApi(conquests: Conquest[]) {
         this.conquests = conquests
+        this.recomputeConquestStats()
+      },
+      /**
+       * Refold the signed-in athlete's game record from the battle feed.
+       *
+       * `conquestStats` was a fixture too, so /conquests reported the same
+       * three conquests and six defences to every account regardless of what
+       * the battles below the counters actually said.
+       */
+      recomputeConquestStats() {
+        if (!this.currentUserId)
+          return
+        this.conquestStats = computeConquestRecord(this.currentUserId, this.conquests)
       },
       findTrail(id: number): Trail | undefined {
         return this.trails.find((t: Trail) => t.id === id)

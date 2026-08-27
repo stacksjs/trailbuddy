@@ -94,3 +94,46 @@ export function computeAchievementProgress(
   }
   return entries
 }
+
+export interface AchievementMetricActivity {
+  distance?: number | null
+  elevation?: number | null
+  trail_id?: number | null
+  completed_at?: string | null
+  splits?: string | null
+}
+
+export interface AchievementMetricStats {
+  territories_conquered?: number | null
+  territories_defended?: number | null
+  total_territories_owned?: number | null
+}
+
+/**
+ * Every metric an achievement can be defined against, folded from the rows
+ * that are its source of truth.
+ *
+ * Pure so the unlock engine and the seeder compute a user's standing the same
+ * way. The metric names are the model's `metrics` enum, and a definition
+ * naming one that is missing here is skipped by `computeAchievementProgress`
+ * rather than silently reading zero.
+ */
+export function achievementMetricValues(input: {
+  activities: AchievementMetricActivity[]
+  kudosGiven: unknown[]
+  stats?: AchievementMetricStats | null
+}): Record<string, number> {
+  const { activities, kudosGiven, stats } = input
+  return {
+    activities: activities.length,
+    distinct_trails: new Set(activities.map(a => a.trail_id).filter(Boolean)).size,
+    total_miles: activities.reduce((sum, a) => sum + (a.distance ?? 0), 0),
+    total_elevation: activities.reduce((sum, a) => sum + (a.elevation ?? 0), 0),
+    territories_conquered: stats?.territories_conquered ?? 0,
+    territories_defended: stats?.territories_defended ?? 0,
+    territories_owned: stats?.total_territories_owned ?? 0,
+    kudos_given: kudosGiven.length,
+    streak_days: longestDayStreak(activities.map(a => a.completed_at)),
+    fast_mile: hasSubSevenMile(activities.map(a => a.splits)) ? 1 : 0,
+  }
+}

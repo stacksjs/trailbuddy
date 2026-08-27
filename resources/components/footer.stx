@@ -1,9 +1,16 @@
+<script server>
+  // The copyright year is a render-time constant, so it is computed here
+  // rather than shipped to the browser. It also has to survive the client
+  // scope below failing to hydrate: the footer is on every page, and a
+  // copyright line reading "© WildLoop" with the year missing is the most
+  // visible thing on the site when it does.
+  const year = new Date().getFullYear()
+</script>
+
 <script client>
   import { useAppInstall } from '../composables/useAppInstall'
 
   const { canPrompt, installed, platform, promptInstall } = useAppInstall()
-
-  const year = new Date().getFullYear()
 </script>
 
 <footer class="mt-auto border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">

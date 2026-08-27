@@ -26,18 +26,10 @@ export async function evaluateAchievementsForUser(userId: number): Promise<{
   const kudosGiven = (await Kudos.where('giver_id', '=', userId).get()) ?? []
   const stats = await TerritoryStats.where('user_id', '=', userId).first()
 
-  const metricValues: Record<string, number> = {
-    activities: activities.length,
-    distinct_trails: new Set(activities.map((a: any) => a.trail_id).filter(Boolean)).size,
-    total_miles: activities.reduce((sum: number, a: any) => sum + (a.distance ?? 0), 0),
-    total_elevation: activities.reduce((sum: number, a: any) => sum + (a.elevation ?? 0), 0),
-    territories_conquered: stats?.territories_conquered ?? 0,
-    territories_defended: stats?.territories_defended ?? 0,
-    territories_owned: stats?.total_territories_owned ?? 0,
-    kudos_given: kudosGiven.length,
-    streak_days: longestDayStreak(activities.map((a: any) => a.completed_at)),
-    fast_mile: hasSubSevenMile(activities.map((a: any) => a.splits)) ? 1 : 0,
-  }
+  // The fold itself lives in resources/functions/achievements.ts so the
+  // database seeder computes a user's standing from exactly the same rules
+  // this engine does, rather than a second copy of them.
+  const metricValues = achievementMetricValues({ activities, kudosGiven, stats })
 
   const entries = computeAchievementProgress(definitions, metricValues)
   const existing = (await UserAchievement.where('user_id', '=', userId).get()) ?? []

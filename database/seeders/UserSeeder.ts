@@ -38,8 +38,8 @@ interface SeedUser {
   }
 }
 
-/** Shared across every seeded account. Staging only — see the note above. */
-const SEED_PASSWORD = 'wildloop-staging'
+/** Shared across every seeded athlete. Staging only — see the note above. */
+export const SEED_PASSWORD = 'wildloop-staging'
 
 const USERS: SeedUser[] = [
   {

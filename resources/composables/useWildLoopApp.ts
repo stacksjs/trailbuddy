@@ -87,7 +87,7 @@ export function dataNeedsForPath(pathname: string): AppDataNeeds {
     battles: isPath(pathname, ['/battles', '/challenges', '/conquests', '/territories', '/territory']),
     follows: isPath(pathname, ['/athlete', '/athletes', '/feed', '/profile']),
     territories: isPath(pathname, ['/battles', '/challenges', '/conquests', '/leaderboard', '/record', '/territories', '/territory']),
-    trails: isPath(pathname, ['/record', '/trail', '/trails']),
+    trails: isPath(pathname, ['/record', '/routes', '/trail', '/trails']),
   }
 }
 
