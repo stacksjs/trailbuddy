@@ -817,22 +817,15 @@
   }
 
   /* An icon is a flex item sitting next to a text block that wants all the
-     room, so without this it gets squashed to a 3px sliver — every feature
-     rule and checklist on this page was rendering its glyph as a smear.
-     `w-5`/`w-4` cannot win it back on their own: the `.i-lucide-*` utility
-     sets `width: 1em` and is emitted after the sizing utilities, so the size
-     is pinned here alongside `flex: none`. */
-  .feature-rule > i {
-    flex: none;
-    width: 1.25rem;
-    height: 1.25rem;
-  }
-
+     room, so it needs to be told not to give any of it up — otherwise every
+     feature rule and checklist here renders its glyph as a smear.
+     The SIZE is not set here: each icon carries its own `h-5 w-5` (or
+     `h-4 w-4`), and crosswind ranks icon utilities below sizing ones, so
+     those win over the icon's default `1em` on their own. */
+  .feature-rule > i,
   .live-stage li > i,
   .share-stage li > i {
     flex: none;
-    width: 1rem;
-    height: 1rem;
   }
 
   .territory-plot {
