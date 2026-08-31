@@ -528,6 +528,13 @@ route.group({ middleware: 'auth' }, () => {
     route.patch('/route-efforts/{id}', 'Actions/Record/RouteEffortUpdateAction')
     route.delete('/route-efforts/{id}', 'Actions/Record/RouteEffortDestroyAction')
     route.post('/route-efforts/{id}/review', 'Actions/Record/RouteEffortReviewAction').middleware('role:admin')
+
+    // Anti-cheat review. The physics checks refuse what is impossible; these
+    // two are where a person decides the cases that are only improbable.
+    // Flagging with nowhere to look is worse than not flagging, because it
+    // lets the team believe something is being checked.
+    route.get('/admin/integrity-queue', 'Actions/Admin/IntegrityQueueAction').middleware('role:admin')
+    route.post('/admin/integrity-review/{id}', 'Actions/Admin/IntegrityReviewAction').middleware('role:admin')
     route.get('/custom-routes', 'Actions/Route/CustomRouteIndexAction')
     route.post('/custom-routes', 'Actions/Route/CustomRouteStoreAction')
     route.delete('/custom-routes/{id}', 'Actions/Route/CustomRouteDestroyAction')
