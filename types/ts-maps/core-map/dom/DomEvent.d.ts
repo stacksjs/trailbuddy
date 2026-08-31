@@ -1,0 +1,15 @@
+import { Point } from '../geometry/Point';
+import * as PointerEvents from './DomEvent.PointerEvents';
+export declare function on(this: any, obj: any, types: any, fn?: any, context?: any): any;
+export declare function off(this: any, obj: any, types?: any, fn?: any, context?: any): any;
+export declare function stopPropagation(this: any, e: any): any;
+export declare function disableScrollPropagation(this: any, el: any): any;
+export declare function disableClickPropagation(this: any, el: any): any;
+export declare function preventDefault(this: any, e: any): any;
+export declare function stop(this: any, e: any): any;
+export declare function getPropagationPath(ev: any): any[];
+export declare function getPointerPosition(e: any, container?: HTMLElement): Point;
+export declare function getWheelPxFactor(): number;
+export declare function getWheelDelta(e: any): number;
+export declare function isExternalTarget(el: Element, e: any): boolean;
+export { PointerEvents };

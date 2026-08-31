@@ -28,6 +28,8 @@
       "Models/*": ["./app/Models/*"],
       "Notifications/*": ["./app/Notifications/*"],
       "stx": ["./node_modules/@stacksjs/stx/dist/index.d.ts"],
+      "ts-maps": ["./types/ts-maps/index.d.ts"],
+      "ts-maps/*": ["./types/ts-maps/core-map/*"],
       "~/*": ["./*"],
       "@/*": ["./resources/*"]
     }

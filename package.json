@@ -39,7 +39,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "build:maps": "mkdir -p public/js public/css && bun build ts-maps --outfile public/js/ts-maps.mjs --format esm --minify && cp node_modules/ts-maps/src/core-map/ts-maps.css public/css/ts-maps.css",
+    "build:maps": "bun scripts/build-maps.ts",
     "build:mobile-associations": "bun scripts/generate-mobile-associations.ts",
     "build:reset": "rm -rf node_modules pantry.lock && bun install && ./buddy generate:types && ./buddy lint:fix",
     "buddy": "./buddy",
