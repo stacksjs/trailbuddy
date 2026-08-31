@@ -3,7 +3,6 @@ import { formatTerritoryArea } from '../functions/territory-style'
 import { appReview, device, haptics, health, isNativeMobile, keepAwake, lifecycle, liveActivities, location, secureStorage, watchConnectivity } from '@stacksjs/mobile'
 import type { CircleMarker as CircleMarkerType } from 'ts-maps'
 import type { Polygon as PolygonType } from 'ts-maps'
-import type { Polyline as PolylineType } from 'ts-maps'
 import type { TsMap as TsMapType } from 'ts-maps'
 import {
   createLiveRouteLine,
@@ -13,6 +12,7 @@ import {
   ensureTsMaps,
   runWhenMapReady,
   type LatLng,
+  type LiveRouteLine,
 } from './useTrailMap'
 import {
   persistRunAndProcess,
@@ -188,7 +188,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
     territoryLayers: Record<number, PolygonType>
     territoryBounds: Record<number, TerritoryBounds>
     trailMarkers: Record<number, CircleMarkerType>
-    routeLine: PolylineType | null
+    routeLine: LiveRouteLine | null
     routeCoords: LatLng[]
     /** Timestamped samples (alt + moving time) for splits/elevation (#952/#953). */
     samples: RecorderSample[]
@@ -856,7 +856,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
 
       const uid = store.currentUserId()
       const polys = store.territoryPolygons()
-      const bounds: LatLng[] = []
+      const trailBounds: LatLng[] = []
 
       for (const t of store.territories()) {
         const poly = polys[t.id]
@@ -878,7 +878,6 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
 
         refs.territoryLayers[t.id] = layer
         refs.territoryBounds[t.id] = polygonBounds(poly)
-        bounds.push(...poly)
       }
 
       for (const tr of store.trails()) {
@@ -889,10 +888,27 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
           onClick: () => selectedTrailId.set(tr.id),
         })
         refs.trailMarkers[tr.id] = marker
-        bounds.push([tr.lat, tr.lng])
+        trailBounds.push([tr.lat, tr.lng])
       }
 
-      if (bounds.length) refs.mapHandle.fitPoints(bounds, [40, 40])
+      /*
+       * Open on one territory, not on a map of the country.
+       *
+       * Framing everything put this screen at continental zoom, where a claim a
+       * few hundred metres across is smaller than the dot drawn over it — a
+       * start screen showing nothing anyone could set off from. Holdings are
+       * not necessarily near each other either, so fitting all of them is no
+       * better than fitting all the trailheads. One territory always frames to
+       * a runnable view: the athlete's biggest, or the biggest in play for
+       * someone who has not claimed any ground yet.
+       */
+      const focus = store.territories()
+        .filter(t => polys[t.id]?.length)
+        .sort((a, b) =>
+          Number(b.user_id === uid) - Number(a.user_id === uid)
+          || b.areaSize - a.areaSize)[0]
+      const frame = focus ? polys[focus.id]! : trailBounds
+      if (frame.length) refs.mapHandle.fitPoints(frame, [40, 40])
       else refs.map.setView([37.7749, -122.4194], 5)
 
       await recoverRecording()
