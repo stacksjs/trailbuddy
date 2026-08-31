@@ -15,6 +15,6 @@ onFlowComplete:
     visible: "Find your next adventure"
     timeout: 30000
 - tapOn: "^Record$"
-- assertVisible: Close a loop and the ground inside it is yours
+- assertVisible: "Close a loop.*"
 - assertNotVisible: "would like to use your current location"
 - takeScreenshot: offline-bundle

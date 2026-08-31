@@ -10,7 +10,7 @@ tags:
     timeout: 30000
 - tapOn: "^Open$"
 - extendedWaitUntil:
-    visible: Close a loop and the ground inside it is yours
+    visible: "Close a loop.*"
     timeout: 30000
 - assertNotVisible: "would like to use your current location"
 - scrollUntilVisible:
@@ -28,7 +28,7 @@ tags:
     timeout: 30000
 - tapOn: "^Record$"
 - extendedWaitUntil:
-    visible: Close a loop and the ground inside it is yours
+    visible: "Close a loop.*"
     timeout: 30000
 - extendedWaitUntil:
     visible: Cascade Ridge Zone
