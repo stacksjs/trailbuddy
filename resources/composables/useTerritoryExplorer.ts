@@ -1,4 +1,10 @@
 import { derived, onDestroy, state } from 'stx'
+import {
+  diffTerritories,
+  formatTerritoryArea,
+  territoryAppearance,
+  type TerritorySnapshot,
+} from '../functions/territory-style'
 import { loadTerritories, type TerritoryViewport } from './useTerritoryCatalog'
 import {
   createTrailMap,
@@ -58,7 +64,11 @@ export function useTerritoryExplorer(wl: TerritoryStore | null) {
     leaderboard().map((entry, index) => ({ ...entry, rank: index + 1 })),
   )
 
-  const formatArea = (area: number): string => `${(area / 1000).toFixed(1)} km²`
+  // `area_size` is square metres, from `calculatePolygonArea`. Dividing by a
+  // thousand and calling the result km² overstated every territory by a factor
+  // of a thousand — a 1 km² claim read as "1000.0 km²" — and the unit is now
+  // chosen for the magnitude, because the game spans four orders of it.
+  const formatArea = (area: number): string => formatTerritoryArea(area)
 
   async function mountTerritoryMap() {
     if (!wl) return
@@ -66,32 +76,79 @@ export function useTerritoryExplorer(wl: TerritoryStore | null) {
     territoryMap = await createTrailMap('territories-map', { scrollWheelZoom: true })
     if (!territoryMap) return
     const { map } = territoryMap
-    const territoryLayers: Array<{ remove?: () => void }> = []
+    // Keyed by territory so a pan can update what changed instead of tearing
+    // the whole map down. Rebuilding everything on `moveend` destroyed and
+    // recreated hundreds of paths to move the map by a block, and took any
+    // open popup with them.
+    const territoryLayers = new Map<number, any>()
+    const drawn = new Map<number, TerritorySnapshot>()
     const bounds: LatLng[] = []
     const uid = currentUserId()
 
-    async function drawTerritories(shouldFit: boolean) {
-      for (const layer of territoryLayers)
-        map.removeLayer(layer as any)
-      territoryLayers.length = 0
+    const ownerName = (ownerId: number): string =>
+      wl!.users().find(u => u.id === ownerId)?.name ?? 'Unknown athlete'
 
-      for (const t of wl!.territories()) {
-        const coords = wl!.territoryPolygons()[t.id]
-        if (!coords) continue
-        const isYours = t.user_id === uid
-        const color = isYours ? '#059669' : '#f59e0b'
-        const polygon = await drawTerritoryPolygon(map, coords, {
-          color,
-          fillOpacity: isYours ? 0.4 : 0.2,
-          weight: isYours ? 3 : 2,
-          dashArray: t.status === 'contested' ? '8 4' : undefined,
-          onClick: () => polygon && map.flyToBounds(polygon.getBounds(), { padding: [40, 40] }),
-        })
-        if (!polygon)
-          continue
-        territoryLayers.push(polygon)
-        if (shouldFit)
-          bounds.push(...coords)
+    async function addTerritory(t: { id: number, name: string, user_id: number, status: string, areaSize: number }) {
+      const coords = wl!.territoryPolygons()[t.id]
+      if (!coords)
+        return
+
+      const style = territoryAppearance(t.user_id, uid, t.status)
+      const polygon = await drawTerritoryPolygon(map, coords, {
+        ...style,
+        // Colour is identity on this map, so the popup names whose it is and
+        // what it is worth rather than leaving the player to decode a hue.
+        popupHtml: `<strong>${t.name}</strong><br>${ownerName(t.user_id)} · ${formatTerritoryArea(t.areaSize)}`,
+      })
+      if (!polygon)
+        return
+
+      polygon.on('click', () => map.flyToBounds(polygon.getBounds(), { padding: [40, 40] }))
+      territoryLayers.set(t.id, polygon)
+    }
+
+    function removeTerritory(id: number) {
+      const layer = territoryLayers.get(id)
+      if (!layer)
+        return
+      map.removeLayer(layer)
+      territoryLayers.delete(id)
+    }
+
+    async function drawTerritories(shouldFit: boolean) {
+      const polygons = wl!.territoryPolygons()
+      const territories = wl!.territories()
+
+      const snapshots: TerritorySnapshot[] = territories
+        .filter(t => polygons[t.id])
+        .map(t => ({
+          id: t.id,
+          userId: t.user_id,
+          status: t.status,
+          shapeVersion: String(polygons[t.id]!.length),
+        }))
+
+      const { added, changed, removed } = diffTerritories(drawn, snapshots)
+
+      for (const id of removed)
+        removeTerritory(id)
+
+      // A changed territory is redrawn, because ownership and shape are what
+      // its appearance is derived from.
+      for (const snapshot of [...added, ...changed]) {
+        removeTerritory(snapshot.id)
+        const territory = territories.find(t => t.id === snapshot.id)
+        if (territory)
+          await addTerritory(territory)
+      }
+
+      drawn.clear()
+      for (const snapshot of snapshots)
+        drawn.set(snapshot.id, snapshot)
+
+      if (shouldFit) {
+        for (const snapshot of snapshots)
+          bounds.push(...polygons[snapshot.id]!)
       }
     }
 

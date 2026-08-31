@@ -1,4 +1,5 @@
 import { derived, onDestroy, onMount, state, useStore } from 'stx'
+import { formatTerritoryArea } from '../functions/territory-style'
 import { appReview, device, haptics, health, isNativeMobile, keepAwake, lifecycle, liveActivities, location, secureStorage, watchConnectivity } from '@stacksjs/mobile'
 import type { CircleMarker as CircleMarkerType } from 'ts-maps'
 import type { Polygon as PolygonType } from 'ts-maps'
@@ -866,7 +867,7 @@ export function useRecorder({ mapElId, wl }: RecorderOptions) {
           color,
           fillOpacity: mine ? 0.45 : 0.15,
           weight: targetTerritoryId() === t.id ? 4 : 2,
-          popupHtml: `<b>${t.name}</b><br>${mine ? 'Your turf' : 'Enemy turf. Run through to capture'}<br>${(t.areaSize / 1000).toFixed(1)} km²`,
+          popupHtml: `<b>${t.name}</b><br>${mine ? 'Your turf' : 'Enemy turf. Run through to capture'}<br>${formatTerritoryArea(t.areaSize)}`,
           onClick: () => {
             if (!mine && !recording())
               targetTerritoryId.set(t.id)
