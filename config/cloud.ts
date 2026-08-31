@@ -139,10 +139,24 @@ export const tsCloud: TsCloudConfig = {
       // The release ships without dependencies, so nothing resolves until
       // install runs here.
       //
-      // Migrations are NOT listed here, and that is deliberate: the deploy
-      // injects `buddy migrate --no-generate` into the database owner itself,
-      // with a `db:backup --before-migrations` in front of it. Listing one
-      // here would only pin it to a site of our choosing and skip that default.
+      // This site migrates, and it is the only one that does. `migrate` is
+      // also the marker the deploy uses to decide which site owns the
+      // database — the owner's shared path is what the siblings link at, and
+      // the owner is where the automatic `db:backup --before-migrations` is
+      // spliced in — so a second site running it would make ownership
+      // ambiguous rather than migrate twice.
+      //
+      // `--no-generate` is doing real work here. Plain `buddy migrate`
+      // regenerates SQL from the models before applying it, and the model
+      // snapshot is gitignored, so the box has none: generation there would
+      // diff against nothing and write a fresh migration set over a database
+      // that already has those tables. This applies `database/migrations` and
+      // derives nothing.
+      //
+      // Stacks ≥0.73.2 injects this automatically for every app; declared
+      // explicitly because this app is on 0.73.1, and because an app that
+      // names its own migrate step is deliberately left alone by that
+      // injection.
       //
       // The scheduler is the same story. `app/Scheduler.ts` declares hourly
       // ranks, daily decay and counter repair, and the deploy attaches a
@@ -190,6 +204,7 @@ export const tsCloud: TsCloudConfig = {
         // The database lives OUTSIDE the release, so create its directory
         // before migrate runs — on a fresh box nothing else would.
         'mkdir -p /var/www/wildloop-shared/database',
+        './buddy migrate --no-generate',
       ],
       // Pin the proxy target. `buddy serve` otherwise falls back to
       // 127.0.0.1:3008, which on this SHARED box is the `stacks` project's own
