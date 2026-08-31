@@ -2,9 +2,45 @@
 
 ## Eligible activities
 
-Only a live `web_gps` activity recorded in `capture` mode can score. The server requires at least 20 ordered samples, at least two minutes and 100 metres, recent completion, timestamps on every sample, and device accuracy of 75 metres or better on at least 80% of samples. Speed is capped at 12 m/s for runs, hikes, and walks and 25 m/s for bikes.
+Only a live `web_gps` activity recorded in `capture` mode can score. The server requires at least 20 ordered samples, at least two minutes and 100 metres, recent completion, timestamps on every sample, and device accuracy of 75 metres or better on at least 80% of samples.
 
 Manual activities, route previews/simulations, imported files, Garmin summary-only webhooks, and free runs are deliberately non-scoring. They remain useful activity records.
+
+## Integrity
+
+Eligibility is decided server-side from the telemetry. Client distance, duration, and capture claims are never trusted.
+
+The checks divide into three, and the division matters: **what is impossible is refused, what is improbable is flagged, and nothing is refused on a statistic alone.** A legitimate athlete wrongly refused is a worse failure than a cheat getting through, because the athlete is real and is right.
+
+### Refused — physically impossible
+
+- **Burst speed** over 14 m/s on foot or 30 m/s on a bike. Faster than any sprinter, and a fast descent respectively.
+- **Sustained pace** faster than a body holds for that long. Checked over every window of five minutes or more against a curve anchored to world records with 25% headroom. A per-sample cap alone permits 11 m/s held for twenty minutes — under the old limit, and a car in traffic.
+- **Acceleration** over 12 m/s². Several times what a sprinter manages; it is there to catch a track assembled from waypoints, where speed jumps between legs with nothing in between.
+- **Vertical speed** over 6 m/s. Faster than any trail, up or down.
+- **Non-monotonic or missing timestamps**, coordinates off the globe, and GPS jumps over 2 km in an untimed track.
+- **A duplicate trace.** Two recordings of the same route never agree to five decimal places at every sample, so a fingerprint match is a replay — the athlete's own, or somebody else's.
+- **An overlap with another scoring activity.** Nobody is in two places at once.
+
+Curves differ by activity: a 10 m/s bike ride is an ordinary club pace and refused as a run.
+
+### Flagged — improbable, for a person to decide
+
+Signals that a track was constructed rather than recorded. A real receiver samples at irregular intervals, reports an accuracy that moves as satellites do, and produces a pace that wanders; generated tracks tend to be regular in all three. Each is individually explainable by an unusual but genuine run, which is why none of them refuses anything:
+
+- uniform sample interval, uniform speed, constant or quantised accuracy
+- no accuracy reported at all
+- geometry lying on near-perfect straight legs
+- a single altitude for the whole track
+- **impossible transit** between two activities — flagged rather than refused, because a wrong clock is likelier than a fraud
+
+These sum to an anomaly score from 0 to 1. At 0.6 or above, or on any cross-activity finding, the capture stands and the activity enters the review queue.
+
+### Review
+
+`GET /api/admin/integrity-queue` lists flagged captures worst first, with the evidence behind each. `POST /api/admin/integrity-review/{id}` clears or upholds one; upholding strips eligibility and requires a reason, which the athlete is notified of. Clearing does not grant eligibility a track never had — a capture refused by the physics checks is not made legitimate by a reviewer deciding its statistics were innocent.
+
+Evidence is stored on the activity (`anomaly_score`, `integrity_flags`, `track_fingerprint`, `review_state`) rather than recomputed, because the neighbouring activity that produced a finding may since have been deleted.
 
 ## Claims
 
