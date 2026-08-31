@@ -1,4 +1,5 @@
 import type { LatLng, UiTrail } from './trail-data'
+import { resolveVectorTiles } from '../../composables/useTrailMap'
 
 const DATABASE_NAME = 'wildloop-offline'
 const STORE_NAME = 'trail-routes'
@@ -44,6 +45,14 @@ export async function saveTrailOffline(trail: UiTrail, route: LatLng[]): Promise
   try {
     const mapsModuleUrl = '/js/ts-maps.mjs'
     const module = await import(/* @vite-ignore */ mapsModuleUrl) as typeof import('ts-maps')
+    // The tiles the basemap actually requests, which is the point: this used to
+    // pre-fetch raster OpenStreetMap images, and once the map moved to vector
+    // tiles nothing ever read them back. A download that fills a cache the map
+    // does not use is worse than no download — it reports success and then the
+    // trail is blank in the field.
+    const tileUrl = await resolveVectorTiles()
+    if (!tileUrl)
+      throw new Error('basemap tile URL unavailable')
     const latitudes = route.map(point => point[0])
     const longitudes = route.map(point => point[1])
     const padding = 0.01
@@ -54,8 +63,11 @@ export async function saveTrailOffline(trail: UiTrail, route: LatLng[]): Promise
         Math.max(...longitudes) + padding,
         Math.max(...latitudes) + padding,
       ],
+      // The vector source publishes to z14 and the renderer subdivides above
+      // it, so z14 is the deepest level worth storing — everything past it is
+      // drawn from these same tiles.
       zoomRange: [10, 14],
-      tileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      tileUrl,
       concurrency: 4,
     })
   }

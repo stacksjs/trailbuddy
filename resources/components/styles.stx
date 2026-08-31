@@ -38,24 +38,28 @@
     font-size: 9px !important;
   }
 
-  /* The basemap is a three-layer stack (see useTrailMap): hillshade, then the
-     land style, then labels. Multiplying the relief is what turns a flat grey
-     wash into terrain — the slopes darken the greens and greys beneath them
-     instead of veiling the whole map. */
-  .wl-map-terrain {
+  /* Shaded relief, multiplied over the vector basemap. The DEM is shaded
+     theme-neutrally — white highlights, grey shadows — and multiply is what
+     makes one shading work for both themes: a lit slope is white, and white
+     multiplies to nothing, so only the shadowed faces darken. Blends that lift
+     as well as darken (soft-light, overlay) turn the dark basemap into a white
+     relief map, because on near-black land there is far more headroom above
+     than below. Strength is set on the layer, not here — it writes its own
+     inline opacity, which a rule in this file could never outrank. */
+  .wl-map-relief {
     mix-blend-mode: multiply;
-    filter: saturate(0);
   }
 
-  .dark .wl-map-terrain {
-    mix-blend-mode: soft-light;
-    filter: saturate(0) invert(1);
-  }
-
-  /* Labels ride above the route lines and territory fills drawn on the overlay
-     pane, so a place name is never cut in half by a track. */
-  .wl-map-labels {
-    pointer-events: none;
+  /* Map chrome: the library ships neutral controls, and these are the two
+     things a product changes about them — the corner radius the rest of the
+     app uses, and a shadow so a white button on a pale basemap has an edge. */
+  .ts-map-container .tsmap-control-navigation,
+  .ts-map-container .tsmap-control-locate,
+  .ts-map-container .tsmap-control-fullscreen,
+  .ts-map-container .tsmap-control-zoom {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgb(9 20 16 / 18%);
   }
 
   /* Trail pins get a soft drop shadow rather than sitting flat on the tiles. */

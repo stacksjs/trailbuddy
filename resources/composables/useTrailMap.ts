@@ -1,49 +1,78 @@
 import type { CircleMarker as CircleMarkerType } from 'ts-maps'
 import type { Polygon as PolygonType } from 'ts-maps'
 import type { Polyline as PolylineType } from 'ts-maps'
+import type { RunTrailLayer as RunTrailLayerType } from 'ts-maps'
 import type { TsMap as TsMapType } from 'ts-maps'
+import type { Style as StyleSpec } from 'ts-maps/style-spec/types'
 
 export type LatLng = [number, number]
 
 type TsMapsModule = typeof import('ts-maps')
 
 /**
- * The basemap is a three-layer stack rather than one flat tile sheet, which is
- * what makes it read like a modern map app instead of raw OpenStreetMap carto:
+ * The basemap is a vector style, not a sheet of pictures.
  *
- *   1. terrain    — hillshaded relief, so a ridge looks like a ridge
- *   2. land       — muted roads, water, and parks with the labels held back
- *   3. labels     — place names composited last, so nothing prints over them
+ * That is the whole difference between this looking like a map app and looking
+ * like OpenStreetMap in an iframe. Vector tiles carry the geometry rather than
+ * a rendering of it, so labels stay upright and crisp at any fractional zoom,
+ * the palette is ours, and — the part that matters for a trail app — we can
+ * pull footpaths out of the road network and draw them as their own class.
  *
- * Every raster layer requests `{r}` (`@2x` on a HiDPI screen) and runs with
- * `detectRetina`, so a phone or a Retina laptop gets true 512px tiles. The old
- * single-layer 1x OpenStreetMap sheet is the whole reason the maps looked soft.
+ * On top of the built-in `styles.light` / `styles.dark` skeletons this app lifts
+ * trails, tracks and footways out of `road-minor` — where OpenMapTiles leaves
+ * them — and draws them dashed and in the brand green, then multiplies shaded
+ * relief over the whole thing so a ridge reads as a ridge.
+ *
+ * `RASTER_FALLBACK` is the same style skeleton over pre-rendered images, used
+ * when the vector service cannot be reached — an offline WebView, a locked-down
+ * network. It looks worse, and it is still a map.
  */
-const BASEMAPS = {
-  light: {
-    land: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png',
-    labels: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png',
-    terrainOpacity: 0.42,
-  },
-  dark: {
-    land: 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}/{y}{r}.png',
-    labels: 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_only_labels/{z}/{x}/{y}{r}.png',
-    terrainOpacity: 0.3,
-  },
+const VECTOR_TILEJSON = 'https://tiles.openfreemap.org/planet'
+
+const RASTER_FALLBACK = {
+  light: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+  dark: 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png',
 } as const
 
+/**
+ * Shaded relief, pre-rendered by Esri and served keyless.
+ *
+ * The obvious alternative is to shade a DEM in the browser — ts-maps has a
+ * `hillshade` layer that does exactly that, over the terrarium elevation tiles
+ * AWS publishes. It is rejected here for one practical reason: that bucket
+ * drops requests when a viewport asks for eight tiles at once, and every drop
+ * is a rectangle with no relief in it. A viewport that renders correctly on the
+ * third reload is not a basemap.
+ *
+ * Pre-rendered relief costs nothing to decode, arrives as one reliable image
+ * per tile, and — the deciding factor — is drawn by cartographers rather than
+ * by a Lambertian one-liner. Note `{z}/{y}/{x}`: Esri's REST tiles put row
+ * before column.
+ */
 const TERRAIN_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}'
+const TERRAIN_MAX_NATIVE_ZOOM = 16
 
-const CARTO_SUBDOMAINS = 'abcd'
+const VECTOR_ATTRIBUTION = '&copy; <a href="https://openfreemap.org">OpenFreeMap</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+const RASTER_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+const TERRAIN_ATTRIBUTION = 'Terrain: Esri'
+
 const MAX_ZOOM = 20
 
-const BASEMAP_ATTRIBUTION = [
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-  '&copy; <a href="https://carto.com/attributions">CARTO</a>',
-  'Terrain: Esri',
-].join(' | ')
+/**
+ * How hard the relief bites, per theme.
+ *
+ * Esri's plate is grey on white, and multiply means only the grey lands. Dark
+ * needs less of it: the same amount of darkening reads far stronger against
+ * near-black ground than against paper.
+ */
+function reliefOpacity(theme: BasemapTheme): number {
+  return theme === 'dark' ? 0.45 : 0.75
+}
 
-type BasemapTheme = keyof typeof BASEMAPS
+/** The green a route is drawn in, and the green a mapped trail is drawn in. */
+const ROUTE_GREEN = '#059669'
+
+type BasemapTheme = 'light' | 'dark'
 
 function currentTheme(): BasemapTheme {
   if (typeof document === 'undefined')
@@ -83,9 +112,142 @@ export async function ensureTsMaps(): Promise<TsMapsModule> {
   return mapsLoad
 }
 
+/**
+ * OpenFreeMap publishes its current tile URL through a TileJSON, and the path
+ * carries a dated version that changes when the planet is rebuilt. Reading it
+ * once per session means a rebuild on their side does not blank every map here.
+ *
+ * The answer is cached in `sessionStorage` so only the first page load of a
+ * session pays for it, and the lookup is raced against a timeout: a hanging
+ * request must fall through to raster rather than leave the map empty.
+ */
+const TILE_URL_CACHE_KEY = 'wildloop:vector-tiles'
+let tileUrlPromise: Promise<string | null> | null = null
+
+export async function resolveVectorTiles(): Promise<string | null> {
+  if (typeof fetch !== 'function')
+    return null
+
+  if (!tileUrlPromise) {
+    tileUrlPromise = (async () => {
+      try {
+        const cached = sessionStorage?.getItem(TILE_URL_CACHE_KEY)
+        if (cached)
+          return cached
+      }
+      catch { /* private mode; just fetch */ }
+
+      try {
+        const controller = new AbortController()
+        const timer = setTimeout(() => controller.abort(), 6000)
+        const response = await fetch(VECTOR_TILEJSON, { signal: controller.signal })
+        clearTimeout(timer)
+        if (!response.ok)
+          throw new Error(`HTTP ${response.status}`)
+        const tilejson = await response.json() as { tiles?: string[] }
+        const url = tilejson?.tiles?.[0] ?? null
+        if (url) {
+          try { sessionStorage?.setItem(TILE_URL_CACHE_KEY, url) }
+          catch { /* not fatal */ }
+        }
+        return url
+      }
+      catch {
+        // Every caller falls back to raster. Not worth a console error on a
+        // page whose map still works.
+        return null
+      }
+    })()
+  }
+  return tileUrlPromise
+}
+
+/** Insert `layers` directly before the layer with id `beforeId`, or append. */
+function insertBefore(spec: StyleSpec, beforeId: string, layers: StyleSpec['layers']) {
+  const at = spec.layers.findIndex(layer => layer.id === beforeId)
+  spec.layers.splice(at < 0 ? spec.layers.length : at, 0, ...layers)
+}
+
+const TRAIL_CLASSES = ['path', 'track', 'bridleway'] as const
+
+function buildStyle(
+  maps: TsMapsModule,
+  theme: BasemapTheme,
+  tiles: string | null,
+): StyleSpec {
+  const build = theme === 'dark' ? maps.styles.dark : maps.styles.light
+
+  if (!tiles) {
+    return build({
+      tiles: RASTER_FALLBACK[theme],
+      mode: 'raster',
+      attribution: RASTER_ATTRIBUTION,
+      maxzoom: MAX_ZOOM,
+    })
+  }
+
+  const spec = build({ tiles, attribution: VECTOR_ATTRIBUTION }) as StyleSpec
+
+  // Read tiles back out of the shared cache that "download for offline" fills.
+  // Without this a style's source never touches the cache, and the download
+  // would be fetching tiles the basemap never asks for.
+  const basemap = spec.sources.basemap
+  if (basemap)
+    (basemap as { offlineCache?: boolean }).offlineCache = true
+
+  // OpenMapTiles files footpaths under `transportation` with everything else
+  // that is not a motorway, so the stock style paints them as minor roads.
+  // On a trail app that is backwards: the trail is the subject.
+  const minor = spec.layers.find(layer => layer.id === 'road-minor') as
+    | { filter?: unknown }
+    | undefined
+  if (minor) {
+    minor.filter = [
+      'all',
+      ['!', ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary']]]],
+      ['!', ['in', ['get', 'class'], ['literal', [...TRAIL_CLASSES]]]],
+    ]
+  }
+
+  insertBefore(spec, 'building', [
+    {
+      id: 'trail-casing',
+      type: 'line',
+      'source-layer': 'transportation',
+      source: 'basemap',
+      minzoom: 12,
+      filter: ['in', ['get', 'class'], ['literal', [...TRAIL_CLASSES]]],
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': theme === 'dark' ? '#0b1b15' : '#ffffff',
+        'line-width': ['interpolate', ['exponential', 1.5], ['zoom'], 12, 2, 16, 6, 20, 14],
+        'line-opacity': 0.7,
+      },
+    },
+    {
+      id: 'trail',
+      type: 'line',
+      'source-layer': 'transportation',
+      source: 'basemap',
+      minzoom: 12,
+      filter: ['in', ['get', 'class'], ['literal', [...TRAIL_CLASSES]]],
+      layout: { 'line-cap': 'butt', 'line-join': 'round' },
+      paint: {
+        'line-color': theme === 'dark' ? '#34d399' : '#0f7a5a',
+        'line-width': ['interpolate', ['exponential', 1.5], ['zoom'], 12, 0.9, 16, 2.2, 20, 5],
+        // Dashes are how a paper map says "unpaved". They also keep the
+        // trail legible where it runs alongside a road of the same width.
+        'line-dasharray': [2.5, 2],
+      },
+    },
+  ] as StyleSpec['layers'])
+  return spec
+}
+
 export interface TrailMapHandle {
   map: TsMapType
   destroy: () => void
+  /** Frame these points. Deferred if the container has not been laid out yet. */
   fitPoints: (points: LatLng[], padding?: [number, number]) => void
 }
 
@@ -106,12 +268,35 @@ function resolveElement(container: HTMLElement | string): HTMLElement | null {
   return container
 }
 
+export interface TrailMapOptions {
+  center?: LatLng
+  zoom?: number
+  minZoom?: number
+  maxZoom?: number
+  scrollWheelZoom?: boolean
+  /**
+   * How much map chrome to put on screen.
+   *
+   * `'full'` — navigation (zoom, compass, pitch), scale, locate, fullscreen.
+   *   For a map that is the page.
+   * `'compact'` — zoom and locate only. For a map beside other content.
+   * `'none'` — attribution and nothing else. For thumbnails and previews,
+   *   where a control stack would cover most of the map.
+   */
+  chrome?: 'full' | 'compact' | 'none'
+  /** A keyless place-search box in the corner. */
+  search?: boolean
+  /** Shaded relief. On by default; off for small previews, where it is noise. */
+  terrain?: boolean
+}
+
 export async function createTrailMap(
   container: HTMLElement | string,
-  options?: { center?: LatLng, zoom?: number, scrollWheelZoom?: boolean },
+  options?: TrailMapOptions,
 ): Promise<TrailMapHandle | null> {
   try {
-    const { TsMap, tileLayer, Polyline, LocateControl } = await ensureTsMaps()
+    const maps = await ensureTsMaps()
+    const { TsMap, Polyline, LocateControl, NavigationControl, ScaleControl, FullscreenControl, GeocoderControl } = maps
     // Loading the map chunk yields to STX hydration. Resolve the target after
     // that await so a structural render cannot leave us mounting into a
     // detached copy of the original container.
@@ -128,75 +313,154 @@ export async function createTrailMap(
     }
     el.innerHTML = ''
 
+    const chrome = options?.chrome ?? 'compact'
+    let theme = currentTheme()
+
     const map = new TsMap(el, {
       center: options?.center ?? [39.5, -98.35],
       zoom: options?.zoom ?? 4,
+      minZoom: options?.minZoom ?? 2,
+      maxZoom: options?.maxZoom ?? MAX_ZOOM,
       scrollWheelZoom: options?.scrollWheelZoom ?? true,
+      // The chrome the app adds below is the chrome it wants; the built-in
+      // zoom box would be a second, differently-styled one.
+      zoomControl: false,
+      theme,
     })
     mapElement._tsMap = map
+
+    if (chrome === 'full') {
+      // `addTo`, not `map.addControl`: the latter is mixed onto TsMap at
+      // runtime and is not on its type, while every Control carries addTo.
+      new NavigationControl({ position: 'topright', visualizePitch: true }).addTo(map)
+      new FullscreenControl({ position: 'topright' }).addTo(map)
+      new ScaleControl({ position: 'bottomleft', imperial: true, metric: false }).addTo(map)
+    }
+    else if (chrome === 'compact') {
+      new NavigationControl({ position: 'topleft', showCompass: false }).addTo(map)
+    }
 
     // "Where am I". Geolocation is requested on press, never on load — a
     // permission prompt nobody asked for is the fastest way to be denied for
     // the rest of the session, and a denial cannot be re-requested without the
     // user digging through browser settings.
-    if (typeof LocateControl === 'function') {
-      // `addTo`, not `map.addControl`: the latter is mixed onto TsMap at
-      // runtime and is not on its type, while every Control carries addTo.
-      new LocateControl({ position: 'topleft', zoom: 14 }).addTo(map)
+    if (chrome !== 'none')
+      new LocateControl({ position: chrome === 'full' ? 'topright' : 'topleft', zoom: 14 }).addTo(map)
+
+    if (options?.search)
+      new GeocoderControl({ position: 'topleft', collapsed: true, marker: false }).addTo(map)
+
+    /*
+     * Relief goes over the basemap, not into its style.
+     *
+     * A vector source draws every one of its style layers into one canvas per
+     * tile, so a `hillshade` layer sequenced among them can only land wholly
+     * above or wholly below that canvas — and below it, the opaque land-cover
+     * fills hide it completely. Over the top, multiplied, it darkens the slopes
+     * beneath instead of covering them, which is the same thing a printed topo
+     * map does with its grey plate. The blend mode lives in CSS
+     * (`.wl-map-relief`) because it is the one part that differs between light
+     * and dark, and the shading itself is theme-neutral: white highlights,
+     * grey shadows.
+     */
+    let relief: ReturnType<TsMapsModule['tileLayer']> | null = null
+    if (options?.terrain !== false && chrome !== 'none') {
+      relief = maps.tileLayer(TERRAIN_TILES, {
+        attribution: TERRAIN_ATTRIBUTION,
+        crossOrigin: true,
+        maxNativeZoom: TERRAIN_MAX_NATIVE_ZOOM,
+        maxZoom: MAX_ZOOM,
+        // Strength, not the blend. A tile layer writes `opacity` inline on its
+        // own container, so a stylesheet rule for it could never win — which is
+        // why this is an option here and only the blend mode lives in CSS.
+        opacity: reliefOpacity(theme),
+        className: 'wl-map-relief',
+        // Above the basemap, below anything drawn on the overlay pane — a
+        // route line is data and must not be shaded like ground.
+        zIndex: 5,
+      })
+      relief.addTo(map)
     }
 
-    let theme = currentTheme()
+    // No style is painted until the tile URL resolves — which, after the first
+    // page of a session, is a cached value one microtask away. Painting the
+    // raster fallback first would download a screenful of images only to throw
+    // them away a moment later, and the swap reads as a flicker. The container
+    // carries the palette's ground colour in CSS, so the wait looks like a map
+    // loading rather than a hole in the page.
+    //
+    // `url` is null when the vector service could not be reached; `buildStyle`
+    // turns that into the raster fallback.
+    let tiles: string | null = null
+    void resolveVectorTiles().then((url) => {
+      // The map this closure was opened for may have been destroyed and
+      // replaced while the lookup was in flight. Styling a removed map throws
+      // from deep inside the renderer, on a pane that no longer exists.
+      if (mapElement._tsMap !== map)
+        return
+      tiles = url
+      map.setStyle(buildStyle(maps, currentTheme(), url))
+    })
 
-    // Relief first, at the bottom of the stack. Multiply-blended by the
-    // stylesheet so it darkens the slopes underneath the land layer instead of
-    // washing a grey film over it.
-    tileLayer(TERRAIN_TILES, {
-      attribution: '',
-      className: 'wl-map-terrain',
-      crossOrigin: true,
-      maxNativeZoom: 16,
-      maxZoom: MAX_ZOOM,
-      opacity: BASEMAPS[theme].terrainOpacity,
-      zIndex: 1,
-    }).addTo(map)
-
-    const land = tileLayer(BASEMAPS[theme].land, {
-      attribution: BASEMAP_ATTRIBUTION,
-      crossOrigin: true,
-      detectRetina: true,
-      maxZoom: MAX_ZOOM,
-      offlineCache: true,
-      subdomains: CARTO_SUBDOMAINS,
-      zIndex: 2,
-    }).addTo(map)
-
-    // Labels last, so a route line drawn on the overlay pane still sits below
-    // the place names rather than cutting through them.
-    const labels = tileLayer(BASEMAPS[theme].labels, {
-      attribution: '',
-      className: 'wl-map-labels',
-      crossOrigin: true,
-      detectRetina: true,
-      maxZoom: MAX_ZOOM,
-      offlineCache: true,
-      subdomains: CARTO_SUBDOMAINS,
-      zIndex: 3,
-    }).addTo(map)
-
-    // Follow the app's dark-mode toggle. Swapping the URL re-requests tiles in
-    // place, which is far cheaper than tearing the map down and rebuilding
-    // every route, marker, and territory drawn on it.
+    // Follow the app's dark-mode toggle. Repainting the style re-requests tiles
+    // in place, which is far cheaper than tearing the map down and rebuilding
+    // every route, marker and territory drawn on it.
     let themeWatcher: MutationObserver | null = null
     if (typeof MutationObserver !== 'undefined') {
       themeWatcher = new MutationObserver(() => {
         const next = currentTheme()
-        if (next === theme)
+        if (next === theme || mapElement._tsMap !== map)
           return
         theme = next
-        land.setUrl(BASEMAPS[next].land)
-        labels.setUrl(BASEMAPS[next].labels)
+        map.setStyle(buildStyle(maps, next, tiles))
+        map.setTheme(next)
+        relief?.setOpacity(reliefOpacity(next))
       })
       themeWatcher.observe(document.documentElement, { attributeFilter: ['class'] })
+    }
+
+    /*
+     * A map sized before its container has been laid out is a map that thinks
+     * it is 0×0, and `fitBounds` on a 0×0 viewport returns maxZoom — which is
+     * how a map of twelve national parks ends up at zoom 20 over a field in
+     * Nebraska, showing nothing.
+     *
+     * So the last fit is remembered rather than applied and forgotten: when the
+     * container's size changes — layout settling, a panel opening, the window
+     * resizing, going fullscreen — the map is re-measured and the fit is
+     * redone against the size it actually has.
+     */
+    let lastFit: { points: LatLng[], padding: [number, number] } | null = null
+
+    function applyFit() {
+      if (!lastFit)
+        return
+      const size = map.getSize()
+      if (size.x < 2 || size.y < 2)
+        return
+      const { points, padding } = lastFit
+      if (points.length === 1) {
+        map.setView(points[0], Math.max(options?.zoom ?? 14, 14))
+        return
+      }
+      const guide = new Polyline(points, { weight: 0, opacity: 0 }).addTo(map)
+      map.fitBounds(guide.getBounds(), { padding })
+      map.removeLayer(guide)
+    }
+
+    let resizeObserver: ResizeObserver | null = null
+    if (typeof ResizeObserver !== 'undefined') {
+      let width = el.clientWidth
+      let height = el.clientHeight
+      resizeObserver = new ResizeObserver(() => {
+        if (el.clientWidth === width && el.clientHeight === height)
+          return
+        width = el.clientWidth
+        height = el.clientHeight
+        map.invalidateSize({ animate: false })
+        applyFit()
+      })
+      resizeObserver.observe(el)
     }
 
     const handle: TrailMapHandle = {
@@ -204,6 +468,8 @@ export async function createTrailMap(
       destroy() {
         themeWatcher?.disconnect()
         themeWatcher = null
+        resizeObserver?.disconnect()
+        resizeObserver = null
         try { map.remove() }
         catch { /* noop */ }
         if (mapElement._tsMap === map) {
@@ -212,15 +478,11 @@ export async function createTrailMap(
         }
       },
       fitPoints(points, padding = [32, 32]) {
-        if (points.length < 1)
+        const usable = points.filter(p => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]))
+        if (usable.length < 1)
           return
-        if (points.length === 1) {
-          map.setView(points[0], 14)
-          return
-        }
-        const guide = new Polyline(points, { weight: 0, opacity: 0 }).addTo(map)
-        map.fitBounds(guide.getBounds(), { padding })
-        map.removeLayer(guide)
+        lastFit = { points: usable, padding }
+        applyFit()
       },
     }
     mapElement._tsMapHandle = handle
@@ -269,8 +531,19 @@ export function runWhenMapReady(
   }
 }
 
+/**
+ * Where a drawn feature is added.
+ *
+ * Anything with `addLayer` will do — the map itself, or a `LayerGroup` a screen
+ * uses to show and hide a whole class of feature at once (see the territory
+ * map, which swaps trail references in and out by zoom).
+ */
+export interface LayerTarget {
+  addLayer: (layer: unknown) => unknown
+}
+
 export async function drawTrailRoute(
-  map: TsMapType,
+  target: LayerTarget,
   coords: LatLng[],
   options?: { color?: string, weight?: number, opacity?: number, casing?: boolean },
 ): Promise<PolylineType | null> {
@@ -283,22 +556,24 @@ export async function drawTrailRoute(
   // Every map app draws the route twice — a dark casing, then the colour on
   // top — which is what gives the line an edge at any zoom.
   if (options?.casing !== false) {
-    new Polyline(coords, {
+    target.addLayer(new Polyline(coords, {
       color: '#0b1b15',
       weight: weight + 3.5,
       opacity: 0.35,
       lineCap: 'round',
       lineJoin: 'round',
-    }).addTo(map)
+    }))
   }
 
-  return new Polyline(coords, {
-    color: options?.color ?? '#059669',
+  const line = new Polyline(coords, {
+    color: options?.color ?? ROUTE_GREEN,
     weight,
     opacity: options?.opacity ?? 0.95,
     lineCap: 'round',
     lineJoin: 'round',
-  }).addTo(map)
+  })
+  target.addLayer(line)
+  return line
 }
 
 export async function drawTerritoryPolygon(
@@ -337,7 +612,7 @@ export async function drawTerritoryPolygon(
 }
 
 export async function drawTrailMarker(
-  map: TsMapType,
+  target: LayerTarget,
   lat: number,
   lng: number,
   options: {
@@ -357,7 +632,8 @@ export async function drawTrailMarker(
     fillColor: fill,
     fillOpacity: 1,
     className: 'wl-map-pin',
-  }).addTo(map)
+  })
+  target.addLayer(marker)
   if (options.popupHtml)
     marker.bindPopup(options.popupHtml)
   if (options.onClick)
@@ -365,10 +641,53 @@ export async function drawTrailMarker(
   return marker
 }
 
+/**
+ * The line behind a runner, mid-run.
+ *
+ * `setLatLngs` / `addLatLng` keep the shape of the `Polyline` this replaced, so
+ * a caller feeding GPS samples in does not have to care which layer is under
+ * it — including `map.removeLayer(line)`, since the adapter *is* the layer.
+ */
+export type LiveRouteLine = RunTrailLayerType & {
+  setLatLngs: (coords: LatLng[]) => void
+  addLatLng: (coord: LatLng) => void
+}
+
 export async function createLiveRouteLine(
   map: TsMapType,
   color: string,
-): Promise<PolylineType> {
-  const { Polyline } = await ensureTsMaps()
-  return new Polyline([], { color, weight: 5, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }).addTo(map)
+): Promise<LiveRouteLine> {
+  const { RunTrailLayer } = await ensureTsMaps()
+
+  /*
+   * A live trail rather than a plain stroke, because the two things a runner
+   * wants mid-run are not what a polyline says.
+   *
+   * The tail fades, so "where I have been since the last capture" reads at a
+   * glance instead of having to be traced. The head pulses, so the line reads
+   * as live rather than as a route someone planned. And `showPotential` shades
+   * the ground the loop would enclose if they closed it from where they are —
+   * which is the whole game, answered before the lap is run rather than after.
+   */
+  const layer = new RunTrailLayer({
+    color,
+    weight: 5,
+    opacity: 0.95,
+    showPotential: true,
+    potentialOpacity: 0.16,
+    showHead: true,
+    pulse: true,
+  })
+  map.addLayer(layer as unknown as Parameters<TsMapType['addLayer']>[0])
+
+  // ts-maps game geometry is [lng, lat] — GeoJSON order — while the rest of
+  // this app is [lat, lng]. The swap lives here so it happens exactly once.
+  const live = layer as LiveRouteLine
+  live.setLatLngs = (coords: LatLng[]) => {
+    layer.setTrack(coords.map(([lat, lng]) => [lng, lat]))
+  }
+  live.addLatLng = ([lat, lng]: LatLng) => {
+    layer.addPoint([lng, lat])
+  }
+  return live
 }
