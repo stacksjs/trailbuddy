@@ -429,8 +429,14 @@ export async function createTrailMap(
      * container's size changes — layout settling, a panel opening, the window
      * resizing, going fullscreen — the map is re-measured and the fit is
      * redone against the size it actually has.
+     *
+     * Only while the fit is still what is on screen, though. The camera each
+     * fit produced is recorded, and a resize re-fits only if the map has not
+     * moved since — otherwise resizing the window would throw away whatever
+     * the player had panned to and snap them back to the opening view.
      */
     let lastFit: { points: LatLng[], padding: [number, number] } | null = null
+    let fitCamera: { center: { lat: number, lng: number }, zoom: number } | null = null
 
     function applyFit() {
       if (!lastFit)
@@ -441,11 +447,24 @@ export async function createTrailMap(
       const { points, padding } = lastFit
       if (points.length === 1) {
         map.setView(points[0], Math.max(options?.zoom ?? 14, 14))
-        return
       }
-      const guide = new Polyline(points, { weight: 0, opacity: 0 }).addTo(map)
-      map.fitBounds(guide.getBounds(), { padding })
-      map.removeLayer(guide)
+      else {
+        const guide = new Polyline(points, { weight: 0, opacity: 0 }).addTo(map)
+        map.fitBounds(guide.getBounds(), { padding })
+        map.removeLayer(guide)
+      }
+      const centre = map.getCenter()
+      fitCamera = { center: { lat: centre.lat, lng: centre.lng }, zoom: map.getZoom() }
+    }
+
+    /** Has the map moved since the last fit put it somewhere? */
+    function showingTheFit(): boolean {
+      if (!fitCamera)
+        return true
+      const centre = map.getCenter()
+      return Math.abs(centre.lat - fitCamera.center.lat) < 1e-9
+        && Math.abs(centre.lng - fitCamera.center.lng) < 1e-9
+        && Math.abs(map.getZoom() - fitCamera.zoom) < 1e-9
     }
 
     let resizeObserver: ResizeObserver | null = null
@@ -457,8 +476,12 @@ export async function createTrailMap(
           return
         width = el.clientWidth
         height = el.clientHeight
+        // Measured before the resize, because `invalidateSize` keeps the centre
+        // and would compare equal either way.
+        const refit = showingTheFit()
         map.invalidateSize({ animate: false })
-        applyFit()
+        if (refit)
+          applyFit()
       })
       resizeObserver.observe(el)
     }
