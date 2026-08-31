@@ -1,5 +1,0 @@
-export { DefaultIcon } from './DefaultIcon';
-export { DivIcon } from './DivIcon';
-export { Icon } from './Icon';
-export { Marker } from './Marker';
-export { MarkerDrag } from './Marker.Drag';

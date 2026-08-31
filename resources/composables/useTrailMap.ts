@@ -3,7 +3,7 @@ import type { Polygon as PolygonType } from 'ts-maps'
 import type { Polyline as PolylineType } from 'ts-maps'
 import type { RunTrailLayer as RunTrailLayerType } from 'ts-maps'
 import type { TsMap as TsMapType } from 'ts-maps'
-import type { Style as StyleSpec } from 'ts-maps/style-spec/types'
+import type { Style as StyleSpec } from 'ts-maps/style-spec'
 
 export type LatLng = [number, number]
 
