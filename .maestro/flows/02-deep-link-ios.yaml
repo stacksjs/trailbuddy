@@ -30,6 +30,10 @@ tags:
 - extendedWaitUntil:
     visible: "Close a loop.*"
     timeout: 30000
+# The zone chips moved behind the Options panel when the record screen was
+# rebuilt; the assertion is still that store-backed territory data reached the
+# WebView, which is what a deep link into a cold app has to prove.
+- tapOn: "^Options$"
 - extendedWaitUntil:
     visible: Cascade Ridge Zone
     timeout: 30000
