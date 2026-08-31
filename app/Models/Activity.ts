@@ -17,6 +17,17 @@ export default defineModel({
   primaryKey: 'id',
   autoIncrement: true,
 
+  // Declared here rather than in a hand-written migration, so the schema has
+  // one source. Each of these backs a query the anti-cheat path runs on every
+  // upload: the duplicate-trace lookup reads by fingerprint across all
+  // athletes, the history checks read one athlete's activities around a time
+  // window, and the review queue reads by state.
+  indexes: [
+    { name: 'activities_track_fingerprint_index', columns: ['track_fingerprint'] },
+    { name: 'activities_user_completed_index', columns: ['user_id', 'completed_at'] },
+    { name: 'activities_review_state_index', columns: ['review_state', 'created_at'] },
+  ],
+
   traits: {
     // The model pass seeds every model that opts in, and a framework default
     // of the same name opts in for us if this one does not — which is how
@@ -244,7 +255,14 @@ export default defineModel({
     anomaly_score: {
       order: 17,
       fillable: true,
-      validation: { rule: schema.number() },
+      // A DB-level default, not just a factory: these columns are added to a
+      // table that already has rows, and SQLite refuses `ADD COLUMN … NOT
+      // NULL` without one.
+      default: 0,
+      // `float`, not `number`: this is a score between zero and one, and
+      // `schema.number()` generates an INTEGER column that stores 0.6 as 0 —
+      // which would leave the review queue ranking every activity the same.
+      validation: { rule: schema.float().min(0).max(1) },
       factory: () => 0,
     },
 
@@ -267,6 +285,7 @@ export default defineModel({
     review_state: {
       order: 20,
       fillable: true,
+      default: 'none',
       validation: { rule: schema.enum(reviewStates).required() },
       factory: (): typeof reviewStates[number] => 'none',
     },
