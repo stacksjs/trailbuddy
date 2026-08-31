@@ -139,7 +139,28 @@ export const tsCloud: TsCloudConfig = {
       // The release ships without dependencies, so nothing resolves until
       // install runs here.
       //
-      // This site migrates, and it is the only one that does. `migrate` is the
+      // Migrations are NOT listed here, and that is deliberate: the deploy
+      // injects `buddy migrate --no-generate` into the database owner itself,
+      // with a `db:backup --before-migrations` in front of it. Listing one
+      // here would only pin it to a site of our choosing and skip that default.
+      //
+      // The scheduler is the same story. `app/Scheduler.ts` declares hourly
+      // ranks, daily decay and counter repair, and the deploy attaches a
+      // scheduler to the database owner when it finds them. A site of our own
+      // running `schedule:run` would be a SECOND scheduler — every job twice,
+      // two decay sweeps over the same territories.
+      //
+      // What the note here used to worry about — schema work riding an
+      // application cutover unreviewed and unbacked — is handled now: the dump
+      // is automatic, and `--no-generate` means the box applies migrations that
+      // were reviewed and merged rather than deriving new SQL from whatever
+      // models the release happens to hold.
+      //
+      // The requirement that remains is on the migrations themselves. During a
+      // zero-downtime cutover the old release is still serving while they run,
+      // so a migration has to be one the previous code survives: additive
+      // columns and new indexes are, a rename or a NOT NULL without a default
+      // is not. `migrate` is the
       // marker the deploy uses to decide which site owns the database: the
       // owner's shared path is the one the others link at, and the owner is
       // where the pre-migration dump is spliced in. A second site running it
@@ -169,14 +190,6 @@ export const tsCloud: TsCloudConfig = {
         // The database lives OUTSIDE the release, so create its directory
         // before migrate runs — on a fresh box nothing else would.
         'mkdir -p /var/www/wildloop-shared/database',
-        // `--no-generate`: apply the migrations in `database/migrations`, and
-        // derive none. Plain `buddy migrate` regenerates SQL from the models
-        // first, so the schema reaching production would be whatever the diff
-        // produces on the box rather than the SQL that was reviewed and
-        // merged — and a model diff can pick a column type or a default nobody
-        // looked at. It also writes files into a release tree the next deploy
-        // deletes.
-        './buddy migrate --no-generate',
       ],
       // Pin the proxy target. `buddy serve` otherwise falls back to
       // 127.0.0.1:3008, which on this SHARED box is the `stacks` project's own
@@ -288,66 +301,6 @@ export const tsCloud: TsCloudConfig = {
         PORT_API: '3050',
         // The same file the site and the API open. An ingest writing to its
         // own copy would build a catalog nobody could read.
-        DB_DATABASE_PATH: SHARED_DATABASE,
-      },
-    },
-
-    // The scheduler.
-    //
-    // `app/Scheduler.ts` registers three jobs the game depends on — hourly
-    // territory ranks, daily decay at 03:10 UTC, counter repair at 04:10 — and
-    // until now nothing ran them in production. No site started the scheduler
-    // and the production server does not embed one, so the ranks on the
-    // leaderboard were whatever the last manual `buddy territory:ranks` left,
-    // decay never ran at all, and the documented behaviour in
-    // docs/wildloop/game-rules.md was describing a process that did not exist.
-    //
-    // Loopback-only like `api` and `ingest`: no `domain` keeps rpx from
-    // publishing it, and HOST pins the bind so neighbours on this shared box
-    // cannot reach it. 3052 is this project's fourth slot.
-    scheduler: {
-      root: '.',
-      exclude: SOURCE_RELEASE_EXCLUDES,
-      deploy: 'server',
-      start: 'bun storage/framework/runtime/production/scheduler.js',
-      port: 3052,
-      /*
-       * Never two at once.
-       *
-       * The overlap cutover is right for a request-serving site, where two
-       * instances briefly sharing a port is the point. Here it would run every
-       * due job twice — two decay sweeps against the same territories, two
-       * rank recomputations racing each other. The jobs declare
-       * `withoutOverlapping` and `onOneServer`, but those guard a single
-       * scheduler restarting, not two schedulers running side by side.
-       */
-      zeroDowntime: false,
-      /*
-       * Let a running job finish.
-       *
-       * `schedule.gracefulShutdown()` waits for in-flight tasks on SIGINT, and
-       * a decay sweep over every territory is not instant. systemd's default
-       * 90 seconds would SIGKILL it mid-sweep, which is how a counter repair
-       * ends up half-applied.
-       */
-      stopTimeout: '5min',
-      preStart: [
-        LINK_ENV_KEYS,
-        INSTALL_DEPS,
-        PREPARE_PRODUCTION_BUNFIG,
-        'mkdir -p storage/framework/runtime/production',
-        'bun build --production --target=bun --packages=external app/SchedulerWorker.ts --outfile storage/framework/runtime/production/scheduler.js',
-        // No `migrate` here on purpose: `main` owns the database, and a second
-        // site running it would make that ownership ambiguous.
-        'mkdir -p /var/www/wildloop-shared/database',
-      ],
-      env: {
-        HOST: '127.0.0.1',
-        PORT: '3052',
-        APP_ENV: 'production',
-        NODE_ENV: 'production',
-        // The scheduler shells out to `./buddy territory:*`, which open the
-        // database directly — the same file every other site opens.
         DB_DATABASE_PATH: SHARED_DATABASE,
       },
     },
