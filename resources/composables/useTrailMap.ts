@@ -61,12 +61,18 @@ const MAX_ZOOM = 20
 /**
  * How hard the relief bites, per theme.
  *
- * Esri's plate is grey on white, and multiply means only the grey lands. Dark
- * needs less of it: the same amount of darkening reads far stronger against
- * near-black ground than against paper.
+ * Esri's plate is grey on white, and multiply means only the grey lands. Both
+ * numbers are lower than they want to be, because relief is the one layer that
+ * will happily eat the whole design: at full strength a mountain valley goes
+ * uniformly grey-brown and every colour underneath — the parks, the water, the
+ * territory fills — turns to mud. It is background, and has to lose to the
+ * data drawn on top of it.
+ *
+ * Dark takes less again: the same amount of darkening reads far stronger
+ * against near-black ground than against paper.
  */
 function reliefOpacity(theme: BasemapTheme): number {
-  return theme === 'dark' ? 0.45 : 0.75
+  return theme === 'dark' ? 0.35 : 0.5
 }
 
 /** The green a route is drawn in, and the green a mapped trail is drawn in. */
@@ -162,6 +168,65 @@ export async function resolveVectorTiles(): Promise<string | null> {
   return tileUrlPromise
 }
 
+/**
+ * WildLoop's palette, applied to the map.
+ *
+ * ts-maps ships a good general-purpose pair of basemaps, and they are the wrong
+ * pair for this app: the light one is warm paper-and-beige and the dark one is
+ * a neutral charcoal, while every other surface here is cool slate with a
+ * single emerald accent. A map that does not share the product's neutrals reads
+ * as an embed from somewhere else, which on a screen that is mostly map is most
+ * of the screen.
+ *
+ * So the greys are slate, the same ramp the rest of the UI is built from, and
+ * parks carry the accent's hue rather than olive — the one place a basemap can
+ * say "this is a trail app" without saying anything.
+ *
+ * Dark sits a step below the page (`#0f172a`) rather than matching it, so the
+ * map reads as inset into the card instead of dissolving through it.
+ */
+const PALETTE = {
+  light: {
+    background: '#e8eef3',
+    land: '#f4f7fa',
+    green: '#dbeee3',
+    water: '#bcd7ea',
+    roadMajor: '#ffffff',
+    roadMinor: '#ffffff',
+    roadCasing: '#d8e1ea',
+    buildings: '#e4ebf2',
+    boundary: '#c3cede',
+    label: '#334155',
+    labelHalo: '#ffffff',
+    labelMuted: '#64748b',
+  },
+  dark: {
+    background: '#0b1220',
+    land: '#111a2b',
+    green: '#102a20',
+    water: '#0b1a2b',
+    roadMajor: '#3d4c63',
+    roadMinor: '#222d40',
+    roadCasing: '#080e18',
+    buildings: '#182338',
+    boundary: '#2b3950',
+    label: '#cbd5e1',
+    labelHalo: '#0b1220',
+    labelMuted: '#8fa0b6',
+  },
+} as const
+
+/**
+ * The app's own type on the map.
+ *
+ * `text-font` resolves to a CSS family stack, and Geist is already loaded for
+ * the rest of the page, so place names cost nothing extra and stop looking like
+ * a different product's map. The weight rides in the name — the style spec
+ * carries it there rather than as a separate property.
+ */
+const LABEL_FONT = ['Geist Medium'] as const
+const PLACE_FONT = ['Geist Semibold'] as const
+
 /** Insert `layers` directly before the layer with id `beforeId`, or append. */
 function insertBefore(spec: StyleSpec, beforeId: string, layers: StyleSpec['layers']) {
   const at = spec.layers.findIndex(layer => layer.id === beforeId)
@@ -183,10 +248,23 @@ function buildStyle(
       mode: 'raster',
       attribution: RASTER_ATTRIBUTION,
       maxzoom: MAX_ZOOM,
+      palette: { ...PALETTE[theme] },
     })
   }
 
-  const spec = build({ tiles, attribution: VECTOR_ATTRIBUTION }) as StyleSpec
+  const spec = build({
+    tiles,
+    attribution: VECTOR_ATTRIBUTION,
+    palette: { ...PALETTE[theme] },
+  }) as StyleSpec
+
+  // Labels in the app's own face rather than the atlas's system default.
+  for (const layer of spec.layers) {
+    if (layer.type !== 'symbol')
+      continue
+    const layout = (layer.layout ??= {}) as { 'text-font'?: readonly string[] }
+    layout['text-font'] = layer.id === 'place-label' ? PLACE_FONT : LABEL_FONT
+  }
 
   // Read tiles back out of the shared cache that "download for offline" fills.
   // Without this a style's source never touches the cache, and the download
@@ -219,7 +297,7 @@ function buildStyle(
       filter: ['in', ['get', 'class'], ['literal', [...TRAIL_CLASSES]]],
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: {
-        'line-color': theme === 'dark' ? '#0b1b15' : '#ffffff',
+        'line-color': theme === 'dark' ? '#081018' : '#ffffff',
         'line-width': ['interpolate', ['exponential', 1.5], ['zoom'], 12, 2, 16, 6, 20, 14],
         'line-opacity': 0.7,
       },
@@ -233,7 +311,9 @@ function buildStyle(
       filter: ['in', ['get', 'class'], ['literal', [...TRAIL_CLASSES]]],
       layout: { 'line-cap': 'butt', 'line-join': 'round' },
       paint: {
-        'line-color': theme === 'dark' ? '#34d399' : '#0f7a5a',
+        // `--accent-bright` and `--accent`: the same two greens the buttons and
+        // the route lines use, so a mapped trail and a run read as one family.
+        'line-color': theme === 'dark' ? '#34d399' : '#059669',
         'line-width': ['interpolate', ['exponential', 1.5], ['zoom'], 12, 0.9, 16, 2.2, 20, 5],
         // Dashes are how a paper map says "unpaved". They also keep the
         // trail legible where it runs alongside a road of the same width.

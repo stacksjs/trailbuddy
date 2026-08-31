@@ -15,7 +15,7 @@
     "stx": "npm:@stacksjs/stx@0.2.236",
     "ts-health": "^0.1.0",
     "ts-images": "^0.2.12",
-    "ts-maps": "^0.3.3",
+    "ts-maps": "^0.3.4",
     "ts-qr-codes": "^0.1.6",
     "ts-web-scraper": "^0.1.10"
   },
