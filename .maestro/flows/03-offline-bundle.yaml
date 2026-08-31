@@ -12,9 +12,9 @@ onFlowComplete:
     permissions:
       all: allow
 - extendedWaitUntil:
-    visible: "Find your line.*"
+    visible: "Find your next adventure"
     timeout: 30000
 - tapOn: "^Record$"
-- assertVisible: Capture Run
+- assertVisible: Close a loop and the ground inside it is yours
 - assertNotVisible: "would like to use your current location"
 - takeScreenshot: offline-bundle

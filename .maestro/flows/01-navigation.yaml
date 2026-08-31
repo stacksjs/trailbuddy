@@ -9,7 +9,7 @@ tags:
     permissions:
       all: allow
 - extendedWaitUntil:
-    visible: "Find your line.*"
+    visible: "Find your next adventure"
     timeout: 30000
 - takeScreenshot: home
 - tapOn: "^Feed$"
@@ -24,7 +24,7 @@ tags:
 - takeScreenshot: trails
 - tapOn: "^Record$"
 - extendedWaitUntil:
-    visible: Capture Run
+    visible: Close a loop and the ground inside it is yours
     timeout: 30000
 - assertNotVisible: "would like to use your current location"
 - scrollUntilVisible:

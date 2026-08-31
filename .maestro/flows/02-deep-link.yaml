@@ -5,7 +5,7 @@ tags:
   - mobile
 ---
 - extendedWaitUntil:
-    visible: Capture Run
+    visible: Close a loop and the ground inside it is yours
     timeout: 30000
 - assertNotVisible: "would like to use your current location"
 - scrollUntilVisible:
