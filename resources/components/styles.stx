@@ -50,16 +50,52 @@
     mix-blend-mode: multiply;
   }
 
-  /* Map chrome: the library ships neutral controls, and these are the two
-     things a product changes about them — the corner radius the rest of the
-     app uses, and a shadow so a white button on a pale basemap has an edge. */
+  /* Map chrome, wearing the app's neutrals.
+
+     ts-maps themes its controls, popups, attribution and tile background
+     through custom properties on the map container, which is the seam to use:
+     one set of tokens instead of chasing individual selectors, and it keeps
+     working when the library restyles a button. Its defaults are Google's warm
+     greys — #292a2d panels, a blue accent — and this app is cool slate with a
+     single emerald. Same mismatch the basemap had, one layer up. */
+  .ts-map-container.tsmap-container {
+    --tsmap-accent: #059669;
+    --tsmap-surface: #fff;
+    --tsmap-surface-hover: #f1f5f9;
+    --tsmap-fg: #334155;
+    --tsmap-fg-muted: #64748b;
+    --tsmap-fg-disabled: #cbd5e1;
+    --tsmap-divider: rgb(15 23 42 / 10%);
+    --tsmap-hairline: #e2e8f0;
+    --tsmap-scale-line: #64748b;
+
+    /* The ground a tile fades in against. Matched to the basemap palette's own
+       background, so a pan shows the map's colour rather than a grey band. */
+    --tsmap-tile-bg: #e8eef3;
+  }
+
+  .ts-map-container.tsmap-container.tsmap-dark {
+    --tsmap-accent: #34d399;
+    --tsmap-surface: #1e293b;
+    --tsmap-surface-hover: #334155;
+    --tsmap-fg: #e2e8f0;
+    --tsmap-fg-muted: #94a3b8;
+    --tsmap-fg-disabled: #475569;
+    --tsmap-divider: rgb(255 255 255 / 12%);
+    --tsmap-hairline: #334155;
+    --tsmap-scale-line: #94a3b8;
+    --tsmap-tile-bg: #0b1220;
+  }
+
+  /* The corner radius the rest of the app uses, and a shadow so a control has
+     an edge against a pale basemap. */
   .ts-map-container .tsmap-control-navigation,
   .ts-map-container .tsmap-control-locate,
   .ts-map-container .tsmap-control-fullscreen,
+  .ts-map-container .tsmap-control-geocoder,
   .ts-map-container .tsmap-control-zoom {
     border-radius: 10px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgb(9 20 16 / 18%);
   }
 
   /* Trail pins get a soft drop shadow rather than sitting flat on the tiles. */
@@ -67,14 +103,6 @@
     filter: drop-shadow(0 1px 2px rgb(9 20 16 / 45%));
   }
 
-  /* Rounded corners on a map container clip the tiles, not just the frame. */
-  .ts-map-container {
-    background: #e7ece8;
-  }
-
-  .dark .ts-map-container {
-    background: #101a17;
-  }
 
   /* Geist over Inter: Inter is the default every generated site reaches for.
      15px base because 14px body copy on a content-led product reads cramped. */
