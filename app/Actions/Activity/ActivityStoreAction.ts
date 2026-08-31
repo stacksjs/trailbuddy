@@ -11,6 +11,7 @@ import { Auth } from '@stacksjs/auth'
 
 import { evaluateAchievementsForUser } from '../Achievement/EvaluateAchievementsAction'
 import { durationLabel, evaluateTrackIntegrity, isLiveGpsSource, type RecordingSource } from '../../../resources/functions/activity-integrity'
+import { integrityFlagsJson, verifyAgainstHistory } from './VerifyActivityIntegrity'
 import UserPrivacySetting from '../../Models/UserPrivacySetting'
 
 const ACTIVITY_TYPES = ['Trail Run', 'Hike', 'Walk', 'Bike']
@@ -111,7 +112,17 @@ export default new Action({
         }
       }
 
-      const captureEligible = integrity.captureEligible && gameMode === 'capture'
+      // Everything so far judged this track on its own. The athlete's other
+      // activities decide the rest: nobody is in two places at once, and
+      // nobody records the same trace twice.
+      const claimedEligible = integrity.captureEligible && gameMode === 'capture'
+      const verdict = await verifyAgainstHistory({
+        userId,
+        integrity,
+        completedAt: typeof completedAt === 'string' ? completedAt : null,
+        captureEligible: claimedEligible,
+      })
+      const captureEligible = verdict.captureEligible
       const serverDistance = isLiveGpsSource(recordingSource) && integrity.distanceMiles !== null
         ? Number(integrity.distanceMiles.toFixed(2))
         : distance
@@ -144,7 +155,11 @@ export default new Action({
         game_mode: gameMode,
         capture_eligible: captureEligible,
         integrity_status: integrity.status,
-        integrity_reason: captureEligible ? null : integrity.reason,
+        integrity_reason: captureEligible ? null : (verdict.reason ?? integrity.reason),
+        anomaly_score: integrity.anomalyScore,
+        integrity_flags: integrityFlagsJson(integrity, verdict.findings),
+        track_fingerprint: integrity.fingerprint,
+        review_state: verdict.reviewState,
         completed_at: (completedAt as string | undefined) ?? new Date().toISOString(),
       })
 

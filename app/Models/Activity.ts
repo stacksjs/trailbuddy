@@ -5,6 +5,10 @@ const activityTypes = ['Trail Run', 'Hike', 'Walk', 'Bike'] as const
 const visibilities = ['public', 'followers', 'private'] as const
 const recordingSources = ['web_gps', 'native_gps', 'simulation', 'manual', 'file_import', 'garmin'] as const
 const integrityStatuses = ['verified', 'unverified', 'rejected'] as const
+// Kept separate from `integrityStatuses`: a rejected activity is decided, a
+// flagged one is not, and conflating them either blocks honest athletes or
+// waves cheats through depending on which way the conflation falls.
+const reviewStates = ['none', 'pending', 'cleared', 'upheld'] as const
 const gameModes = ['capture', 'free', 'none'] as const
 
 export default defineModel({
@@ -231,6 +235,40 @@ export default defineModel({
         rule: schema.string(),
       },
       factory: (faker) => faker.date.recent({ days: 30 }).toISOString(),
+    },
+
+    // Anti-cheat evidence, stored beside the verdict it produced. A reviewer
+    // handling a disputed rejection needs what it was decided from, and the
+    // neighbouring activity that produced a finding may since have been
+    // deleted — so this is recorded rather than recomputed.
+    anomaly_score: {
+      order: 17,
+      fillable: true,
+      validation: { rule: schema.number() },
+      factory: () => 0,
+    },
+
+    integrity_flags: {
+      order: 18,
+      fillable: true,
+      nullable: true,
+      validation: { rule: schema.string().max(4000) },
+      factory: () => null,
+    },
+
+    track_fingerprint: {
+      order: 19,
+      fillable: true,
+      nullable: true,
+      validation: { rule: schema.string().max(64) },
+      factory: () => null,
+    },
+
+    review_state: {
+      order: 20,
+      fillable: true,
+      validation: { rule: schema.enum(reviewStates).required() },
+      factory: (): typeof reviewStates[number] => 'none',
     },
   },
 
