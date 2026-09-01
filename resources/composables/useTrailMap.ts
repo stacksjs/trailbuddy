@@ -52,6 +52,22 @@ const RASTER_FALLBACK = {
 const TERRAIN_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}'
 const TERRAIN_MAX_NATIVE_ZOOM = 16
 
+/**
+ * Relief starts here and not before.
+ *
+ * Esri's plate is an opaque grey-on-white sheet, and it is composited over the
+ * basemap rather than multiplied into it — `mix-blend-mode: multiply` computes
+ * on the layer but does not survive to the rendered output, so the honest way
+ * to treat this layer is as ink laid on top at low opacity. Which it is: set
+ * the blend to `normal` and the result is pixel-identical.
+ *
+ * That is fine where the shading carries information and terrible where it does
+ * not. At continental zoom the sheet is near-white over the whole map and all
+ * it does is wash the palette grey; from about a county's width down, it is the
+ * shape of the ground the trail runs over. So it is drawn from there.
+ */
+const TERRAIN_MIN_ZOOM = 9
+
 const VECTOR_ATTRIBUTION = '&copy; <a href="https://openfreemap.org">OpenFreeMap</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 const RASTER_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
 const TERRAIN_ATTRIBUTION = 'Terrain: Esri'
@@ -61,15 +77,16 @@ const MAX_ZOOM = 20
 /**
  * How hard the relief bites, per theme.
  *
- * Esri's plate is grey on white, and multiply means only the grey lands. Both
- * numbers are lower than they want to be, because relief is the one layer that
- * will happily eat the whole design: at full strength a mountain valley goes
- * uniformly grey-brown and every colour underneath — the parks, the water, the
- * territory fills — turns to mud. It is background, and has to lose to the
- * data drawn on top of it.
+ * Esri's plate is opaque grey on white and lands on top rather than into the
+ * map (see `TERRAIN_MIN_ZOOM`), so these are the opacities at which it reads as
+ * terrain instead of as a veil. Both are lower than they want to be, because
+ * relief is the one layer that will happily eat the whole design: at full
+ * strength a mountain valley goes uniformly grey and every colour underneath —
+ * the parks, the water, the territory fills — turns to mud. It is background,
+ * and has to lose to the data drawn on top of it.
  *
- * Dark takes less again: the same amount of darkening reads far stronger
- * against near-black ground than against paper.
+ * Dark takes less again: a pale sheet over near-black ground lifts it much
+ * further than the same sheet over paper.
  */
 function reliefOpacity(theme: BasemapTheme): number {
   return theme === 'dark' ? 0.35 : 0.5
@@ -448,6 +465,7 @@ export async function createTrailMap(
       relief = maps.tileLayer(TERRAIN_TILES, {
         attribution: TERRAIN_ATTRIBUTION,
         crossOrigin: true,
+        minZoom: TERRAIN_MIN_ZOOM,
         maxNativeZoom: TERRAIN_MAX_NATIVE_ZOOM,
         maxZoom: MAX_ZOOM,
         // Strength, not the blend. A tile layer writes `opacity` inline on its
