@@ -39,7 +39,7 @@ jobs:
           bun-version: canary
 
       - name: Use cached node_modules
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: node_modules
           key: node-modules-${{ hashFiles('**/bun.lock') }}
@@ -74,7 +74,7 @@ jobs:
           bun-version: canary
 
       - name: Use cached node_modules
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: node_modules
           key: node-modules-${{ hashFiles('**/bun.lock') }}
@@ -132,7 +132,7 @@ jobs:
           bun-version: canary
 
       - name: Use cached node_modules
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: node_modules
           key: node-modules-${{ hashFiles('**/bun.lock') }}
@@ -206,7 +206,7 @@ jobs:
           bun-version: canary
 
       - name: Use cached node_modules
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: node_modules
           key: node-modules-${{ hashFiles('**/bun.lock') }}
@@ -318,7 +318,7 @@ jobs:
           bun-version: canary
 
       - name: Use cached node_modules
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: node_modules
           key: node-modules-${{ hashFiles('**/bun.lock') }}
@@ -348,7 +348,7 @@ jobs:
           bun-version: canary
 
       - name: Use cached node_modules
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: node_modules
           key: node-modules-${{ hashFiles('**/bun.lock') }}
@@ -376,7 +376,7 @@ jobs:
           bun-version: canary
 
       - name: Use cached node_modules
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: node_modules
           key: node-modules-${{ hashFiles('**/bun.lock') }}
