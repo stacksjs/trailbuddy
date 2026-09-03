@@ -4,7 +4,7 @@
 
 @section('content')
 <script client>
-  import { token } from '../assets/scripts/auth'
+  import { readyToken } from '../assets/scripts/auth'
 
   useHead({ title: 'Route Planner - WildLoop' })
   const wl = useStore('wl')
@@ -20,12 +20,22 @@
   const message = state('')
 
   async function loadRoutes() {
-    const res = await fetch('/api/custom-routes', { headers: { Authorization: `Bearer ${token()}` } }).catch(() => null)
+    const bearer = await readyToken()
+    if (!bearer) {
+      navigate('/login')
+      return
+    }
+    const res = await fetch('/api/custom-routes', { headers: { Authorization: `Bearer ${bearer}` } }).catch(() => null)
     const payload = await res?.json().catch(() => null)
     routes.set(res?.ok && Array.isArray(payload?.routes) ? payload.routes : [])
   }
 
   async function saveRoute() {
+    const bearer = await readyToken()
+    if (!bearer) {
+      navigate('/login')
+      return
+    }
     const trailId = Number(selectedTrailId())
     const trail = wl?.findTrail(trailId)
     const route = wl?.trailRoutes()[trailId] ?? []
@@ -35,7 +45,7 @@
     }
     const res = await fetch('/api/custom-routes', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${bearer}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: name().trim() || `${trail.name} route`, route, elevation: trail.elevation }),
     })
     const payload = await res.json().catch(() => null)
@@ -49,7 +59,12 @@
   }
 
   async function deleteRoute(id) {
-    await fetch(`/api/custom-routes/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token()}` } })
+    const bearer = await readyToken()
+    if (!bearer) {
+      navigate('/login')
+      return
+    }
+    await fetch(`/api/custom-routes/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${bearer}` } })
     await loadRoutes()
   }
 
@@ -88,4 +103,3 @@
   </div>
 </div>
 @endsection
-

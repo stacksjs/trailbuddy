@@ -1,15 +1,27 @@
-import { token } from './auth'
+import { readyToken } from './auth'
 
 export type ActivityVisibility = 'public' | 'followers' | 'private'
 
 let pending: Promise<ActivityVisibility> | null = null
+let pendingForToken: string | null = null
 
 /** Resolve the athlete's server-side default, with the safe default offline. */
-export function loadActivityVisibilityDefault(): Promise<ActivityVisibility> {
-  if (pending)
+export async function loadActivityVisibilityDefault(): Promise<ActivityVisibility> {
+  const bearer = await readyToken()
+
+  // Recording and manual-entry controls can be rendered before someone has
+  // signed in. The privacy endpoint is deliberately authenticated, so a guest
+  // must use the conservative local default instead of creating a guaranteed
+  // 401 request (and a browser-console error) merely by opening the page.
+  if (!bearer)
+    return 'followers'
+
+  if (pending && pendingForToken === bearer)
     return pending
+
+  pendingForToken = bearer
   pending = fetch('/api/privacy-settings', {
-    headers: token() ? { Authorization: `Bearer ${token()}` } : undefined,
+    headers: { Authorization: `Bearer ${bearer}` },
   })
     .then(async (result) => {
       if (!result.ok) return 'followers' as const

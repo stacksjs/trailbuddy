@@ -272,7 +272,9 @@ export async function markNotificationsRead(id?: number): Promise<boolean> {
 
 /** List the session user's challenges (sent + received). */
 export async function fetchChallenges(): Promise<any[] | null> {
-  await ensureSession()
+  const bearer = await readyToken()
+  if (!bearer)
+    return null
   const res = await fetch('/api/challenges', { headers: authHeaders() })
   if (!res.ok)
     return null
@@ -437,6 +439,12 @@ export async function toggleSaveTrail(trailId: number): Promise<{ success: boole
 
 /** Fetch a user's saved trails (with trail summaries) (#969). */
 export async function fetchSavedTrails(userId: number): Promise<{ savedTrails: any[] } | null> {
+  // The shared catalog renders for guests with a sentinel user id of zero.
+  // Saved trails are meaningful only for a real account; do not turn that
+  // sentinel into `/api/users/0/saved-trails` and a guaranteed validation
+  // error on every public trail page.
+  if (!Number.isInteger(userId) || userId <= 0)
+    return null
   const res = await fetch(`/api/users/${userId}/saved-trails`, { headers: authHeaders() })
   if (!res.ok)
     return null
