@@ -61,6 +61,20 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
 
+      # ts-cloud also reads the public key from disk to register it on the
+      # server. An ssh-agent exposes no file path, so derive the public half
+      # from the same private key instead of maintaining a second secret.
+      - name: Write the deploy key to disk
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keygen -y -f ~/.ssh/id_ed25519 > ~/.ssh/id_ed25519.pub
+          chmod 644 ~/.ssh/id_ed25519.pub
+
       - name: Deploy
         run: ./buddy deploy --${{ github.event.inputs.environment == 'staging' && 'staging' || github.event.inputs.environment == 'development' && 'dev' || 'prod' }} --yes
         env:
