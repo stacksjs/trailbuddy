@@ -45,7 +45,7 @@ interface Emitted {
 
 export default class UserNotificationSeeder extends Seeder {
   // Last of the content seeders: it reports on everything the others wrote.
-  static order = -54
+  static override order = -54
 
   async run(): Promise<void> {
     const users = (await User.all().catch(() => [])) as any[]

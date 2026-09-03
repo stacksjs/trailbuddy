@@ -92,7 +92,7 @@ const EVENTS: SeedEvent[] = [
 
 export default class EventSeeder extends Seeder {
   // Events reference a host, a club, and entrants — all seeded before this.
-  static order = -80
+  static override order = -80
 
   async run(): Promise<void> {
     const users = await User.all().catch(() => [])

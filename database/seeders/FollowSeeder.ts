@@ -31,7 +31,7 @@ const GRAPH: Record<string, string[]> = {
 
 export default class FollowSeeder extends Seeder {
   // After UserSeeder (-100) and AdminSeeder (-95): both ends must exist.
-  static order = -66
+  static override order = -66
 
   async run(): Promise<void> {
     const users = (await User.all().catch(() => [])) as any[]

@@ -34,7 +34,7 @@ const SECONDS_PER_DAY = 86400
 
 export default class TerritoryStatsSeeder extends Seeder {
   // Last of the territory seeders: it reads the finished board.
-  static order = -76
+  static override order = -76
 
   async run(): Promise<void> {
     const users = (await User.all().catch(() => [])) as any[]

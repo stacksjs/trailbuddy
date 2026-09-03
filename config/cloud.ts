@@ -205,6 +205,10 @@ export const tsCloud: TsCloudConfig = {
         // before migrate runs — on a fresh box nothing else would.
         'mkdir -p /var/www/wildloop-shared/database',
         './buddy migrate --no-generate',
+        // This is an active test deployment with no real users. Application
+        // seeders are idempotent and keep the admin, normal, and paid sign-ins
+        // available after every release.
+        './buddy seed --verbose',
       ],
       // Pin the proxy target. `buddy serve` otherwise falls back to
       // 127.0.0.1:3008, which on this SHARED box is the `stacks` project's own

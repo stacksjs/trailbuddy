@@ -53,7 +53,7 @@ const SAVED: Record<string, Array<{ trail: string, notes: string }>> = {
 export default class SavedTrailSeeder extends Seeder {
   // After TrailSeeder (-92) and ActivitySeeder (-85): the visited flag is read
   // off the athlete's own activities.
-  static order = -60
+  static override order = -60
 
   async run(): Promise<void> {
     const users = (await User.all().catch(() => [])) as any[]

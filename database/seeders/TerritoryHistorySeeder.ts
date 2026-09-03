@@ -56,7 +56,7 @@ interface Parcel {
 
 export default class TerritoryHistorySeeder extends Seeder {
   // After TerritorySeeder (-80): the parcels these events act on must exist.
-  static order = -78
+  static override order = -78
 
   async run(): Promise<void> {
     const rows = (await Territory.all().catch(() => [])) as any[]

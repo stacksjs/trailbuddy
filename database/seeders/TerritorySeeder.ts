@@ -58,7 +58,7 @@ const MAX_TERRITORY_SIZE = 5000000
 
 export default class TerritorySeeder extends Seeder {
   // After ActivitySeeder (-85): territories are claimed from its runs.
-  static order = -80
+  static override order = -80
 
   async run(): Promise<void> {
     const captured = await Activity.where('capture_eligible', '=', true).get().catch(() => [])

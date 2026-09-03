@@ -23,7 +23,7 @@ import Trail from '../../app/Models/Trail'
  */
 export default class CounterSeeder extends Seeder {
   // Last. Everything it counts has to exist first.
-  static order = 100
+  static override order = 100
 
   async run(): Promise<void> {
     const [activities, kudos, trails, reviews] = await Promise.all([

@@ -27,7 +27,7 @@ const LOOP_GAP_METERS = 50
 
 export default class CustomRouteSeeder extends Seeder {
   // After ActivitySeeder (-85): the routes are its tracks.
-  static order = -56
+  static override order = -56
 
   async run(): Promise<void> {
     const activities = (await Activity.where('capture_eligible', '=', true).get().catch(() => [])) as any[]

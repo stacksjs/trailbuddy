@@ -295,7 +295,7 @@ const ACHIEVEMENTS: SeedAchievement[] = [
 export default class AchievementSeeder extends Seeder {
   // After the territory seeders (-76): three metrics are read off
   // territory_stats, so the standings have to be settled first.
-  static order = -68
+  static override order = -68
 
   async run(): Promise<void> {
     for (const seed of ACHIEVEMENTS) {

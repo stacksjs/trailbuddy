@@ -43,6 +43,34 @@ export const SEED_PASSWORD = 'wildloop-staging'
 
 const USERS: SeedUser[] = [
   {
+    name: 'WildLoop User',
+    email: 'user@wildloop.test',
+    stats: {
+      total_distance: 42.2,
+      total_elevation: 3100,
+      trails_completed: 4,
+      total_activities: 9,
+      current_streak: 2,
+      longest_streak: 5,
+      total_kudos_received: 12,
+      total_kudos_given: 18,
+    },
+  },
+  {
+    name: 'WildLoop Paid User',
+    email: 'paid@wildloop.test',
+    stats: {
+      total_distance: 286.4,
+      total_elevation: 24750,
+      trails_completed: 23,
+      total_activities: 71,
+      current_streak: 6,
+      longest_streak: 19,
+      total_kudos_received: 214,
+      total_kudos_given: 306,
+    },
+  },
+  {
     name: 'Chris Breuer',
     email: 'chris@wildloop.test',
     stats: {
@@ -121,7 +149,7 @@ export default class UserSeeder extends Seeder {
   // Clubs, activities and territories all point at a user. Seeding runs in
   // path order by default, which put ClubSeeder first and left it with no
   // owner to attach a club to.
-  static order = -100
+  static override order = -100
 
   async run(): Promise<void> {
     for (const seed of USERS) {
@@ -130,7 +158,7 @@ export default class UserSeeder extends Seeder {
       const existing = await User.where('email', '=', seed.email).first().catch(() => null)
 
       const user = existing
-        ? (await User.update(existing.id, { name: seed.name }), existing)
+        ? (await User.update(existing.id, { name: seed.name, password: SEED_PASSWORD }), existing)
         : await User.create({
             name: seed.name,
             email: seed.email,

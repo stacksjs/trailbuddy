@@ -50,7 +50,7 @@ const CLUBS: SeedClub[] = [
 
 export default class ClubSeeder extends Seeder {
   // After UserSeeder — a club needs an owner.
-  static order = -90
+  static override order = -90
 
   async run(): Promise<void> {
     // Every club needs an owner. `static order` above guarantees UserSeeder

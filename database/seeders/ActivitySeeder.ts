@@ -205,7 +205,7 @@ function trackForSession(centerLat: number, centerLng: number, distanceMiles: nu
 export default class ActivitySeeder extends Seeder {
   // After UserSeeder and TrailSeeder: every activity belongs to one of its
   // athletes, and the ones that name a trail need that trail to exist.
-  static order = -85
+  static override order = -85
 
   async run(): Promise<void> {
     const users = await User.all().catch(() => [])

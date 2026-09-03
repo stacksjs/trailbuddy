@@ -79,7 +79,7 @@ const CHALLENGES: SeedChallenge[] = [
 
 export default class ChallengeSeeder extends Seeder {
   // After the territory seeders: a challenge stakes a parcel that must exist.
-  static order = -58
+  static override order = -58
 
   async run(): Promise<void> {
     const users = (await User.all().catch(() => [])) as any[]

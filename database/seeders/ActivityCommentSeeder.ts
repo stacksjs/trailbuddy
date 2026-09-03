@@ -81,7 +81,7 @@ const COMMENTS: SeedComment[] = [
 
 export default class ActivityCommentSeeder extends Seeder {
   // After ActivitySeeder (-85): the threads hang off its runs.
-  static order = -62
+  static override order = -62
 
   async run(): Promise<void> {
     const users = (await User.all().catch(() => [])) as any[]

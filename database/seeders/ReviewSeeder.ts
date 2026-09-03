@@ -361,7 +361,7 @@ const DAY = 24 * 60 * 60 * 1000
 
 export default class ReviewSeeder extends Seeder {
   // After TrailSeeder (-92) and UserSeeder (-100): a review needs both ends.
-  static order = -70
+  static override order = -70
 
   async run(): Promise<void> {
     const users = (await User.all().catch(() => [])) as any[]

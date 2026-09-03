@@ -25,7 +25,7 @@ import Kudos from '../../app/Models/Kudos'
  */
 export default class KudosSeeder extends Seeder {
   // After FollowSeeder (-66): the graph decides who gives kudos to whom.
-  static order = -64
+  static override order = -64
 
   async run(): Promise<void> {
     const follows = (await Follow.all().catch(() => [])) as any[]

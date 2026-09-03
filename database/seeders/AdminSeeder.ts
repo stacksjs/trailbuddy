@@ -13,9 +13,8 @@ import UserStat from '../../app/Models/UserStats'
  * and the page rendered its "This area is for administrators." error.
  *
  * This seeder closes that gap end to end. It ensures the default role packs
- * exist (so `buddy seed` alone is enough — `buddy seed:roles` stays an
- * equivalent, separate entry point), creates the staging administrator, and
- * assigns the role.
+ * plus the application-level `paid` role exist, creates the explicit test
+ * accounts, and assigns admin/client/paid access independently.
  *
  * Two accounts hold it on purpose, because they show different things:
  *
@@ -36,12 +35,15 @@ import UserStat from '../../app/Models/UserStats'
 export const ADMIN_EMAIL = 'admin@wildloop.test'
 export const ADMIN_PASSWORD = 'wildloop-admin'
 
+export const NORMAL_EMAIL = 'user@wildloop.test'
+export const PAID_EMAIL = 'paid@wildloop.test'
+
 /** Seeded athletes who also hold the `admin` role. */
 const ADMIN_ATHLETE_EMAILS = ['chris@wildloop.test']
 
 export default class AdminSeeder extends Seeder {
   // After UserSeeder (-100), so the athletes it promotes already exist.
-  static order = -95
+  static override order = -95
 
   async run(): Promise<void> {
     const { createBqbRbacStore, Rbac, seedDefaultRoles } = await import('@stacksjs/auth')
@@ -49,10 +51,12 @@ export default class AdminSeeder extends Seeder {
 
     // Idempotent: existing (name, guard_name) rows are left untouched.
     await seedDefaultRoles()
+    if (!await Rbac.findRole('paid'))
+      await Rbac.createRole('paid', 'web', 'A WildLoop member with an active paid plan.')
 
     const existing = await User.where('email', '=', ADMIN_EMAIL).first().catch(() => null)
     const admin = existing
-      ? (await User.update(existing.id, { name: 'WildLoop Admin' }), existing)
+      ? (await User.update(existing.id, { name: 'WildLoop Admin', password: ADMIN_PASSWORD }), existing)
       : await User.create({
           name: 'WildLoop Admin',
           email: ADMIN_EMAIL,
@@ -98,8 +102,26 @@ export default class AdminSeeder extends Seeder {
       })
     }
 
+    const roleAssignments = [
+      { email: NORMAL_EMAIL, roles: ['client'] },
+      { email: PAID_EMAIL, roles: ['client', 'paid'] },
+    ]
+    for (const assignment of roleAssignments) {
+      const user = await User.where('email', '=', assignment.email).first().catch(() => null)
+      if (!user?.id)
+        continue
+
+      for (const role of assignment.roles) {
+        await Rbac.assignRole({ id: user.id }, role).catch((err: unknown) => {
+          console.error(`[seed] could not grant ${role} to ${assignment.email}:`, err)
+        })
+      }
+    }
+
     console.warn(`[seed] admin sign-in: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD} (holds no data — the empty states)`)
     for (const email of ADMIN_ATHLETE_EMAILS)
       console.warn(`[seed] admin sign-in: ${email} / ${SEED_PASSWORD} (a seeded athlete, so every page has data)`)
+    console.warn(`[seed] normal user sign-in: ${NORMAL_EMAIL} / ${SEED_PASSWORD}`)
+    console.warn(`[seed] paid user sign-in: ${PAID_EMAIL} / ${SEED_PASSWORD}`)
   }
 }

@@ -751,7 +751,7 @@ function estimatedTime(distanceMiles: number, elevationFeet: number): string {
 export default class TrailSeeder extends Seeder {
   // Before anything that hangs off a trail id: activities, reviews, saved
   // trails and the territories claimed on them.
-  static order = -92
+  static override order = -92
 
   async run(): Promise<void> {
     const syncedAt = new Date().toISOString()
