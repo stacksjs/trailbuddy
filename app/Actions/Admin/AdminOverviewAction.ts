@@ -12,6 +12,7 @@
 
 /** Roles allowed to see the dashboard. */
 import { Auth } from '@stacksjs/auth'
+import { countOf } from './admin-overview-support'
 
 const ADMIN_ROLES = ['admin']
 
@@ -31,17 +32,6 @@ async function roleNamesFor(userId: number): Promise<string[]> {
   }
   catch {
     return []
-  }
-}
-
-/** Count a table, returning 0 rather than throwing when it does not exist yet. */
-async function countOf(model: any): Promise<number> {
-  try {
-    const rows = await model.all()
-    return Array.isArray(rows) ? rows.length : 0
-  }
-  catch {
-    return 0
   }
 }
 
