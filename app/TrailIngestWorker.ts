@@ -15,6 +15,7 @@
 import process from 'node:process'
 import { db } from '@stacksjs/orm'
 import { progress, runIngest, seedShards } from './Ingest/ingest'
+import { waitForAbortableDelay } from './Ingest/worker-lifecycle'
 
 process.env.APP_ENV ||= 'production'
 process.env.NODE_ENV ||= 'production'
@@ -61,6 +62,7 @@ const state: WorkerState = {
 }
 
 let stopping = false
+const stopController = new AbortController()
 
 Bun.serve({
   port: PORT,
@@ -99,6 +101,7 @@ for (const signal of ['SIGTERM', 'SIGINT'] as const) {
   process.on(signal, () => {
     console.log(`[ingest] ${signal} received, finishing current shard`)
     stopping = true
+    stopController.abort()
   })
 }
 
@@ -161,7 +164,7 @@ while (!stopping) {
 
   if (state.idle) {
     console.log(`[ingest] nothing to claim, sleeping ${IDLE_SLEEP_MS / 60000}m`)
-    await Bun.sleep(IDLE_SLEEP_MS)
+    await waitForAbortableDelay(IDLE_SLEEP_MS, stopController.signal)
   }
 }
 
