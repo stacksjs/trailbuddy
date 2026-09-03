@@ -57,10 +57,10 @@ const INSTALL_BUN = '/usr/local/bin/bun'
 const INSTALL_DEPS = `${INSTALL_BUN} install --frozen-lockfile`
 
 // Production intentionally excludes the vendored framework tree. Point Bun at
-// the app-owned preloader, which recreates Stacks auto-imports from published
-// runtime packages; test-specific settings remain untouched.
+// Stacks' published canonical preloader so package-only deployments retain the
+// same auto-import behavior as a full development checkout.
 const PREPARE_PRODUCTION_BUNFIG =
-  "sed -i 's#./storage/framework/defaults/resources/plugins/preloader.ts#./app/ProductionPreloader.ts#' bunfig.toml"
+  "sed -i 's#./storage/framework/defaults/resources/plugins/preloader.ts#@stacksjs/defaults/resources/plugins/preloader#' bunfig.toml"
 
 /**
  * Files that belong to a developer checkout or to mutable host state, never to
