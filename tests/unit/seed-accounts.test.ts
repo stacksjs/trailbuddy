@@ -19,6 +19,9 @@ describe('deployed test accounts', () => {
   })
 
   it('runs idempotent application seeders after production migrations', () => {
-    expect(cloud.indexOf("'./buddy migrate --no-generate'")).toBeLessThan(cloud.indexOf("'./buddy seed --verbose'"))
+    const accountSeed = "'./buddy seed --skip-models --only-seeders UserSeeder,AdminSeeder --verbose'"
+
+    expect(cloud.indexOf("'./buddy migrate --no-generate'")).toBeLessThan(cloud.indexOf(accountSeed))
+    expect(cloud).toContain(accountSeed)
   })
 })
