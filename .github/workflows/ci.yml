@@ -3,14 +3,14 @@ name: CI
 on:
   push:
     branches:
-      - main # deploys to prod
+      - main
 
     tags:
       - '*-beta.*' # ensures it is deployed to stage in case `main`` is not pushed to
 
   pull_request:
     branches:
-      - main # deploys to dev
+      - main
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -146,162 +146,6 @@ jobs:
         env:
           AWS_DYNAMODB_ENDPOINT: http://localhost:8000
         run: bun test
-
-  release-check:
-    runs-on: ubuntu-latest
-
-    outputs:
-      contains_release: ${{ steps.check_release.outputs.contains_release }}
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 2
-      - name: Release Check
-        id: check_release
-        # Two fixes here.
-        #
-        # `$GITHUB_ENV` only takes effect in LATER steps, so the previous
-        # version wrote CONTAINS_RELEASE and then read `env.CONTAINS_RELEASE`
-        # in the same step, where it was always empty. The output was
-        # therefore always '' — never '0' — which is half of why the deploy
-        # below never ran. It writes the output directly now.
-        #
-        # And it reads the SUBJECT (%s), not the whole body (%B). A release
-        # commit announces itself in its subject: `chore: release v1.2.3`.
-        # Grepping the body caught any commit that so much as mentioned the
-        # word — including the one that fixed this deploy pipeline, whose body
-        # explains what ships in a release. That silently skipped the deploy.
-        run: |
-          subject=$(git log --format=%s -n 1 HEAD)
-          count=$(printf '%s' "$subject" | grep -ci 'release' || true)
-          echo "subject: ${subject}"
-          echo "contains_release=${count}" >> "$GITHUB_OUTPUT"
-
-  deploy-prod:
-    # Was gated on `needs.check_commit_message.outputs.contains_release`.
-    # There is no `check_commit_message` job — the job is `release-check` — and
-    # it was not in `needs` either, so the expression evaluated to null, the
-    # `== '0'` comparison was always false, and production has never once been
-    # deployed by this workflow.
-    # Bracket notation is required: `needs.release-check` would parse the
-    # hyphen as subtraction.
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs['release-check'].outputs.contains_release == '0'
-    needs: [lint, typecheck, test, release-check]
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    environment: production
-    permissions:
-      contents: read
-      deployments: write
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          # The lockfile is written by a canary Bun (lockfileVersion 2); stable
-          # 1.3.14 cannot read it and silently resolves fresh instead, which
-          # is how a deploy ended up installing a half-published dependency
-          # set. Pin the runner to the Bun that wrote the lockfile.
-          bun-version: canary
-
-      - name: Use cached node_modules
-        uses: actions/cache@v5
-        with:
-          path: node_modules
-          key: node-modules-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            node-modules-
-
-      - name: Install Dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Prepare Deploy SSH Key
-        env:
-          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-        run: |
-          if [ -z "$DEPLOY_SSH_KEY" ]; then
-            echo "No deploy SSH key configured; continuing without one."
-            exit 0
-          fi
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keygen -y -f ~/.ssh/id_ed25519 > ~/.ssh/id_ed25519.pub
-          chmod 644 ~/.ssh/id_ed25519.pub
-
-      - name: Deploy production
-        run: ./buddy deploy --prod --yes
-        env:
-          APP_ENV: production
-          DOTENV_PRIVATE_KEY_PRODUCTION: ${{ secrets.DOTENV_PRIVATE_KEY_PRODUCTION }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COPYFILE_DISABLE: '1'
-
-  deploy-stage:
-    if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (startsWith(github.ref, 'refs/tags/') && contains(github.ref, '-beta.'))
-    needs: [lint, typecheck, test, deploy-prod, deploy-dev]
-    runs-on: ubuntu-latest
-    environment: staging
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          # The lockfile is written by a canary Bun (lockfileVersion 2); stable
-          # 1.3.14 cannot read it and silently resolves fresh instead, which
-          # is how a deploy ended up installing a half-published dependency
-          # set. Pin the runner to the Bun that wrote the lockfile.
-          bun-version: canary
-
-      - name: Use cached node_modules
-        uses: actions/cache@v5
-        with:
-          path: node_modules
-          key: node-modules-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            node-modules-
-
-      - name: Install Dependencies
-        run: bun install
-
-  deploy-dev:
-    if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (github.event_name == 'pull_request' && github.base_ref == 'main')
-    needs: [lint, typecheck, test, deploy-prod]
-    runs-on: ubuntu-latest
-    environment: development
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          # The lockfile is written by a canary Bun (lockfileVersion 2); stable
-          # 1.3.14 cannot read it and silently resolves fresh instead, which
-          # is how a deploy ended up installing a half-published dependency
-          # set. Pin the runner to the Bun that wrote the lockfile.
-          bun-version: canary
-
-      - name: Use cached node_modules
-        uses: actions/cache@v5
-        with:
-          path: node_modules
-          key: node-modules-${{ hashFiles('**/bun.lock') }}
-          restore-keys: |
-            node-modules-
-
-      - name: Install Dependencies
-        run: bun install
 
   publish-commit:
     runs-on: ubuntu-latest
