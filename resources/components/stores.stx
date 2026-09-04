@@ -314,13 +314,6 @@
     { id: 12, trail_id: 12, user_id: 6, userName: 'Aisha Patel', rating: 5, text: 'Peak wildflower season is absolutely unreal.', conditions: 'Perfect', created_at: ago(3, 5) },
   ]
 
-  const seedClubs: Club[] = [
-    { id: 1, name: 'Trail Crushers', description: 'Competitive trail runners pushing limits on technical terrain.', memberCount: 48, location: 'Bay Area, CA', type: 'Running', isPrivate: false, weeklyDistance: 342, activitiesThisWeek: 67, members: [1, 2, 3, 5, 7], created_at: ago(180) },
-    { id: 2, name: 'Weekend Warriors', description: 'Casual hikers and trail runners who love weekend adventures.', memberCount: 156, location: 'Denver, CO', type: 'Mixed', isPrivate: false, weeklyDistance: 580, activitiesThisWeek: 124, members: [1, 4, 6, 8], created_at: ago(365) },
-    { id: 3, name: 'Summit Seekers', description: 'Dedicated peak baggers working through state highpoints and 14ers.', memberCount: 32, location: 'National', type: 'Hiking', isPrivate: false, weeklyDistance: 215, activitiesThisWeek: 28, members: [5, 7, 3], created_at: ago(90) },
-    { id: 4, name: 'Conqueror\'s Guild', description: 'Territory game enthusiasts focused on conquest strategy.', memberCount: 24, location: 'National', type: 'Territory Game', isPrivate: true, weeklyDistance: 189, activitiesThisWeek: 42, members: [1, 3, 5], created_at: ago(45) },
-  ]
-
   const seedAchievements: Achievement[] = [
     { id: 1, name: 'First Steps', description: 'Complete your first activity', icon: '👟', progress: 1, total: 1, unlockedAt: ago(90) },
     { id: 2, name: 'Trail Blazer', description: 'Complete 10 different trails', icon: '🔥', progress: 8, total: 10, unlockedAt: null },
@@ -441,7 +434,9 @@
       conquests: seedConquests,
       challenges: seedChallenges,
       reviews: seedReviews,
-      clubs: seedClubs,
+      // Club discovery is backed by /api/clubs. Starting empty prevents SSR
+      // from emitting links to demo-only ids before live hydration completes.
+      clubs: [] as Club[],
       achievements: seedAchievements,
       notifications: seedNotifications,
       segments: seedSegments,
@@ -647,8 +642,7 @@
       },
       /** Replace clubs with live API data (#964). */
       hydrateClubs(list: Club[]) {
-        if (list.length)
-          this.clubs = list
+        this.clubs = list
       },
       /** Prepend a newly-created club (#964). */
       addClub(club: Club) {
