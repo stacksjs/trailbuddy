@@ -12,6 +12,8 @@
 
 import { Auth } from '@stacksjs/auth'
 import RouteEffort from '../../Models/RouteEffort'
+import { paginate, readPageParams } from '../../../resources/functions/pagination'
+import { positiveInt } from '../../../resources/functions/validate'
 
 import { asCategory, asDirection, asStatus, asStyle, isAdminUser, PUBLIC_STATUSES, shapeEfforts } from './record-support'
 

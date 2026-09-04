@@ -35,6 +35,29 @@ async function roleNamesFor(userId: number): Promise<string[]> {
   }
 }
 
+interface RoleAssignmentRow {
+  role: string
+  user_id: number
+}
+
+/**
+ * Load every application role assignment in one query.
+ *
+ * The dashboard only renders the 25 newest accounts, but its totals describe
+ * the whole application. Deriving the admin count from that visible slice
+ * understated the real number as soon as an older account held the role.
+ */
+async function roleAssignments(): Promise<RoleAssignmentRow[]> {
+  const rows = await db.sql`
+    SELECT ur.user_id AS user_id, r.name AS role
+    FROM user_roles ur
+    INNER JOIN roles r ON r.id = ur.role_id
+    WHERE r.guard_name = 'web'
+  `.execute() as RoleAssignmentRow[]
+
+  return Array.isArray(rows) ? rows : []
+}
+
 export default new Action({
   name: 'Admin Overview',
   description: 'Counts, recent accounts and their roles for the admin dashboard',
@@ -52,38 +75,56 @@ export default new Action({
       return response.json({ error: 'This area is for administrators.' }, 403)
     }
 
-    const [users, trails, activities] = await Promise.all([
+    const [users, trails, activities, assignments] = await Promise.all([
       User.all().catch(() => []),
       countOf(Trail),
       countOf(Activity),
+      roleAssignments(),
     ])
 
-    const accounts = (Array.isArray(users) ? users : [])
+    const allAccounts = Array.isArray(users) ? users : []
+    const rolesByUser = new Map<number, string[]>()
+    for (const assignment of assignments) {
+      const userId = Number(assignment.user_id)
+      const roles = rolesByUser.get(userId) ?? []
+      const role = String(assignment.role || '')
+      if (role && !roles.includes(role))
+        roles.push(role)
+      rolesByUser.set(userId, roles)
+    }
+
+    const accounts = allAccounts
       .slice()
       .sort((a: any, b: any) => Number(b?.id ?? 0) - Number(a?.id ?? 0))
       .slice(0, 25)
 
-    // One roles lookup per listed account. The list is capped at 25, so this
-    // stays a small, bounded number of queries rather than a table scan.
-    const accountRoles = await Promise.all(
-      accounts.map(async (account: any) => ({
+    const accountRoles = accounts.map((account: any) => ({
         id: account.id,
         name: account.name ?? null,
         email: account.email,
         created_at: account.created_at ?? null,
-        roles: await roleNamesFor(account.id),
-      })),
-    )
+        roles: rolesByUser.get(Number(account.id)) ?? [],
+      }))
+
+    const roleCounts = allAccounts.reduce((summary, account: any) => {
+      const roles = rolesByUser.get(Number(account.id)) ?? []
+      if (roles.includes('admin')) summary.admins += 1
+      if (roles.includes('client')) summary.clients += 1
+      if (roles.includes('paid')) summary.paid += 1
+      if (roles.length === 0) summary.unassigned += 1
+      return summary
+    }, { admins: 0, clients: 0, paid: 0, unassigned: 0 })
 
     return response.json({
       viewer: { id: user.id, email: user.email, name: user.name ?? null, roles },
       counts: {
-        users: Array.isArray(users) ? users.length : 0,
+        users: allAccounts.length,
         trails,
         activities,
-        admins: accountRoles.filter(a => a.roles.includes('admin')).length,
+        ...roleCounts,
       },
       accounts: accountRoles,
+      accountLimit: 25,
     })
   },
 })

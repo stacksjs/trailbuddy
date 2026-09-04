@@ -63,7 +63,7 @@ const formattedArea = formatArea(props.areaSize)
       <h3 class="mb-2 font-bold text-gray-900 text-lg">{{ props.name }}</h3>
 
       <div class="flex items-center mb-3 space-x-2">
-        <img x-src="props.ownerAvatar" x-alt="props.ownerName" class="object-cover h-6 w-6 rounded-full" />
+        <Image x-src="props.ownerAvatar" x-alt="props.ownerName" width="24" height="24" sizes="24px" placeholder="blur" class="object-cover h-6 w-6 rounded-full" />
         <span class="text-gray-600 text-sm">Owned by <span class="font-medium">{{ props.ownerName }}</span></span>
       </div>
 

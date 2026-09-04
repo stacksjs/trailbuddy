@@ -351,7 +351,7 @@
             class="flex gap-3 items-center p-3 card hover:shadow-md transition"
           >
             <div class="shrink-0 overflow-hidden h-14 w-14 rounded-lg">
-              <img x-src="trail.image || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=200&h=200&fit=crop'" x-alt="trail.name" width="56" height="56" loading="lazy" class="object-cover h-full w-full" />
+              <Image x-src="trail.image || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=200&h=200&fit=crop'" x-alt="trail.name" width="56" height="56" sizes="56px" placeholder="blur" class="object-cover h-full w-full" />
             </div>
             <div class="min-w-0 flex-1">
               <p class="font-semibold text-sm dark:text-white truncate">{{ trail.name }}</p>
@@ -380,7 +380,7 @@
       <template :for="trail in results">
         <StxLink x-to="'/trail/' + trail.id" class="block overflow-hidden p-0 hover:shadow-lg transition card group" @click="selectedTrailId.set(trail.id)">
           <div class="overflow-hidden relative h-48">
-            <img x-src="trail.image || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&h=600&fit=crop'" x-alt="trail.name" width="800" height="600" loading="lazy" class="object-cover h-full w-full duration-300 transition-transform group-hover:scale-105" />
+            <Image x-src="trail.image || 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&h=600&fit=crop'" x-alt="trail.name" width="800" height="600" sizes="(max-width: 768px) 100vw, 33vw" placeholder="blur" class="object-cover h-full w-full duration-300 transition-transform group-hover:scale-105" />
             <div class="absolute left-3 top-3 flex gap-2">
               <span x-class="'px-2 py-1 capitalize font-semibold text-xs rounded-full difficulty-' + trail.difficulty">{{ trail.difficulty }}</span>
               <span :if="trail.nationalTrail" class="px-2 py-1 font-semibold text-xs rounded-full bg-white/90 text-emerald-700">National Trail</span>

@@ -65,7 +65,7 @@
           <span class="text-sm font-bold tracking-wide">WILDLOOP</span>
         </StxLink>
 
-        <div class="hidden items-center gap-1 md:flex">
+        <div class="hidden items-center gap-1 xl:flex">
           <StxLink to="/trails" activeClass="nav-active" class="rounded px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">Trails</StxLink>
           <StxLink to="/feed" activeClass="nav-active" class="rounded px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">Feed</StxLink>
           <StxLink to="/events" activeClass="nav-active" class="rounded px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">Events</StxLink>
@@ -76,7 +76,7 @@
         </div>
       </div>
 
-      <div class="hidden items-center gap-2 md:flex">
+      <div class="hidden items-center gap-2 xl:flex">
         <button @click="useDark().toggle()" aria-label="Toggle dark mode" class="rounded-lg p-2 text-slate-500 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
           <Icon name="moon" size="18" class="dark:hidden" />
           <Icon name="sun" size="18" class="hidden dark:inline" />
@@ -123,13 +123,13 @@
         </div>
       </div>
 
-      <button class="p-2 text-slate-500 md:hidden dark:text-slate-400" @click="mobileOpen.set(!mobileOpen())" aria-label="Menu">
+      <button class="p-2 text-slate-500 xl:hidden dark:text-slate-400" @click="mobileOpen.set(!mobileOpen())" aria-label="Menu">
         <Icon :show="!mobileOpen()" name="menu" size="24" />
         <Icon :show="mobileOpen()" name="x" size="24" />
       </button>
     </div>
 
-    <div :show="mobileOpen()" x-cloak class="space-y-1 pb-4 md:hidden">
+    <div :show="mobileOpen()" x-cloak class="space-y-1 pb-4 xl:hidden">
       <StxLink to="/trails" class="block rounded px-3 py-2 text-sm text-slate-500 dark:text-slate-400">Trails</StxLink>
       <StxLink to="/feed" class="block rounded px-3 py-2 text-sm text-slate-500 dark:text-slate-400">Feed</StxLink>
       <StxLink to="/events" class="block rounded px-3 py-2 text-sm text-slate-500 dark:text-slate-400">Events</StxLink>
@@ -148,6 +148,7 @@
         <StxLink to="/stats" class="block rounded px-3 py-2 text-sm text-slate-600 dark:text-slate-400">Stats</StxLink>
         <StxLink to="/notifications" class="block rounded px-3 py-2 text-sm text-slate-600 dark:text-slate-400">Alerts</StxLink>
         <StxLink to="/profile" class="block rounded px-3 py-2 text-sm text-slate-600 dark:text-slate-400">Account</StxLink>
+        <StxLink :if="isAdmin" to="/admin" class="block rounded px-3 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-400">Admin</StxLink>
         <button @click="handleSignOut()" class="block w-full rounded px-3 py-2 text-left text-sm text-slate-600 dark:text-slate-400">Log out</button>
       </div>
     </div>

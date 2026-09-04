@@ -19,7 +19,7 @@
 <NativeAppShell tabBar>
   <NativeNetworkBanner />
   @include('../components/mobile-header')
-  <div class="hidden md:block">
+  <div class="hidden lg:block">
     @include('../components/nav')
   </div>
 
@@ -27,12 +27,12 @@
     @slot('content')
   </main>
 
-  <div class="mt-auto hidden shrink-0 md:block">
+  <div class="mt-auto hidden shrink-0 lg:block">
     @include('../components/footer')
   </div>
 
   <template #tab-bar>
-    <div class="md:hidden">
+    <div class="lg:hidden">
       <NativeTabBar label="WildLoop navigation">
         <NativeTabItem label="Feed" href="/feed" icon="i-lucide-house" />
         <NativeTabItem label="Trails" href="/trails" icon="i-lucide-map" />
@@ -56,7 +56,7 @@
     flex-direction: column;
   }
 
-  @media (min-width: 768px) {
+  @media (min-width: 1024px) {
     [data-native-app-shell] .native-app-content {
       padding-bottom: 0;
     }

@@ -1,12 +1,10 @@
 #!/usr/bin/env bun
-import { existsSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { generateMobileAssociations } from './scripts/generate-mobile-associations'
 
 const requestedSource = process.env.STX_SOURCE_ROOT?.trim()
-const localSource = resolve(import.meta.dir, '../../Tools/stx')
-const sourceRoot = requestedSource || (existsSync(join(localSource, 'packages/stx/src/build.ts')) ? localSource : '')
+const sourceRoot = requestedSource || ''
 const { buildApp } = sourceRoot
   ? await import(pathToFileURL(join(sourceRoot, 'packages/stx/src/build.ts')).href)
   : await import('@stacksjs/stx')

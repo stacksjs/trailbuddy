@@ -149,17 +149,16 @@
        page is below the fold on purpose: the first thing a visitor wants is
        somewhere to go this weekend, not a feature list. -->
   <section class="hero-stage">
-    <picture>
-      <source srcset="/images/marketing/wildloop-ridge-runner.webp" type="image/webp" />
-      <img
-        src="/images/marketing/wildloop-ridge-runner.jpg"
-        alt=""
-        width="1440"
-        height="960"
-        fetchpriority="high"
-        class="hero-photo"
-      />
-    </picture>
+    <Image
+      src="/images/marketing/wildloop-ridge-runner.jpg"
+      alt=""
+      width="1440"
+      height="960"
+      sizes="100vw"
+      priority
+      decorative
+      class="hero-photo"
+    />
 
     <div class="hero-inner">
       <h1 class="hero-title">Find your next adventure</h1>
@@ -206,7 +205,7 @@
         <template :for="trail in featured">
           <StxLink x-to="'/trail/' + trail.id" class="trail-tile group">
             <div class="trail-tile-photo">
-              <img :if="trail.image" x-src="trail.image" x-alt="trail.name" loading="lazy" class="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]" />
+              <Image :if="trail.image" x-src="trail.image" x-alt="trail.name" width="640" height="480" sizes="(max-width: 768px) 100vw, 33vw" placeholder="blur" class="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]" />
               <div :if="!trail.image" class="trail-tile-blank" aria-hidden="true">
                 <i class="i-lucide-mountain h-8 w-8"></i>
               </div>
@@ -428,10 +427,7 @@
           </div>
         </div>
         <div class="bento-image md:col-span-5 md:row-span-3">
-          <picture>
-            <source srcset="/images/marketing/wildloop-forest-trail.webp" type="image/webp" />
-            <img src="/images/marketing/wildloop-forest-trail.jpg" alt="Two hikers following an S-shaped trail through dense green forest" width="960" height="1200" loading="lazy" class="h-full w-full object-cover" />
-          </picture>
+          <Image src="/images/marketing/wildloop-forest-trail.jpg" alt="Two hikers following an S-shaped trail through dense green forest" width="960" height="1200" sizes="(max-width: 768px) 100vw, 42vw" class="h-full w-full object-cover" />
         </div>
         <div class="bento-small md:col-span-4">
           <i class="i-lucide-route h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-hidden="true"></i>
@@ -450,8 +446,8 @@
   <section class="share-stage">
     <div class="mx-auto grid max-w-7xl gap-14 px-4 py-20 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:gap-20 lg:px-8 lg:py-28">
       <div class="share-cards section-rise" aria-label="WildLoop activity image examples">
-        <img x-src="sampleSquare" alt="Square WildLoop activity image with a route trace and activity metrics" width="1080" height="1080" loading="lazy" class="share-square" />
-        <img x-src="sampleStory" alt="Vertical WildLoop story image with a route trace and activity metrics" width="1080" height="1920" loading="lazy" class="share-story" />
+        <Image x-src="sampleSquare" alt="Square WildLoop activity image with a route trace and activity metrics" width="1080" height="1080" sizes="(max-width: 1024px) 80vw, 42vw" placeholder="blur" class="share-square" />
+        <Image x-src="sampleStory" alt="Vertical WildLoop story image with a route trace and activity metrics" width="1080" height="1920" sizes="(max-width: 1024px) 45vw, 24vw" placeholder="blur" class="share-story" />
       </div>
       <div class="section-rise">
         <p class="section-kicker text-emerald-300">Built to leave the feed</p>

@@ -27,7 +27,7 @@ const { name, location, distance, elevation, difficulty, rating, image } = withD
     <!-- Main card -->
     <div class="overflow-hidden bg-white rounded-3xl shadow-2xl duration-300 transition-transform rotate-2 transform hover:rotate-0">
       <div class="overflow-hidden relative h-64">
-        <img src="{{ image }}" alt="{{ name }}" class="object-cover h-full w-full" />
+        <Image src="{{ image }}" alt="{{ name }}" width="800" height="600" sizes="(max-width: 768px) 100vw, 50vw" placeholder="blur" class="object-cover h-full w-full" />
         <div class="absolute left-4 top-4">
           <span class="px-3 py-1 font-semibold text-emerald-700 text-sm bg-white/90 rounded-full backdrop-blur-sm">
             Featured Trail

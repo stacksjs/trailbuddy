@@ -10,26 +10,99 @@ Object.assign(globalThis, autoImports)
 
 // TypeScript declarations
 declare global {
-  const computeTerritoryRankAssignments: typeof autoImports.computeTerritoryRankAssignments
-  const increment: typeof autoImports.increment
-  const count: typeof autoImports.count
-  const shapeChallenge: typeof autoImports.shapeChallenge
+  const longestDayStreak: typeof autoImports.longestDayStreak
+  const hasSubSevenMile: typeof autoImports.hasSubSevenMile
+  const computeAchievementProgress: typeof autoImports.computeAchievementProgress
+  const achievementMetricValues: typeof autoImports.achievementMetricValues
+  const detectAnomalies: typeof autoImports.detectAnomalies
+  const trackFingerprint: typeof autoImports.trackFingerprint
+  const parseActivityFile: typeof autoImports.parseActivityFile
+  const parseGpxActivity: typeof autoImports.parseGpxActivity
+  const parseTcxActivity: typeof autoImports.parseTcxActivity
+  const parseFitActivity: typeof autoImports.parseFitActivity
+  const escapeXml: typeof autoImports.escapeXml
+  const importedTrackGeoJson: typeof autoImports.importedTrackGeoJson
+  const trackToGpx: typeof autoImports.trackToGpx
+  const downloadGpxFile: typeof autoImports.downloadGpxFile
+  const MAX_ACTIVITY_FILE_BYTES: typeof autoImports.MAX_ACTIVITY_FILE_BYTES
+  const MAX_ACTIVITY_TRACK_POINTS: typeof autoImports.MAX_ACTIVITY_TRACK_POINTS
+  const checkAgainstHistory: typeof autoImports.checkAgainstHistory
+  const isLiveGpsSource: typeof autoImports.isLiveGpsSource
+  const parseTrackSamples: typeof autoImports.parseTrackSamples
+  const evaluateTrackIntegrity: typeof autoImports.evaluateTrackIntegrity
+  const durationLabel: typeof autoImports.durationLabel
+  const activityKind: typeof autoImports.activityKind
+  const maxSustainableSpeed: typeof autoImports.maxSustainableSpeed
+  const maxBurstSpeed: typeof autoImports.maxBurstSpeed
+  const worstSustainedWindow: typeof autoImports.worstSustainedWindow
+  const MAX_ACCELERATION: typeof autoImports.MAX_ACCELERATION
+  const MAX_VERTICAL_SPEED: typeof autoImports.MAX_VERTICAL_SPEED
   const renderActivitySharePng: typeof autoImports.renderActivitySharePng
   const downloadActivityShareImage: typeof autoImports.downloadActivityShareImage
   const shareActivityImage: typeof autoImports.shareActivityImage
   const activityShareOptions: typeof autoImports.activityShareOptions
   const activityShareSvg: typeof autoImports.activityShareSvg
   const activitySharePreview: typeof autoImports.activitySharePreview
-  const readPageParams: typeof autoImports.readPageParams
-  const paginate: typeof autoImports.paginate
-  const longestDayStreak: typeof autoImports.longestDayStreak
-  const hasSubSevenMile: typeof autoImports.hasSubSevenMile
-  const computeAchievementProgress: typeof autoImports.computeAchievementProgress
-  const achievementMetricValues: typeof autoImports.achievementMetricValues
+  const yardStartsAt: typeof autoImports.yardStartsAt
+  const currentYard: typeof autoImports.currentYard
+  const msToNextStart: typeof autoImports.msToNextStart
+  const msIntoCurrentYard: typeof autoImports.msIntoCurrentYard
+  const yardsRequiredToBeIn: typeof autoImports.yardsRequiredToBeIn
+  const isStillIn: typeof autoImports.isStillIn
+  const standings: typeof autoImports.standings
+  const resolveOutcome: typeof autoImports.resolveOutcome
+  const formatClock: typeof autoImports.formatClock
+  const STANDARD_YARD_MILES: typeof autoImports.STANDARD_YARD_MILES
+  const STANDARD_YARD_MINUTES: typeof autoImports.STANDARD_YARD_MINUTES
+  const shapeChallenge: typeof autoImports.shapeChallenge
+  const computeConquestRecord: typeof autoImports.computeConquestRecord
+  const increment: typeof autoImports.increment
+  const count: typeof autoImports.count
+  const computeCounterFixes: typeof autoImports.computeCounterFixes
+  const isDark: typeof autoImports.isDark
+  const toggleDark: typeof autoImports.toggleDark
+  const preferredDark: typeof autoImports.preferredDark
+  const territoryFreshnessMs: typeof autoImports.territoryFreshnessMs
+  const computeTerritoryDecay: typeof autoImports.computeTerritoryDecay
+  const DECAY_STALE_DAYS: typeof autoImports.DECAY_STALE_DAYS
+  const DECAY_EXPIRE_DAYS: typeof autoImports.DECAY_EXPIRE_DAYS
+  const parseDurationToSeconds: typeof autoImports.parseDurationToSeconds
+  const paceString: typeof autoImports.paceString
+  const haversineDistance: typeof autoImports.haversineDistance
+  const isClosedLoop: typeof autoImports.isClosedLoop
+  const calculatePolygonArea: typeof autoImports.calculatePolygonArea
+  const calculatePerimeter: typeof autoImports.calculatePerimeter
+  const simplifyTrack: typeof autoImports.simplifyTrack
+  const pointInPolygon: typeof autoImports.pointInPolygon
+  const lineIntersectsPolygon: typeof autoImports.lineIntersectsPolygon
+  const routeIntersectsPolygon: typeof autoImports.routeIntersectsPolygon
+  const getBoundingBox: typeof autoImports.getBoundingBox
+  const parseBoundingBox: typeof autoImports.parseBoundingBox
+  const boundingBoxesOverlap: typeof autoImports.boundingBoxesOverlap
+  const polygonsOverlap: typeof autoImports.polygonsOverlap
+  const getCentroid: typeof autoImports.getCentroid
+  const coordinatesToGeoJson: typeof autoImports.coordinatesToGeoJson
+  const geoJsonToCoordinates: typeof autoImports.geoJsonToCoordinates
+  const findLinePolygonIntersections: typeof autoImports.findLinePolygonIntersections
+  const splitPolygonByRoute: typeof autoImports.splitPolygonByRoute
+  const generateLoopCoordinates: typeof autoImports.generateLoopCoordinates
+  const parseGpx: typeof autoImports.parseGpx
+  const parseJsonCoordinates: typeof autoImports.parseJsonCoordinates
+  const parseGpsData: typeof autoImports.parseGpsData
+  const generateSampleLoopGpx: typeof autoImports.generateSampleLoopGpx
+  const generateSampleLoopJson: typeof autoImports.generateSampleLoopJson
+  const validateGpsDataForClaim: typeof autoImports.validateGpsDataForClaim
+  const validateTrackRealism: typeof autoImports.validateTrackRealism
   const extractMentionQuery: typeof autoImports.extractMentionQuery
   const mentionCandidates: typeof autoImports.mentionCandidates
   const applyMention: typeof autoImports.applyMention
   const parseMentions: typeof autoImports.parseMentions
+  const readPageParams: typeof autoImports.readPageParams
+  const paginate: typeof autoImports.paginate
+  const qrSvg: typeof autoImports.qrSvg
+  const qrSvgMarkup: typeof autoImports.qrSvgMarkup
+  const qrBrandedMarkup: typeof autoImports.qrBrandedMarkup
+  const computeTerritoryRankAssignments: typeof autoImports.computeTerritoryRankAssignments
   const routeIsRankable: typeof autoImports.routeIsRankable
   const elapsedSeconds: typeof autoImports.elapsedSeconds
   const formatElapsed: typeof autoImports.formatElapsed
@@ -58,80 +131,21 @@ declare global {
   const computeSplitsFromSamples: typeof autoImports.computeSplitsFromSamples
   const ELEVATION_NOISE_FLOOR_FT: typeof autoImports.ELEVATION_NOISE_FLOOR_FT
   const METERS_TO_FEET: typeof autoImports.METERS_TO_FEET
-  const blockedUserIdsFor: typeof autoImports.blockedUserIdsFor
-  const canViewActivity: typeof autoImports.canViewActivity
-  const maskRouteEndpoints: typeof autoImports.maskRouteEndpoints
-  const isDark: typeof autoImports.isDark
-  const toggleDark: typeof autoImports.toggleDark
-  const preferredDark: typeof autoImports.preferredDark
-  const qrSvg: typeof autoImports.qrSvg
-  const qrSvgMarkup: typeof autoImports.qrSvgMarkup
-  const qrBrandedMarkup: typeof autoImports.qrBrandedMarkup
+  const classifyBattleOutcome: typeof autoImports.classifyBattleOutcome
+  const territoryColor: typeof autoImports.territoryColor
+  const territoryAppearance: typeof autoImports.territoryAppearance
+  const formatTerritoryArea: typeof autoImports.formatTerritoryArea
+  const diffTerritories: typeof autoImports.diffTerritories
+  const OWN_TERRITORY_COLOR: typeof autoImports.OWN_TERRITORY_COLOR
+  const computeTrainingStats: typeof autoImports.computeTrainingStats
   const positiveInt: typeof autoImports.positiveInt
   const boundedNumber: typeof autoImports.boundedNumber
   const boundedString: typeof autoImports.boundedString
   const durationString: typeof autoImports.durationString
+  const blockedUserIdsFor: typeof autoImports.blockedUserIdsFor
+  const canViewActivity: typeof autoImports.canViewActivity
+  const maskRouteEndpoints: typeof autoImports.maskRouteEndpoints
   const XP_REWARDS: typeof autoImports.XP_REWARDS
-  const yardStartsAt: typeof autoImports.yardStartsAt
-  const currentYard: typeof autoImports.currentYard
-  const msToNextStart: typeof autoImports.msToNextStart
-  const msIntoCurrentYard: typeof autoImports.msIntoCurrentYard
-  const yardsRequiredToBeIn: typeof autoImports.yardsRequiredToBeIn
-  const isStillIn: typeof autoImports.isStillIn
-  const standings: typeof autoImports.standings
-  const resolveOutcome: typeof autoImports.resolveOutcome
-  const formatClock: typeof autoImports.formatClock
-  const STANDARD_YARD_MILES: typeof autoImports.STANDARD_YARD_MILES
-  const STANDARD_YARD_MINUTES: typeof autoImports.STANDARD_YARD_MINUTES
-  const parseGpx: typeof autoImports.parseGpx
-  const parseJsonCoordinates: typeof autoImports.parseJsonCoordinates
-  const parseGpsData: typeof autoImports.parseGpsData
-  const generateSampleLoopGpx: typeof autoImports.generateSampleLoopGpx
-  const generateSampleLoopJson: typeof autoImports.generateSampleLoopJson
-  const validateGpsDataForClaim: typeof autoImports.validateGpsDataForClaim
-  const validateTrackRealism: typeof autoImports.validateTrackRealism
-  const parseActivityFile: typeof autoImports.parseActivityFile
-  const parseGpxActivity: typeof autoImports.parseGpxActivity
-  const parseTcxActivity: typeof autoImports.parseTcxActivity
-  const parseFitActivity: typeof autoImports.parseFitActivity
-  const escapeXml: typeof autoImports.escapeXml
-  const importedTrackGeoJson: typeof autoImports.importedTrackGeoJson
-  const trackToGpx: typeof autoImports.trackToGpx
-  const downloadGpxFile: typeof autoImports.downloadGpxFile
-  const MAX_ACTIVITY_FILE_BYTES: typeof autoImports.MAX_ACTIVITY_FILE_BYTES
-  const MAX_ACTIVITY_TRACK_POINTS: typeof autoImports.MAX_ACTIVITY_TRACK_POINTS
-  const classifyBattleOutcome: typeof autoImports.classifyBattleOutcome
-  const parseDurationToSeconds: typeof autoImports.parseDurationToSeconds
-  const paceString: typeof autoImports.paceString
-  const territoryFreshnessMs: typeof autoImports.territoryFreshnessMs
-  const computeTerritoryDecay: typeof autoImports.computeTerritoryDecay
-  const DECAY_STALE_DAYS: typeof autoImports.DECAY_STALE_DAYS
-  const DECAY_EXPIRE_DAYS: typeof autoImports.DECAY_EXPIRE_DAYS
-  const isLiveGpsSource: typeof autoImports.isLiveGpsSource
-  const parseTrackSamples: typeof autoImports.parseTrackSamples
-  const evaluateTrackIntegrity: typeof autoImports.evaluateTrackIntegrity
-  const durationLabel: typeof autoImports.durationLabel
-  const computeConquestRecord: typeof autoImports.computeConquestRecord
-  const computeCounterFixes: typeof autoImports.computeCounterFixes
-  const computeTrainingStats: typeof autoImports.computeTrainingStats
-  const haversineDistance: typeof autoImports.haversineDistance
-  const isClosedLoop: typeof autoImports.isClosedLoop
-  const calculatePolygonArea: typeof autoImports.calculatePolygonArea
-  const calculatePerimeter: typeof autoImports.calculatePerimeter
-  const simplifyTrack: typeof autoImports.simplifyTrack
-  const pointInPolygon: typeof autoImports.pointInPolygon
-  const lineIntersectsPolygon: typeof autoImports.lineIntersectsPolygon
-  const routeIntersectsPolygon: typeof autoImports.routeIntersectsPolygon
-  const getBoundingBox: typeof autoImports.getBoundingBox
-  const parseBoundingBox: typeof autoImports.parseBoundingBox
-  const boundingBoxesOverlap: typeof autoImports.boundingBoxesOverlap
-  const polygonsOverlap: typeof autoImports.polygonsOverlap
-  const getCentroid: typeof autoImports.getCentroid
-  const coordinatesToGeoJson: typeof autoImports.coordinatesToGeoJson
-  const geoJsonToCoordinates: typeof autoImports.geoJsonToCoordinates
-  const findLinePolygonIntersections: typeof autoImports.findLinePolygonIntersections
-  const splitPolygonByRoute: typeof autoImports.splitPolygonByRoute
-  const generateLoopCoordinates: typeof autoImports.generateLoopCoordinates
 }
 
 export {}

@@ -187,7 +187,7 @@
   <div :if="trail">
     <!-- Hero -->
     <section class="relative h-72 sm:h-96 bg-gradient-to-br from-emerald-700 to-teal-800 overflow-hidden">
-      <img x-src="trail.image || 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1600&h=900&fit=crop'" x-alt="trail.name" class="absolute inset-0 w-full h-full object-cover" />
+      <Image x-src="trail.image || 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=1600&h=900&fit=crop'" x-alt="trail.name" width="1600" height="900" sizes="100vw" placeholder="blur" class="absolute inset-0 w-full h-full object-cover" />
       <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/20"></div>
       <div class="relative h-full flex items-end px-4 mx-auto max-w-7xl sm:px-6 lg:px-8 pb-8">
         <div class="flex-1">

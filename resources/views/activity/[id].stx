@@ -248,11 +248,13 @@
     <section class="mb-6 overflow-hidden rounded-2xl border border-emerald-900/15 bg-[#f2f6f3] dark:border-white/10 dark:bg-[#0c1512]">
       <div class="grid lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
         <div class="flex items-center justify-center bg-[#091310] p-5 sm:p-7">
-          <img
+          <Image
             x-src="sharePreview"
             alt="Shareable WildLoop activity image with route and performance metrics"
             x-width="sharePreset === 'landscape' ? 1200 : 1080"
             x-height="sharePreset === 'story' ? 1920 : sharePreset === 'landscape' ? 630 : 1080"
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            placeholder="blur"
             class="max-h-[420px] w-full rounded-xl object-contain shadow-2xl shadow-black/30"
           />
         </div>
