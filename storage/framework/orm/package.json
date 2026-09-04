@@ -45,9 +45,9 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@stacksjs/cache": "^0.74.16",
-    "@stacksjs/database": "^0.74.16",
-    "@stacksjs/error-handling": "^0.74.16"
+    "@stacksjs/cache": "^0.74.18",
+    "@stacksjs/database": "^0.74.18",
+    "@stacksjs/error-handling": "^0.74.18"
   },
   "devDependencies": {
     "better-dx": "^0.2.5"
